@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Fragment } from 'react/jsx-runtime'
 import { formatDistanceToNowStrict } from 'date-fns'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { IconEdit, IconMessages, IconSearch } from '@tabler/icons-react'
 import { SearchChatParams } from '@/routes/_authenticated/chats'
 import { es } from 'date-fns/locale/es'
@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { Separator } from '@/components/ui/separator.tsx'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { chatService } from '@/features/chats/ChatService.ts'
+import { Chat } from '@/features/chats/ChatTypes.ts'
 
 export default function ChatBar({
   selectedChatId,
@@ -23,8 +24,9 @@ export default function ChatBar({
   const { data: chats, isLoading: isChatsLoading } = useQuery({
     queryKey: ['chats'],
     queryFn: () => chatService.getChats(),
-    staleTime: Infinity
+    staleTime: Infinity,
   })
+  const queryClient = useQueryClient();
 
   const filteredChatList = useMemo(
     () =>
@@ -39,6 +41,21 @@ export default function ChatBar({
   const handleSelectChat = (chatId: string) => {
     setSelectedChatId(chatId)
     setMobileSelectedChatId(chatId)
+    queryClient.setQueryData<Chat[]>(['chats'], (cachedChats) => {
+      if (cachedChats === undefined) return cachedChats
+      return [...cachedChats]
+        .map((chat) => {
+          if (chat.id === chatId) {
+            return {
+              ...chat,
+              newClientMessagesCount: 0,
+            }
+          }
+          return chat
+        })
+    })
+
+    // TODO: NOTIFY THE SERVER TO RESTORE THE NEW CLIENT MESSAGES COUNT IN CHATID
     navigate({
       search: (prev: SearchChatParams) => ({ ...prev, chatId }),
       replace: true,
@@ -99,7 +116,7 @@ export default function ChatBar({
                     <div className='flex gap-2 w-full'>
                       <Avatar>
                         <AvatarFallback>
-                          {chat.client.profileName[0] || 'D'}
+                          {chat.client.profileName[0] || ''}
                         </AvatarFallback>
                       </Avatar>
                       <div className='w-full flex flex-col'>
@@ -114,8 +131,13 @@ export default function ChatBar({
                             )}
                           </span>
                         </span>
-                        <span className='text-ellipsis text-muted-foreground'>
-                          <span>{lastMsg}</span>
+                        <span className='text-ellipsis flex items-center text-muted-foreground '>
+                          <span className='flex-1'>{lastMsg}</span>
+                          {chat.newClientMessagesCount > 0 && (
+                            <span className='px-1 rounded-full text-center  bg-blue-500 text-white text-xs'>
+                              {chat.newClientMessagesCount}
+                            </span>
+                          )}
                         </span>
                       </div>
                     </div>

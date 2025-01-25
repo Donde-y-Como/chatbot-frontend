@@ -29,16 +29,19 @@ export default function ChatFooter({ selectedChatId }) {
 
       queryClient.setQueryData<Chat[]>(['chats'], (oldChats) => {
         if (oldChats === undefined) return oldChats
-        return [...oldChats].map((chat) => {
-          if (chat.id === variables.conversationId) {
-            return {
-              ...chat,
-              lastMessage: variables.message,
+        return [...oldChats]
+          .map((chat) => {
+            if (chat.id === variables.conversationId) {
+              return {
+                ...chat,
+                lastMessage: variables.message,
+              }
             }
-          }
-          return chat
-        })
+            return chat
+          })
+          .sort((a, b) => b.lastMessage.timestamp - a.lastMessage.timestamp)
       })
+
     },
   })
 

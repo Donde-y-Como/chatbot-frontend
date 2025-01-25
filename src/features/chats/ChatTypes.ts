@@ -3,8 +3,8 @@ export type Chat = {
   platformName: string
   client: Client
   clientProfileId: string | null
-  lastMessage: LastMessage
-  newClientMessagesCount: 0
+  lastMessage: Message
+  newClientMessagesCount: number
 }
 
 export type Message = {
@@ -35,14 +35,6 @@ export type ChatMessages = {
     whatsapp?: string[]
     facebook?: string[]
   }
-}
-
-export type LastMessage = {
-  id: string
-  content: string
-  role: 'business' | 'user' | 'assistant'
-  timestamp: number
-  media: Media | null
 }
 
 export type Media = {

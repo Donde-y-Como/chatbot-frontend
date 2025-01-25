@@ -32,7 +32,7 @@ export default function Chats() {
   const [mobileSelectedChatId, setMobileSelectedChatId] = useState<
     string | null
   >(null)
-  const { data: chats, isLoading: isChatsLoading } = useQuery({
+  const { data: chats } = useQuery({
     queryKey: ['chats'],
     queryFn: () => chatService.getChats(),
   })
