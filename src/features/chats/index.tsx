@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Fragment } from 'react/jsx-runtime'
 import { format, formatDistanceToNow } from 'date-fns'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { getRouteApi } from '@tanstack/react-router'
 import {
   IconArrowLeft,
   IconDotsVertical,
@@ -15,6 +16,7 @@ import {
   IconSend,
   IconVideo,
 } from '@tabler/icons-react'
+import { SearchChatParams } from '@/routes/_authenticated/chats'
 import { es } from 'date-fns/locale/es'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -25,15 +27,16 @@ import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { Main } from '@/components/layout/main'
 import { chatService } from '@/features/chats/ChatService.ts'
 import { ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
-import { conversations } from './data/convo.json'
 
-type ChatUser = (typeof conversations)[number]
-type Convo = ChatUser['messages'][number]
+const route = getRouteApi('/_authenticated/chats/')
 
 export default function Chats() {
   const queryClient = useQueryClient()
+  const searchParams = route.useSearch()
+  const navigate = route.useNavigate()
   const [search, setSearch] = useState('')
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const [mobileSelectedChatId, setMobileSelectedChatId] = useState<
     string | null
   >(null)
@@ -61,10 +64,33 @@ export default function Chats() {
   })
 
   useEffect(() => {
-    if (chats && chats.length > 0 && !selectedChatId) {
-      setSelectedChatId(chats[0].id)
+    if (chats && chats.length > 0) {
+      const urlChatId = searchParams.chatId
+      const isValidChat = urlChatId && chats.some((c) => c.id === urlChatId)
+      const initialChatId = isValidChat ? urlChatId : chats[0].id
+
+      setSelectedChatId(initialChatId)
+      setMobileSelectedChatId(isValidChat ? initialChatId : null)
     }
-  }, [chats, selectedChatId])
+  }, [chats, searchParams.chatId])
+
+  useEffect(() => {
+    const urlChatId = searchParams.chatId
+    const isMobile = window.innerWidth < 640
+
+    if (isMobile) {
+      setMobileSelectedChatId(urlChatId ? urlChatId : null)
+    }
+  }, [searchParams.chatId])
+
+  const handleSelectChat = (chatId: string) => {
+    setSelectedChatId(chatId)
+    setMobileSelectedChatId(chatId)
+    navigate({
+      search: (prev: SearchChatParams) => ({ ...prev, chatId }),
+      replace: true,
+    })
+  }
 
   const filteredChatList =
     chats?.filter((chat) =>
@@ -73,20 +99,18 @@ export default function Chats() {
         .includes(search.trim().toLowerCase())
     ) || []
 
-  const currentMessage = chatMessages?.messages
-    .slice()
-    .reduce(
-      (acc, msg) => {
-        const date = new Date(msg.timestamp)
-        // Use local date with format
-        const key = format(date, 'd MMM yyyy', {locale:es})
+  const currentMessage = chatMessages?.messages.slice().reduce(
+    (acc, msg) => {
+      const date = new Date(msg.timestamp)
+      // Use local date with format
+      const key = format(date, 'd MMM yyyy', { locale: es })
 
-        if (!acc[key]) acc[key] = []
-        acc[key].push(msg)
-        return acc
-      },
-      {} as Record<string, Message[]>
-    )
+      if (!acc[key]) acc[key] = []
+      acc[key].push(msg)
+      return acc
+    },
+    {} as Record<string, Message[]>
+  )
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
@@ -110,17 +134,23 @@ export default function Chats() {
     // TODO: Implement API call to send message
   }
 
-  const messagesEndRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    setTimeout(() => {
+    if (!mobileSelectedChatId) return
+
+    const scroll = () => {
       if (messagesEndRef.current) {
         messagesEndRef.current.scrollIntoView({
           behavior: 'auto',
           block: 'end',
         })
       }
-    }, 100)
-  }, [chatMessages, selectedChatId])
+    }
+
+    // Double requestAnimationFrame for mobile initial render
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scroll)
+    })
+  }, [chatMessages, mobileSelectedChatId])
 
   return (
     <Main fixed>
@@ -174,10 +204,7 @@ export default function Chats() {
                           `-mx-1 flex w-full rounded-md px-2 py-2 text-left text-sm hover:bg-secondary/75`,
                           selectedChatId === chat.id && 'sm:bg-muted'
                         )}
-                        onClick={() => {
-                          setSelectedChatId(chat.id)
-                          setMobileSelectedChatId(chat.id)
-                        }}
+                        onClick={() => handleSelectChat(chat.id)}
                       >
                         <div className='flex gap-2 w-full'>
                           <Avatar>
@@ -214,7 +241,7 @@ export default function Chats() {
         <div
           className={cn(
             'absolute inset-0 hidden left-full z-50 w-full flex-1 flex-col rounded-md border bg-primary-foreground shadow-sm transition-all duration-200 sm:static sm:z-auto sm:flex',
-            mobileSelectedChatId && 'left-0 flex'
+            (mobileSelectedChatId || searchParams.chatId) && 'left-0 flex'
           )}
         >
           {/* Top Part */}
@@ -224,7 +251,13 @@ export default function Chats() {
                 size='icon'
                 variant='ghost'
                 className='-ml-2 h-full sm:hidden'
-                onClick={() => setMobileSelectedChatId(null)}
+                onClick={() => {
+                  setMobileSelectedChatId(null)
+                  navigate({
+                    search: () => ({ chatId: undefined }),
+                    replace: true,
+                  })
+                }}
               >
                 <IconArrowLeft />
               </Button>
@@ -287,7 +320,10 @@ export default function Chats() {
           <div className='flex flex-1 flex-col gap-2 rounded-md px-4 pb-4 pt-0'>
             <div className='flex size-full flex-1'>
               <div className='chat-text-container relative -mr-4 flex flex-1 flex-col overflow-y-hidden'>
-                <div className='chat-flex flex h-40 w-full flex-grow flex-col justify-start gap-4 overflow-y-auto py-2 pb-4 pr-4'>
+                <div
+                  key={mobileSelectedChatId}
+                  className='chat-flex flex h-40 w-full flex-grow flex-col justify-start gap-4 overflow-y-auto py-2 pb-4 pr-4'
+                >
                   {isMessagesLoading
                     ? Array.from({ length: 3 }).map((_, index) => (
                         <Skeleton
@@ -326,9 +362,9 @@ export default function Chats() {
                               </span>
                             </div>
                           ))}
-                          <div ref={messagesEndRef} />
                         </Fragment>
                       ))}
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
             </div>
