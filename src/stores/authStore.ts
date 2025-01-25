@@ -1,5 +1,3 @@
-import Cookies from 'js-cookie'
-import { useRouter } from '@tanstack/react-router'
 import { create } from 'zustand'
 import { UserData } from '@/features/auth/types.ts'
 
@@ -8,7 +6,7 @@ const ACCESS_TOKEN = 'thisisjustarandomstring'
 interface AuthState {
   auth: {
     user: UserData | null
-    setUser: (user: UserData | null) => void
+    setUser: (user: UserData) => void
     accessToken: string
     setAccessToken: (accessToken: string) => void
     resetAccessToken: () => void
@@ -18,27 +16,35 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>()((set, get) => {
-  const cookieState = Cookies.get(ACCESS_TOKEN)
+  const cookieState = localStorage.getItem(ACCESS_TOKEN)
   const initToken = cookieState ? JSON.parse(cookieState) : ''
+  const initUser = localStorage.getItem('user')
+    ? JSON.parse(localStorage.getItem('user')!)
+    : null
   return {
     auth: {
-      user: null,
-      setUser: (user) =>
-        set((state) => ({ ...state, auth: { ...state.auth, user } })),
+      user: initUser,
+      setUser: (user: UserData) =>
+        set((state) => {
+          localStorage.setItem('user', JSON.stringify(user))
+          return { ...state, auth: { ...state.auth, user } }
+        }),
       accessToken: initToken,
       setAccessToken: (accessToken) =>
         set((state) => {
-          Cookies.set(ACCESS_TOKEN, JSON.stringify(accessToken))
+          localStorage.setItem(ACCESS_TOKEN, JSON.stringify(accessToken))
           return { ...state, auth: { ...state.auth, accessToken } }
         }),
       resetAccessToken: () =>
         set((state) => {
-          Cookies.remove(ACCESS_TOKEN)
+          localStorage.removeItem(ACCESS_TOKEN)
+          localStorage.removeItem('user')
           return { ...state, auth: { ...state.auth, accessToken: '' } }
         }),
       reset: () =>
         set((state) => {
-          Cookies.remove(ACCESS_TOKEN)
+          localStorage.removeItem(ACCESS_TOKEN)
+          localStorage.removeItem('user')
           return {
             ...state,
             auth: { ...state.auth, user: null, accessToken: '' },
@@ -52,4 +58,4 @@ export const useAuthStore = create<AuthState>()((set, get) => {
   }
 })
 
-// export const useAuth = () => useAuthStore((state) => state.auth)
+export const useAuth = () => useAuthStore((state) => state.auth)

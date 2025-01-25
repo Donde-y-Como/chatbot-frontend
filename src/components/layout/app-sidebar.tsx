@@ -3,8 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter, SidebarGroup, SidebarGroupLabel,
-  SidebarHeader, SidebarMenu,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
   SidebarRail,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
@@ -31,8 +33,8 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           <NavGroup key={props.title} {...props} />
         ))}
         <SidebarGroup>
-          <SidebarMenu className="flex items-center justify-center">
-            <ThemeSwitch/>
+          <SidebarMenu className='flex items-center justify-center'>
+            <ThemeSwitch />
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

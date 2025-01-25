@@ -18,7 +18,9 @@ import {
 } from '@tabler/icons-react'
 import { SearchChatParams } from '@/routes/_authenticated/chats'
 import { es } from 'date-fns/locale/es'
+import { uid } from 'uid'
 import { cn } from '@/lib/utils'
+import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -32,6 +34,7 @@ const route = getRouteApi('/_authenticated/chats/')
 
 export default function Chats() {
   const queryClient = useQueryClient()
+  const socket = useWebSocket()
   const searchParams = route.useSearch()
   const navigate = route.useNavigate()
   const [search, setSearch] = useState('')
@@ -41,20 +44,12 @@ export default function Chats() {
     string | null
   >(null)
   const [newMessage, setNewMessage] = useState('')
-  const {
-    data: chats,
-    isLoading: isChatsLoading,
-    isError: isChatsError,
-  } = useQuery({
+  const { data: chats, isLoading: isChatsLoading } = useQuery({
     queryKey: ['chats'],
     queryFn: () => chatService.getChats(),
   })
 
-  const {
-    data: chatMessages,
-    isLoading: isMessagesLoading,
-    isError: isMessagesError,
-  } = useQuery({
+  const { data: chatMessages, isLoading: isMessagesLoading } = useQuery({
     queryKey: ['chat', selectedChatId],
     queryFn: () => {
       if (!selectedChatId) throw new Error('No chat selected')
@@ -117,7 +112,7 @@ export default function Chats() {
     if (!newMessage.trim() || !chatMessages) return
 
     const newMsg: Message = {
-      id: Date.now().toString(),
+      id: uid(),
       content: newMessage.trim(),
       role: 'business',
       timestamp: Date.now(),
@@ -126,12 +121,15 @@ export default function Chats() {
 
     const updatedChatMessages: ChatMessages = {
       ...chatMessages,
-      messages: [newMsg, ...chatMessages.messages],
+      messages: [...chatMessages.messages, newMsg],
     }
 
     queryClient.setQueryData(['chat', selectedChatId], updatedChatMessages)
     setNewMessage('')
-    // TODO: Implement API call to send message
+    // socket.sendMessage({
+    //   conversationId: selectedChatId!,
+    //   message: newMsg,
+    // })
   }
 
   useEffect(() => {
@@ -217,7 +215,7 @@ export default function Chats() {
                               <span className='flex-1'>
                                 {chat.client.profileName || 'Desconocido'}
                               </span>
-                              <span className='ml-2 text-xs font-normal text-muted-foreground'>
+                              <span className='ml-2 text-xs text-right font-normal text-muted-foreground'>
                                 {formatDistanceToNow(
                                   new Date(chat.lastMessage.timestamp),
                                   { addSuffix: true, locale: es }

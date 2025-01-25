@@ -1,7 +1,9 @@
 import Cookies from 'js-cookie'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { useAuth } from '@/stores/authStore.ts'
 import { cn } from '@/lib/utils'
 import { SearchProvider } from '@/context/search-context'
+import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import SkipToMain from '@/components/skip-to-main'
@@ -12,6 +14,12 @@ export const Route = createFileRoute('/_authenticated')({
 
 function RouteComponent() {
   const defaultOpen = Cookies.get('sidebar:state') !== 'false'
+  const { socket, isConnected, setIsConnected } = useWebSocket()
+  const auth = useAuth()
+  if (auth.user && !isConnected) {
+    socket.emit('joinBusinessRoom', auth.user.id)
+    setIsConnected(true)
+  }
   return (
     <SearchProvider>
       <SidebarProvider defaultOpen={defaultOpen}>

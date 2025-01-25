@@ -30,8 +30,7 @@ export function NavUser({ user }: { user: UserData }) {
   const router = useRouter()
   const logout = () => {
     authService.logout()
-    const redirect = `${router.history.location.href}`
-    router.navigate({ to: '/iniciar-sesion', search: { redirect } })
+    router.navigate({ to: '/iniciar-sesion', replace: true })
   }
 
   return (

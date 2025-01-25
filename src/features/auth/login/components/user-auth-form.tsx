@@ -2,9 +2,9 @@ import { HTMLAttributes, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useRouter } from '@tanstack/react-router'
-import { useAuthStore } from '@/stores/authStore.ts'
+import { useAuth } from '@/stores/authStore.ts'
 import { cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast.ts'
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,7 @@ const formSchema = z.object({
   email: z
     .string()
     .min(1, { message: 'Ingresa tu correo' })
-    .email({ message: 'Direccion de correo invalida' }),
+    .email({ message: 'Correo invalido' }),
   password: z.string().min(1, {
     message: 'Ingresa tu contraseña',
   }),
@@ -35,8 +35,8 @@ const formSchema = z.object({
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { auth } = useAuthStore()
-
+  const queryClient = useQueryClient()
+  const { setAccessToken, setUser } = useAuth()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,9 +48,15 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const { mutateAsync: login, isPending } = useMutation({
     mutationKey: ['login'],
     mutationFn: authService.login,
-    onSuccess: (data) => {
-      auth.setAccessToken(data.token)
-      router.navigate({ to: '/' })
+    onSuccess: async (data) => {
+      setAccessToken(data.token)
+      const user = await queryClient.fetchQuery({
+        queryKey: ['user'],
+        queryFn: authService.getMe,
+      })
+
+      setUser(user)
+      router.navigate({ to: '/', replace: true })
     },
     onError: () => {
       toast({
@@ -84,7 +90,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                 <FormItem className='space-y-1'>
                   <FormLabel>Correo</FormLabel>
                   <FormControl>
-                    <Input placeholder='name@example.com' {...field} />
+                    <Input autoComplete="username" placeholder='name@example.com' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -105,7 +111,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                     </Link>
                   </div>
                   <FormControl>
-                    <PasswordInput placeholder='********' {...field} />
+                    <PasswordInput autoComplete="current-password" placeholder='********' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

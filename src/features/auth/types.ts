@@ -7,7 +7,17 @@ export interface UserData {
   id: string
   logo: string
   name: string
-  plan: {
-    name: string
-  }
+  plan: BillingPlan
+}
+
+export interface BillingPlan {
+  active: boolean
+  endTimestamp: number
+  leftMessages: number
+  usedMessages: number
+  totalMessages: number
+  name: 'Trial' | 'Basic' | 'Pro' | 'StartUp'
+  startTimestamp: number
+  status: 'active' | 'inactive'
+  type: string
 }
