@@ -41,7 +41,6 @@ export default function ChatFooter({ selectedChatId }) {
           })
           .sort((a, b) => b.lastMessage.timestamp - a.lastMessage.timestamp)
       })
-
     },
   })
 
