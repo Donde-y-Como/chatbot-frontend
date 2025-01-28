@@ -31,7 +31,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const { toggleSidebar } = useSidebar()
 
   return (
-    <Sidebar collapsible='icon' variant='floating' {...props}>
+    <Sidebar collapsible='icon' {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={sidebarData.teams} />
       </SidebarHeader>

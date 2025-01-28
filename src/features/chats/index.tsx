@@ -50,7 +50,7 @@ export default function Chats() {
 
   return (
     <Main fixed>
-      <section className='flex h-full gap-6'>
+      <section className='flex h-full gap-2'>
         <ChatBar
           navigate={navigate}
           selectedChatId={selectedChatId}
@@ -66,7 +66,7 @@ export default function Chats() {
             chatData={chatMessages}
             selectedChatId={selectedChatId}
             mobileSelectedChatId={mobileSelectedChatId}
-            isMobileVisible={!!(mobileSelectedChatId || searchParams.chatId)}
+            isMobileVisible={!!mobileSelectedChatId}
             onBackClick={handleBackClick}
           />
         )}

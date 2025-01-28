@@ -1,13 +1,21 @@
+import React from 'react'
+import { format } from 'date-fns'
 import {
   IconBrandFacebook,
   IconBrandInstagram,
   IconBrandWhatsapp,
 } from '@tabler/icons-react'
+import { Check, MoreVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Chat } from '@/features/chats/ChatTypes'
-import { format } from 'date-fns'
-import { Check } from 'lucide-react'
 
 interface ChatListItemProps {
   chat: Chat
@@ -17,13 +25,17 @@ interface ChatListItemProps {
 
 export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   const lastMsg =
-    chat.lastMessage.role === 'business'
-      ? `Tú: ${chat.lastMessage.content}`
-      : chat.lastMessage.role === 'assistant'
-        ? `Asistente: ${chat.lastMessage.content}`
-        : chat.lastMessage.content
-
-  const isSent = chat.lastMessage.role === 'business' || chat.lastMessage.role === 'assistant';
+    chat.lastMessage.role === 'business' ? (
+      <span>
+        <Check className='inline-block h-3 w-3 mr-1 opacity-80' />Tú: {chat.lastMessage.content}
+      </span>
+    ) : chat.lastMessage.role === 'assistant' ? (
+      <span>
+        <Check className='inline-block w-3 mr-0.5 opacity-80' />Asistente: {chat.lastMessage.content}
+      </span>
+    ) : (
+      chat.lastMessage.content
+    )
 
   const PlatformIcon = {
     whatsapp: IconBrandWhatsapp,
@@ -32,10 +44,9 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   }[chat.platformName.toLowerCase()]
 
   return (
-    <button
-      type='button'
+    <div
       className={cn(
-        ` flex w-full rounded-md px-2 py-2 text-left text-sm hover:bg-secondary/75`,
+        'flex w-full rounded-md px-2 py-2 text-left text-sm hover:bg-secondary/75 cursor-pointer',
         isSelected && 'sm:bg-muted'
       )}
       onClick={onClick}
@@ -79,12 +90,26 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
               <span className='min-w-5 h-5 flex items-center justify-center rounded-full bg-blue-500 text-white text-xs'>
                 {chat.newClientMessagesCount}
               </span>
-            ) : isSent && (
-              <Check className='h-4 w-4 opacity-80' />
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='ghost'
+                    className='h-6 w-6 p-0 hover:bg-muted'
+                  >
+                    <MoreVertical className='h-4 w-4' />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end' className='w-36'>
+                  <DropdownMenuItem>Cambiar nombre</DropdownMenuItem>
+                  <DropdownMenuItem>Ver perfil</DropdownMenuItem>
+                  <DropdownMenuItem>Encender/Apagar IA</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </span>
         </div>
       </div>
-    </button>
+    </div>
   )
 }
