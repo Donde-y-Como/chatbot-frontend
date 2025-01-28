@@ -31,7 +31,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         </div>
 
         {showTime && (
-          <span className="text-xs text-right text-gray-500">
+          <span className={cn('text-xs text-gray-500', !isUser && 'text-right')}>
             {format(new Date(message.timestamp), 'p')}
           </span>
         )}
