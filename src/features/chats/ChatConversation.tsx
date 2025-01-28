@@ -21,19 +21,10 @@ export function ChatConversation({
 
   useEffect(() => {
     if (!mobileSelectedChatId) return
-
     const scroll = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({
-          behavior: 'auto',
-          block: 'end',
-        })
-      }
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' })
     }
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(scroll)
-    })
+    requestAnimationFrame(() => requestAnimationFrame(scroll))
   }, [messages, mobileSelectedChatId])
 
   return (
@@ -53,17 +44,41 @@ export function ChatConversation({
                   )}
                 />
               ))
-            : Object.entries(messageGroups).map(([date, messages]) => (
-                <Fragment key={date}>
-                  <div className='text-center text-xs'>{date}</div>
-                  {messages.map((msg, index) => (
-                    <ChatMessage
-                      key={`${msg.role}-${msg.timestamp}-${index}`}
-                      message={msg}
-                    />
-                  ))}
-                </Fragment>
-              ))}
+            : Object.entries(messageGroups).map(([date, groupMessages]) => {
+
+              return (
+                  <Fragment key={date}>
+                    <div className='text-center text-xs'>{date}</div>
+                    {groupMessages.map((message, index) => {
+                      const prevMessage = index > 0 ? groupMessages[index - 1] : null
+                      const nextMessage = index < groupMessages.length - 1 ? groupMessages[index + 1] : null
+
+                      const isUser = message.role === "user"
+                      const prevIsUser = prevMessage ? prevMessage.role === "user" : false
+                      const nextIsUser = nextMessage ? nextMessage.role === "user" : false
+
+                      const isFirstInGroup = !prevMessage || isUser !== prevIsUser
+                      const isLastInGroup = !nextMessage || isUser !== nextIsUser
+
+                      return (
+                        <div
+                          key={`${message.role}-${message.timestamp}-${index}`}
+                          className={cn(
+                            'flex flex-col',
+                            !isLastInGroup ? 'mb-1' : 'mb-3'
+                          )}
+                        >
+                          <ChatMessage
+                            message={message}
+                            isFirstInGroup={isFirstInGroup}
+                            isLastInGroup={isLastInGroup}
+                          />
+                        </div>
+                      )
+                    })}
+                  </Fragment>
+                )
+              })}
           <div ref={messagesEndRef} />
         </div>
       </div>

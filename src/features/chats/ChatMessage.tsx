@@ -1,33 +1,47 @@
-import { format } from 'date-fns'
-import Markdown from 'react-markdown'
-import { cn } from '@/lib/utils'
 import { Message } from '@/features/chats/ChatTypes'
+import { useState } from 'react'
+import { cn } from '@/lib/utils'
+import Markdown from 'react-markdown'
+import { format } from 'date-fns'
 
 interface ChatMessageProps {
   message: Message
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
-  const isBusinessOrAssistant = message.role === 'business' || message.role === 'assistant'
+  const [showTime, setShowTime] = useState(false)
+  const isUser = message.role === "user"
 
   return (
-    <div
-      className={cn(
-        'chat-box max-w-72 break-words px-3 py-2 shadow-lg',
-        isBusinessOrAssistant
-          ? 'self-end rounded-[16px_16px_0_16px] bg-primary/85 text-primary-foreground/75'
-          : 'self-start rounded-[16px_16px_16px_0] bg-secondary'
-      )}
-    >
-      <Markdown>{message.content}</Markdown>
-      <span
-        className={cn(
-          'mt-1 block text-xs font-light italic text-muted-foreground',
-          isBusinessOrAssistant && 'text-right'
+    <div className={cn(
+      "flex w-full px-4",
+      isUser ? "justify-start" : "justify-end"
+    )}>
+      <div className="flex flex-col gap-1 max-w-[70%]">
+        <div
+          onClick={() => setShowTime(!showTime)}
+          className={cn(
+            "px-4 py-2 rounded-2xl break-words cursor-pointer",
+            isUser
+              ? "bg-gray-200 text-gray-900"
+              : "bg-blue-500 text-white"
+          )}
+        >
+          <Markdown>{message.content}</Markdown>
+        </div>
+
+        {showTime && (
+          <span className="text-xs text-right text-gray-500">
+            {format(new Date(message.timestamp), 'p')}
+          </span>
         )}
-      >
-        {format(new Date(message.timestamp), 'h:mm a')}
-      </span>
+
+        {message.media && (
+          <span className="text-xs text-gray-500">
+            Media attachment (not displayed)
+          </span>
+        )}
+      </div>
     </div>
   )
 }
