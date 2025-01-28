@@ -14,7 +14,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
   return (
     <div className={cn(
-      "flex w-full px-4",
+      "flex w-full",
       isUser ? "justify-start" : "justify-end"
     )}>
       <div className="flex flex-col gap-1 max-w-[70%]">
@@ -31,7 +31,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         </div>
 
         {showTime && (
-          <span className={cn('text-xs text-gray-500', !isUser && 'text-right')}>
+          <span className={cn('text-xs text-gray-500 ml-2', !isUser && 'text-right ml-0 mr-2')}>
             {format(new Date(message.timestamp), 'p')}
           </span>
         )}
