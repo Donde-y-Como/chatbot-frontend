@@ -10,10 +10,20 @@ import { toast } from '@/hooks/use-toast.ts'
 import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 
 export const socket = io(import.meta.env.VITE_WS_URL || 'http://localhost:3000')
+const notification = new Audio('/notification.mp3')
+
+function playNotification() {
+  notification.currentTime = 0
+  notification.play().catch(() => {})
+}
 
 socket.on(
   'newClientMessage',
   (data: { conversationId: string; message: Message }) => {
+    if (data.message.role === 'user') {
+      playNotification()
+    }
+
     queryClient.setQueryData<Chat[]>(['chats'], (cachedChats) => {
       if (cachedChats === undefined) return cachedChats
       return [...cachedChats]
