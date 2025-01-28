@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
+import { useIsMobile } from '@/hooks/use-mobile.tsx'
 import { Main } from '@/components/layout/main'
 import { ChatBar } from '@/features/chats/ChatBar'
 import { ChatContent } from '@/features/chats/ChatContent'
 import { chatService } from '@/features/chats/ChatService'
-import { useMobileMediaQuery } from '@/features/chats/hooks/useMobileMediaQuery.ts'
+import EmptyChatSelectedState from '@/features/chats/EmptyChatSelectedState.tsx'
 
 const route = getRouteApi('/_authenticated/chats/')
 
@@ -16,7 +17,7 @@ export default function Chats() {
   const [mobileSelectedChatId, setMobileSelectedChatId] = useState<
     string | null
   >(null)
-  const isMobile = useMobileMediaQuery('(max-width: 639px)')
+  const isMobile = useIsMobile()
 
   const { data: chats } = useQuery({
     queryKey: ['chats'],
@@ -34,18 +35,10 @@ export default function Chats() {
       const urlChatId = searchParams.chatId
       const isValidChat = urlChatId && chats.some((c) => c.id === urlChatId)
 
-      if (!isMobile) {
-        const initialChatId = isValidChat ? urlChatId : chats[0].id
-        setSelectedChatId(initialChatId)
-        void navigate({
-          search: () => ({ chatId: initialChatId }),
-          replace: true,
-        })
-      }
-
+      setSelectedChatId(isValidChat ? urlChatId : null)
       setMobileSelectedChatId(isValidChat ? urlChatId : null)
     }
-  }, [chats, searchParams.chatId, isMobile, navigate])
+  }, [chats, searchParams.chatId])
 
   const handleBackClick = () => {
     setMobileSelectedChatId(null)
@@ -65,14 +58,18 @@ export default function Chats() {
           setMobileSelectedChatId={setMobileSelectedChatId}
         />
 
-        <ChatContent
-          isLoading={isMessagesLoading}
-          chatData={chatMessages}
-          selectedChatId={selectedChatId}
-          mobileSelectedChatId={mobileSelectedChatId}
-          isMobileVisible={!!(mobileSelectedChatId || searchParams.chatId)}
-          onBackClick={handleBackClick}
-        />
+        {!selectedChatId && !isMobile ? (
+          <EmptyChatSelectedState />
+        ) : (
+          <ChatContent
+            isLoading={isMessagesLoading}
+            chatData={chatMessages}
+            selectedChatId={selectedChatId}
+            mobileSelectedChatId={mobileSelectedChatId}
+            isMobileVisible={!!(mobileSelectedChatId || searchParams.chatId)}
+            onBackClick={handleBackClick}
+          />
+        )}
       </section>
     </Main>
   )

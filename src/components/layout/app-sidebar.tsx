@@ -40,7 +40,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           <NavGroup key={props.title} {...props} />
         ))}
         <SidebarGroup>
-          <SidebarMenu onClick={toggleSidebar}>
+          <SidebarMenu onClick={toggleSidebar} className="cursor-pointer">
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip='Abrir barra'>
                 <div>

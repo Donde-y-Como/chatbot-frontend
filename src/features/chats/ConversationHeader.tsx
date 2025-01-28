@@ -50,7 +50,7 @@ export function ConversationHeader({
             ) : (
               <>
                 <span className='text-sm font-medium lg:text-base'>
-                  {chatData?.client.profileName || 'Desconocido'}
+                  {chatData?.client.profileName || <Skeleton className='h-3 w-24' />}
                 </span>
                 <span className='block text-xs text-muted-foreground lg:text-sm'>
                   {chatData?.platformName}
