@@ -22,8 +22,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { CreditsDisplay } from '@/components/credits-display.tsx'
 import { authService } from '@/features/auth/AuthService.ts'
 import { UserData } from '@/features/auth/types.ts'
+import { ThemeSwitch } from '@/components/theme-switch.tsx'
 
 export function NavUser({ user }: { user: UserData }) {
   const { isMobile } = useSidebar()
@@ -52,7 +54,7 @@ export function NavUser({ user }: { user: UserData }) {
               </Avatar>
               <div className='grid flex-1 text-left text-sm leading-tight'>
                 <span className='truncate font-semibold'>{user.name}</span>
-                <span className='truncate text-xs'>{user.plan.name}</span>
+                <span className='truncate text-xs'>Plan {user.plan.name}</span>
               </div>
               <ChevronsUpDown className='ml-auto size-4' />
             </SidebarMenuButton>
@@ -75,12 +77,28 @@ export function NavUser({ user }: { user: UserData }) {
                 </Avatar>
                 <div className='grid flex-1 text-left text-sm leading-tight'>
                   <span className='truncate font-semibold'>{user.name}</span>
-                  <span className='truncate text-xs'>{user.plan.name}</span>
+                  <span className='truncate text-xs'>
+                    Plan {user.plan.name}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <Link to='/settings/account'>
+                  <CreditsDisplay
+                    total={user.plan.totalMessages}
+                    remaining={user.plan.leftMessages}
+                  />
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <div className='flex w-full justify-between items-center font-xs'>
+                  <p>Tema</p>
+                  <ThemeSwitch />
+                </div>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to='/settings/account'>
                   <BadgeCheck />
