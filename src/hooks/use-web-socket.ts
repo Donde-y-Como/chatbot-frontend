@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore.ts'
 import { handleServerError } from '@/utils/handle-server-error.ts'
 import { toast } from '@/hooks/use-toast.ts'
 import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
+import { makeLastMessageContent } from '@/features/chats/hooks/makeLastMessageContent.ts'
 
 export const socket = io(import.meta.env.VITE_WS_URL || 'http://localhost:3000')
 const notification = new Audio('/notification.mp3')
@@ -32,7 +33,7 @@ socket.on(
             return {
               ...chat,
               newClientMessagesCount: chat.newClientMessagesCount + 1,
-              lastMessage: data.message,
+              lastMessage: makeLastMessageContent(data.message),
             }
           }
           return chat
