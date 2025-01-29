@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { format } from 'date-fns'
+import { formatDistanceToNowStrict } from 'date-fns'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   IconBrandFacebook,
   IconBrandInstagram,
   IconBrandWhatsapp,
 } from '@tabler/icons-react'
+import { es } from 'date-fns/locale/es'
 import { Check, MoreVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/use-web-socket.ts'
@@ -195,7 +196,10 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
           </span>
 
           <span className='col-span-1 text-xs text-right font-normal text-muted-foreground'>
-            {format(new Date(chat.lastMessage.timestamp), 'HH:mm')}
+            {formatDistanceToNowStrict(new Date(chat.lastMessage.timestamp), {
+              addSuffix: true,
+              locale: es,
+            })}
           </span>
 
           <span className='col-span-4 text-sm text-muted-foreground truncate'>
