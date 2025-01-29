@@ -19,8 +19,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input.tsx'
-import { Switch } from '@/components/ui/switch.tsx'
+//import { Switch } from '@/components/ui/switch.tsx'
 import { Chat, ChatMessages } from '@/features/chats/ChatTypes'
+import { toast } from '@/hooks/use-toast.ts'
 
 interface ChatListItemProps {
   chat: Chat
@@ -32,7 +33,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   const { emit } = useWebSocket()
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState(chat.client.profileName)
-  const [isAIEnabled, setIsAIEnabled] = useState(false)
+  // const [isAIEnabled, setIsAIEnabled] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
   const updateProfileNameMutation = useMutation({
@@ -106,12 +107,18 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
         profileName: tempName,
       })
 
-      console.log('Updating name to:', newName)
-      // After successful API call, update local state
       setIsEditing(false)
       setTempName(chat.client.profileName)
+
+      toast({
+        variant: 'default',
+        title: 'Nombre de perfil actualizado'
+      })
     } catch (error) {
-      console.error('Failed to update name:', error)
+      toast({
+        variant: 'destructive',
+        title: 'El nombre de perfil no se actualizó!',
+      })
       setTempName(chat.client.profileName)
       setIsEditing(false)
     }
@@ -131,16 +138,16 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
     void handleNameChange(tempName)
   }
 
-  const handleAIToggle = async () => {
-    try {
-      const newState = !isAIEnabled
-      // Here you would call your API to update AI state
-      console.log('Toggling AI to:', newState)
-      setIsAIEnabled(newState)
-    } catch (error) {
-      console.error('Failed to toggle AI:', error)
-    }
-  }
+  // const handleAIToggle = async () => {
+  //   try {
+  //     const newState = !isAIEnabled
+  //     // Here you would call your API to update AI state
+  //     console.log('Toggling AI to:', newState)
+  //     setIsAIEnabled(newState)
+  //   } catch (error) {
+  //     console.error('Failed to toggle AI:', error)
+  //   }
+  // }
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -241,17 +248,17 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                   >
                     Ver perfil
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className='flex justify-between'
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <span>IA {isAIEnabled ? 'Encendida' : 'Apagada'}</span>
-                    <Switch
-                      checked={isAIEnabled}
-                      onCheckedChange={handleAIToggle}
-                      className='ml-2'
-                    />
-                  </DropdownMenuItem>
+                  {/*<DropdownMenuItem*/}
+                  {/*  className='flex justify-between'*/}
+                  {/*  onClick={(e) => e.stopPropagation()}*/}
+                  {/*>*/}
+                  {/*  <span>IA {isAIEnabled ? 'Encendida' : 'Apagada'}</span>*/}
+                  {/*  <Switch*/}
+                  {/*    checked={isAIEnabled}*/}
+                  {/*    onCheckedChange={handleAIToggle}*/}
+                  {/*    className='ml-2'*/}
+                  {/*  />*/}
+                  {/*</DropdownMenuItem>*/}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
