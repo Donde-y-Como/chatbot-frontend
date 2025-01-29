@@ -108,7 +108,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
       })
 
       setIsEditing(false)
-      setTempName(chat.client.profileName)
+      setTempName(tempName)
 
       toast({
         variant: 'default',
@@ -204,7 +204,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
 
           <span className='col-span-1 text-xs text-right font-normal text-muted-foreground'>
             {formatDistanceToNowStrict(new Date(chat.lastMessage.timestamp), {
-              addSuffix: true,
+              addSuffix: false,
               locale: es,
             })}
           </span>

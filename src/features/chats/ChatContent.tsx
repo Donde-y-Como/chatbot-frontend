@@ -1,13 +1,19 @@
 import { cn } from '@/lib/utils'
-import { ChatConversation } from '@/features/chats/ChatConversation.tsx'
+import {
+  ChatConversation,
+  ChatConversationSkeleton,
+} from '@/features/chats/ChatConversation.tsx'
 import ChatFooter from '@/features/chats/ChatFooter.tsx'
 import { ChatMessages } from '@/features/chats/ChatTypes.ts'
-import { ConversationHeader } from '@/features/chats/ConversationHeader.tsx'
+import {
+  ConversationHeader,
+  ConversationHeaderSkeleton,
+} from '@/features/chats/ConversationHeader.tsx'
 
 interface ChatContentProps {
   isLoading: boolean
   chatData?: ChatMessages
-  selectedChatId: string | null
+  selectedChatId: string
   mobileSelectedChatId: string | null
   isMobileVisible: boolean
   onBackClick: () => void
@@ -28,18 +34,26 @@ export function ChatContent({
         isMobileVisible && 'left-0 flex'
       )}
     >
-      <ConversationHeader
-        isLoading={isLoading}
-        chatData={chatData}
-        onBackClick={onBackClick}
-      />
+      {isLoading || !chatData || !selectedChatId ? (
+        <ConversationHeaderSkeleton />
+      ) : (
+        <ConversationHeader
+          chatData={chatData}
+          selectedChatId={selectedChatId}
+          onBackClick={onBackClick}
+        />
+      )}
 
       <div className='flex flex-1 flex-col gap-2 rounded-md px-4 pb-4 pt-0'>
-        <ChatConversation
-          messages={chatData?.messages}
-          isLoading={isLoading}
-          mobileSelectedChatId={mobileSelectedChatId}
-        />
+        {isLoading ? (
+          <ChatConversationSkeleton />
+        ) : (
+          <ChatConversation
+            messages={chatData?.messages}
+            mobileSelectedChatId={mobileSelectedChatId}
+          />
+        )}
+
         <ChatFooter selectedChatId={selectedChatId} />
       </div>
     </div>

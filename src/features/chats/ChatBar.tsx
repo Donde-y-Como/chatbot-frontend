@@ -1,16 +1,15 @@
 import { Fragment, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { SearchChatParams } from '@/routes/_authenticated/chats'
-import { useWebSocket } from '@/hooks/use-web-socket.ts'
+import { useAuth } from '@/stores/authStore.ts'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ChatBarHeader } from '@/features/chats/ChatBarHeader.tsx'
 import { ChatListItem } from '@/features/chats/ChatListItem.tsx'
-import { chatService } from '@/features/chats/ChatService'
 import { Chat } from '@/features/chats/ChatTypes'
+import { useChats } from '@/features/chats/hooks/useChats.ts'
 import { useFilteredChats } from '@/features/chats/hooks/useFilteredChats.ts'
-import { useAuth } from '@/stores/authStore.ts'
 
 interface ChatBarProps {
   selectedChatId: string | null
@@ -31,14 +30,8 @@ export function ChatBar({
   const [search, setSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const queryClient = useQueryClient()
-  const { emit } = useWebSocket()
   const { user } = useAuth()
-
-  const { data: chats, isLoading: isChatsLoading } = useQuery({
-    queryKey: ['chats'],
-    queryFn: () => chatService.getChats(),
-    staleTime: Infinity,
-  })
+  const {chats, isChatsLoading, toggleAllIaMutation} = useChats()
 
   const filteredChatList = useFilteredChats(chats, search, activeFilter)
 
@@ -55,6 +48,8 @@ export function ChatBar({
       }))
     })
 
+    // emit a message to the server to mark the chat as read
+
     navigate({
       search: (prev: SearchChatParams) => ({ ...prev, chatId }),
       replace: true,
@@ -62,8 +57,7 @@ export function ChatBar({
   }
 
   const onToggleAllAI = (enabled: boolean) => {
-    const event = enabled ? 'enableAllAssistants' : 'disableAllAssistants'
-    emit(event, user?.id)
+    if (user) toggleAllIaMutation.mutate({ enabled, userId: user.id })
   }
 
   return (

@@ -58,13 +58,13 @@ export default function Chats() {
           setMobileSelectedChatId={setMobileSelectedChatId}
         />
 
-        {!selectedChatId && !isMobile ? (
+        {selectedChatId == null && !isMobile ? (
           <EmptyChatSelectedState />
         ) : (
           <ChatContent
             isLoading={isMessagesLoading}
             chatData={chatMessages}
-            selectedChatId={selectedChatId}
+            selectedChatId={selectedChatId as string}
             mobileSelectedChatId={mobileSelectedChatId}
             isMobileVisible={!!mobileSelectedChatId}
             onBackClick={handleBackClick}

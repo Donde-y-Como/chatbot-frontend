@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
 
 interface ChatSearchInputProps {
   value: string
@@ -51,18 +52,7 @@ export function ChatBarHeader({
           <h1 className="text-2xl font-bold">Chats</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="group relative"
-            onClick={() => handleAIToggle(!allAIEnabled)}
-          >
-            <img src={allAIEnabled ?   "/images/robot.svg" : "/images/robot-disabled.svg"} alt="robot" className="w-5 h-5" />
-            <span
-              className="absolute left-10 scale-0 rounded bg-foreground p-2 text-xs text-background group-hover:scale-100 whitespace-nowrap">
-              {allAIEnabled ? 'Desactivar IAs' : 'Activar IAs'}
-            </span>
-          </Button>
+          <IconIaEnabled enabled={allAIEnabled} onToggle={handleAIToggle} tooltip={allAIEnabled? "Desactivar IAs": "Activar IAs"} />
           <Button size="icon" variant="ghost" className="rounded-lg">
             <IconEdit size={24} className="stroke-muted-foreground" />
           </Button>
