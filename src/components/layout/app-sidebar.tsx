@@ -8,7 +8,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -18,7 +17,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { NavGroup } from '@/components/layout/nav-group'
 import { NavUser } from '@/components/layout/nav-user'
-import { TeamSwitcher } from '@/components/layout/team-switcher'
 import { authService } from '@/features/auth/AuthService.ts'
 import { sidebarData } from './data/sidebar-data'
 
@@ -32,15 +30,12 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible='icon' {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={sidebarData.teams} />
-      </SidebarHeader>
       <SidebarContent>
         {sidebarData.navGroups.map((props) => (
           <NavGroup key={props.title} {...props} />
         ))}
         <SidebarGroup>
-          <SidebarMenu onClick={toggleSidebar} className="cursor-pointer">
+          <SidebarMenu onClick={toggleSidebar} className='cursor-pointer'>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip='Abrir barra'>
                 <div>
