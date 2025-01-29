@@ -7,12 +7,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from "@/components/ui/button";
+import { Media } from '@/features/chats/ChatTypes.ts'
 
 interface MediaProps {
-  media: {
-    type: "document" | "video" | "image";
-    url: string;
-  };
+  media: Media
 }
 
 export const MediaPreview: React.FC<MediaProps> = ({ media }) => {
