@@ -86,7 +86,13 @@ export default function ChatFooter({ selectedChatId }) {
   }
 
   return (
-    <form onSubmit={handleSendMessage} className='flex w-full flex-none gap-2'>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        handleSendMessage(e)
+      }}
+      className='flex w-full flex-none gap-2'
+    >
       <div className='flex flex-1 items-center gap-2 rounded-md border border-input px-2 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring lg:gap-4'>
         <MediaUpload onSend={handleMediaSend} />
 
@@ -95,6 +101,12 @@ export default function ChatFooter({ selectedChatId }) {
           placeholder='Escribe tu mensaje...'
           className='h-8 w-full bg-inherit focus-visible:outline-none'
           value={newMessage}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handleSendMessage(e)
+            }
+          }}
           onChange={(e) => setNewMessage(e.target.value)}
         />
         <Button

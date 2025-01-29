@@ -2,10 +2,10 @@ import React, { useRef, useState } from 'react';
 import { Paperclip, X, Send } from 'lucide-react';
 import {
   Dialog,
-  DialogContent,
+  DialogContent, DialogDescription,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useUploadMedia } from '@/features/chats/hooks/useUploadMedia.ts'
@@ -89,7 +89,8 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ onSend }) => {
           </DialogTrigger>
           <DialogContent className="max-w-4xl bg-background p-6">
             <DialogTitle>Vista previa</DialogTitle>
-            <div className="relative">
+            <DialogDescription className="sr-only">Ver vista previa del archivo</DialogDescription>
+            <div className="relative flex items-center justify-center">
               {preview ? (
                 selectedFile.type.startsWith('image') ? (
                   <img
