@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import Markdown from 'react-markdown'
 import { format } from 'date-fns'
+import { MediaPreview } from '@/features/chats/MediaPreview.tsx'
 
 interface ChatMessageProps {
   message: Message
@@ -18,7 +19,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       isUser ? "justify-start" : "justify-end"
     )}>
       <div className="flex flex-col gap-1 max-w-[70%]">
-        <div
+        {message.content && (<div
           onClick={() => setShowTime(!showTime)}
           className={cn(
             "px-4 py-2 rounded-2xl break-words cursor-pointer",
@@ -28,7 +29,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           )}
         >
           <Markdown>{message.content}</Markdown>
-        </div>
+        </div>)}
 
         {showTime && (
           <span className={cn('text-xs text-gray-500 ml-2', !isUser && 'text-right ml-0 mr-2')}>
@@ -36,11 +37,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           </span>
         )}
 
-        {message.media && (
-          <span className="text-xs text-gray-500">
-            Media attachment (not displayed)
-          </span>
-        )}
+        {message.media && <MediaPreview media={message.media} />}
       </div>
     </div>
   )
