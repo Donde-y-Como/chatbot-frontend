@@ -35,7 +35,9 @@ export function ChatConversation({
           {Object.entries(messageGroups).map(([date, groupMessages]) => {
             return (
               <Fragment key={date}>
-                <div className='text-center text-xs'>{date}</div>
+                <div className='text-center text-xs flex items-center justify-center'>
+                  <span className="bg-muted/50 rounded-full p-2">{date}</span>
+                </div>
                 {groupMessages.map((message, index) => {
                   return (
                     <div
