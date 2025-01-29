@@ -60,7 +60,11 @@ export const useWebSocket = () => {
     socket.emit('newBusinessMessage', data)
   }
 
-  return { socket, isConnected, setIsConnected, sendMessage }
+  const emit = (event: string, data: unknown) => {
+    socket.emit(event, data)
+  }
+
+  return { socket, isConnected, setIsConnected, sendMessage, emit }
 }
 
 export const queryClient = new QueryClient({

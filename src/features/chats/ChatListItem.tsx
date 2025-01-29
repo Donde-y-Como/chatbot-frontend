@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { format } from 'date-fns'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   IconBrandFacebook,
   IconBrandInstagram,
@@ -7,6 +8,7 @@ import {
 } from '@tabler/icons-react'
 import { Check, MoreVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,7 +17,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Chat } from '@/features/chats/ChatTypes'
+import { Input } from '@/components/ui/input.tsx'
+import { Switch } from '@/components/ui/switch.tsx'
+import { Chat, ChatMessages } from '@/features/chats/ChatTypes'
 
 interface ChatListItemProps {
   chat: Chat
@@ -24,14 +28,59 @@ interface ChatListItemProps {
 }
 
 export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
+  const { emit } = useWebSocket()
+  const [isEditing, setIsEditing] = useState(false)
+  const [tempName, setTempName] = useState(chat.client.profileName)
+  const [isAIEnabled, setIsAIEnabled] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const queryClient = useQueryClient()
+  const updateProfileNameMutation = useMutation({
+    mutationKey: ['send-message'],
+    async mutationFn(data: { clientId: string; profileName: string }) {
+      emit('setProfileName', data)
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.setQueryData<ChatMessages>(['chat', chat.id], (oldChats) => {
+        if (oldChats === undefined) return oldChats
+        return {
+          ...oldChats,
+          client: {
+            ...oldChats.client,
+            profileName: variables.profileName,
+          },
+        }
+      })
+
+      queryClient.setQueryData<Chat[]>(['chats'], (oldChats) => {
+        if (oldChats === undefined) return oldChats
+        return [...oldChats]
+          .map((cachedChat) => {
+            if (cachedChat.id === chat.id) {
+              return {
+                ...cachedChat,
+                client: {
+                  ...cachedChat.client,
+                  profileName: variables.profileName,
+                },
+              }
+            }
+            return cachedChat
+          })
+          .sort((a, b) => b.lastMessage.timestamp - a.lastMessage.timestamp)
+      })
+    },
+  })
+
   const lastMsg =
     chat.lastMessage.role === 'business' ? (
       <span>
-        <Check className='inline-block h-3 w-3 mr-1 opacity-80' />Tú: {chat.lastMessage.content}
+        <Check className='inline-block h-3 w-3 mr-1 opacity-80' />
+        Tú: {chat.lastMessage.content}
       </span>
     ) : chat.lastMessage.role === 'assistant' ? (
       <span>
-        <Check className='inline-block w-3 mr-0.5 opacity-80' />Asistente: {chat.lastMessage.content}
+        <Check className='inline-block w-3 mr-0.5 opacity-80' />
+        Asistente: {chat.lastMessage.content}
       </span>
     ) : (
       chat.lastMessage.content
@@ -42,6 +91,61 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
     facebook: IconBrandFacebook,
     instagram: IconBrandInstagram,
   }[chat.platformName.toLowerCase()]
+
+  const handleNameChange = async (newName: string) => {
+    try {
+      if (!newName.trim()) {
+        setTempName(chat.client.profileName)
+        setIsEditing(false)
+        return
+      }
+
+      updateProfileNameMutation.mutate({
+        clientId: chat.client.id,
+        profileName: tempName,
+      })
+
+      console.log('Updating name to:', newName)
+      // After successful API call, update local state
+      setIsEditing(false)
+      setTempName(chat.client.profileName)
+    } catch (error) {
+      console.error('Failed to update name:', error)
+      setTempName(chat.client.profileName)
+      setIsEditing(false)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tempName.trim()) {
+      void handleNameChange(tempName)
+    } else if (e.key === 'Escape') {
+      setIsEditing(false)
+      setTempName(chat.client.profileName)
+    }
+    e.stopPropagation()
+  }
+
+  const handleBlur = () => {
+    void handleNameChange(tempName)
+  }
+
+  const handleAIToggle = async () => {
+    try {
+      const newState = !isAIEnabled
+      // Here you would call your API to update AI state
+      console.log('Toggling AI to:', newState)
+      setIsAIEnabled(newState)
+    } catch (error) {
+      console.error('Failed to toggle AI:', error)
+    }
+  }
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [isEditing])
 
   return (
     <div
@@ -74,7 +178,20 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
         </div>
         <div className='font-medium w-full grid grid-cols-5 gap-y-0.5'>
           <span className='col-span-4'>
-            {chat.client.profileName || 'Desconocido'}
+            {isEditing ? (
+              <div onClick={(e) => e.stopPropagation()}>
+                <Input
+                  ref={inputRef}
+                  value={tempName}
+                  onChange={(e) => setTempName(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onBlur={handleBlur}
+                  className='h-6 py-0 px-1'
+                />
+              </div>
+            ) : (
+              chat.client.profileName || 'Desconocido'
+            )}
           </span>
 
           <span className='col-span-1 text-xs text-right font-normal text-muted-foreground'>
@@ -92,7 +209,10 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
               </span>
             ) : (
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger
+                  asChild
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Button
                     variant='ghost'
                     className='h-6 w-6 p-0 hover:bg-muted'
@@ -100,10 +220,34 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                     <MoreVertical className='h-4 w-4' />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-36'>
-                  <DropdownMenuItem>Cambiar nombre</DropdownMenuItem>
-                  <DropdownMenuItem>Ver perfil</DropdownMenuItem>
-                  <DropdownMenuItem>Encender/Apagar IA</DropdownMenuItem>
+                <DropdownMenuContent align='end' className='w-44'>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsEditing(true)
+                    }}
+                  >
+                    Cambiar nombre
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      // Handle profile view
+                    }}
+                  >
+                    Ver perfil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className='flex justify-between'
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span>IA {isAIEnabled ? 'Encendida' : 'Apagada'}</span>
+                    <Switch
+                      checked={isAIEnabled}
+                      onCheckedChange={handleAIToggle}
+                      className='ml-2'
+                    />
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

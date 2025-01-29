@@ -1,5 +1,5 @@
 import React from 'react'
-import { IconEdit, IconMessages, IconSearch } from '@tabler/icons-react'
+import { IconEdit, IconSearch } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator.tsx'
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx'
@@ -15,7 +15,7 @@ export function ChatBarHeader({ value, onChange }: ChatSearchInputProps) {
       <div className='flex items-center justify-between px-3'>
         <div className='flex gap-2'>
           <SidebarTrigger variant='outline' />
-          <Separator orientation='vertical' className='h-7'/>
+          <Separator orientation='vertical' className='h-7' />
           <h1 className='text-2xl font-bold'>Chats</h1>
           {/*<IconMessages size={20} />*/}
         </div>
