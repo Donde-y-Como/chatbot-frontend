@@ -1,3 +1,11 @@
+export type Template = {
+  businessId: string
+  name: string
+  content: string
+  category: string
+  status: string
+}
+
 export type Chat = {
   id: string
   platformName: string
