@@ -1,14 +1,22 @@
 import { Message } from '@/features/chats/ChatTypes.ts'
 
-export function makeLastMessageContent(message: Message): Message{
-  if(message.media) {
-    const mediaType = message.media.type;
-    const icon = mediaType === 'image' ? '📷' :
-      mediaType === 'video' ? '📹' :
-        mediaType === 'document' ? '📎' : '';
-
-    return {...message, content: `${icon} ${mediaType}`}
+export function makeLastMessageContent(message: Message): Message {
+  if (message.media) {
+    return {
+      ...message,
+      content: getLasMessageMediaContent(message.media.type),
+    }
   }
 
-  return message;
+  return message
+}
+
+function getLasMessageMediaContent(type: string) {
+  const mediaMap: Record<string, string> = {
+    image: '📷 Foto',
+    video: '🎞️ Video',
+    document: '📄 Documento',
+  }
+
+  return mediaMap[type] || 'Archivo'
 }
