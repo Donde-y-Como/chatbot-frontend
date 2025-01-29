@@ -78,7 +78,7 @@ export function ConversationHeader({
         </Button>
         <div className='relative flex items-center gap-2 lg:gap-4'>
           <Avatar className='size-9 lg:size-11'>
-            <AvatarFallback className='bg-white'>
+            <AvatarFallback className='bg-background'>
               {chatData.client.profileName[0] || 'D'}
             </AvatarFallback>
           </Avatar>
