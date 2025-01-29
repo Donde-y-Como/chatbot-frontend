@@ -20,9 +20,21 @@ function playNotification() {
 
 socket.on(
   'newClientMessage',
-  (data: { conversationId: string; message: Message }) => {
+  async (data: { conversationId: string; message: Message }) => {
     if (data.message.role === 'user') {
       playNotification()
+    }
+
+    const chats = queryClient.getQueryData(['chats']) as Chat[] | undefined
+    const chat = chats?.find((chat) => chat.id === data.conversationId)
+
+    if (chat === undefined) {
+      setTimeout(async () => {
+        await queryClient.invalidateQueries({
+          queryKey: ['chats'],
+        })
+      }, 1000)
+      return
     }
 
     queryClient.setQueryData<Chat[]>(['chats'], (cachedChats) => {
