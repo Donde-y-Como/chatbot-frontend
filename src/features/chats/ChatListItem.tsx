@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input.tsx'
 //import { Switch } from '@/components/ui/switch.tsx'
 import { Chat, ChatMessages } from '@/features/chats/ChatTypes'
-import { toast } from '@/hooks/use-toast.ts'
+import { toast } from 'sonner'
 
 interface ChatListItemProps {
   chat: Chat
@@ -110,15 +110,9 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
       setIsEditing(false)
       setTempName(tempName)
 
-      toast({
-        variant: 'default',
-        title: 'Nombre de perfil actualizado'
-      })
+      toast.success('Nombre de perfil actualizado')
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'El nombre de perfil no se actualizó!',
-      })
+      toast.error('El nombre de perfil no se actualizó!')
       setTempName(chat.client.profileName)
       setIsEditing(false)
     }

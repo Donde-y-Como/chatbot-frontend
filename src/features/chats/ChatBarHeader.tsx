@@ -1,15 +1,14 @@
-import React, { useState } from 'react'
-import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconBrandWhatsapp,
-  IconSearch,
-} from '@tabler/icons-react'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { SidebarTrigger } from '@/components/ui/sidebar'
-import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
-import { StartConversation } from '@/features/chats/StartConversation.tsx'
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { IconBrandFacebook, IconBrandInstagram, IconBrandWhatsapp, IconSearch } from '@tabler/icons-react';
+import { api } from '@/api/axiosInstance.ts';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Template } from '@/features/chats/ChatTypes.ts';
+import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx';
+import { NewConversation, StartConversation } from '@/features/chats/StartConversation.tsx'
+import { toast } from "sonner"
 
 interface ChatSearchInputProps {
   value: string
@@ -25,6 +24,15 @@ export function ChatBarHeader({
   onToggleAllAI,
 }: ChatSearchInputProps) {
   const [allAIEnabled, setAllAIEnabled] = useState(true)
+
+  const { data: templates } = useQuery({
+    queryKey: ['templates'],
+    queryFn: async () => {
+      const t = await api.get<Template[]>('/templates')
+      return t.data
+    },
+  })
+
   const handleAIToggle = (checked: boolean) => {
     setAllAIEnabled(checked)
     onToggleAllAI(checked)
@@ -42,6 +50,11 @@ export function ChatBarHeader({
     { name: 'instagram', icon: IconBrandInstagram, color: 'text-pink-500' },
   ]
 
+  const handleOnNewConversation = (data: NewConversation) => {
+    console.log(data)
+    toast.success("Mensaje enviado")
+  }
+
   return (
     <div className='sticky top-0 z-10 bg-background pb-3 w-full shadow-sm sm:pt-2'>
       <div className='flex items-center justify-between px-3  mb-2'>
@@ -56,7 +69,12 @@ export function ChatBarHeader({
             onToggle={handleAIToggle}
             tooltip={allAIEnabled ? 'Desactivar IAs' : 'Activar IAs'}
           />
-          <StartConversation />
+          {templates && (
+            <StartConversation
+              templates={templates}
+              onSubmit={handleOnNewConversation}
+            />
+          )}
         </div>
       </div>
 

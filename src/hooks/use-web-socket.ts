@@ -6,7 +6,7 @@ import { routeTree } from '@/routeTree.gen.ts'
 import { io } from 'socket.io-client'
 import { useAuthStore } from '@/stores/authStore.ts'
 import { handleServerError } from '@/utils/handle-server-error.ts'
-import { toast } from '@/hooks/use-toast.ts'
+import { toast } from 'sonner'
 import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 import { makeLastMessageContent } from '@/features/chats/hooks/makeLastMessageContent.ts'
 
@@ -103,10 +103,7 @@ export const queryClient = new QueryClient({
 
         if (error instanceof AxiosError) {
           if (error.response?.status === 304) {
-            toast({
-              variant: 'destructive',
-              title: 'El contenido no se actualizó!',
-            })
+            toast.error('El contenido no se actualizó!')
           }
         }
       },
@@ -120,10 +117,7 @@ export const queryClient = new QueryClient({
           void router.navigate({ to: '/iniciar-sesion' })
         }
         if (error.response?.status === 500) {
-          toast({
-            variant: 'destructive',
-            title: 'El servidor tuvo un problema!',
-          })
+          toast.error('El contenido no se actualizó!')
           void router.navigate({ to: '/500' })
         }
         if (error.response?.status === 403) {

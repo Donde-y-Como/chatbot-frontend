@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useRouter } from '@tanstack/react-router'
 import { useAuth } from '@/stores/authStore.ts'
 import { cn } from '@/lib/utils'
-import { toast } from '@/hooks/use-toast.ts'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -59,9 +59,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       router.navigate({ to: '/', replace: true })
     },
     onError: () => {
-      toast({
-        variant: 'destructive',
-        title: 'Error de autenticación',
+      toast.error('Error de autenticación',{
         description: 'Credenciales inválidas',
       })
     },
