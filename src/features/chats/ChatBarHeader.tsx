@@ -51,7 +51,7 @@ export function ChatBarHeader({
       setTimeout(async () => {
         await queryClient.invalidateQueries({ queryKey: ['chats'] })
       }, 1000)
-1    },
+    },
   })
 
   const handleAIToggle = (checked: boolean) => {
