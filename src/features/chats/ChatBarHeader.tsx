@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { IconBrandFacebook, IconBrandInstagram, IconBrandWhatsapp, IconSearch } from '@tabler/icons-react';
-import { api } from '@/api/axiosInstance.ts';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Template } from '@/features/chats/ChatTypes.ts';
-import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx';
-import { NewConversation, StartConversation } from '@/features/chats/StartConversation.tsx'
-import { toast } from "sonner"
+import React, { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconBrandWhatsapp,
+  IconSearch,
+} from '@tabler/icons-react'
+import { toast } from 'sonner'
+import { api } from '@/api/axiosInstance.ts'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { SidebarTrigger } from '@/components/ui/sidebar'
+import { Template } from '@/features/chats/ChatTypes.ts'
+import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
+import {
+  NewConversation,
+  StartConversation,
+} from '@/features/chats/StartConversation.tsx'
 
 interface ChatSearchInputProps {
   value: string
@@ -24,13 +32,26 @@ export function ChatBarHeader({
   onToggleAllAI,
 }: ChatSearchInputProps) {
   const [allAIEnabled, setAllAIEnabled] = useState(true)
-
+  const queryClient = useQueryClient()
   const { data: templates } = useQuery({
     queryKey: ['templates'],
     queryFn: async () => {
       const t = await api.get<Template[]>('/templates')
       return t.data
     },
+  })
+
+  const startConversationMutation = useMutation({
+    mutationKey: ['start-conversation'],
+    async mutationFn(data: NewConversation) {
+      const response = await api.post('/chats', data)
+      return response.data
+    },
+    onSuccess: async () => {
+      setTimeout(async () => {
+        await queryClient.invalidateQueries({ queryKey: ['chats'] })
+      }, 1000)
+1    },
   })
 
   const handleAIToggle = (checked: boolean) => {
@@ -51,8 +72,8 @@ export function ChatBarHeader({
   ]
 
   const handleOnNewConversation = (data: NewConversation) => {
-    console.log(data)
-    toast.success("Mensaje enviado")
+    startConversationMutation.mutate(data)
+    toast.success('Mensaje enviado')
   }
 
   return (

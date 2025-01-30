@@ -309,7 +309,7 @@ export const StartConversation: React.FC<StartConversationProps> = React.memo(
         <Dialog open={isOpen} onOpenChange={setIsOpen} modal>
           <DialogTrigger asChild>
             <Button onClick={() => setIsOpen(true)}>
-              Iniciar conversación
+              <MessageSquarePlus />
             </Button>
           </DialogTrigger>
           <DialogContent
