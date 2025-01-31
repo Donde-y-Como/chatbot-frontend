@@ -96,7 +96,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
 
   const handleNameChange = async (newName: string) => {
     try {
-      if (!newName.trim()) {
+      if (!newName.trim() || newName === chat.client.profileName) {
         setTempName(chat.client.profileName)
         setIsEditing(false)
         return
