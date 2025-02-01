@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/collapsible'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import type { Employee, Service } from './types'
+import { useSidebar } from '@/components/ui/sidebar.tsx'
 
 interface SidebarProps {
   selectedDate: Date
@@ -39,6 +40,7 @@ export const CalendarSidebar: FC<SidebarProps> = ({
   const [isOpen, setIsOpen] = useState(true)
   const [isEmployeesOpen, setIsEmployeesOpen] = useState(true)
   const [isServicesOpen, setIsServicesOpen] = useState(true)
+  const {open: mainSidebarOpen} = useSidebar()
 
   return (
     <div className='relative h-screen '>
@@ -51,7 +53,7 @@ export const CalendarSidebar: FC<SidebarProps> = ({
         )}
       >
         <ScrollArea className='h-full'>
-          <div className='pr-4'>
+          <div className={mainSidebarOpen ? "px-4" : "pr-4" } >
             <CollapsibleTrigger asChild>
               <Button
                 variant='ghost'
