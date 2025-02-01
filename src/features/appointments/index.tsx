@@ -1,7 +1,6 @@
 import { Main } from '@/components/layout/main';
 import { Calendar } from '@/features/appointments/Calendar'
 
-
 export default function Appointments() {
   return (
     <Main fixed>

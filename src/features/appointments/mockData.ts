@@ -1,12 +1,20 @@
-import type { Employee, Event } from "./types"
+import type { Employee, Event, Service } from './types'
 import { addDays, setHours, setMinutes } from "date-fns"
 
 export const mockEmployees: Employee[] = [
-  { id: "1", name: "John Doe", color: "#FF5733" },
-  { id: "2", name: "Jane Smith", color: "#33FF57" },
-  { id: "3", name: "Bob Johnson", color: "#3357FF" },
-  { id: "4", name: "Alice Williams", color: "#FF33F5" },
-  { id: "5", name: "Charlie Brown", color: "#33FFF5" },
+  { id: "1", name: "John Doe", color: "rgba(255,87,51,0.6)" },
+  { id: "2", name: "Jane Smith", color: "rgba(51,255,87,0.6)" },
+  { id: "3", name: "Bob Johnson", color: "rgba(51,87,255,0.6)" },
+  { id: "4", name: "Alice Williams", color: "rgba(255,51,245,0.6)" },
+  { id: "5", name: "Charlie Brown", color: "rgba(51,255,245,0.6)" },
+]
+
+export const mockServices: Service[] = [
+  { id: "1", name: "Service A" },
+  { id: "2", name: "Service B" },
+  { id: "3", name: "Service C" },
+  { id: "4", name: "Service D" },
+  { id: "5", name: "Service E" },
 ]
 
 export const generateMockEvents = (): Event[] => {

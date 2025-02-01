@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { DndContext, useSensors, useSensor, PointerSensor } from '@dnd-kit/core'
 import { useCalendarEvents } from './hooks/useCalendarEvents'
 import type { Event } from './types'
-import { generateMockEvents, mockEmployees } from '@/features/appointments/mockData.ts'
+import { generateMockEvents, mockEmployees, mockServices } from '@/features/appointments/mockData.ts'
 import { CalendarSidebar } from '@/features/appointments/CalendarSidebar.tsx'
 import { addMinutes } from 'date-fns'
 import { CalendarHeader } from '@/features/appointments/CalendarHeader.tsx'
@@ -11,12 +11,14 @@ import { DayView } from '@/features/appointments/DayView.tsx'
 import { EventDialog } from '@/features/appointments/EventDialog.tsx'
 
 export function Calendar() {
-  const [selectedDate, setSelectedDate] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [view, setView] = useState<"day" | "week">("week")
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(
     new Set(mockEmployees.map((emp) => emp.id))
   )
-  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [selectedServices, setSelectedServices] = useState<Set<string>>(
+    new Set(mockServices.map((emp) => emp.id))
+  )
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Partial<Event>>({})
 
@@ -48,16 +50,17 @@ export function Calendar() {
   }
 
   return (
-    <div className="h-screen w-full flex bg-white">
+    <div className="h-screen w-full flex bg-background text-foreground">
       <CalendarSidebar
-        currentMonth={currentMonth}
-        setCurrentMonth={setCurrentMonth}
+        setSelectedServices={setSelectedServices}
+        selectedServices={selectedServices}
         selectedDate={selectedDate}
         setSelectedDate={setSelectedDate}
         employees={mockEmployees}
         selectedEmployees={selectedEmployees}
         setSelectedEmployees={setSelectedEmployees}
         onCreateEvent={handleCreateEvent}
+        services={mockServices}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
