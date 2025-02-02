@@ -35,7 +35,7 @@ export function DayView({ events }: { events: Event[] }) {
       />
       <div className='flex h-full'>
         <div className='w-16 flex-shrink-0 border-r'>
-          <TimeSlots />
+          <TimeSlots startAt={startAt} endAt={endAt} />
         </div>
         <div className='flex-1 relative'>
           {positionedEvents.map(({ event, column, totalColumns }) => {

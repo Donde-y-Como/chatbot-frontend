@@ -10,16 +10,16 @@ export interface ServiceFilterProps {
 }
 
 export function ServiceFilter({
-  services,
-  selectedService,
-  onServiceSelect,
-}: ServiceFilterProps) {
+                                services,
+                                selectedService,
+                                onServiceSelect,
+                              }: ServiceFilterProps) {
   return (
-    <ScrollArea className='w-full whitespace-nowrap'>
-      <div className='flex space-x-2 p-4 ml-16'>
+    <ScrollArea orientation="horizontal" className="w-full overflow-x-auto overflow-y-hidden whitespace-nowrap">
+      <div className="flex space-x-2 p-4 ml-16">
         <Badge
           variant={selectedService === 'all' ? 'default' : 'secondary'}
-          className='cursor-pointer transition-all duration-200 hover:scale-105'
+          className="cursor-pointer transition-all duration-200 hover:scale-105"
           onClick={() => onServiceSelect('all')}
         >
           Todos
@@ -28,14 +28,14 @@ export function ServiceFilter({
           <Badge
             key={service.id}
             variant={selectedService === service.id ? 'default' : 'secondary'}
-            className='cursor-pointer transition-all duration-200 hover:scale-105'
+            className="cursor-pointer transition-all duration-200 hover:scale-105"
             onClick={() => onServiceSelect(service.id)}
           >
             {service.name}
           </Badge>
         ))}
       </div>
-      <ScrollBar orientation='horizontal' />
+      <ScrollBar orientation="horizontal" />
     </ScrollArea>
   )
 }

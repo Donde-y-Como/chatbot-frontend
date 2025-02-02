@@ -3,7 +3,7 @@ import type { Employee, Event, Service } from './types'
 
 export const mockEmployees: Employee[] = [
   { id: '1', name: 'John Doe', color: 'rgba(231,71,200,0.69)' },
-  { id: '2', name: 'Jane Smith', color: 'rgba(51,255,87,0.6)' },
+  { id: '2', name: 'Jane Smith', color: 'rgba(86,240,113,0.6)' },
   { id: '3', name: 'Bob Johnson', color: 'rgba(51,87,255,0.6)' },
   { id: '4', name: 'Alice Williams', color: 'rgba(255,51,245,0.6)' },
   { id: '5', name: 'Charlie Brown', color: 'rgba(51,255,245,0.6)' },
@@ -22,7 +22,7 @@ export const generateMockEvents = (): Event[] => {
 
   const startDate = new Date()
   const startHour = 9 + Math.floor(Math.random() * 8) // Random hour between 9 AM and 5 PM
-  const duration = 1 + Math.floor(Math.random() * 3) // Random duration between 1 and 3 hours
+  const duration = 1 // Random duration between 1 and 3 hours
 
   const start = setMinutes(setHours(startDate, startHour), 0)
   const end = setMinutes(setHours(startDate, startHour + duration), 0)
@@ -63,7 +63,7 @@ export const generateMockEvents = (): Event[] => {
     serviceId: mockServices[1].id,
     notes: `Notes for appointment ${1}`,
     start: addMinutes(start, 60),
-    end,
+    end: addMinutes(end, 60),
     status: ['scheduled', 'completed', 'cancelled'][
       Math.floor(Math.random() * 3)
     ] as Event['status'],

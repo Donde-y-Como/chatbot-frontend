@@ -10,8 +10,8 @@ import {
 } from '@/components/ui/collapsible'
 import { useSidebar } from '@/components/ui/sidebar.tsx'
 import { EmployeesSelector } from '@/features/appointments/EmployeesSelector.tsx'
-import type { Employee } from './types'
 import { MakeAppointmentDialog } from '@/features/appointments/MakeAppointmentDialog.tsx'
+import type { Employee } from './types'
 
 interface SidebarProps {
   selectedDate: Date

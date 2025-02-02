@@ -50,7 +50,7 @@ export function CalendarHeader({
         <h2 className='text-xl font-semibold capitalize'>
           {format(
             selectedDate,
-            view === 'day' ? 'MMMM d, yyyy' : "'Semana de ' MMMM d, yyyy",
+            view === 'day' ? 'EEEE MMMM d, yyyy' : "'Semana de ' MMMM d, yyyy",
             { locale: es }
           )}
         </h2>

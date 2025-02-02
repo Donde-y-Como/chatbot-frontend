@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { isSameDay } from 'date-fns'
 import { CalendarHeader } from '@/features/appointments/CalendarHeader.tsx'
 import { CalendarSidebar } from '@/features/appointments/CalendarSidebar.tsx'
@@ -11,7 +11,7 @@ import {
 export function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [view, setView] = useState<'day' | 'week'>('day')
-  const events = generateMockEvents()
+  const events = useMemo(() => generateMockEvents(), [])
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(
     new Set(mockEmployees.map((emp) => emp.id))
   )

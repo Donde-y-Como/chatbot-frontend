@@ -1,4 +1,5 @@
 import React from 'react'
+import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -17,22 +18,39 @@ interface EventBlockProps {
   column: number
   totalColumns: number
   workHours: {
-    startAt: number
-    endAt: number
+    startAt: number  // minutes since midnight (e.g. 9AM = 540)
+    endAt: number    // minutes since midnight (e.g. 18PM = 1080)
   }
 }
 
+// This constant defines how many pixels represent one minute.
+// For example, if each hour slot is 64px tall then:
+const MINUTE_HEIGHT = 64 / 60 // ~1.0667 pixels per minute
+const verticalGap = 4
 export function EventBlock({
-  event,
-  employee,
-  column,
-  totalColumns,
-  workHours,
-}: EventBlockProps) {
-  // Calculate top offset and height in minutes from the start of the day view (starting at 9 AM = 540 minutes)
-  const startMinutes =
-    event.start.getHours() * 60 + event.start.getMinutes() - workHours.startAt
+                             event,
+                             employee,
+                             column,
+                             totalColumns,
+                             workHours,
+                           }: EventBlockProps) {
+
+
+  // Calculate the start time in minutes relative to the work day start.
+  // (e.g. if event starts at 9:30 and workHours.startAt is 540 then:
+  //  (570 - 540) = 30 minutes into the grid)
+  const eventStartMinutes = event.start.getHours() * 60 + event.start.getMinutes()
+  const startMinutesRelative = eventStartMinutes - workHours.startAt
+
+  // Calculate duration in minutes.
   const duration = (event.end.getTime() - event.start.getTime()) / (1000 * 60)
+
+  // Multiply by the pixel conversion factor.
+  const topOffset = startMinutesRelative * MINUTE_HEIGHT
+  const eventHeight = duration * MINUTE_HEIGHT
+
+  const adjustedTopOffset = topOffset + verticalGap / 2
+  const adjustedEventHeight = eventHeight - verticalGap
 
   // Calculate left offset and width based on column info.
   const leftPercent = (column / totalColumns) * 100
@@ -44,15 +62,18 @@ export function EventBlock({
         <div
           className='absolute rounded p-2 overflow-hidden cursor-pointer transition-opacity hover:opacity-90'
           style={{
-            top: `${startMinutes}px`,
-            height: `${duration}px`,
+            top: `${adjustedTopOffset}px`,
+            height: `${adjustedEventHeight}px`,
             left: `calc(${leftPercent}% + 2px)`,
             width: `calc(${widthPercent}% - 4px)`,
             backgroundColor: employee.color,
           }}
         >
-          <div className='text-white text-sm font-semibold truncate'>
+          <div className='flex items-center justify-between text-white text-sm font-semibold truncate'>
             {event.client}
+            <small>
+              {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
+            </small>
           </div>
           <div className='text-white text-xs truncate'>{event.service}</div>
         </div>
