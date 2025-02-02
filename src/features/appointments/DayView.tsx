@@ -49,7 +49,7 @@ export function DayView({ events }: { events: Event[] }) {
         onServiceSelect={handleSelectedService}
       />
 
-      <div className='flex h-full relative'>
+      <div className='flex relative '>
         <div className='w-16 flex-shrink-0 border-r'>
           <TimeSlots startAt={startAt} endAt={endAt} />
         </div>
@@ -62,7 +62,7 @@ export function DayView({ events }: { events: Event[] }) {
         </div>
 
         <div
-          className='flex-1 relative  '
+          className='flex-1 relative '
           style={{
             backgroundImage: `repeating-linear-gradient(
                                  to bottom,
