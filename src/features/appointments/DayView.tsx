@@ -1,36 +1,62 @@
-import type React from "react"
-import { DayColumn } from "./DayColumn"
-import type { Employee, Event } from "./types"
+import React, { useState } from 'react'
+import { EventBlock } from '@/features/appointments/EventBlock.tsx'
+import {
+  ServiceFilter,
+  ServiceFilterProps,
+} from '@/features/appointments/ServiceFilter.tsx'
+import { TimeSlots } from '@/features/appointments/TimeSlots.tsx'
+import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts'
+import {
+  mockEmployees,
+  mockServices,
+} from '@/features/appointments/mockData.ts'
+import type { Employee, Event, Service } from './types'
 
-interface DayViewProps {
-  selectedDate: Date
-  events: Event[]
-  employees: Employee[]
-  onEventClick: (event: Event) => void
-  onTimeSlotClick: (time: Date) => void
-}
+export function DayView({ events }: { events: Event[] }) {
+  const startAt = 540
+  const endAt = 1080
+  const employees = mockEmployees satisfies Employee[]
+  const services = mockServices satisfies Service[]
+  const [selectedService, setSelectedService] =
+    useState<ServiceFilterProps['selectedService']>('all')
 
-export const DayView: React.FC<DayViewProps> = ({ selectedDate, events, employees, onEventClick, onTimeSlotClick }) => {
+  const handleSelectedService = (serviceId: string | 'all') => {
+    setSelectedService(serviceId)
+  }
+
+  const positionedEvents = usePositionedEvents({ events, selectedService })
+
   return (
-    <div className="flex h-full">
-      <div className="w-16 flex-shrink-0 border-r">
-        {Array.from({ length: 24 }, (_, i) => (
-          <div key={i} className="h-[60px] border-b text-xs text-right pr-2">
-            {i === 0 ? "12 AM" : i < 12 ? `${i} AM` : i === 12 ? "12 PM" : `${i - 12} PM`}
-          </div>
-        ))}
-      </div>
-      <div className="flex-1">
-        <DayColumn
-          date={selectedDate}
-          events={events}
-          employees={employees}
-          onEventClick={onEventClick}
-          onTimeSlotClick={onTimeSlotClick}
-          isToday={true}
-        />
+    <div className='flex flex-col space-y-2 h-full'>
+      <ServiceFilter
+        services={services}
+        selectedService={selectedService}
+        onServiceSelect={handleSelectedService}
+      />
+      <div className='flex h-full'>
+        <div className='w-16 flex-shrink-0 border-r'>
+          <TimeSlots />
+        </div>
+        <div className='flex-1 relative'>
+          {positionedEvents.map(({ event, column, totalColumns }) => {
+            const employee = employees.find(
+              (emp) => emp.id === event.employeeId
+            )
+            if (!employee) return null
+
+            return (
+              <EventBlock
+                key={event.id}
+                event={event}
+                employee={employee}
+                column={column}
+                totalColumns={totalColumns}
+                workHours={{ startAt, endAt }}
+              />
+            )
+          })}
+        </div>
       </div>
     </div>
   )
 }
-

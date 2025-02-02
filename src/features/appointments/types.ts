@@ -13,6 +13,7 @@ export interface Employee {
 export interface Event {
   id: string
   employeeId: string
+  serviceId:string
   client: string
   service: string
   notes: string
