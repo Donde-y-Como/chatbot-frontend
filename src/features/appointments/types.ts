@@ -1,28 +1,41 @@
+import { z } from 'zod'
+
 export interface Service {
-  id:string
-  name:string
+  id: string
+  name: string
 }
 
 export interface Employee {
   id: string
+  businessId: string
   name: string
+  role: string
+  email: string
+  schedule: Record<string, MinutesTimeRange>
+  photo: string | undefined
+  address?: string
+  birthDate?: Date
+  createdAt: Date
   color: string
+}
+
+export interface MinutesTimeRange {
+  startAt: number
+  endAt: number
 }
 
 // Event type
 export interface Event {
   id: string
   employeeId: string
-  serviceId:string
+  serviceId: string
   client: string
   service: string
   notes: string
   start: Date
   end: Date
-  status: "scheduled" | "completed" | "cancelled"
+  status: 'scheduled' | 'completed' | 'cancelled'
 }
-
-import { z } from 'zod'
 
 export const appointment = z.object({
   _id: z.string(),

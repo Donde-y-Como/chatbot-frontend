@@ -5,13 +5,21 @@ import { cn } from '@/lib/utils.ts'
 import type { Employee } from '@/features/appointments/types.ts'
 import { Checkbox } from '@/components/ui/checkbox.tsx'
 
+type EmployeesSelectorProps = {
+  isEmployeesOpen: boolean
+  setIsEmployeesOpen: (isOpen: boolean) => void
+  employees: Employee[]
+  selectedEmployees: Set<string>
+  setSelectedEmployees: (employees: Set<string>) => void
+}
+
 export function EmployeesSelector({
                                         isEmployeesOpen,
                                         setIsEmployeesOpen,
                                         employees,
                                         selectedEmployees,
                                         setSelectedEmployees,
-                                      }) {
+                                      }: EmployeesSelectorProps) {
   return (
     <Collapsible
       open={isEmployeesOpen}

@@ -3,18 +3,19 @@ import { isSameDay } from 'date-fns'
 import { CalendarHeader } from '@/features/appointments/CalendarHeader.tsx'
 import { CalendarSidebar } from '@/features/appointments/CalendarSidebar.tsx'
 import { DayView } from '@/features/appointments/DayView.tsx'
-import {
-  generateMockEvents,
-  mockEmployees,
-} from '@/features/appointments/mockData.ts'
+import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
+import { generateMockEvents } from '@/features/appointments/mockData.ts'
 
 export function Calendar() {
+  const { data: employees } = useGetEmployees()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [view, setView] = useState<'day' | 'week'>('day')
   const events = useMemo(() => generateMockEvents(), [])
-  const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(
-    new Set(mockEmployees.map((emp) => emp.id))
-  )
+  const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    setSelectedEmployees(new Set(employees?.map((emp) => emp.id) ?? []))
+  }, [employees])
 
   const filteredEvents = useMemo(() => {
     return events.filter(
@@ -29,7 +30,7 @@ export function Calendar() {
       <CalendarSidebar
         selectedDate={selectedDate}
         setSelectedDate={setSelectedDate}
-        employees={mockEmployees}
+        employees={employees}
         selectedEmployees={selectedEmployees}
         setSelectedEmployees={setSelectedEmployees}
       />
