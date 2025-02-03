@@ -1,60 +1,71 @@
-import React, { useEffect, useState } from 'react';
-import { EventBlock } from '@/features/appointments/EventBlock.tsx';
-import { ServiceFilter, ServiceFilterProps } from '@/features/appointments/ServiceFilter.tsx';
-import { TimeSlots } from '@/features/appointments/TimeSlots.tsx';
-import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts';
-import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts';
-import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts';
-import type { Event } from './types';
-import {  useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
-import { Skeleton } from '@/components/ui/skeleton'; // Add your skeleton component
+import React, { useEffect, useState } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { EventBlock } from '@/features/appointments/EventBlock.tsx'
+import {
+  ServiceFilter,
+  ServiceFilterProps,
+} from '@/features/appointments/ServiceFilter.tsx'
+import { TimeSlots } from '@/features/appointments/TimeSlots.tsx'
+import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
+import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
+import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
+import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
+import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts'
+import type { Event } from './types'
 
-export function DayView({ events, date }: { events: Event[],date:Date }) {
-  const { data: workHours, isLoading: isWorkHoursLoading } = useGetWorkSchedule(date);
-  const { data: employees = [], isLoading: isEmployeesLoading } = useGetEmployees();
-  const { data: services = [], isLoading: isServicesLoading } = useGetServices();
+export function DayView({ events, date }: { events: Event[]; date: Date }) {
+  const { data: workHours, isLoading: isWorkHoursLoading } =
+    useGetWorkSchedule(date)
+  const { data: employees = [], isLoading: isEmployeesLoading } =
+    useGetEmployees()
+  const { data: services = [], isLoading: isServicesLoading } = useGetServices()
+  const { data: clients = [], isLoading: isClientsLoading } = useGetClients()
 
   const [selectedService, setSelectedService] =
-    useState<ServiceFilterProps['selectedService']>('all');
-  const [currentTime, setCurrentTime] = useState(date);
+    useState<ServiceFilterProps['selectedService']>('all')
+  const [currentTime, setCurrentTime] = useState(date)
 
   const handleSelectedService = (serviceId: string | 'all') => {
     setSelectedService(serviceId)
   }
 
-  const positionedEvents = usePositionedEvents({ events, selectedService });
+  const positionedEvents = usePositionedEvents({ events, selectedService })
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTime(date);
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [date]);
+      setCurrentTime(date)
+    }, 60000)
+    return () => clearInterval(interval)
+  }, [date])
 
   const getCurrentTimePosition = () => {
-    if (!workHours) return -100; // Position off-screen
+    if (!workHours) return -100 // Position off-screen
 
-    const startMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-    const startMinutesRelative = startMinutes - workHours.startAt;
-    return (startMinutesRelative * 64) / 60;
-  };
+    const startMinutes = currentTime.getHours() * 60 + currentTime.getMinutes()
+    const startMinutesRelative = startMinutes - workHours.startAt
+    return (startMinutesRelative * 64) / 60
+  }
 
-  const isLoading = isWorkHoursLoading || isEmployeesLoading || isServicesLoading;
+  const isLoading =
+    isWorkHoursLoading ||
+    isEmployeesLoading ||
+    isServicesLoading ||
+    isClientsLoading
 
   if (isLoading) {
     return (
       <div className='flex flex-col space-y-2 h-full'>
-        <Skeleton className="h-10 w-full" />
+        <Skeleton className='h-10 w-full' />
         <div className='flex relative'>
-          <Skeleton className="w-16 h-screen" />
-          <Skeleton className="flex-1 h-screen" />
+          <Skeleton className='w-16 h-screen' />
+          <Skeleton className='flex-1 h-screen' />
         </div>
       </div>
-    );
+    )
   }
 
   if (!workHours) {
-    return <div>No working hours available for this date</div>;
+    return <div>No working hours available for this date</div>
   }
 
   return (
@@ -93,23 +104,26 @@ export function DayView({ events, date }: { events: Event[],date:Date }) {
           }}
         >
           {positionedEvents.map(({ event, column, totalColumns }) => {
-            const employee = employees.find((emp) => emp.id === event.employeeId);
-            if (!employee) return null;
+            const employee = employees.find(
+              (emp) => emp.id === event.employeeId
+            )
+            if (!employee) return null
 
             return (
               <EventBlock
                 key={event.id}
                 event={event}
+                client={clients.find((c) => c.id === event.clientId)!}
                 employee={employee}
                 service={services.find((s) => s.id === event.serviceId)!}
                 column={column}
                 totalColumns={totalColumns}
                 workHours={workHours}
               />
-            );
+            )
           })}
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -18,35 +18,30 @@ export function Calendar() {
         start: setMinutes(new Date(), 900),
         end: setMinutes(new Date(),930),
         serviceId: 'a19eb22f-17bd-449a-9c29-cbefa2683bc9',
-        client: 'adsadsads',
-        service: 'adsads',
+        clientId: "f8b3aae00c3",
         notes: '',
         status: 'scheduled',
       } satisfies Event,
       {
         id: '2',
+        clientId: "f8b3aae00c3",
         employeeId: 'f44b57cc5a3',
         start: setMinutes(new Date(), 900),
         end: setMinutes(new Date(), 960),
         serviceId: 'haircut-id',
-        client: 'adsadsads',
-        service: 'adsads',
         notes: '',
         status: 'scheduled',
       } satisfies Event,
       {
         id: '3',
+        clientId: "f8b3aae00c3",
         employeeId: '91b7f1845ce',
         start: setMinutes(new Date(), 1000),
         end: setMinutes(new Date(), 1060),
         serviceId: 'haircut-id',
-        client: 'adsadsads',
-        service: 'adsads',
         notes: '',
         status: 'scheduled',
       } satisfies Event,
-
-
     ],
     []
   )

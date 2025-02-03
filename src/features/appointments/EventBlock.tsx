@@ -10,12 +10,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { Client } from '@/features/chats/ChatTypes.ts'
 import type { Employee, Event, Service } from './types'
 
 interface EventBlockProps {
   event: Event
   employee: Employee
   service: Service
+  client: Client
   column: number
   totalColumns: number
   workHours: {
@@ -33,6 +35,7 @@ export function EventBlock({
   event,
   employee,
   service,
+  client,
   column,
   totalColumns,
   workHours,
@@ -71,19 +74,19 @@ export function EventBlock({
             backgroundColor: employee.color,
           }}
         >
-          { adjustedEventHeight >= MINUTE_HEIGHT * 60 - verticalGap ? (
-            <div className="p-2">
-              <div className="flex items-center justify-between text-white text-sm font-semibold truncate">
-                {event.client}
+          {adjustedEventHeight >= MINUTE_HEIGHT * 60 - verticalGap ? (
+            <div className='p-2'>
+              <div className='flex items-center justify-between text-white text-sm font-semibold truncate'>
+                {client.profileName}
                 <small>
                   {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
                 </small>
               </div>
-              <div className="text-white text-xs truncate">{service.name}</div>
+              <div className='text-white text-xs truncate'>{service.name}</div>
             </div>
           ) : (
-            <div className="p-1 flex items-center justify-between text-white text-xs font-semibold truncate">
-              {event.client} - {service.name}
+            <div className='p-1 flex items-center justify-between text-white text-xs font-semibold truncate'>
+              {client.profileName} - {service.name}
               <small>
                 {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
               </small>
@@ -91,16 +94,16 @@ export function EventBlock({
           )}
         </div>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
           <DialogTitle>
-            {event.client} - {event.service}
+            {client.profileName} - {service.name}
           </DialogTitle>
           <DialogDescription>{event.notes}</DialogDescription>
         </DialogHeader>
-        <div className="mt-4 space-y-2 text-sm">
+        <div className='mt-4 space-y-2 text-sm'>
           <div>
-          <span className='font-semibold'>Status:</span> {event.status}
+            <span className='font-semibold'>Status:</span> {event.status}
           </div>
           <div>
             <span className='font-semibold'>Employee:</span> {employee.name}

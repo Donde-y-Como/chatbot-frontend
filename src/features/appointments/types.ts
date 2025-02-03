@@ -42,8 +42,7 @@ export interface Event {
   id: string
   employeeId: string
   serviceId: string
-  client: string
-  service: string
+  clientId: string
   notes: string
   start: Date
   end: Date
