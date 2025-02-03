@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { es } from 'date-fns/locale/es'
 import { MenuIcon } from 'lucide-react'
-import { cn } from '@/lib/utils.ts'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -43,9 +42,7 @@ export function CalendarSidebar({
         onOpenChange={setIsOpen}
         className='bg-background pr-2 py-2 border-r shadow-lg duration-500 ease-in-out transform h-full'
       >
-        <div
-          className={mainSidebarOpen ? 'pl-2' : ''}
-        >
+        <div className={mainSidebarOpen ? 'pl-2' : ''}>
           <CollapsibleTrigger asChild>
             <Button
               variant='ghost'
@@ -60,6 +57,7 @@ export function CalendarSidebar({
             <MakeAppointmentDialog />
             <div className='relative rounded-xl border w-full grid place-items-center  hover:shadow-lg'>
               <Calendar
+                required
                 locale={es}
                 mode='single'
                 selected={selectedDate}

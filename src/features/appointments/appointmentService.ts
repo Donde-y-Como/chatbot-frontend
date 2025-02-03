@@ -1,6 +1,6 @@
 import { api } from '@/api/axiosInstance'
 import {
-  Appointment,
+  Appointment, AppointmentCreated,
   Employee,
   Schedule,
   Service,
@@ -19,6 +19,14 @@ const generateDistantPastels = (seed: number, count = 5) => {
 }
 
 export const appointmentService = {
+  makeAppointment: async (appointment: Partial<Appointment>) => {
+    const response = await api.post<{ appointment: AppointmentCreated }>(
+      '/appointments',
+      appointment
+    )
+    return response.data.appointment
+  },
+
   getAppointments: async (startDate: string, endDate: string) => {
     let endpoint = '/appointments'
     if (startDate && endDate) {

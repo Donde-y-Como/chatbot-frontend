@@ -2,7 +2,19 @@ import { z } from 'zod'
 
 export interface Service {
   id: string
+  businessId: string
   name: string
+  description: string
+  duration: {
+    value: number
+    unit: 'minutes' | 'hours'
+  }
+  price: {
+    amount: number
+    currency: string
+  }
+  maxConcurrentBooks: number
+  minBookingLeadHours: number
 }
 
 export interface Schedule {
@@ -32,10 +44,29 @@ export interface Employee {
   color: string
 }
 
+
+export type EmployeeAvailable = Pick<Employee, 'id' | 'name' | 'email' | 'photo'>
+
 export interface MinutesTimeRange {
   startAt: number
   endAt: number
 }
+
+export const appointmentCreated = z.object({
+  id: z.string(),
+  clientId: z.string(),
+  serviceId: z.string(),
+  employeeId: z.string(),
+  date: z.date(),
+  timeRange: z.object({
+    startAt: z.number(),
+    endAt: z.number(),
+  }),
+  notes: z.string(),
+  folio: z.string(),
+})
+
+export type AppointmentCreated = z.infer<typeof appointmentCreated>
 
 export const appointment = z.object({
   _id: z.string(),
