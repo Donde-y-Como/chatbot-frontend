@@ -10,16 +10,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import type { Employee, Event } from './types'
+import type { Employee, Event, Service } from './types'
 
 interface EventBlockProps {
   event: Event
   employee: Employee
+  service: Service
   column: number
   totalColumns: number
   workHours: {
-    startAt: number  // minutes since midnight (e.g. 9AM = 540)
-    endAt: number    // minutes since midnight (e.g. 18PM = 1080)
+    startAt: number // minutes since midnight (e.g. 9AM = 540)
+    endAt: number // minutes since midnight (e.g. 18PM = 1080)
   }
 }
 
@@ -27,19 +28,20 @@ interface EventBlockProps {
 // For example, if each hour slot is 64px tall then:
 const MINUTE_HEIGHT = 64 / 60 // ~1.0667 pixels per minute
 const verticalGap = 4
+
 export function EventBlock({
-                             event,
-                             employee,
-                             column,
-                             totalColumns,
-                             workHours,
-                           }: EventBlockProps) {
-
-
+  event,
+  employee,
+  service,
+  column,
+  totalColumns,
+  workHours,
+}: EventBlockProps) {
   // Calculate the start time in minutes relative to the work day start.
   // (e.g. if event starts at 9:30 and workHours.startAt is 540 then:
   //  (570 - 540) = 30 minutes into the grid)
-  const eventStartMinutes = event.start.getHours() * 60 + event.start.getMinutes()
+  const eventStartMinutes =
+    event.start.getHours() * 60 + event.start.getMinutes()
   const startMinutesRelative = eventStartMinutes - workHours.startAt
 
   // Calculate duration in minutes.
@@ -75,7 +77,7 @@ export function EventBlock({
               {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
             </small>
           </div>
-          <div className='text-white text-xs truncate'>{event.service}</div>
+          <div className='text-white text-xs truncate'>{service.name}</div>
         </div>
       </DialogTrigger>
       <DialogContent className='sm:max-w-[425px]'>

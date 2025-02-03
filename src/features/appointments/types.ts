@@ -5,6 +5,19 @@ export interface Service {
   name: string
 }
 
+export interface Schedule {
+  id: string
+  businessId: string
+  weeklyWorkDays: Record<string, MinutesTimeRange>
+  nonWorkDates: NonWorkDate[]
+}
+
+export interface NonWorkDate {
+  date: Date
+  reason: string
+  recurrent: boolean
+}
+
 export interface Employee {
   id: string
   businessId: string

@@ -1,5 +1,5 @@
 import { api } from '@/api/axiosInstance'
-import { Appointment, Employee } from '@/features/appointments/types.ts'
+import { Appointment, Employee, Service, Schedule } from '@/features/appointments/types.ts'
 const generatePastelColor = (seed: string) => {
   let hash = 0
   for (let i = 0; i < seed.length; i++) {
@@ -12,6 +12,7 @@ const generatePastelColor = (seed: string) => {
 
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
+
 export const appointmentService = {
   getAppointments: async (startDate: string, endDate: string) => {
     let endpoint = '/appointments'
@@ -28,5 +29,15 @@ export const appointmentService = {
       ...emp,
       color: generatePastelColor(emp.id)
     }))
+  },
+
+  getServices: async(): Promise<Service[]> => {
+    const response = await api.get<Service[]>('/services')
+    return response.data;
+  },
+
+  getSchedule: async() => {
+    const response = await api.get<Schedule>('/schedule')
+    return response.data;
   }
 }

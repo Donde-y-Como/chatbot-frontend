@@ -1,6 +1,6 @@
 import React from 'react'
 
-export function TimeSlots({ startAt = 540, endAt = 1080 }) {
+export function TimeSlots({ startAt = 400, endAt = 1400 }) {
   const startHour = Math.floor(startAt / 60)
   const endHour = Math.ceil(endAt / 60)
   // Create an array of hours from startHour to endHour.
