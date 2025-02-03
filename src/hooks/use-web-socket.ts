@@ -112,16 +112,13 @@ export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
       if (error instanceof AxiosError) {
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
           useAuthStore.getState().auth.reset()
           void router.navigate({ to: '/iniciar-sesion' })
         }
         if (error.response?.status === 500) {
           toast.error('El contenido no se actualizó!')
           void router.navigate({ to: '/500' })
-        }
-        if (error.response?.status === 403) {
-          void router.navigate({ to: '/403' })
         }
       }
     },

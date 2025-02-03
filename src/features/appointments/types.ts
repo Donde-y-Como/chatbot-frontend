@@ -37,18 +37,6 @@ export interface MinutesTimeRange {
   endAt: number
 }
 
-// Event type
-export interface Event {
-  id: string
-  employeeId: string
-  serviceId: string
-  clientId: string
-  notes: string
-  start: Date
-  end: Date
-  status: 'scheduled' | 'completed' | 'cancelled'
-}
-
 export const appointment = z.object({
   _id: z.string(),
   clientId: z.string(),

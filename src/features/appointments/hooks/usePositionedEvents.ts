@@ -1,83 +1,105 @@
 import { useMemo } from 'react'
-import type { Event } from '@/features/appointments/types.ts'
+import type { Appointment } from '@/features/appointments/types.ts'
 
-interface PositionedEvent {
-  event: Event
+interface PositionedAppointment {
+  appointment: Appointment
   column: number
   totalColumns: number
 }
 
 export function usePositionedEvents({
-  events,
-  selectedService,
-}: {
-  events: Event[]
+                                            appointments,
+                                            selectedService,
+                                          }: {
+  appointments: Appointment[]
   selectedService: string | 'all'
 }) {
-  const filteredEvents = useMemo(() => {
-    return events.filter((event) =>
-      selectedService === 'all' ? true : event.serviceId === selectedService
+  // Filter appointments by service
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter((appointment) =>
+      selectedService === 'all' ? true : appointment.serviceId === selectedService
     )
-  }, [events, selectedService])
+  }, [appointments, selectedService])
+
+  // Helper functions to compute start and end times in ms.
+  // Assumes that timeRange.startAt and timeRange.endAt are in minutes.
+  const getStartTime = (appointment: Appointment) => {
+    const base = new Date(appointment.date).setHours(0, 0, 0, 0)
+    return base + appointment.timeRange.startAt * 60000
+  }
+
+  const getEndTime = (appointment: Appointment) => {
+    const base = new Date(appointment.date).setHours(0, 0, 0, 0)
+    return base + appointment.timeRange.endAt * 60000
+  }
 
   return useMemo(() => {
-    const sorted = [...filteredEvents].sort(
-      (a, b) => a.start.getTime() - b.start.getTime()
+    // Sort the filtered appointments by their computed start time.
+    const sorted = [...filteredAppointments].sort(
+      (a, b) => getStartTime(a) - getStartTime(b)
     )
-    const results: PositionedEvent[] = []
-    let currentGroup: Event[] = []
+    const results: PositionedAppointment[] = []
+    let currentGroup: Appointment[] = []
     let groupEnd = 0
 
+    // Flush the current group by assigning each appointment a column.
     const flushGroup = () => {
       if (currentGroup.length === 0) return
-      // For the current group, assign columns using a greedy algorithm.
-      // columns[i] will store the end time of the last event in column i.
+      // `columns[i]` stores the end time of the last appointment in column i.
       const columns: number[] = []
-      const groupResults: { event: Event; column: number }[] = []
+      const groupResults: { appointment: Appointment; column: number }[] = []
 
-      currentGroup.forEach((ev) => {
-        // Find the first column that is free (i.e. its last event ended before this event starts)
+      currentGroup.forEach((appt) => {
+        const start = getStartTime(appt)
+        const end = getEndTime(appt)
         let assigned = false
         for (let i = 0; i < columns.length; i++) {
-          if (columns[i] <= ev.start.getTime()) {
-            columns[i] = ev.end.getTime()
-            groupResults.push({ event: ev, column: i })
+          if (columns[i] <= start) {
+            columns[i] = end
+            groupResults.push({ appointment: appt, column: i })
             assigned = true
             break
           }
         }
         if (!assigned) {
-          // No free column, create a new one.
-          columns.push(ev.end.getTime())
-          groupResults.push({ event: ev, column: columns.length - 1 })
+          // Create a new column if no existing column is free.
+          columns.push(end)
+          groupResults.push({ appointment: appt, column: columns.length - 1 })
         }
       })
 
       const totalColumns = columns.length
       groupResults.forEach((r) => {
-        results.push({ event: r.event, column: r.column, totalColumns })
+        results.push({
+          appointment: r.appointment,
+          column: r.column,
+          totalColumns,
+        })
       })
       currentGroup = []
     }
 
-    sorted.forEach((ev) => {
+    // Process each sorted appointment, grouping overlapping ones.
+    sorted.forEach((appt) => {
+      const start = getStartTime(appt)
+      const end = getEndTime(appt)
       if (currentGroup.length === 0) {
-        currentGroup.push(ev)
-        groupEnd = ev.end.getTime()
+        currentGroup.push(appt)
+        groupEnd = end
       } else {
-        // If the event starts before the current group ends, it's overlapping.
-        if (ev.start.getTime() < groupEnd) {
-          currentGroup.push(ev)
-          groupEnd = Math.max(groupEnd, ev.end.getTime())
+        // If the current appointment starts before the group ends, it's overlapping.
+        if (start < groupEnd) {
+          currentGroup.push(appt)
+          groupEnd = Math.max(groupEnd, end)
         } else {
-          // flush the current group and start a new one.
+          // Otherwise, flush the current group and start a new one.
           flushGroup()
-          currentGroup.push(ev)
-          groupEnd = ev.end.getTime()
+          currentGroup.push(appt)
+          groupEnd = end
         }
       }
     })
     flushGroup()
     return results
-  }, [filteredEvents])
+  }, [filteredAppointments])
 }

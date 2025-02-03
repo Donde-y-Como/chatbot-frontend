@@ -1,5 +1,5 @@
 import Cookies from 'js-cookie'
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { createFileRoute, Navigate, Outlet } from '@tanstack/react-router'
 import { useAuth } from '@/stores/authStore.ts'
 import { cn } from '@/lib/utils'
 import { SearchProvider } from '@/context/search-context'
@@ -20,6 +20,11 @@ function RouteComponent() {
     socket.emit('joinBusinessRoom', auth.user.id)
     setIsConnected(true)
   }
+
+  if(!auth.user) {
+    return <Navigate to='/iniciar-sesion' />
+  }
+
   return (
     <SearchProvider>
       <SidebarProvider defaultOpen={defaultOpen}>

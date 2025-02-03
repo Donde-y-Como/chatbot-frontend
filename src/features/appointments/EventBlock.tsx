@@ -1,5 +1,5 @@
 import React from 'react'
-import { format } from 'date-fns'
+import { format, setMinutes } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -11,10 +11,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Client } from '@/features/chats/ChatTypes.ts'
-import type { Employee, Event, Service } from './types'
+import type { Appointment, Employee,  Service } from './types'
 
 interface EventBlockProps {
-  event: Event
+  appointment: Appointment
   employee: Employee
   service: Service
   client: Client
@@ -32,7 +32,7 @@ const MINUTE_HEIGHT = 64 / 60 // ~1.0667 pixels per minute
 const verticalGap = 4
 
 export function EventBlock({
-  event,
+  appointment,
   employee,
   service,
   client,
@@ -43,12 +43,11 @@ export function EventBlock({
   // Calculate the start time in minutes relative to the work day start.
   // (e.g. if event starts at 9:30 and workHours.startAt is 540 then:
   //  (570 - 540) = 30 minutes into the grid)
-  const eventStartMinutes =
-    event.start.getHours() * 60 + event.start.getMinutes()
+  const eventStartMinutes = appointment.timeRange.startAt
   const startMinutesRelative = eventStartMinutes - workHours.startAt
 
   // Calculate duration in minutes.
-  const duration = (event.end.getTime() - event.start.getTime()) / (1000 * 60)
+  const duration = (appointment.timeRange.endAt - appointment.timeRange.startAt) / (1000 * 60)
 
   // Multiply by the pixel conversion factor.
   const topOffset = startMinutesRelative * MINUTE_HEIGHT
@@ -79,7 +78,7 @@ export function EventBlock({
               <div className='flex items-center justify-between text-white text-sm font-semibold truncate'>
                 {client.profileName}
                 <small>
-                  {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
+                  {format(setMinutes(new Date(), appointment.timeRange.startAt), 'HH:mm')} - {format(setMinutes(new Date(), appointment.timeRange.endAt), 'HH:mm')}
                 </small>
               </div>
               <div className='text-white text-xs truncate'>{service.name}</div>
@@ -88,7 +87,7 @@ export function EventBlock({
             <div className='p-1 flex items-center justify-between text-white text-xs font-semibold truncate'>
               {client.profileName} - {service.name}
               <small>
-                {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
+                {format(setMinutes(new Date(), appointment.timeRange.startAt), 'HH:mm')} - {format(setMinutes(new Date(), appointment.timeRange.endAt), 'HH:mm')}
               </small>
             </div>
           )}
@@ -99,22 +98,22 @@ export function EventBlock({
           <DialogTitle>
             {client.profileName} - {service.name}
           </DialogTitle>
-          <DialogDescription>{event.notes}</DialogDescription>
+          <DialogDescription>{appointment.notes}</DialogDescription>
         </DialogHeader>
         <div className='mt-4 space-y-2 text-sm'>
           <div>
-            <span className='font-semibold'>Status:</span> {event.status}
+            <span className='font-semibold'>Notes:</span> {appointment.notes}
           </div>
           <div>
             <span className='font-semibold'>Employee:</span> {employee.name}
           </div>
           <div>
             <span className='font-semibold'>Start:</span>{' '}
-            {event.start.toLocaleString()}
+            {appointment.date.toLocaleString()}
           </div>
           <div>
             <span className='font-semibold'>End:</span>{' '}
-            {event.end.toLocaleString()}
+            {appointment.date.toLocaleString()}
           </div>
         </div>
         <DialogClose asChild>

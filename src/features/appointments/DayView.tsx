@@ -11,9 +11,15 @@ import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.t
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
 import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts'
-import type { Event } from './types'
+import type { Appointment } from './types'
 
-export function DayView({ events, date }: { events: Event[]; date: Date }) {
+export function DayView({
+  appointments,
+  date,
+}: {
+  appointments: Appointment[]
+  date: Date
+}) {
   const { data: workHours, isLoading: isWorkHoursLoading } =
     useGetWorkSchedule(date)
   const { data: employees = [], isLoading: isEmployeesLoading } =
@@ -29,7 +35,10 @@ export function DayView({ events, date }: { events: Event[]; date: Date }) {
     setSelectedService(serviceId)
   }
 
-  const positionedEvents = usePositionedEvents({ events, selectedService })
+  const positionedEvents = usePositionedEvents({
+    appointments,
+    selectedService,
+  })
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -103,19 +112,19 @@ export function DayView({ events, date }: { events: Event[]; date: Date }) {
             backgroundSize: '100% 64px',
           }}
         >
-          {positionedEvents.map(({ event, column, totalColumns }) => {
+          {positionedEvents.map(({ appointment, column, totalColumns }) => {
             const employee = employees.find(
-              (emp) => emp.id === event.employeeId
+              (emp) => emp.id === appointment.employeeId
             )
             if (!employee) return null
 
             return (
               <EventBlock
-                key={event.id}
-                event={event}
-                client={clients.find((c) => c.id === event.clientId)!}
+                key={appointment._id}
+                appointment={appointment}
+                client={clients.find((c) => c.id === appointment.clientId)!}
                 employee={employee}
-                service={services.find((s) => s.id === event.serviceId)!}
+                service={services.find((s) => s.id === appointment.serviceId)!}
                 column={column}
                 totalColumns={totalColumns}
                 workHours={workHours}

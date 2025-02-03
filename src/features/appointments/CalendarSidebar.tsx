@@ -37,17 +37,14 @@ export function CalendarSidebar({
   if (!employees) return <CalendarSidebarSkeleton />
 
   return (
-    <div className='relative h-screen transition-all w-fit'>
+    <div className='relative h-screen w-fit'>
       <Collapsible
         open={isOpen}
         onOpenChange={setIsOpen}
         className='bg-background pr-2 py-2 border-r shadow-lg duration-500 ease-in-out transform h-full'
       >
         <div
-          className={cn(
-            'transition-all duration-500',
-            mainSidebarOpen ? 'pl-2' : ''
-          )}
+          className={mainSidebarOpen ? 'pl-2' : ''}
         >
           <CollapsibleTrigger asChild>
             <Button
@@ -59,9 +56,9 @@ export function CalendarSidebar({
             </Button>
           </CollapsibleTrigger>
 
-          <CollapsibleContent className='space-y-6 duration-500 transition'>
+          <CollapsibleContent className='space-y-6  '>
             <MakeAppointmentDialog />
-            <div className='relative rounded-xl border w-full grid place-items-center transition-all duration-300 hover:shadow-lg'>
+            <div className='relative rounded-xl border w-full grid place-items-center  hover:shadow-lg'>
               <Calendar
                 locale={es}
                 mode='single'
