@@ -19,6 +19,11 @@ const generateDistantPastels = (seed: number, count = 5) => {
 }
 
 export const appointmentService = {
+
+  cancelAppointment: async (appointmentId: string) => {
+    await api.delete(`/appointments/${appointmentId}`)
+  },
+
   makeAppointment: async (appointment: Partial<Appointment>) => {
     const response = await api.post<{ appointment: AppointmentCreated }>(
       '/appointments',

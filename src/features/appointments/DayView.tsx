@@ -12,6 +12,10 @@ import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
 import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts'
 import type { Appointment } from './types'
+import { appointmentService } from '@/features/appointments/appointmentService.ts'
+import { toast } from 'sonner'
+import { format } from 'date-fns'
+import { useQueryClient } from '@tanstack/react-query'
 
 export function DayView({
   appointments,
@@ -30,6 +34,8 @@ export function DayView({
   const [selectedService, setSelectedService] =
     useState<ServiceFilterProps['selectedService']>('all')
   const [currentTime, setCurrentTime] = useState(date)
+
+  const queryClient = useQueryClient()
 
   const handleSelectedService = (serviceId: string | 'all') => {
     setSelectedService(serviceId)
@@ -53,6 +59,22 @@ export function DayView({
     const startMinutes = currentTime.getHours() * 60 + currentTime.getMinutes()
     const startMinutesRelative = startMinutes - workHours.startAt
     return (startMinutesRelative * 64) / 60
+  }
+
+  const handleCancel = async (id:string) => {
+    try {
+      await appointmentService.cancelAppointment(id)
+      await queryClient.invalidateQueries({
+        queryKey: [
+          'appointments',
+          format(date, 'yyyy-MM-dd'),
+          format(date, 'yyyy-MM-dd'),
+        ],
+      })
+      toast.success('Cita cancelada exitosamente')
+    } catch (e) {
+      toast.error('No se pudo cancelar la cita')
+    }
   }
 
   const isLoading =
@@ -120,6 +142,7 @@ export function DayView({
 
             return (
               <EventBlock
+                cancelAppointment={handleCancel}
                 key={appointment._id}
                 appointment={appointment}
                 client={clients.find((c) => c.id === appointment.clientId)!}

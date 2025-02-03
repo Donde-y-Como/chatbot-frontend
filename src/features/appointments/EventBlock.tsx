@@ -1,5 +1,16 @@
 import React from 'react'
-import { format, setMinutes } from 'date-fns'
+import { format, isBefore, parseISO, setMinutes } from 'date-fns'
+import { CalendarIcon, ClockIcon } from '@radix-ui/react-icons'
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconBrandWhatsapp,
+} from '@tabler/icons-react'
+import { now } from '@internationalized/date'
+import { es } from 'date-fns/locale/es'
+import { cn } from '@/lib/utils.ts'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx'
+import { Badge } from '@/components/ui/badge.tsx'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -11,9 +22,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Client } from '@/features/chats/ChatTypes.ts'
-import type { Appointment, Employee,  Service } from './types'
+import type { Appointment, Employee, Service } from './types'
 
 interface EventBlockProps {
+  cancelAppointment: (id: string) => void
   appointment: Appointment
   employee: Employee
   service: Service
@@ -21,17 +33,16 @@ interface EventBlockProps {
   column: number
   totalColumns: number
   workHours: {
-    startAt: number // minutes since midnight (e.g. 9AM = 540)
-    endAt: number // minutes since midnight (e.g. 18PM = 1080)
+    startAt: number
+    endAt: number
   }
 }
 
-// This constant defines how many pixels represent one minute.
-// For example, if each hour slot is 64px tall then:
-const MINUTE_HEIGHT = 64 / 60 // ~1.0667 pixels per minute
+const MINUTE_HEIGHT = 64 / 60
 const verticalGap = 4
 
 export function EventBlock({
+  cancelAppointment,
   appointment,
   employee,
   service,
@@ -40,25 +51,21 @@ export function EventBlock({
   totalColumns,
   workHours,
 }: EventBlockProps) {
-  // Calculate the start time in minutes relative to the work day start.
-  // (e.g. if event starts at 9:30 and workHours.startAt is 540 then:
-  //  (570 - 540) = 30 minutes into the grid)
   const eventStartMinutes = appointment.timeRange.startAt
   const startMinutesRelative = eventStartMinutes - workHours.startAt
-
-  // Calculate duration in minutes.
-  const duration = (appointment.timeRange.endAt - appointment.timeRange.startAt)
-
-  // Multiply by the pixel conversion factor.
+  const duration = appointment.timeRange.endAt - appointment.timeRange.startAt
   const topOffset = startMinutesRelative * MINUTE_HEIGHT
   const eventHeight = duration * MINUTE_HEIGHT
-
   const adjustedTopOffset = topOffset + verticalGap / 2
   const adjustedEventHeight = eventHeight - verticalGap
-
-  // Calculate left offset and width based on column info.
   const leftPercent = (column / totalColumns) * 100
   const widthPercent = 100 / totalColumns
+
+  const PlatformIcon = {
+    whatsapp: IconBrandWhatsapp,
+    facebook: IconBrandFacebook,
+    instagram: IconBrandInstagram,
+  }[client.platformName.toLowerCase()]
 
   return (
     <Dialog>
@@ -78,7 +85,8 @@ export function EventBlock({
               <div className='flex items-center justify-between text-white text-sm font-semibold truncate'>
                 {client.profileName}
                 <small>
-                  {format(setMinutes(appointment.date, appointment.timeRange.startAt), 'HH:mm')} - {format(setMinutes(appointment.date, appointment.timeRange.endAt), 'HH:mm')}
+                  {formatTime(appointment.timeRange.startAt)} -{' '}
+                  {formatTime(appointment.timeRange.endAt)}
                 </small>
               </div>
               <div className='text-white text-xs truncate'>{service.name}</div>
@@ -87,39 +95,129 @@ export function EventBlock({
             <div className='p-1 flex items-center justify-between text-white text-xs font-semibold truncate'>
               {client.profileName} - {service.name}
               <small>
-                {format(setMinutes(appointment.date, appointment.timeRange.startAt), 'HH:mm')} - {format(setMinutes(appointment.date, appointment.timeRange.endAt), 'HH:mm')}
+                {formatTime(appointment.timeRange.startAt)} -{' '}
+                {formatTime(appointment.timeRange.endAt)}
               </small>
             </div>
           )}
         </div>
       </DialogTrigger>
-      <DialogContent className='sm:max-w-[425px]'>
-        <DialogHeader>
-          <DialogTitle>
-            {client.profileName} - {service.name}
-          </DialogTitle>
-          <DialogDescription>{appointment.notes}</DialogDescription>
+      <DialogContent className='sm:max-w-[500px] p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg'>
+        <DialogHeader className='mb-4 border-b pb-2'>
+          <div className='flex items-center justify-between'>
+            <DialogTitle className='text-xl font-semibold'>
+              {client.profileName} - {service.name}
+            </DialogTitle>
+          </div>
+          <DialogDescription className='text-sm text-gray-500 dark:text-gray-400'>
+            {appointment.notes || 'Sin notas adicionales'}
+          </DialogDescription>
         </DialogHeader>
-        <div className='mt-4 space-y-2 text-sm'>
-          <div>
-            <span className='font-semibold'>Notes:</span> {appointment.notes}
+        <div className='space-y-5'>
+          <div className='flex items-center space-x-4'>
+            <Avatar className='h-12 w-12'>
+              <AvatarImage src={employee.photo} alt={employee.name} />
+              <AvatarFallback className='bg-background'>
+                {employee.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className='text-lg font-semibold'>{employee.name}</h3>
+              <p className='text-sm text-muted-foreground'>{employee.role}</p>
+            </div>
           </div>
-          <div>
-            <span className='font-semibold'>Employee:</span> {employee.name}
+
+          <div className='space-y-2'>
+            <div className='flex items-center space-x-2 text-sm'>
+              <CalendarIcon className='h-4 w-4 text-muted-foreground' />
+              <span className='font-medium'>Fecha:</span>
+              <span className='first-letter:uppercase'>
+                {format(
+                  new Date(appointment.date),
+                  "eeee d 'de' MMMM 'del' y",
+                  { locale: es }
+                )}
+              </span>
+            </div>
+            <div className='flex items-center space-x-2 text-sm'>
+              <ClockIcon className='h-4 w-4 text-muted-foreground' />
+              <span className='font-medium'>Hora:</span>
+              <span>
+                {formatTime(appointment.timeRange.startAt)} -{' '}
+                {formatTime(appointment.timeRange.endAt)}
+              </span>
+            </div>
           </div>
-          <div>
-            <span className='font-semibold'>Start:</span>{' '}
-            {appointment.date.toLocaleString()}
+
+          <div className='space-y-2'>
+            <h4 className='font-semibold'>Servicio</h4>
+            <Badge>{service.name}</Badge>
+            <p className='text-sm text-muted-foreground'>
+              {service.description}
+            </p>
+            <p className='text-sm font-medium'>
+              Precio: {service.price.amount} {service.price.currency}
+            </p>
           </div>
-          <div>
-            <span className='font-semibold'>End:</span>{' '}
-            {appointment.date.toLocaleString()}
+
+          <div className='space-y-2'>
+            <h4 className='font-semibold'>Cliente</h4>
+
+            <section className='flex items-center gap-2'>
+              <article className='relative'>
+                <Avatar>
+                  <AvatarFallback className='bg-background'>
+                    {client.profileName[0] || ''}
+                  </AvatarFallback>
+                </Avatar>
+                {PlatformIcon && (
+                  <div className='absolute -bottom-0.5 -right-0.5 rounded-full bg-white p-0.5 shadow-md'>
+                    <PlatformIcon
+                      size={14}
+                      className={cn(
+                        client.platformName.toLowerCase() === 'whatsapp' &&
+                          'text-green-500',
+                        client.platformName.toLowerCase() === 'facebook' &&
+                          'text-blue-500',
+                        client.platformName.toLowerCase() === 'instagram' &&
+                          'text-pink-500'
+                      )}
+                    />
+                  </div>
+                )}
+              </article>
+              <span>{client.profileName}</span>
+            </section>
           </div>
         </div>
-        <DialogClose asChild>
-          <Button className='mt-4 w-full'>Close</Button>
-        </DialogClose>
+
+        <div className='flex flex-col sm:flex-row justify-between gap-3 mt-6'>
+          {isBefore(
+            now('America/Mexico_City').toDate(),
+            setMinutes(
+              parseISO(appointment.date),
+              appointment.timeRange.startAt
+            )
+          ) && (
+            <Button
+              variant='destructive'
+              onClick={() => cancelAppointment(appointment._id)}
+              className='w-full sm:w-auto'
+            >
+              Cancelar
+            </Button>
+          )}
+          <DialogClose asChild>
+            <Button className='w-full sm:w-auto'>Cerrar</Button>
+          </DialogClose>
+        </div>
       </DialogContent>
     </Dialog>
   )
+}
+
+const formatTime = (minutes: number) => {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
 }

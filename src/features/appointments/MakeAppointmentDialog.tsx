@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { format, setMinutes } from 'date-fns'
+import { format } from 'date-fns'
+import { useQueryClient } from '@tanstack/react-query'
+import { now } from '@internationalized/date'
+import { es } from 'date-fns/locale/es'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/api/axiosInstance.ts'
@@ -24,18 +27,19 @@ import {
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
-import { Appointment, EmployeeAvailable, MinutesTimeRange } from '@/features/appointments/types.ts'
-import { es } from 'date-fns/locale/es'
-import { useQueryClient } from '@tanstack/react-query'
-import { now } from '@internationalized/date'
+import {
+  Appointment,
+  EmployeeAvailable,
+  MinutesTimeRange,
+} from '@/features/appointments/types.ts'
 
 export function MakeAppointmentDialog() {
   const [open, setOpen] = useState(false)
   const [clientId, setClientId] = useState('')
   const [serviceId, setServiceId] = useState('')
-  const [date, setDate] = useState<Date>(now("America/Mexico_City").toDate())
+  const [date, setDate] = useState<Date>(now('America/Mexico_City').toDate())
   const [availableSlots, setAvailableSlots] = useState<
-    { slot: MinutesTimeRange, employees: EmployeeAvailable[] }[]
+    { slot: MinutesTimeRange; employees: EmployeeAvailable[] }[]
   >([])
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [employeeId, setEmployeeId] = useState('')
@@ -68,7 +72,7 @@ export function MakeAppointmentDialog() {
       clientId,
       serviceId,
       employeeId,
-      date: date!,
+      date: format(date!, 'yyyy-MM-dd'),
       timeRange: JSON.parse(selectedSlot) satisfies MinutesTimeRange,
       notes: '',
     } satisfies Partial<Appointment>
@@ -77,7 +81,11 @@ export function MakeAppointmentDialog() {
       const result = await appointmentService.makeAppointment(appointmentData)
       if (result.id) {
         void queryClient.invalidateQueries({
-          queryKey: ['appointments', format(date, 'yyyy-MM-dd'), format(date, 'yyyy-MM-dd')],
+          queryKey: [
+            'appointments',
+            format(date, 'yyyy-MM-dd'),
+            format(date, 'yyyy-MM-dd'),
+          ],
         })
         toast.success('Cita agendada con éxito')
         setEmployeeId('')
@@ -139,11 +147,13 @@ export function MakeAppointmentDialog() {
             locale={es}
             mode='single'
             selected={date}
-            onSelect={(d)=>setDate(d as Date)}
+            onSelect={(d) => setDate(d as Date)}
           />
-          <Button disabled={loading || !serviceId} onClick={fetchAvailability}>Consultar disponibilidad</Button>
+          <Button disabled={loading || !serviceId} onClick={fetchAvailability}>
+            Consultar disponibilidad
+          </Button>
 
-          {availableSlots.length > 0? (
+          {availableSlots.length > 0 ? (
             <Select onValueChange={setSelectedSlot}>
               <SelectTrigger>
                 <SelectValue placeholder='Selecciona un horario' />
@@ -154,13 +164,16 @@ export function MakeAppointmentDialog() {
                     key={slot.slot.startAt}
                     value={JSON.stringify(slot.slot)}
                   >
-                    {formatSlotHour(slot.slot.startAt)} - {formatSlotHour(slot.slot.endAt)}
+                    {formatSlotHour(slot.slot.startAt)} -{' '}
+                    {formatSlotHour(slot.slot.endAt)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          ): (
-            <h4 className="text-center font-light text-sm">No hay horarios disponibles para este día</h4>
+          ) : (
+            <h4 className='text-center font-light text-sm'>
+              No hay horarios disponibles para este día
+            </h4>
           )}
 
           {selectedSlot && (
@@ -181,28 +194,33 @@ export function MakeAppointmentDialog() {
           )}
         </div>
         <DialogFooter>
-          <Button disabled={loading} onClick={handleSubmit}>Agendar</Button>
+          <Button disabled={loading} onClick={handleSubmit}>
+            Agendar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   )
 }
 
-function formatSlotHour(minutes:number) {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
+function formatSlotHour(minutes: number) {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
 
   // Determine period (AM/PM)
-  const period = hours < 12 ? 'AM' : 'PM';
+  const period = hours < 12 ? 'AM' : 'PM'
 
   // Convert to 12-hour format
-  const displayHours = hours === 0 ? 12 : // Midnight
-    hours > 12 ? hours - 12 : // PM
-      hours; // AM
+  const displayHours =
+    hours === 0
+      ? 12 // Midnight
+      : hours > 12
+        ? hours - 12 // PM
+        : hours // AM
 
   // Format minutes with leading zero if needed
-  const displayMinutes = mins.toString().padStart(2, '0');
+  const displayMinutes = mins.toString().padStart(2, '0')
 
   // Return formatted time
-  return `${displayHours}:${displayMinutes} ${period}`;
+  return `${displayHours}:${displayMinutes} ${period}`
 }

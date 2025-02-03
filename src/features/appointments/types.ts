@@ -73,7 +73,7 @@ export const appointment = z.object({
   clientId: z.string(),
   serviceId: z.string(),
   employeeId: z.string(),
-  date: z.date(),
+  date: z.string(),
   timeRange: z.object({
     startAt: z.number(),
     endAt: z.number(),
