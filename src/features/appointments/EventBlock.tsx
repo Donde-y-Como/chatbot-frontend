@@ -102,14 +102,14 @@ export function EventBlock({
           )}
         </div>
       </DialogTrigger>
-      <DialogContent className='sm:max-w-[500px] p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg'>
+      <DialogContent className='sm:max-w-[500px] p-6 bg-background rounded-lg shadow-lg'>
         <DialogHeader className='mb-4 border-b pb-2'>
           <div className='flex items-center justify-between'>
             <DialogTitle className='text-xl font-semibold'>
               {client.profileName} - {service.name}
             </DialogTitle>
           </div>
-          <DialogDescription className='text-sm text-gray-500 dark:text-gray-400'>
+          <DialogDescription className='text-sm text-foreground/50'>
             {appointment.notes || 'Sin notas adicionales'}
           </DialogDescription>
         </DialogHeader>
@@ -117,7 +117,7 @@ export function EventBlock({
           <div className='flex items-center space-x-4'>
             <Avatar className='h-12 w-12'>
               <AvatarImage src={employee.photo} alt={employee.name} />
-              <AvatarFallback className='bg-background'>
+              <AvatarFallback>
                 {employee.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
@@ -166,8 +166,8 @@ export function EventBlock({
             <section className='flex items-center gap-2'>
               <article className='relative'>
                 <Avatar>
-                  <AvatarFallback className='bg-background'>
-                    {client.profileName[0] || ''}
+                  <AvatarFallback>
+                    {client.profileName[0] || 'C'}
                   </AvatarFallback>
                 </Avatar>
                 {PlatformIcon && (
