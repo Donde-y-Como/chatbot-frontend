@@ -3,7 +3,9 @@
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { toast } from '@/hooks/use-toast'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { api } from '@/api/axiosInstance.ts'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -27,14 +29,24 @@ import { SelectDropdown } from '@/components/select-dropdown'
 import { Service } from '@/features/appointments/types'
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: 'El nombre del servicio es obligatorio.' }),
+  name: z
+    .string()
+    .min(1, { message: 'El nombre del servicio es obligatorio.' }),
   description: z.string().min(1, { message: 'La descripción es obligatoria.' }),
-  durationValue: z.number().min(1, { message: 'La duración debe ser al menos 1.' }),
+  durationValue: z.coerce
+    .number()
+    .min(1, { message: 'La duración debe ser al menos 1.' }),
   durationUnit: z.enum(['minutes', 'hours']),
-  priceAmount: z.number().min(0, { message: 'El precio debe ser al menos 0.' }),
+  priceAmount: z.coerce
+    .number()
+    .min(0, { message: 'El precio debe ser al menos 0.' }),
   priceCurrency: z.string().min(1, { message: 'La moneda es obligatoria.' }),
-  maxConcurrentBooks: z.number().min(1, { message: 'Debe permitir al menos 1 reserva.' }),
-  minBookingLeadHours: z.number().min(0, { message: 'El tiempo mínimo de anticipación debe ser de al menos 0 horas.' }),
+  maxConcurrentBooks: z.coerce
+    .number()
+    .min(1, { message: 'Debe permitir al menos 1 reserva.' }),
+  minBookingLeadHours: z.coerce.number().min(0, {
+    message: 'El tiempo mínimo de anticipación debe ser de al menos 0 horas.',
+  }),
 })
 type ServiceForm = z.infer<typeof formSchema>
 
@@ -44,40 +56,69 @@ interface Props {
   onOpenChange: (open: boolean) => void
 }
 
-export function ServiceActionDialog({ currentService, open, onOpenChange }: Props) {
+export function ServiceActionDialog({
+  currentService,
+  open,
+  onOpenChange,
+}: Props) {
   const isEdit = !!currentService
   const form = useForm<ServiceForm>({
     resolver: zodResolver(formSchema),
     defaultValues: isEdit
       ? {
-        ...currentService,
-        durationValue: currentService.duration.value,
-        durationUnit: currentService.duration.unit,
-        priceAmount: currentService.price.amount,
-        priceCurrency: currentService.price.currency,
-      }
+          ...currentService,
+          durationValue: currentService.duration.value,
+          durationUnit: currentService.duration.unit,
+          priceAmount: currentService.price.amount,
+          priceCurrency: currentService.price.currency,
+        }
       : {
-        name: '',
-        description: '',
-        durationValue: 30,
-        durationUnit: 'minutes',
-        priceAmount: 0,
-        priceCurrency: 'USD',
-        maxConcurrentBooks: 1,
-        minBookingLeadHours: 0,
-      },
+          name: '',
+          description: '',
+          durationValue: 30,
+          durationUnit: 'minutes',
+          priceAmount: 0,
+          priceCurrency: 'USD',
+          maxConcurrentBooks: 1,
+          minBookingLeadHours: 0,
+        },
   })
 
-  const onSubmit = (values: ServiceForm) => {
+  const queryClient = useQueryClient()
+
+  const serviceMutation = useMutation({
+    mutationKey: ['services-form'],
+    mutationFn: async (values: ServiceForm) => {
+      console.log('Saving service', values)
+      const body = {
+        ...values,
+        price: { amount: values.priceAmount, currency: values.priceCurrency },
+        duration: { unit: values.durationUnit, value: values.durationValue },
+      }
+
+      if(isEdit && currentService) {
+        const res = await api.put('/services/'+ currentService.id, body)
+        if (res.status != 201) throw new Error('Error al editar servicio')
+        return
+      }
+
+      const res = await api.post('/services', body)
+      if (res.status != 201) throw new Error('Error al guardar servicio')
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ['services']
+      })
+      toast.success('Servicio guardado con éxito')
+    },
+    onError: () => {
+      toast.error('Error al guardar servicio')
+    },
+  })
+
+  const onSubmit = async (values: ServiceForm) => {
+    serviceMutation.mutate(values)
     form.reset()
-    toast({
-      title: 'Se enviaron los siguientes valores:',
-      description: (
-        <pre className='mt-2 w-[340px] rounded-md bg-slate-950 p-4'>
-          <code className='text-white'>{JSON.stringify(values, null, 2)}</code>
-        </pre>
-      ),
-    })
     onOpenChange(false)
   }
 
@@ -91,9 +132,14 @@ export function ServiceActionDialog({ currentService, open, onOpenChange }: Prop
     >
       <DialogContent className='sm:max-w-lg'>
         <DialogHeader className='text-left'>
-          <DialogTitle>{isEdit ? 'Editar Servicio' : 'Agregar Nuevo Servicio'}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? 'Editar Servicio' : 'Agregar Nuevo Servicio'}
+          </DialogTitle>
           <DialogDescription>
-            {isEdit ? 'Actualiza el servicio aquí.' : 'Crea un nuevo servicio aquí.'} Haz clic en guardar cuando termines.
+            {isEdit
+              ? 'Actualiza el servicio aquí.'
+              : 'Crea un nuevo servicio aquí.'}{' '}
+            Haz clic en guardar cuando termines.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className='h-[26.25rem] w-full pr-4 -mr-4 py-1'>
@@ -123,7 +169,10 @@ export function ServiceActionDialog({ currentService, open, onOpenChange }: Prop
                   <FormItem>
                     <FormLabel>Descripción</FormLabel>
                     <FormControl>
-                      <Input placeholder='Descripción del servicio' {...field} />
+                      <Input
+                        placeholder='Descripción del servicio'
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -136,7 +185,11 @@ export function ServiceActionDialog({ currentService, open, onOpenChange }: Prop
                   <FormItem>
                     <FormLabel>Duración</FormLabel>
                     <FormControl>
-                      <Input type='number' placeholder='Valor de la duración' {...field} />
+                      <Input
+                        type='number'
+                        placeholder='Valor de la duración'
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -193,7 +246,11 @@ export function ServiceActionDialog({ currentService, open, onOpenChange }: Prop
                   <FormItem>
                     <FormLabel>Máximo de Reservas Concurrentes</FormLabel>
                     <FormControl>
-                      <Input type='number' placeholder='Número máximo de reservas' {...field} />
+                      <Input
+                        type='number'
+                        placeholder='Número máximo de reservas'
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -206,7 +263,11 @@ export function ServiceActionDialog({ currentService, open, onOpenChange }: Prop
                   <FormItem>
                     <FormLabel>Horas Mínimas de Anticipación</FormLabel>
                     <FormControl>
-                      <Input type='number' placeholder='Horas mínimas para reservar' {...field} />
+                      <Input
+                        type='number'
+                        placeholder='Horas mínimas para reservar'
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
