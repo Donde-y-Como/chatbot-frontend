@@ -47,7 +47,7 @@ export function EventBlock({
   const startMinutesRelative = eventStartMinutes - workHours.startAt
 
   // Calculate duration in minutes.
-  const duration = (appointment.timeRange.endAt - appointment.timeRange.startAt) / (1000 * 60)
+  const duration = (appointment.timeRange.endAt - appointment.timeRange.startAt)
 
   // Multiply by the pixel conversion factor.
   const topOffset = startMinutesRelative * MINUTE_HEIGHT
@@ -78,7 +78,7 @@ export function EventBlock({
               <div className='flex items-center justify-between text-white text-sm font-semibold truncate'>
                 {client.profileName}
                 <small>
-                  {format(setMinutes(new Date(), appointment.timeRange.startAt), 'HH:mm')} - {format(setMinutes(new Date(), appointment.timeRange.endAt), 'HH:mm')}
+                  {format(setMinutes(appointment.date, appointment.timeRange.startAt), 'HH:mm')} - {format(setMinutes(appointment.date, appointment.timeRange.endAt), 'HH:mm')}
                 </small>
               </div>
               <div className='text-white text-xs truncate'>{service.name}</div>
@@ -87,7 +87,7 @@ export function EventBlock({
             <div className='p-1 flex items-center justify-between text-white text-xs font-semibold truncate'>
               {client.profileName} - {service.name}
               <small>
-                {format(setMinutes(new Date(), appointment.timeRange.startAt), 'HH:mm')} - {format(setMinutes(new Date(), appointment.timeRange.endAt), 'HH:mm')}
+                {format(setMinutes(appointment.date, appointment.timeRange.startAt), 'HH:mm')} - {format(setMinutes(appointment.date, appointment.timeRange.endAt), 'HH:mm')}
               </small>
             </div>
           )}

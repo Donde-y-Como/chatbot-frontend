@@ -34,7 +34,6 @@ export function usePositionedEvents({
   }
 
   return useMemo(() => {
-    // Sort the filtered appointments by their computed start time.
     const sorted = [...filteredAppointments].sort(
       (a, b) => getStartTime(a) - getStartTime(b)
     )

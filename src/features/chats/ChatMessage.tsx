@@ -22,7 +22,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         {message.content && (<div
           onClick={() => setShowTime(!showTime)}
           className={cn(
-            "px-4 py-2 rounded-2xl break-words cursor-pointer",
+            "px-4 py-2 rounded-2xl break-words cursor-pointer overflow-hidden",
             isUser
               ? "bg-gray-200 text-gray-900"
               : "bg-blue-500 text-white"
