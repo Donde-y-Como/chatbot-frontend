@@ -16,7 +16,7 @@ export function Calendar() {
         id: '1',
         employeeId: '0c54613ab2c',
         start: setMinutes(new Date(), 900),
-        end: setMinutes(new Date(), 960),
+        end: setMinutes(new Date(),930),
         serviceId: 'a19eb22f-17bd-449a-9c29-cbefa2683bc9',
         client: 'adsadsads',
         service: 'adsads',

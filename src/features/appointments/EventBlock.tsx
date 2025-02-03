@@ -62,7 +62,7 @@ export function EventBlock({
     <Dialog>
       <DialogTrigger asChild>
         <div
-          className='absolute rounded p-2 overflow-hidden cursor-pointer transition-opacity hover:opacity-90'
+          className='absolute rounded  overflow-hidden cursor-pointer transition-opacity hover:opacity-90'
           style={{
             top: `${adjustedTopOffset}px`,
             height: `${adjustedEventHeight}px`,
@@ -71,25 +71,36 @@ export function EventBlock({
             backgroundColor: employee.color,
           }}
         >
-          <div className='flex items-center justify-between text-white text-sm font-semibold truncate'>
-            {event.client}
-            <small>
-              {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
-            </small>
-          </div>
-          <div className='text-white text-xs truncate'>{service.name}</div>
+          { adjustedEventHeight >= MINUTE_HEIGHT * 60 - verticalGap ? (
+            <div className="p-2">
+              <div className="flex items-center justify-between text-white text-sm font-semibold truncate">
+                {event.client}
+                <small>
+                  {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
+                </small>
+              </div>
+              <div className="text-white text-xs truncate">{service.name}</div>
+            </div>
+          ) : (
+            <div className="p-1 flex items-center justify-between text-white text-xs font-semibold truncate">
+              {event.client} - {service.name}
+              <small>
+                {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
+              </small>
+            </div>
+          )}
         </div>
       </DialogTrigger>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
             {event.client} - {event.service}
           </DialogTitle>
           <DialogDescription>{event.notes}</DialogDescription>
         </DialogHeader>
-        <div className='mt-4 space-y-2 text-sm'>
+        <div className="mt-4 space-y-2 text-sm">
           <div>
-            <span className='font-semibold'>Status:</span> {event.status}
+          <span className='font-semibold'>Status:</span> {event.status}
           </div>
           <div>
             <span className='font-semibold'>Employee:</span> {employee.name}
