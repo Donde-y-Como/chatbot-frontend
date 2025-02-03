@@ -1,17 +1,17 @@
 import { api } from '@/api/axiosInstance'
 import { Appointment, Employee, Service, Schedule } from '@/features/appointments/types.ts'
-const generatePastelColor = (seed: string) => {
-  let hash = 0
-  for (let i = 0; i < seed.length; i++) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash)
-  }
 
-  const r = ((hash & 0xFF0000) >> 16) & 0x7F + 128
-  const g = ((hash & 0x00FF00) >> 8) & 0x7F + 128
-  const b = (hash & 0x0000FF) & 0x7F + 128
+const generateDistantPastels = (seed:number, count = 5) => {
+  const rand = ((seed * 9301 + 49297) % 233280) / 233280;
+  const startHue = rand * 360;
+  const hueStep = 360 / count;
 
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
-}
+  return Array.from({ length: count }, (_, i) => {
+    const hue = (startHue + i * hueStep) % 360;
+    return `hsl(${hue}, 75%, 65%)`;
+  });
+};
+
 
 export const appointmentService = {
   getAppointments: async (startDate: string, endDate: string) => {
@@ -25,9 +25,10 @@ export const appointmentService = {
 
   getEmployees: async(): Promise<Employee[]> => {
     const response = await api.get<Omit<Employee,"color">[]>('/employees')
-    return response.data.map((emp) => ({
+    const colors = generateDistantPastels(42, response.data.length);
+    return response.data.map((emp, i) => ({
       ...emp,
-      color: generatePastelColor(emp.id)
+      color: colors[i]
     }))
   },
 

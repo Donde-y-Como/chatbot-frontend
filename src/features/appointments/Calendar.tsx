@@ -25,7 +25,7 @@ export function Calendar() {
       } satisfies Event,
       {
         id: '2',
-        employeeId: '6dd415cd6ef',
+        employeeId: 'f44b57cc5a3',
         start: setMinutes(new Date(), 900),
         end: setMinutes(new Date(), 960),
         serviceId: 'haircut-id',
@@ -34,6 +34,19 @@ export function Calendar() {
         notes: '',
         status: 'scheduled',
       } satisfies Event,
+      {
+        id: '3',
+        employeeId: '91b7f1845ce',
+        start: setMinutes(new Date(), 1000),
+        end: setMinutes(new Date(), 1060),
+        serviceId: 'haircut-id',
+        client: 'adsadsads',
+        service: 'adsads',
+        notes: '',
+        status: 'scheduled',
+      } satisfies Event,
+
+
     ],
     []
   )
