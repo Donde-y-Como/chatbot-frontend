@@ -1,6 +1,6 @@
 import { createLazyFileRoute } from '@tanstack/react-router'
-import Users from '@/features/users'
+import Employees from '@/features/employees'
 
-export const Route = createLazyFileRoute('/_authenticated/users/')({
-  component: Users,
+export const Route = createLazyFileRoute('/_authenticated/empleados/')({
+  component: Employees,
 })

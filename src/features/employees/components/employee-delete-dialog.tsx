@@ -1,37 +1,53 @@
 'use client'
 
 import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { IconAlertTriangle } from '@tabler/icons-react'
-import { toast } from '@/hooks/use-toast'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { toast } from 'sonner'
+import { api } from '@/api/axiosInstance.ts'
+// import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { User } from '../data/schema'
+import { Employee } from '@/features/appointments/types.ts'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  currentRow: User
+  currentRow: Employee
 }
 
-export function UsersDeleteDialog({ open, onOpenChange, currentRow }: Props) {
+export function EmployeeDeleteDialog({
+                                       open,
+                                       onOpenChange,
+                                       currentRow,
+                                     }: Props) {
   const [value, setValue] = useState('')
+  const queryClient = useQueryClient()
+  const deleteEmployeeMutation = useMutation({
+    mutationKey: ['delete-employee'],
+    async mutationFn() {
+      const res = await api.delete(`/employees/${currentRow.id}`);
+      if(res.status !== 200) throw new Error('Error deleting employees')
+    },
+    onSuccess: () => {
+      toast.success(
+        'El empleado ' + currentRow.name + ' ha sido eliminado correctamente.'
+      )
+      onOpenChange(false)
+      void queryClient.setQueryData<Employee[]>(['employees'], (oldEmployees) => {
+        if (oldEmployees === undefined) return oldEmployees
+        return oldEmployees.filter((employee) => employee.id !== currentRow.id)
+      })
+    },
+    onError: () => {
+      toast.error('Hubo un error al eliminar el empleado ' + currentRow.name)
+    }
+  })
 
   const handleDelete = () => {
-    if (value.trim() !== currentRow.username) return
-
-    onOpenChange(false)
-    toast({
-      title: 'The following user has been deleted:',
-      description: (
-        <pre className='mt-2 w-[340px] rounded-md bg-slate-950 p-4'>
-          <code className='text-white'>
-            {JSON.stringify(currentRow, null, 2)}
-          </code>
-        </pre>
-      ),
-    })
+    if (value.trim() !== currentRow.name) return
+    deleteEmployeeMutation.mutate()
   }
 
   return (
@@ -39,47 +55,42 @@ export function UsersDeleteDialog({ open, onOpenChange, currentRow }: Props) {
       open={open}
       onOpenChange={onOpenChange}
       handleConfirm={handleDelete}
-      disabled={value.trim() !== currentRow.username}
+      disabled={value.trim() !== currentRow.name}
       title={
         <span className='text-destructive'>
           <IconAlertTriangle
             className='mr-1 inline-block stroke-destructive'
             size={18}
           />{' '}
-          Delete User
+          Eliminar empleado
         </span>
       }
       desc={
         <div className='space-y-4'>
           <p className='mb-2'>
-            Are you sure you want to delete{' '}
-            <span className='font-bold'>{currentRow.username}</span>?
+            Estas seguro de eliminar{' '}
+            <span className='font-bold'>{currentRow.name}</span>?
             <br />
-            This action will permanently remove the user with the role of{' '}
-            <span className='font-bold'>
-              {currentRow.role.toUpperCase()}
-            </span>{' '}
-            from the system. This cannot be undone.
+            Esta acción es permanente y puede afectar a sus citas creadas.
           </p>
 
           <Label className='my-2'>
-            Username:
             <Input
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder='Enter username to confirm deletion.'
+              placeholder={`Escribe ${currentRow.name} para confirmar.`}
             />
           </Label>
 
-          <Alert variant='destructive'>
-            <AlertTitle>Warning!</AlertTitle>
-            <AlertDescription>
-              Please be carefull, this operation can not be rolled back.
-            </AlertDescription>
-          </Alert>
+          {/*<Alert variant='destructive'>*/}
+          {/*  <AlertTitle>Aguas!</AlertTitle>*/}
+          {/*  <AlertDescription>*/}
+          {/*    Por favor sé cuidadoso al eliminar servicios, esta acción no se puede deshacer.*/}
+          {/*  </AlertDescription>*/}
+          {/*</Alert>*/}
         </div>
       }
-      confirmText='Delete'
+      confirmText='Eliminar'
       destructive
     />
   )

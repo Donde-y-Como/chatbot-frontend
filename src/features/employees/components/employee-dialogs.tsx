@@ -1,27 +1,20 @@
-import { useUsers } from '../context/users-context'
-import { UsersActionDialog } from './users-action-dialog'
-import { UsersDeleteDialog } from './users-delete-dialog'
-import { UsersInviteDialog } from './users-invite-dialog'
+import { useEmployees } from '../context/users-context'
+import { EmployeeActionDialog } from './employee-action-dialog.tsx'
+import { EmployeeDeleteDialog } from './employee-delete-dialog.tsx'
 
-export function UsersDialogs() {
-  const { open, setOpen, currentRow, setCurrentRow } = useUsers()
+export function EmployeeDialogs() {
+  const { open, setOpen, currentRow, setCurrentRow } = useEmployees()
   return (
     <>
-      <UsersActionDialog
+      <EmployeeActionDialog
         key='user-add'
         open={open === 'add'}
         onOpenChange={() => setOpen('add')}
       />
 
-      <UsersInviteDialog
-        key='user-invite'
-        open={open === 'invite'}
-        onOpenChange={() => setOpen('invite')}
-      />
-
       {currentRow && (
         <>
-          <UsersActionDialog
+          <EmployeeActionDialog
             key={`user-edit-${currentRow.id}`}
             open={open === 'edit'}
             onOpenChange={() => {
@@ -33,7 +26,7 @@ export function UsersDialogs() {
             currentRow={currentRow}
           />
 
-          <UsersDeleteDialog
+          <EmployeeDeleteDialog
             key={`user-delete-${currentRow.id}`}
             open={open === 'delete'}
             onOpenChange={() => {

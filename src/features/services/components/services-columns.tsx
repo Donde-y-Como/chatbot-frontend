@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import LongText from '@/components/long-text'
 import { Service } from '@/features/appointments/types.ts'
-import { DataTableColumnHeader } from './data-table-column-header'
+import { DataTableColumnHeader } from '@/components/tables/data-table-column-header'
 import { DataTableRowActions } from './data-table-row-actions'
 
 export const columns: ColumnDef<Service>[] = [

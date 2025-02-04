@@ -25,8 +25,8 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { PasswordInput } from '@/components/password-input'
 import { SelectDropdown } from '@/components/select-dropdown'
+import { Employee } from '@/features/appointments/types.ts'
 import { userTypes } from '../data/data'
-import { User } from '../data/schema'
 
 const formSchema = z
   .object({
@@ -89,12 +89,16 @@ const formSchema = z
 type UserForm = z.infer<typeof formSchema>
 
 interface Props {
-  currentRow?: User
+  currentRow?: Employee
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
+export function EmployeeActionDialog({
+  currentRow,
+  open,
+  onOpenChange,
+}: Props) {
   const isEdit = !!currentRow
   const form = useForm<UserForm>({
     resolver: zodResolver(formSchema),

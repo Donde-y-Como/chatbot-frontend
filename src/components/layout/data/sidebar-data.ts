@@ -1,4 +1,4 @@
-import { IconChecklist, IconLayoutDashboard, IconMessages, IconPackages } from '@tabler/icons-react'
+import { IconChecklist, IconMessages, IconPackages, IconUsers } from '@tabler/icons-react'
 import { Command } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -35,12 +35,11 @@ export const sidebarData: SidebarData = {
           url: '/servicios',
           icon: IconPackages,
         },
-
-        // {
-        //   title: 'Empleados',
-        //   url: '/users',
-        //   icon: IconUsers,
-        // },
+        {
+          title: 'Empleados',
+          url: '/empleados',
+          icon: IconUsers,
+        },
       ],
     },
     // {

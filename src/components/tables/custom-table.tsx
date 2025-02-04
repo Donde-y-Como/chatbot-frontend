@@ -2,9 +2,6 @@ import { useState } from 'react'
 import {
   ColumnDef,
   ColumnFiltersState,
-  RowData,
-  SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFacetedRowModel,
@@ -12,7 +9,10 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  RowData,
+  SortingState,
   useReactTable,
+  VisibilityState,
 } from '@tanstack/react-table'
 import {
   Table,
@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/table'
 import { DataTablePagination } from './data-table-pagination'
 import { DataTableToolbar } from './data-table-toolbar'
-import { Employee, Service } from '@/features/appointments/types.ts'
 
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
@@ -32,12 +31,12 @@ declare module '@tanstack/react-table' {
   }
 }
 
-interface DataTableProps {
-  columns: ColumnDef<Employee | Service>[]
-  data: Employee[] | Service[]
+interface DataTableProps<T> {
+  columns: ColumnDef<T>[]
+  data: T[]
 }
 
-export function CustomTable({ columns, data }: DataTableProps) {
+export function CustomTable<T>({ columns, data }: DataTableProps<T>) {
   const [rowSelection, setRowSelection] = useState({})
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
