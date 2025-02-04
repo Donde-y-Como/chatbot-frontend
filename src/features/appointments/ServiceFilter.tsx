@@ -15,7 +15,7 @@ export function ServiceFilter({
                                 onServiceSelect,
                               }: ServiceFilterProps) {
   return (
-    <ScrollArea orientation="horizontal" className="w-full overflow-x-auto overflow-y-hidden whitespace-nowrap">
+    <ScrollArea orientation="horizontal" className="w-full overflow-x-auto overflow-y-hidden min-h-fit whitespace-nowrap">
       <div className="flex space-x-2 p-4 ml-16">
         <Badge
           variant={selectedService === 'all' ? 'default' : 'secondary'}
