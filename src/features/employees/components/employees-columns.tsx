@@ -1,5 +1,5 @@
 import React from 'react'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { ColumnDef } from '@tanstack/react-table'
 import { es } from 'date-fns/locale/es'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx'
@@ -73,7 +73,7 @@ export const columns: ColumnDef<Employee>[] = [
     cell: ({ row }) => (
       <div>
         {row.original.birthDate
-          ? format(row.original.birthDate, 'd/M/y', { locale: es })
+          ? format(parseISO(row.original.birthDate), 'd/M/y', { locale: es })
           : ''}
       </div>
     ),

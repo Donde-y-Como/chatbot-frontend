@@ -1,18 +1,23 @@
 import { useState } from 'react'
 import { es } from 'date-fns/locale/es'
-import { MenuIcon } from 'lucide-react'
+import { ChevronDown, MenuIcon } from 'lucide-react'
+import { cn } from '@/lib/utils.ts'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
+import { Checkbox } from '@/components/ui/checkbox.tsx'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
+import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { useSidebar } from '@/components/ui/sidebar.tsx'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
+import { CreateEventDialog } from '@/features/appointments/CreateEventDialog.tsx'
 import { EmployeesSelector } from '@/features/appointments/EmployeesSelector.tsx'
 import { MakeAppointmentDialog } from '@/features/appointments/MakeAppointmentDialog.tsx'
-import type { Employee } from './types'
+import type { Employee, Event } from './types'
+import { ViewEvents } from '@/features/appointments/ViewEvents.tsx'
 
 interface SidebarProps {
   selectedDate: Date
@@ -31,6 +36,7 @@ export function CalendarSidebar({
 }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true)
   const [isEmployeesOpen, setIsEmployeesOpen] = useState(true)
+  const [isEventsOpen, setIsEventsOpen] = useState(true)
   const { open: mainSidebarOpen } = useSidebar()
 
   if (!employees) return <CalendarSidebarSkeleton />
@@ -53,26 +59,40 @@ export function CalendarSidebar({
             </Button>
           </CollapsibleTrigger>
 
-          <CollapsibleContent className='space-y-6  '>
-            <MakeAppointmentDialog />
-            <div className='relative rounded-xl border w-full grid place-items-center  hover:shadow-lg'>
-              <Calendar
-                required
-                locale={es}
-                mode='single'
-                selected={selectedDate}
-                onSelect={(d) => setSelectedDate(d as Date)}
+          <ScrollArea className='h-screen pr-3'>
+            <CollapsibleContent className='mb-10 h-full space-y-6 flex flex-col'>
+              <MakeAppointmentDialog />
+              <CreateEventDialog />
+              <div className='relative rounded-xl border w-full grid place-items-center  hover:shadow-lg'>
+                <Calendar
+                  required
+                  locale={es}
+                  mode='single'
+                  selected={selectedDate}
+                  onSelect={(d) => setSelectedDate(d as Date)}
+                />
+              </div>
+              <EmployeesSelector
+                employees={employees}
+                selectedEmployees={selectedEmployees}
+                setSelectedEmployees={setSelectedEmployees}
+                isEmployeesOpen={isEmployeesOpen}
+                setIsEmployeesOpen={setIsEmployeesOpen}
               />
-            </div>
-            <EmployeesSelector
-              employees={employees}
-              selectedEmployees={selectedEmployees}
-              setSelectedEmployees={setSelectedEmployees}
-              isEmployeesOpen={isEmployeesOpen}
-              setIsEmployeesOpen={setIsEmployeesOpen}
-            />
-            <br />
-          </CollapsibleContent>
+
+              <ViewEvents
+                employees={employees}
+                selectedEmployees={selectedEmployees}
+                setSelectedEmployees={setSelectedEmployees}
+                isEventsOpen={isEventsOpen}
+                setIsEventsOpen={setIsEventsOpen}
+              />
+
+              <br />
+              <br />
+              <br />
+            </CollapsibleContent>
+          </ScrollArea>
         </div>
       </Collapsible>
     </div>

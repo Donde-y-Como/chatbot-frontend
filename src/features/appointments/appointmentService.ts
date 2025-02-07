@@ -1,7 +1,9 @@
 import { api } from '@/api/axiosInstance'
 import {
-  Appointment, AppointmentCreated,
+  Appointment,
+  AppointmentCreated,
   Employee,
+  Event,
   Schedule,
   Service,
 } from '@/features/appointments/types.ts'
@@ -19,7 +21,6 @@ const generateDistantPastels = (seed: number, count = 5) => {
 }
 
 export const appointmentService = {
-
   cancelAppointment: async (appointmentId: string) => {
     await api.delete(`/appointments/${appointmentId}`)
   },
@@ -62,6 +63,16 @@ export const appointmentService = {
 
   getClients: async () => {
     const response = await api.get<Client[]>('/clients')
+    return response.data
+  },
+
+  createEvent: async (event: Omit<Event, "id">) => {
+    const response = await api.post('/events', event)
+    return response.status === 201
+  },
+
+  getEvents: async () => {
+    const response = await api.get<Event[]>('/events')
     return response.data
   },
 }

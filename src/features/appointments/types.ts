@@ -39,13 +39,29 @@ export interface Employee {
   schedule: Record<string, MinutesTimeRange>
   photo: string | undefined
   address?: string
-  birthDate?: Date
+  birthDate?: string
   createdAt: Date
   color: string
 }
 
+export type Event = {
+  id: string
+  name: string
+  description: string | null
+  startDate: string
+  endDate: string
+  startTime: number
+  endTime: number
+  capacity: number | null
+  price: number
+  isLimited: boolean
+  repeatEvery: 'never' | 'day' | 'week' | 'month' | 'year'
+}
 
-export type EmployeeAvailable = Pick<Employee, 'id' | 'name' | 'email' | 'photo'>
+export type EmployeeAvailable = Pick<
+  Employee,
+  'id' | 'name' | 'email' | 'photo'
+>
 
 export interface MinutesTimeRange {
   startAt: number

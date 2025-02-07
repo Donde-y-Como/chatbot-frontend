@@ -24,7 +24,7 @@ export function EmployeesSelector({
     <Collapsible
       open={isEmployeesOpen}
       onOpenChange={setIsEmployeesOpen}
-      className='rounded-lg  border p-4 transition-all duration-300 hover:shadow-lg'
+      className='rounded-lg  border p-4 transition-all duration-300 hover:shadow-lg mb-10'
     >
       <div className='flex items-center justify-between'>
         <h3 className='font-semibold text-primary/90'>Empleados</h3>
@@ -40,7 +40,7 @@ export function EmployeesSelector({
         </CollapsibleTrigger>
       </div>
 
-      <CollapsibleContent className='mt-2'>
+      <CollapsibleContent className=''>
         {employees.map((employee: Employee) => (
           <label
             htmlFor={'check-' + employee.id}
@@ -70,6 +70,7 @@ export function EmployeesSelector({
           </label>
         ))}
       </CollapsibleContent>
+
     </Collapsible>
   )
 }
