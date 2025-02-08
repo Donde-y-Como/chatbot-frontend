@@ -23,7 +23,7 @@ export function EmployeeDialogs() {
                 setCurrentRow(null)
               }, 500)
             }}
-            currentRow={currentRow}
+            currentEmployee={currentRow}
           />
 
           <EmployeeDeleteDialog

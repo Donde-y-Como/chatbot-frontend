@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { es } from 'date-fns/locale/es'
-import { ChevronDown, MenuIcon } from 'lucide-react'
-import { cn } from '@/lib/utils.ts'
+import { MenuIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import { Checkbox } from '@/components/ui/checkbox.tsx'
 import {
   Collapsible,
   CollapsibleContent,
@@ -16,8 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { CreateEventDialog } from '@/features/appointments/CreateEventDialog.tsx'
 import { EmployeesSelector } from '@/features/appointments/EmployeesSelector.tsx'
 import { MakeAppointmentDialog } from '@/features/appointments/MakeAppointmentDialog.tsx'
-import type { Employee, Event } from './types'
 import { ViewEvents } from '@/features/appointments/ViewEvents.tsx'
+import type { Employee } from './types'
 
 interface SidebarProps {
   selectedDate: Date
@@ -81,9 +79,6 @@ export function CalendarSidebar({
               />
 
               <ViewEvents
-                employees={employees}
-                selectedEmployees={selectedEmployees}
-                setSelectedEmployees={setSelectedEmployees}
                 isEventsOpen={isEventsOpen}
                 setIsEventsOpen={setIsEventsOpen}
               />
