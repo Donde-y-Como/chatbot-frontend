@@ -23,6 +23,7 @@ export function ServicesDeleteDialog({
   currentRow,
 }: Props) {
   const [value, setValue] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const queryClient = useQueryClient()
   const deleteServiceMutation = useMutation({
     mutationKey: ['delete-service'],
@@ -46,7 +47,8 @@ export function ServicesDeleteDialog({
   })
 
   const handleDelete = () => {
-    if (value.trim() !== currentRow.name) return
+    if (value.trim() !== currentRow.name.trim()) return
+    setIsLoading(true)
     deleteServiceMutation.mutate()
   }
 
@@ -55,7 +57,7 @@ export function ServicesDeleteDialog({
       open={open}
       onOpenChange={onOpenChange}
       handleConfirm={handleDelete}
-      disabled={value.trim() !== currentRow.name}
+      disabled={value.trim() !== currentRow.name.trim() || isLoading}
       title={
         <span className='text-destructive'>
           <IconAlertTriangle
@@ -75,10 +77,13 @@ export function ServicesDeleteDialog({
           </p>
 
           <Label className='my-2'>
+            <p className="my-2">{`Escribe ${currentRow.name} para confirmar.`}</p>
             <Input
               value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder={`Escribe ${currentRow.name} para confirmar.`}
+              onChange={(e) => {
+                console.log(e.target.value === currentRow.name)
+                setValue(e.target.value)
+              }}
             />
           </Label>
 
