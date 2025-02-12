@@ -9,14 +9,9 @@ import { handleServerError } from '@/utils/handle-server-error.ts'
 import { toast } from 'sonner'
 import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 import { makeLastMessageContent } from '@/features/chats/hooks/makeLastMessageContent.ts'
+import { playNotification } from '@/lib/audio.ts'
 
 export const socket = io(import.meta.env.VITE_WS_URL || 'http://localhost:3000')
-const notification = new Audio('/notification.mp3')
-
-function playNotification() {
-  notification.currentTime = 0
-  notification.play().catch(() => {})
-}
 
 socket.on(
   'newClientMessage',
