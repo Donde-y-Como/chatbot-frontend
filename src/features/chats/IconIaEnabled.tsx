@@ -22,7 +22,7 @@ export function IconIaEnabled({ onToggle, enabled, tooltip }) {
         </motion.div>
       </motion.div>
       <span
-        className="absolute left-full ml-2 scale-0 rounded bg-popover p-2 text-xs text-popover-foreground group-hover:scale-100 whitespace-nowrap shadow-md">
+        className="absolute right-full bottom-0 scale-0 rounded bg-popover p-2 text-xs text-popover-foreground group-hover:scale-100 whitespace-nowrap shadow-md">
         {tooltip}
       </span>
     </div>
