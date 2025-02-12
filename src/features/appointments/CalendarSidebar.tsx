@@ -60,7 +60,7 @@ export function CalendarSidebar({
           <ScrollArea className='h-screen pr-3'>
             <CollapsibleContent className='mb-10 h-full space-y-6 flex flex-col'>
               <MakeAppointmentDialog />
-              <CreateEventDialog />
+              {/*<CreateEventDialog />*/}
               <div className='relative rounded-xl border w-full grid place-items-center  hover:shadow-lg'>
                 <Calendar
                   required
@@ -78,10 +78,10 @@ export function CalendarSidebar({
                 setIsEmployeesOpen={setIsEmployeesOpen}
               />
 
-              <ViewEvents
-                isEventsOpen={isEventsOpen}
-                setIsEventsOpen={setIsEventsOpen}
-              />
+              {/*<ViewEvents*/}
+              {/*  isEventsOpen={isEventsOpen}*/}
+              {/*  setIsEventsOpen={setIsEventsOpen}*/}
+              {/*/>*/}
 
               <br />
               <br />

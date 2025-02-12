@@ -27,6 +27,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
 import { Event } from '@/features/appointments/types.ts'
+import { Plus } from 'lucide-react'
 
 export function CreateEventDialog() {
   // Estado del formulario
@@ -331,7 +332,7 @@ export function CreateEventDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className='w-full bg-primary hover:bg-primary/90 transition-all duration-300'>
-          Crear Evento
+          <Plus className='mr-2 h-4 w-4 animate-pulse' /> Crear Evento
         </Button>
       </DialogTrigger>
       <DialogContent>
