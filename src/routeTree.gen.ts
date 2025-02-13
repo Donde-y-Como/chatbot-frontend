@@ -41,6 +41,9 @@ const AuthenticatedSettingsIndexLazyImport = createFileRoute(
 const AuthenticatedServiciosIndexLazyImport = createFileRoute(
   '/_authenticated/servicios/',
 )()
+const AuthenticatedEventosIndexLazyImport = createFileRoute(
+  '/_authenticated/eventos/',
+)()
 const AuthenticatedEmpleadosIndexLazyImport = createFileRoute(
   '/_authenticated/empleados/',
 )()
@@ -186,6 +189,15 @@ const AuthenticatedServiciosIndexLazyRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any).lazy(() =>
     import('./routes/_authenticated/servicios/index.lazy').then((d) => d.Route),
+  )
+
+const AuthenticatedEventosIndexLazyRoute =
+  AuthenticatedEventosIndexLazyImport.update({
+    id: '/eventos/',
+    path: '/eventos/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/eventos/index.lazy').then((d) => d.Route),
   )
 
 const AuthenticatedEmpleadosIndexLazyRoute =
@@ -407,6 +419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEmpleadosIndexLazyImport
       parentRoute: typeof AuthenticatedRouteImport
     }
+    '/_authenticated/eventos/': {
+      id: '/_authenticated/eventos/'
+      path: '/eventos'
+      fullPath: '/eventos'
+      preLoaderRoute: typeof AuthenticatedEventosIndexLazyImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
     '/_authenticated/servicios/': {
       id: '/_authenticated/servicios/'
       path: '/servicios'
@@ -458,6 +477,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
   AuthenticatedCitasIndexLazyRoute: typeof AuthenticatedCitasIndexLazyRoute
   AuthenticatedEmpleadosIndexLazyRoute: typeof AuthenticatedEmpleadosIndexLazyRoute
+  AuthenticatedEventosIndexLazyRoute: typeof AuthenticatedEventosIndexLazyRoute
   AuthenticatedServiciosIndexLazyRoute: typeof AuthenticatedServiciosIndexLazyRoute
 }
 
@@ -468,6 +488,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
   AuthenticatedCitasIndexLazyRoute: AuthenticatedCitasIndexLazyRoute,
   AuthenticatedEmpleadosIndexLazyRoute: AuthenticatedEmpleadosIndexLazyRoute,
+  AuthenticatedEventosIndexLazyRoute: AuthenticatedEventosIndexLazyRoute,
   AuthenticatedServiciosIndexLazyRoute: AuthenticatedServiciosIndexLazyRoute,
 }
 
@@ -495,6 +516,7 @@ export interface FileRoutesByFullPath {
   '/chats': typeof AuthenticatedChatsIndexRoute
   '/citas': typeof AuthenticatedCitasIndexLazyRoute
   '/empleados': typeof AuthenticatedEmpleadosIndexLazyRoute
+  '/eventos': typeof AuthenticatedEventosIndexLazyRoute
   '/servicios': typeof AuthenticatedServiciosIndexLazyRoute
   '/settings/': typeof AuthenticatedSettingsIndexLazyRoute
 }
@@ -518,6 +540,7 @@ export interface FileRoutesByTo {
   '/chats': typeof AuthenticatedChatsIndexRoute
   '/citas': typeof AuthenticatedCitasIndexLazyRoute
   '/empleados': typeof AuthenticatedEmpleadosIndexLazyRoute
+  '/eventos': typeof AuthenticatedEventosIndexLazyRoute
   '/servicios': typeof AuthenticatedServiciosIndexLazyRoute
   '/settings': typeof AuthenticatedSettingsIndexLazyRoute
 }
@@ -545,6 +568,7 @@ export interface FileRoutesById {
   '/_authenticated/chats/': typeof AuthenticatedChatsIndexRoute
   '/_authenticated/citas/': typeof AuthenticatedCitasIndexLazyRoute
   '/_authenticated/empleados/': typeof AuthenticatedEmpleadosIndexLazyRoute
+  '/_authenticated/eventos/': typeof AuthenticatedEventosIndexLazyRoute
   '/_authenticated/servicios/': typeof AuthenticatedServiciosIndexLazyRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexLazyRoute
 }
@@ -572,6 +596,7 @@ export interface FileRouteTypes {
     | '/chats'
     | '/citas'
     | '/empleados'
+    | '/eventos'
     | '/servicios'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
@@ -594,6 +619,7 @@ export interface FileRouteTypes {
     | '/chats'
     | '/citas'
     | '/empleados'
+    | '/eventos'
     | '/servicios'
     | '/settings'
   id:
@@ -619,6 +645,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chats/'
     | '/_authenticated/citas/'
     | '/_authenticated/empleados/'
+    | '/_authenticated/eventos/'
     | '/_authenticated/servicios/'
     | '/_authenticated/settings/'
   fileRoutesById: FileRoutesById
@@ -686,6 +713,7 @@ export const routeTree = rootRoute
         "/_authenticated/chats/",
         "/_authenticated/citas/",
         "/_authenticated/empleados/",
+        "/_authenticated/eventos/",
         "/_authenticated/servicios/"
       ]
     },
@@ -763,6 +791,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/empleados/": {
       "filePath": "_authenticated/empleados/index.lazy.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/eventos/": {
+      "filePath": "_authenticated/eventos/index.lazy.ts",
       "parent": "/_authenticated"
     },
     "/_authenticated/servicios/": {
