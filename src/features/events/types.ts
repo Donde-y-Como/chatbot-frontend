@@ -19,7 +19,7 @@ export type DurationPrimitives = {
 
 export type CapacityPrimitives = {
   isLimited: boolean
-  maxCapacity?: number
+  maxCapacity?: number | null
 }
 
 export interface PricePrimitives {

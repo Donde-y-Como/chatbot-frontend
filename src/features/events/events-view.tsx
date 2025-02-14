@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { format } from 'date-fns'
+import { useQueryClient } from '@tanstack/react-query'
 import { es } from 'date-fns/locale/es'
 import { Calendar, List, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { EventApiService } from '@/features/events/EventApiService.ts'
 import { EventCard } from '@/features/events/event-card.tsx'
 import { useGetBookings } from '@/features/events/hooks/useGetBookings.ts'
 import { useGetEvents } from '@/features/events/hooks/useGetEvents.ts'
@@ -19,6 +21,7 @@ import { EventPrimitives } from '@/features/events/types.ts'
 export default function EventsView() {
   const { data: allBookings, isLoading } = useGetBookings()
   const { data: events, isLoading: isEventsLoading } = useGetEvents()
+  const queryClient = useQueryClient()
 
   const groupedEvents = useMemo(() => {
     const groups: Record<string, EventPrimitives[]> = {}
@@ -36,9 +39,13 @@ export default function EventsView() {
     return groups
   }, [events])
 
-  const handleDeleteEvent = (id: string) => {
-    // Handle event deletion
-    console.log('Deleting event:', id)
+  const handleDeleteEvent = async (id: string) => {
+    await EventApiService.deleteEvent(id)
+    queryClient.setQueryData<EventPrimitives[]>(['events'], (oldEvents) => {
+      if (!oldEvents) return oldEvents
+
+      return [...oldEvents].filter((event) => event.id !== id)
+    })
   }
 
   if (isLoading || isEventsLoading) return <div>Loading...</div>
@@ -77,7 +84,7 @@ export default function EventsView() {
       <div className='space-y-6'>
         {Object.entries(groupedEvents).map(([date, events]) => (
           <div key={date}>
-            <div className='mb-2 '>
+            <div className='mb-2'>
               <h2 className='font-semibold first-letter:uppercase'>
                 {format(new Date(date), 'MMM d', { locale: es })}
               </h2>
@@ -91,6 +98,8 @@ export default function EventsView() {
                   allBookings?.filter(
                     (booking) => booking.eventId === event.id
                   ) || []
+
+                console.log(event)
 
                 return (
                   <EventCard
