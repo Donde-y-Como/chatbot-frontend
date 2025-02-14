@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
 import { es } from 'date-fns/locale/es'
@@ -14,6 +14,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { EventApiService } from '@/features/events/EventApiService.ts'
 import { EventCard } from '@/features/events/event-card.tsx'
+import { EventCreateModal } from '@/features/events/event-create-modal.tsx'
 import { useGetBookings } from '@/features/events/hooks/useGetBookings.ts'
 import { useGetEvents } from '@/features/events/hooks/useGetEvents.ts'
 import { EventPrimitives } from '@/features/events/types.ts'
@@ -22,6 +23,7 @@ export default function EventsView() {
   const { data: allBookings, isLoading } = useGetBookings()
   const { data: events, isLoading: isEventsLoading } = useGetEvents()
   const queryClient = useQueryClient()
+  const [showCreate, setShowCreate] = useState(false)
 
   const groupedEvents = useMemo(() => {
     const groups: Record<string, EventPrimitives[]> = {}
@@ -48,6 +50,15 @@ export default function EventsView() {
     })
   }
 
+  const handleCreateEvent = async (
+    event: Omit<EventPrimitives, 'id' | 'businessId'>
+  ) => {
+    await EventApiService.createEvent(event)
+    void queryClient.invalidateQueries({
+      queryKey: ['events'],
+    })
+  }
+
   if (isLoading || isEventsLoading) return <div>Loading...</div>
 
   return (
@@ -56,7 +67,7 @@ export default function EventsView() {
         <div className='flex items-center justify-between'>
           <h1 className='text-2xl font-bold'>Eventos</h1>
           <div className='flex items-center gap-2'>
-            <Button variant='default'>
+            <Button variant='default' onClick={() => setShowCreate(true)}>
               <Plus className='mr-2 h-4 w-4' />
               Nuevo Evento
             </Button>
@@ -114,6 +125,12 @@ export default function EventsView() {
           </div>
         ))}
       </div>
+
+      <EventCreateModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onSave={handleCreateEvent}
+      />
     </div>
   )
 }

@@ -14,5 +14,12 @@ export const EventApiService = {
     if (response.status !== 200) {
       throw new Error('Error deleting event')
     }
+  },
+
+  createEvent: async (event: Omit<EventPrimitives, 'id' | 'businessId'>) => {
+    const response = await api.post('/events', event)
+    if (response.status !== 201) {
+      throw new Error('Error creating event')
+    }
   }
 }
