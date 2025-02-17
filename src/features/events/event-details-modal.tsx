@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { DialogDescription } from '@radix-ui/react-dialog'
+import moment from 'moment-timezone'
 import {
   Dialog,
   DialogContent,
@@ -8,21 +9,13 @@ import {
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import EventCarousel from '@/features/events/event-carousel.tsx'
-import {
-  EventPrimitives,
-  RecurrencePrimitives,
-} from '@/features/events/types.ts'
+import { useGetEventWithBookings } from '@/features/events/hooks/useGetEventWithBookings.ts'
+import { RecurrencePrimitives } from '@/features/events/types.ts'
 
 // Helper to format the start and end dates in Spanish
-function formatDateRange(start: Date, end: Date) {
-  const startFormatted = new Date(start).toLocaleString('es-ES', {
-    dateStyle: 'long',
-    timeStyle: 'short',
-  })
-  const endFormatted = new Date(end).toLocaleString('es-ES', {
-    dateStyle: 'long',
-    timeStyle: 'short',
-  })
+function formatDateRange(start: number, end: number) {
+  const startFormatted = moment(start).tz('America/Mexico_City').format('LLLL')
+  const endFormatted = moment(end).tz('America/Mexico_City').format('LT')
   return `${startFormatted} - ${endFormatted}`
 }
 
@@ -72,14 +65,18 @@ function formatRecurrence(recurrence: RecurrencePrimitives) {
 }
 
 export function EventDetailsModal({
-  event,
+  eventId,
   open,
   onClose,
 }: {
-  event: EventPrimitives
+  eventId: string
   open: boolean
   onClose: () => void
 }) {
+  const { data: event, isLoading } = useGetEventWithBookings(eventId)
+
+  if (isLoading || !event) return <div>Cargando...</div>
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className='w-full max-w-[1200px] max-h-[90vh] overflow-hidden'>
@@ -104,6 +101,9 @@ export function EventDetailsModal({
                 {event.capacity.isLimited
                   ? `${event.capacity.maxCapacity} personas`
                   : 'Ilimitada'}
+              </div>
+              <div>
+                <strong>Ubicación:</strong> {event.location}
               </div>
               <div>
                 <strong>Precio:</strong>{' '}

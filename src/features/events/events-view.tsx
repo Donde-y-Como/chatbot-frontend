@@ -18,6 +18,7 @@ import { EventCreateModal } from '@/features/events/event-create-modal.tsx'
 import { useGetBookings } from '@/features/events/hooks/useGetBookings.ts'
 import { useGetEvents } from '@/features/events/hooks/useGetEvents.ts'
 import { EventPrimitives } from '@/features/events/types.ts'
+import moment from "moment-timezone"
 
 export default function EventsView() {
   const { data: allBookings, isLoading } = useGetBookings()
@@ -31,7 +32,10 @@ export default function EventsView() {
     if (!events) return groups
 
     events.forEach((event) => {
-      const date = format(event.duration.startAt, 'yyyy-MM-dd')
+      const date = format(
+        moment(event.duration.startAt).tz('America/Mexico_City').toDate(),
+        'yyyy-MM-dd'
+      )
       if (!groups[date]) {
         groups[date] = []
       }
@@ -97,10 +101,10 @@ export default function EventsView() {
           <div key={date}>
             <div className='mb-2'>
               <h2 className='font-semibold first-letter:uppercase'>
-                {format(new Date(date), 'MMM d', { locale: es })}
+                {format(moment(date).tz("America/Mexico_City").toDate(), 'MMM d', { locale: es })}
               </h2>
               <p className='text-sm text-muted-foreground first-letter:uppercase'>
-                {format(new Date(date), 'EEEE', { locale: es })}
+                {format(moment(date).tz("America/Mexico_City").toDate(), 'EEEE', { locale: es })}
               </p>
             </div>
             <div>
@@ -109,8 +113,6 @@ export default function EventsView() {
                   allBookings?.filter(
                     (booking) => booking.eventId === event.id
                   ) || []
-
-                console.log(event)
 
                 return (
                   <EventCard

@@ -45,9 +45,10 @@ export function EventCreateModal({
     capacity: { isLimited: false },
     recurrence: { frequency: 'never', endCondition: null },
     duration: {
-      startAt: new Date(),
-      endAt: addHours(new Date(), 1),
+      startAt: Date.now(),
+      endAt: addHours(new Date(), 1).getTime(),
     },
+    location: '',
     photos: []
   })
 
@@ -91,6 +92,15 @@ export function EventCreateModal({
                 id='description'
                 placeholder='Describe tu evento...'
                 onChange={(e) => updateField('description', e.target.value)}
+              />
+            </div>
+
+            <div className='grid gap-2'>
+              <Label htmlFor='location'>Ubicación</Label>
+              <Textarea
+                id='location'
+                placeholder='Virtual o dirección física'
+                onChange={(e) => updateField('location', e.target.value)}
               />
             </div>
 
@@ -179,7 +189,7 @@ export function EventCreateModal({
                       onChange={(date: Date) => {
                         updateField('duration', {
                           endAt: changes.duration?.endAt,
-                          startAt: date,
+                          startAt: date.getTime(),
                         })
                       }}
                     />
@@ -192,7 +202,7 @@ export function EventCreateModal({
                       onChange={(date: Date) => {
                         updateField('duration', {
                           startAt: changes.duration?.startAt,
-                          endAt: date,
+                          endAt: date.getTime(),
                         })
                       }}
                     />

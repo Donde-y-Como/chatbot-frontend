@@ -87,6 +87,16 @@ export function EventEditModal({
             </div>
 
             <div className='grid gap-2'>
+              <Label htmlFor='location'>Ubicación</Label>
+              <Textarea
+                id='location'
+                defaultValue={event.location}
+                placeholder='Virtual o dirección física'
+                onChange={(e) => updateField('location', e.target.value)}
+              />
+            </div>
+
+            <div className='grid gap-2'>
               <Label>Precio</Label>
               <div className='grid grid-cols-2 gap-2'>
                 <Input
@@ -179,7 +189,7 @@ export function EventEditModal({
                         updateField('duration', {
                           endAt:
                             changes.duration?.endAt ?? event.duration.endAt,
-                          startAt: date,
+                          startAt: date.getTime(),
                         })
                       }}
                     />
@@ -193,7 +203,7 @@ export function EventEditModal({
                         updateField('duration', {
                           startAt:
                             changes.duration?.startAt ?? event.duration.startAt,
-                          endAt: date,
+                          endAt: date.getTime(),
                         })
                       }}
                     />

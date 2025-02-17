@@ -21,5 +21,12 @@ export const EventApiService = {
     if (response.status !== 201) {
       throw new Error('Error creating event')
     }
-  }
+  },
+
+  bookEvent: async (eventId: string, clientIds: string[]) => {
+    const response = await api.post(`/events/${eventId}/group-booking`, { clientIds })
+    if (response.status !== 201) {
+      throw new Error('Error booking event')
+    }
+  },
 }

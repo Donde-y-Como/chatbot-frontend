@@ -1,18 +1,23 @@
-import { useState } from 'react';
-import { format } from 'date-fns';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { MoreHorizontal } from 'lucide-react';
-import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge.tsx';
-import { Button } from '@/components/ui/button.tsx';
-import { Card, CardContent } from '@/components/ui/card.tsx';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu.tsx';
-import { EventApiService } from '@/features/events/EventApiService.ts';
-import { EventDeleteDialog } from '@/features/events/event-delete-dialog.tsx';
-import { EventDetailsModal } from '@/features/events/event-details-modal.tsx';
-import { EventEditModal } from '@/features/events/event-edit-modal.tsx';
-import { Booking, EventPrimitives } from '@/features/events/types.ts';
-
+import { useState } from 'react'
+import { format } from 'date-fns'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { MoreHorizontal } from 'lucide-react'
+import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge.tsx'
+import { Button } from '@/components/ui/button.tsx'
+import { Card, CardContent } from '@/components/ui/card.tsx'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu.tsx'
+import { EventApiService } from '@/features/events/EventApiService.ts'
+import { EventBookingModal } from '@/features/events/event-booking-modal.tsx'
+import { EventDeleteDialog } from '@/features/events/event-delete-dialog.tsx'
+import { EventDetailsModal } from '@/features/events/event-details-modal.tsx'
+import { EventEditModal } from '@/features/events/event-edit-modal.tsx'
+import { Booking, EventPrimitives, EventWithBookings } from '@/features/events/types.ts'
 
 function translateRecurrente(frequency: string) {
   return frequency === 'weekly'
@@ -51,6 +56,7 @@ export function EventCard({
 }) {
   const [showDetails, setShowDetails] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  const [showBooking, setShowBooking] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const recurrenceText = getRecurrenceText(event)
   const queryClient = useQueryClient()
@@ -61,6 +67,7 @@ export function EventCard({
     },
     onSuccess: (_data, changes) => {
       toast.success('Evento actualizado correctamente')
+
       queryClient.setQueryData<EventPrimitives[]>(['events'], (oldEvents) => {
         if (!oldEvents) return oldEvents
 
@@ -70,15 +77,25 @@ export function EventCard({
             : existingEvent
         )
       })
+
+      queryClient.setQueryData<EventWithBookings>(['event', event.id], (oldEvent) => {
+        if (!oldEvent) return oldEvent
+
+        return { ...oldEvent, ...changes }
+      })
     },
     onError: (data) => {
       console.log(data)
       toast.error('Hubo un error al actualizar el evento')
     },
   })
+
   const handleEditedEvent = (changes: Partial<EventPrimitives>) => {
-    console.log(changes)
     updateEventMutation.mutate(changes)
+  }
+
+  const handleBookingEvent = async (clients: string[]) => {
+    await EventApiService.bookEvent(event.id, clients)
   }
 
   return (
@@ -126,6 +143,9 @@ export function EventCard({
                     <DropdownMenuItem onClick={() => setShowEdit(true)}>
                       Editar
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowBooking(true)}>
+                      Agendar
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       className='text-destructive'
                       onClick={() => setShowDeleteDialog(true)}
@@ -141,7 +161,7 @@ export function EventCard({
       </Card>
 
       <EventDetailsModal
-        event={event}
+        eventId={event.id}
         open={showDetails}
         onClose={() => setShowDetails(false)}
       />
@@ -151,6 +171,13 @@ export function EventCard({
         open={showEdit}
         onClose={() => setShowEdit(false)}
         onSave={handleEditedEvent}
+      />
+
+      <EventBookingModal
+        eventId={event.id}
+        open={showBooking}
+        onClose={() => setShowBooking(false)}
+        onSave={handleBookingEvent}
       />
 
       <EventDeleteDialog
