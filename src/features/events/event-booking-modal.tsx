@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
-  DialogContent,
+  DialogContent, DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -39,6 +39,8 @@ export function EventBookingModal({
         <DialogHeader>
           <DialogTitle>Agendar clientes</DialogTitle>
         </DialogHeader>
+
+        <DialogDescription className="sr-only">Agendar evento</DialogDescription>
 
         <DialogFooter>
           <Button variant='outline' onClick={onClose}>

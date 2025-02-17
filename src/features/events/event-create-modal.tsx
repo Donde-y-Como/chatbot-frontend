@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { DateTimePicker } from '@/components/ui/date-time-picker.tsx'
 import {
   Dialog,
-  DialogContent,
+  DialogContent, DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -68,6 +68,8 @@ export function EventCreateModal({
         <DialogHeader>
           <DialogTitle>Crear Evento</DialogTitle>
         </DialogHeader>
+
+        <DialogDescription className="sr-only">Crear evento</DialogDescription>
 
         <Tabs defaultValue='general' className='w-full'>
           <TabsList className='grid w-full grid-cols-3'>
