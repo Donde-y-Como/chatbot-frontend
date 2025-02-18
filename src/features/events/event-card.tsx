@@ -17,7 +17,11 @@ import { EventBookingModal } from '@/features/events/event-booking-modal.tsx'
 import { EventDeleteDialog } from '@/features/events/event-delete-dialog.tsx'
 import { EventDetailsModal } from '@/features/events/event-details-modal.tsx'
 import { EventEditModal } from '@/features/events/event-edit-modal.tsx'
-import { Booking, EventPrimitives, EventWithBookings } from '@/features/events/types.ts'
+import {
+  Booking,
+  EventPrimitives,
+  EventWithBookings,
+} from '@/features/events/types.ts'
 
 function translateRecurrente(frequency: string) {
   return frequency === 'weekly'
@@ -60,6 +64,31 @@ export function EventCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const recurrenceText = getRecurrenceText(event)
   const queryClient = useQueryClient()
+  const bookGroupMutation = useMutation({
+    mutationKey: ['bookGroupEvent'],
+    mutationFn: async (variables: {
+      eventId: string
+      date: number
+      clientIds: string[]
+    }) => {
+      await EventApiService.bookEvent(
+        variables.eventId,
+        variables.clientIds,
+        variables.date
+      )
+    },
+    onSuccess: (_data, changes) => {
+      toast.success('Clients agendados correctamente')
+
+      void queryClient.invalidateQueries({
+        queryKey: ['event', event.id],
+      })
+    },
+    onError: (data) => {
+      console.log(data)
+      toast.error('Hubo un error al agendar clientes en el evento')
+    },
+  })
   const updateEventMutation = useMutation({
     mutationKey: ['updateEvent'],
     mutationFn: async (changes: Partial<EventPrimitives>) => {
@@ -78,11 +107,14 @@ export function EventCard({
         )
       })
 
-      queryClient.setQueryData<EventWithBookings>(['event', event.id], (oldEvent) => {
-        if (!oldEvent) return oldEvent
+      queryClient.setQueryData<EventWithBookings>(
+        ['event', event.id],
+        (oldEvent) => {
+          if (!oldEvent) return oldEvent
 
-        return { ...oldEvent, ...changes }
-      })
+          return { ...oldEvent, ...changes }
+        }
+      )
     },
     onError: (data) => {
       console.log(data)
@@ -94,8 +126,12 @@ export function EventCard({
     updateEventMutation.mutate(changes)
   }
 
-  const handleBookingEvent = async (clients: string[]) => {
-    await EventApiService.bookEvent(event.id, clients)
+  const handleBookingEvent = async (clients: string[], date: Date) => {
+    bookGroupMutation.mutate({
+      eventId: event.id,
+      clientIds: clients,
+      date: date.getTime(),
+    })
   }
 
   return (

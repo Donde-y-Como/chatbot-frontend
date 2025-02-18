@@ -57,3 +57,9 @@ export type Booking = {
   createdAt: number
   updatedAt: number
 }
+
+export type EventAvailability = {
+  hasAvailability: boolean
+  totalParticipants: number
+  remainingSpots: number | null
+}

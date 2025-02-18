@@ -18,7 +18,7 @@ export default function EventCarousel({ event }: { event: EventPrimitives }) {
     )
   }
   return (
-    <div className='relative w-full h-[400px] overflow-hidden rounded-md'>
+    <div className='relative w-full h-full overflow-hidden rounded-md'>
       {images.length > 0 ? (
         <>
           <img
@@ -44,8 +44,8 @@ export default function EventCarousel({ event }: { event: EventPrimitives }) {
           )}
         </>
       ) : (
-        <div className='w-full h-full flex items-center justify-center'>
-          Sin imagenes
+        <div className='w-full h-full bg-secondary flex items-center justify-center'>
+          Evento sin imagenes
         </div>
       )}
     </div>
