@@ -45,8 +45,8 @@ export function EventCreateModal({
     capacity: { isLimited: false },
     recurrence: { frequency: 'never', endCondition: null },
     duration: {
-      startAt: Date.now(),
-      endAt: addHours(new Date(), 1).getTime(),
+      startAt: new Date().toISOString(),
+      endAt: addHours(new Date(), 1).toISOString(),
     },
     location: '',
     photos: []
@@ -191,7 +191,7 @@ export function EventCreateModal({
                       onChange={(date: Date) => {
                         updateField('duration', {
                           endAt: changes.duration?.endAt,
-                          startAt: date.getTime(),
+                          startAt: date.toISOString(),
                         })
                       }}
                     />
@@ -204,7 +204,7 @@ export function EventCreateModal({
                       onChange={(date: Date) => {
                         updateField('duration', {
                           startAt: changes.duration?.startAt,
-                          endAt: date.getTime(),
+                          endAt: date.toISOString(),
                         })
                       }}
                     />

@@ -33,7 +33,7 @@ export default function EventsView() {
 
     events.forEach((event) => {
       const date = format(
-        moment(event.duration.startAt).tz('America/Mexico_City').toDate(),
+        new Date(event.duration.startAt),
         'yyyy-MM-dd'
       )
       if (!groups[date]) {

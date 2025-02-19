@@ -67,13 +67,13 @@ export function EventBookingModal({
   const { data: clients, isLoading: isClientsLoading } = useGetClients()
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
     return event
-      ? moment.tz(event.duration.startAt, 'America/Mexico_Ci1ty').toDate()
+      ? new Date(event.duration.startAt)
       : null
   })
 
   useEffect(() => {
     if(event) {
-      const date = moment.tz(event.duration.startAt, 'America/Mexico_City').toDate()
+      const date = new Date(event.duration.startAt)
       setSelectedDate(date)
     }
   }, [event])
@@ -88,7 +88,7 @@ export function EventBookingModal({
   useEffect(() => {
     if (event && selectedDate) {
       const dateBookings = event.bookings.filter((booking) => {
-        return booking.date === selectedDate.getTime()
+        return new Date(booking.date).getTime() === selectedDate.getTime()
       })
       setSelectedClientIds(dateBookings.map((booking) => booking.clientId))
     }

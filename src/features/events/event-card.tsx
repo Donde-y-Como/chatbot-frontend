@@ -22,6 +22,7 @@ import {
   EventPrimitives,
   EventWithBookings,
 } from '@/features/events/types.ts'
+import { fromZonedTime } from 'date-fns-tz'
 
 function translateRecurrente(frequency: string) {
   return frequency === 'weekly'
@@ -68,7 +69,7 @@ export function EventCard({
     mutationKey: ['bookGroupEvent'],
     mutationFn: async (variables: {
       eventId: string
-      date: number
+      date: string
       clientIds: string[]
     }) => {
       await EventApiService.bookEvent(
@@ -127,10 +128,12 @@ export function EventCard({
   }
 
   const handleBookingEvent = async (clients: string[], date: Date) => {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const utcDate = fromZonedTime(date, timeZone)
     bookGroupMutation.mutate({
       eventId: event.id,
       clientIds: clients,
-      date: date.getTime(),
+      date: utcDate.toISOString(),
     })
   }
 

@@ -26,7 +26,7 @@ import EventCarousel from '@/features/events/event-carousel'
 import { useGetEventWithBookings } from '@/features/events/hooks/useGetEventWithBookings'
 import type { RecurrencePrimitives } from '@/features/events/types'
 
-function formatDateRange(start: number, end: number) {
+function formatDateRange(start: string, end: string) {
   return `${format(moment.tz(start, 'America/Mexico_City').toDate(), 'PP', { locale: es })} ${format(moment.tz(start, 'America/Mexico_City').toDate(), 'p', { locale: es })} - ${format(moment.tz(end, 'America/Mexico_City').toDate(), 'PP p', { locale: es })}`
 }
 
@@ -200,7 +200,7 @@ function EventDetailsSkeleton() {
   )
 }
 
-function formatDuration(start: number, end: number) {
+function formatDuration(start: string, end: string) {
   const duration = moment.duration(
     moment
       .tz(end, 'America/Mexico_City')

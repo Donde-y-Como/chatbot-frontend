@@ -16,8 +16,8 @@ export type RecurrencePrimitives = {
   endCondition: EndCondition
 }
 export type DurationPrimitives = {
-  startAt: number
-  endAt: number
+  startAt: string
+  endAt: string
 }
 
 export type CapacityPrimitives = {
@@ -51,11 +51,11 @@ export type Booking = {
   id: string
   clientId: string
   eventId: string
-  date: number
+  date: string
   participants: number
   notes: string
-  createdAt: number
-  updatedAt: number
+  createdAt: string
+  updatedAt: string
 }
 
 export type EventAvailability = {

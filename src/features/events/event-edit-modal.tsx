@@ -191,7 +191,7 @@ export function EventEditModal({
                         updateField('duration', {
                           endAt:
                             changes.duration?.endAt ?? event.duration.endAt,
-                          startAt: date.getTime(),
+                          startAt: date.toISOString(),
                         })
                       }}
                     />
@@ -205,7 +205,7 @@ export function EventEditModal({
                         updateField('duration', {
                           startAt:
                             changes.duration?.startAt ?? event.duration.startAt,
-                          endAt: date.getTime(),
+                          endAt: date.toISOString(),
                         })
                       }}
                     />
