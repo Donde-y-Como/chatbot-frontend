@@ -65,10 +65,18 @@ export function EventBookingModal({
   const { data: event, isLoading: isEventLoading } =
     useGetEventWithBookings(eventId)
   const { data: clients, isLoading: isClientsLoading } = useGetClients()
-  const [selectedDate] = useState<Date>(() => {
-    const date = event ? event.duration.startAt : Date.now()
-    return moment.tz(date, 'America/Mexico_City').toDate()
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
+    return event
+      ? moment.tz(event.duration.startAt, 'America/Mexico_Ci1ty').toDate()
+      : null
   })
+
+  useEffect(() => {
+    if(event) {
+      const date = moment.tz(event.duration.startAt, 'America/Mexico_City').toDate()
+      setSelectedDate(date)
+    }
+  }, [event])
 
   const { data: availability, isLoading: isAvailabilityLoading } =
     useCheckEventAvailability(eventId, selectedDate)
@@ -78,9 +86,9 @@ export function EventBookingModal({
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (event) {
+    if (event && selectedDate) {
       const dateBookings = event.bookings.filter((booking) => {
-        return (booking.date === selectedDate.getTime())
+        return booking.date === selectedDate.getTime()
       })
       setSelectedClientIds(dateBookings.map((booking) => booking.clientId))
     }
@@ -120,7 +128,7 @@ export function EventBookingModal({
       (clientId) =>
         !event?.bookings.find((booking) => booking.clientId === clientId)
     )
-    onSave(newClientIds, selectedDate)
+    if (selectedDate) onSave(newClientIds, selectedDate)
     onClose()
   }
 
@@ -142,7 +150,7 @@ export function EventBookingModal({
         <DialogHeader>
           <DialogTitle>Agregar invitados</DialogTitle>
           <DialogDescription>
-            {format(selectedDate, "EEEE d 'de' MMMM, yyyy", { locale: es })}
+            {selectedDate && format(selectedDate, "EEEE d 'de' MMMM, yyyy", { locale: es })}
           </DialogDescription>
         </DialogHeader>
 
