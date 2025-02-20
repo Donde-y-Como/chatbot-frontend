@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogContent,
@@ -17,10 +16,10 @@ import {
   Repeat,
   Users,
 } from 'lucide-react'
+import { EventDetailBookings } from './details/event-detail-bookings'
 import { EventDetailItem } from './details/event-detail-item'
 import { EventDetailsSkeleton } from './details/event-details-skeleton'
 import { formatDateRange, formatEventDuration, formatPrice, formatRecurrence } from './details/utils/formatters'
-import { EventDetailBoookings } from './details/event-detail-bookings'
 
 export function EventDetailsModal({
   eventId,
@@ -75,7 +74,7 @@ export function EventDetailsModal({
                     )}
                   </EventDetailItem>
 
-                  <EventDetailItem 
+                  <EventDetailItem
                     icon={<Users className='w-5 h-5' />}
                     label='Capacidad'
                   >
@@ -107,7 +106,7 @@ export function EventDetailsModal({
                 </div>
 
                 <div className='mt-8'>
-                  <EventDetailBoookings event={event}/>
+                  <EventDetailBookings event={event} />
                 </div>
               </div>
             </div>

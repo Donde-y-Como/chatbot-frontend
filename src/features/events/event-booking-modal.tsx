@@ -1,9 +1,3 @@
-import * as React from 'react'
-import { useEffect, useState } from 'react'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { AlertCircle, Loader2, Search, X } from 'lucide-react'
-import moment from 'moment-timezone'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -33,6 +27,11 @@ import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { Client } from '@/features/chats/ChatTypes.ts'
 import { useCheckEventAvailability } from '@/features/events/hooks/useCheckEventAvailability'
 import { useGetEventWithBookings } from '@/features/events/hooks/useGetEventWithBookings'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { AlertCircle, Loader2, Search, X } from 'lucide-react'
+import * as React from 'react'
+import { useEffect, useState } from 'react'
 
 function getInitials(name: string) {
   return name
@@ -184,7 +183,7 @@ export function EventBookingModal({
                         className='flex items-center gap-2'
                       >
                         <Avatar className='h-8 w-8'>
-                          <AvatarFallback>
+                        <AvatarFallback>
                             {getInitials(client.name)}
                           </AvatarFallback>
                         </Avatar>
@@ -199,7 +198,7 @@ export function EventBookingModal({
 
           <ScrollArea className='h-[200px]'>
             <div className='flex flex-wrap gap-2'>
-              {selectedClients.map((client) => (
+              {selectedClients.map((client) => (  
                 <div
                   key={client.id}
                   className='flex items-center gap-2 bg-secondary p-2 rounded-full'

@@ -22,7 +22,7 @@ export const columns: ColumnDef<Employee>[] = [
             <AvatarImage src={photo} alt={name} />
             <AvatarFallback>{name.charAt(0)}</AvatarFallback>
           </Avatar>
-          <p className=''>{name}</p>
+          <p>{name}</p>
         </div>
       )
     },
@@ -71,11 +71,26 @@ export const columns: ColumnDef<Employee>[] = [
       <DataTableColumnHeader column={column} title='Fecha de nacimiento' />
     ),
     cell: ({ row }) => (
-      <div>
+      <Badge variant='secondary' className='text-sm'>
         {row.original.birthDate
-          ? format(parseISO(row.original.birthDate), 'd/M/y', { locale: es })
+          ? format(parseISO(row.original.birthDate), 'dd/MM/y', { locale: es })
           : ''}
-      </div>
+      </Badge>
+    ),
+    enableSorting: false,
+    enableHiding: true,
+  },
+  {
+    accessorKey: 'fecha de creación',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Fecha de creación' />
+    ),
+    cell: ({ row }) => (
+      <Badge variant='secondary' className='text-sm'>
+        {row.original.createdAt
+          ? format(parseISO(row.original.createdAt), 'dd/MM/y', { locale: es })
+          : ''}
+      </Badge>
     ),
     enableSorting: false,
     enableHiding: true,

@@ -40,8 +40,13 @@ export interface Employee {
   photo: string | undefined
   address?: string
   birthDate?: string
-  createdAt: Date
+  createdAt: string
   color: string
+}
+
+export interface MinutesTimeRange {
+  startAt: number
+  endAt: number
 }
 
 export type Event = {
@@ -63,10 +68,7 @@ export type EmployeeAvailable = Pick<
   'id' | 'name' | 'email' | 'photo'
 >
 
-export interface MinutesTimeRange {
-  startAt: number
-  endAt: number
-}
+
 
 export const appointmentCreated = z.object({
   id: z.string(),
