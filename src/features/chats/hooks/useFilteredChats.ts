@@ -9,7 +9,7 @@ export function useFilteredChats(
   return useMemo(() => {
     return (
       chats?.filter((chat) => {
-        const searchQuery = chat.client.profileName
+        const searchQuery = chat.client.name
           .toLowerCase()
           .includes(search.trim().toLowerCase())
         let matchesFilter = true

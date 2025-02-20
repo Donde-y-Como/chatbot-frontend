@@ -1,6 +1,3 @@
-import { useState } from 'react'
-import { es } from 'date-fns/locale/es'
-import { MenuIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -11,10 +8,11 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { useSidebar } from '@/components/ui/sidebar.tsx'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
-import { CreateEventDialog } from '@/features/appointments/CreateEventDialog.tsx'
 import { EmployeesSelector } from '@/features/appointments/EmployeesSelector.tsx'
 import { MakeAppointmentDialog } from '@/features/appointments/MakeAppointmentDialog.tsx'
-import { ViewEvents } from '@/features/appointments/ViewEvents.tsx'
+import { es } from 'date-fns/locale/es'
+import { MenuIcon } from 'lucide-react'
+import { useState } from 'react'
 import type { Employee } from './types'
 
 interface SidebarProps {
@@ -34,7 +32,6 @@ export function CalendarSidebar({
 }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true)
   const [isEmployeesOpen, setIsEmployeesOpen] = useState(true)
-  const [isEventsOpen, setIsEventsOpen] = useState(true)
   const { open: mainSidebarOpen } = useSidebar()
 
   if (!employees) return <CalendarSidebarSkeleton />
@@ -77,12 +74,6 @@ export function CalendarSidebar({
                 isEmployeesOpen={isEmployeesOpen}
                 setIsEmployeesOpen={setIsEmployeesOpen}
               />
-
-              {/*<ViewEvents*/}
-              {/*  isEventsOpen={isEventsOpen}*/}
-              {/*  setIsEventsOpen={setIsEventsOpen}*/}
-              {/*/>*/}
-
               <br />
               <br />
               <br />

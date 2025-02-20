@@ -123,7 +123,7 @@ export function MakeAppointmentDialog() {
             <SelectContent>
               {clients?.map((client) => (
                 <SelectItem key={client.id} value={client.id}>
-                  {client.profileName}
+                  {client.name}
                 </SelectItem>
               ))}
             </SelectContent>

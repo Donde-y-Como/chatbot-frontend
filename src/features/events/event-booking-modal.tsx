@@ -116,7 +116,7 @@ export function EventBookingModal({
     if (!clients) return []
     return clients.filter(
       (client) =>
-        client.profileName.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        client.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !selectedClientIds.includes(client.id)
     )
   }, [clients, searchQuery, selectedClientIds])
@@ -185,10 +185,10 @@ export function EventBookingModal({
                       >
                         <Avatar className='h-8 w-8'>
                           <AvatarFallback>
-                            {getInitials(client.profileName)}
+                            {getInitials(client.name)}
                           </AvatarFallback>
                         </Avatar>
-                        <span>{client.profileName}</span>
+                        <span>{client.name}</span>
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -206,11 +206,11 @@ export function EventBookingModal({
                 >
                   <Avatar className='h-8 w-8'>
                     <AvatarFallback>
-                      {getInitials(client.profileName)}
+                      {getInitials(client.name)}
                     </AvatarFallback>
                   </Avatar>
                   <span className='text-sm font-medium'>
-                    {client.profileName}
+                    {client.name}
                   </span>
                   <Button
                     variant='ghost'

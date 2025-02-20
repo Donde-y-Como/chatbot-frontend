@@ -10,7 +10,6 @@ export type Chat = {
   id: string
   platformName: string
   client: Client
-  clientProfileId: string | null
   lastMessage: Message
   newClientMessagesCount: number
 }
@@ -38,11 +37,12 @@ export type ChatMessages = {
   newClientMessagesCount: number
   currentIntention: string
   client: Client
-  clientProfileConversationIds: {
-    instagram?: string[]
-    whatsapp?: string[]
-    facebook?: string[]
-  }
+}
+
+export enum PlatformName {
+  Whatsapp = "whatsapp",
+  Facebook = "facebook",
+  Instagram = "instagram",
 }
 
 export type Media = {
@@ -50,10 +50,29 @@ export type Media = {
   url: string
 }
 
+export type PlatformIdentity = {
+  platformId: string;
+  platformName: PlatformName;
+  profileName: string;
+}
+
+export type Annex = {
+  name: string;
+  media: Media;
+}
+
 export type Client = {
-  id: string
-  businessId: string
-  platformId: string
-  platformName: string
-  profileName: string
+  id: string;
+  businessId: string;
+  name: string;
+  platformIdentities: PlatformIdentity[];
+  tagIds: string[];
+  annexes: Annex[];
+  photo: string;
+  notes: string;
+  email: string;
+  address: string;
+  birthdate?: string;
+  createdAt: string;
+  updatedAt: string;
 }

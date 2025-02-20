@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input.tsx'
 //import { Switch } from '@/components/ui/switch.tsx'
 import { Chat, ChatMessages } from '@/features/chats/ChatTypes'
 import { toast } from 'sonner'
+import { AvatarImage } from '@radix-ui/react-avatar'
 
 interface ChatListItemProps {
   chat: Chat
@@ -32,7 +33,7 @@ interface ChatListItemProps {
 export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   const { emit } = useWebSocket()
   const [isEditing, setIsEditing] = useState(false)
-  const [tempName, setTempName] = useState(chat.client.profileName)
+  const [tempName, setTempName] = useState(chat.client.name)
   // const [isAIEnabled, setIsAIEnabled] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
@@ -48,7 +49,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
           ...oldChats,
           client: {
             ...oldChats.client,
-            profileName: variables.profileName,
+            name: variables.profileName,
           },
         }
       })
@@ -62,7 +63,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                 ...cachedChat,
                 client: {
                   ...cachedChat.client,
-                  profileName: variables.profileName,
+                  name: variables.profileName,
                 },
               }
             }
@@ -96,8 +97,8 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
 
   const handleNameChange = async (newName: string) => {
     try {
-      if (!newName.trim() || newName === chat.client.profileName) {
-        setTempName(chat.client.profileName)
+      if (!newName.trim() || newName === chat.client.name) {
+        setTempName(chat.client.name)
         setIsEditing(false)
         return
       }
@@ -113,7 +114,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
       toast.success('Nombre de perfil actualizado')
     } catch (error) {
       toast.error('El nombre de perfil no se actualizó!')
-      setTempName(chat.client.profileName)
+      setTempName(chat.client.name)
       setIsEditing(false)
     }
   }
@@ -123,7 +124,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
       void handleNameChange(tempName)
     } else if (e.key === 'Escape') {
       setIsEditing(false)
-      setTempName(chat.client.profileName)
+      setTempName(chat.client.name)
     }
     e.stopPropagation()
   }
@@ -160,7 +161,8 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
       <div className='flex gap-2 w-full'>
         <div className='relative flex-shrink-0'>
           <Avatar>
-            <AvatarFallback>{chat.client.profileName[0] || ''}</AvatarFallback>
+            {chat.client.photo.length > 0 && <AvatarImage src={chat.client.photo} alt={chat.client.name} className="object-cover" />}
+            <AvatarFallback>{chat.client.name[0]}</AvatarFallback>
           </Avatar>
           {PlatformIcon && (
             <div className='absolute -bottom-0.5 -right-0.5 rounded-full bg-white p-0.5 shadow-md'>
@@ -168,11 +170,11 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                 size={14}
                 className={cn(
                   chat.platformName.toLowerCase() === 'whatsapp' &&
-                    'text-green-500',
+                  'text-green-500',
                   chat.platformName.toLowerCase() === 'facebook' &&
-                    'text-blue-500',
+                  'text-blue-500',
                   chat.platformName.toLowerCase() === 'instagram' &&
-                    'text-pink-500'
+                  'text-pink-500'
                 )}
               />
             </div>
@@ -192,7 +194,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                 />
               </div>
             ) : (
-              chat.client.profileName || 'Desconocido'
+              chat.client.name
             )}
           </span>
 

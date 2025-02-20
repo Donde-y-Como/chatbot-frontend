@@ -79,7 +79,7 @@ export function ConversationHeader({
         <div className='relative flex items-center gap-2 lg:gap-4'>
           <Avatar className='size-9 lg:size-11'>
             <AvatarFallback className='bg-background'>
-              {chatData.client.profileName[0] || 'D'}
+              {chatData.client.name[0]}
             </AvatarFallback>
           </Avatar>
           {PlatformIcon && (
@@ -88,18 +88,18 @@ export function ConversationHeader({
                 size={14}
                 className={cn(
                   chatData.platformName.toLowerCase() === 'whatsapp' &&
-                    'text-green-500',
+                  'text-green-500',
                   chatData.platformName.toLowerCase() === 'facebook' &&
-                    'text-blue-500',
+                  'text-blue-500',
                   chatData.platformName.toLowerCase() === 'instagram' &&
-                    'text-pink-500'
+                  'text-pink-500'
                 )}
               />
             </div>
           )}
         </div>
         <span className='text-sm font-medium lg:text-base  flex items-center'>
-          {chatData.client.profileName || <Skeleton className='h-3 w-24' />}
+          {chatData.client.name || <Skeleton className='h-3 w-24' />}
         </span>
       </div>
 

@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { z } from 'zod'
-import { parseISO } from 'date-fns'
+import { isValid, parseISO } from 'date-fns'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ImagePlus, Trash2, Upload, X } from 'lucide-react'
@@ -57,10 +57,9 @@ const employeeFormSchema = z
       .string()
       .min(1, { message: 'El email es obligatorio.' })
       .email({ message: 'El email no es válido.' }),
-    birthDate: z.preprocess(
-      (arg) => (arg ? parseISO(arg as string) : undefined),
-      z.string({ invalid_type_error: 'Fecha no válida' }).optional()
-    ),
+    birthDate: z.string().refine(
+      (value) => isValid(parseISO(value)),
+      { message: 'La fecha de nacimiento no es válida.' }).optional(),
     address: z.string().optional(),
     photo: z.string().optional(),
     password: z.string(),
@@ -170,38 +169,38 @@ export function EmployeeActionDialog({
   const initialScheduleEntries =
     isEdit && currentEmployee?.schedule
       ? Object.entries(currentEmployee.schedule).map(([day, range]) => {
-          const pad = (n: number) => n.toString().padStart(2, '0')
-          const startAt = `${pad(Math.floor(range.startAt / 60))}:${pad(range.startAt % 60)}`
-          const endAt = `${pad(Math.floor(range.endAt / 60))}:${pad(range.endAt % 60)}`
-          return { day, startAt, endAt }
-        })
+        const pad = (n: number) => n.toString().padStart(2, '0')
+        const startAt = `${pad(Math.floor(range.startAt / 60))}:${pad(range.startAt % 60)}`
+        const endAt = `${pad(Math.floor(range.endAt / 60))}:${pad(range.endAt % 60)}`
+        return { day, startAt, endAt }
+      })
       : defaultScheduleEntries()
 
   const form = useForm<EmployeeFormType>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: isEdit
       ? {
-          name: currentEmployee?.name || '',
-          role: currentEmployee?.role || '',
-          email: currentEmployee?.email || '',
-          birthDate: currentEmployee?.birthDate,
-          address: currentEmployee?.address || '',
-          photo: currentEmployee?.photo || '',
-          password: '',
-          scheduleEntries: initialScheduleEntries,
-          isEdit,
-        }
+        name: currentEmployee?.name || '',
+        role: currentEmployee?.role || '',
+        email: currentEmployee?.email || '',
+        birthDate: currentEmployee?.birthDate,
+        address: currentEmployee?.address || '',
+        photo: currentEmployee?.photo || '',
+        password: '',
+        scheduleEntries: initialScheduleEntries,
+        isEdit,
+      }
       : {
-          name: '',
-          role: '',
-          email: '',
-          birthDate: undefined,
-          address: '',
-          photo: '',
-          password: '',
-          scheduleEntries: defaultScheduleEntries(),
-          isEdit,
-        },
+        name: '',
+        role: '',
+        email: '',
+        birthDate: undefined,
+        address: '',
+        photo: '',
+        password: '',
+        scheduleEntries: defaultScheduleEntries(),
+        isEdit,
+      },
   })
 
   const {

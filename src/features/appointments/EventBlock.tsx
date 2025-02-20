@@ -61,12 +61,6 @@ export function EventBlock({
   const leftPercent = (column / totalColumns) * 100
   const widthPercent = 100 / totalColumns
 
-  const PlatformIcon = {
-    whatsapp: IconBrandWhatsapp,
-    facebook: IconBrandFacebook,
-    instagram: IconBrandInstagram,
-  }[client.platformName.toLowerCase()]
-
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -83,7 +77,7 @@ export function EventBlock({
           {adjustedEventHeight >= MINUTE_HEIGHT * 60 - verticalGap ? (
             <div className='p-2'>
               <div className='flex items-center justify-between text-white text-sm font-semibold truncate'>
-                {client.profileName}
+                {client.name}
                 <small>
                   {formatTime(appointment.timeRange.startAt)} -{' '}
                   {formatTime(appointment.timeRange.endAt)}
@@ -93,7 +87,7 @@ export function EventBlock({
             </div>
           ) : (
             <div className='p-1 flex items-center justify-between text-white text-xs font-semibold truncate'>
-              {client.profileName} - {service.name}
+              {client.name} - {service.name}
               <small>
                 {formatTime(appointment.timeRange.startAt)} -{' '}
                 {formatTime(appointment.timeRange.endAt)}
@@ -106,7 +100,7 @@ export function EventBlock({
         <DialogHeader className='mb-4 border-b pb-2'>
           <div className='flex items-center justify-between'>
             <DialogTitle className='text-xl font-semibold'>
-              {client.profileName} - {service.name}
+              {client.name} - {service.name}
             </DialogTitle>
           </div>
           <DialogDescription className='text-sm text-foreground/50'>
@@ -166,27 +160,13 @@ export function EventBlock({
             <section className='flex items-center gap-2'>
               <article className='relative'>
                 <Avatar>
+                  <AvatarImage src={client.photo} alt={client.name} />
                   <AvatarFallback>
-                    {client.profileName[0] || 'C'}
+                    {client.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                {PlatformIcon && (
-                  <div className='absolute -bottom-0.5 -right-0.5 rounded-full bg-white p-0.5 shadow-md'>
-                    <PlatformIcon
-                      size={14}
-                      className={cn(
-                        client.platformName.toLowerCase() === 'whatsapp' &&
-                          'text-green-500',
-                        client.platformName.toLowerCase() === 'facebook' &&
-                          'text-blue-500',
-                        client.platformName.toLowerCase() === 'instagram' &&
-                          'text-pink-500'
-                      )}
-                    />
-                  </div>
-                )}
               </article>
-              <span>{client.profileName}</span>
+              <span>{client.name}</span>
             </section>
           </div>
         </div>
@@ -199,14 +179,14 @@ export function EventBlock({
               appointment.timeRange.startAt
             )
           ) && (
-            <Button
-              variant='destructive'
-              onClick={() => cancelAppointment(appointment._id)}
-              className='w-full sm:w-auto'
-            >
-              Cancelar
-            </Button>
-          )}
+              <Button
+                variant='destructive'
+                onClick={() => cancelAppointment(appointment._id)}
+                className='w-full sm:w-auto'
+              >
+                Cancelar
+              </Button>
+            )}
           <DialogClose asChild>
             <Button className='w-full sm:w-auto'>Cerrar</Button>
           </DialogClose>
