@@ -1,5 +1,10 @@
-import React from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ChatMessages } from '@/features/chats/ChatTypes.ts'
+import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
+import { useWebSocket } from '@/hooks/use-web-socket.ts'
+import { cn } from '@/lib/utils.ts'
 import {
   IconArrowLeft,
   IconBrandFacebook,
@@ -8,13 +13,7 @@ import {
   IconDotsVertical,
   IconPhone,
 } from '@tabler/icons-react'
-import { cn } from '@/lib/utils.ts'
-import { useWebSocket } from '@/hooks/use-web-socket.ts'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { ChatMessages } from '@/features/chats/ChatTypes.ts'
-import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 interface ConversationHeaderProps {
   onBackClick: () => void
