@@ -2,23 +2,14 @@ import { api } from '@/api/axiosInstance'
 import {
   Appointment,
   AppointmentCreated,
-  Employee,
   Event,
   Schedule,
   Service,
 } from '@/features/appointments/types.ts'
 import { Client } from '@/features/chats/ChatTypes.ts'
+import { Employee } from '../employees/types'
 
-const generateDistantPastels = (seed: number, count = 5) => {
-  const rand = ((seed * 9301 + 49297) % 233280) / 233280
-  const startHue = rand * 360
-  const hueStep = 360 / count
 
-  return Array.from({ length: count }, (_, i) => {
-    const hue = (startHue + i * hueStep) % 360
-    return `hsl(${hue}, 75%, 65%)`
-  })
-}
 
 export const appointmentService = {
   cancelAppointment: async (appointmentId: string) => {
@@ -41,16 +32,7 @@ export const appointmentService = {
     const response = await api.get<Appointment[]>(endpoint)
     return response.data
   },
-
-  getEmployees: async (): Promise<Employee[]> => {
-    const response = await api.get<Omit<Employee, 'color'>[]>('/employees')
-    const colors = generateDistantPastels(42, response.data.length)
-    return response.data.map((emp, i) => ({
-      ...emp,
-      color: colors[i],
-    }))
-  },
-
+ 
   getServices: async (): Promise<Service[]> => {
     const response = await api.get<Service[]>('/services')
     return response.data

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { Employee } from '../employees/types'
 
 export interface Service {
   id: string
@@ -30,20 +31,6 @@ export interface NonWorkDate {
   recurrent: boolean
 }
 
-export interface Employee {
-  id: string
-  businessId: string
-  name: string
-  role: string
-  email: string
-  schedule: Record<string, MinutesTimeRange>
-  photo: string | undefined
-  address?: string
-  birthDate?: string
-  createdAt: string
-  color: string
-}
-
 export interface MinutesTimeRange {
   startAt: number
   endAt: number
@@ -67,8 +54,6 @@ export type EmployeeAvailable = Pick<
   Employee,
   'id' | 'name' | 'email' | 'photo'
 >
-
-
 
 export const appointmentCreated = z.object({
   id: z.string(),

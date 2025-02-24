@@ -5,10 +5,10 @@ import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.t
 import { columns } from './components/employees-columns.tsx'
 import { EmployeeDialogs } from './components/employee-dialogs.tsx'
 import { EmployeePrimaryButtons } from './components/employee-primary-buttons.tsx'
-import EmployeesProvider from './context/users-context'
+import EmployeesProvider from './context/employees-context.tsx'
 import { TableSkeleton } from '@/components/TableSkeleton.tsx'
 import { CustomTable } from '@/components/tables/custom-table.tsx'
-import { Employee } from '@/features/appointments/types.ts'
+import { Employee } from './types.ts'
 
 export default function Employees() {
   const { data: employees, isLoading } = useGetEmployees()

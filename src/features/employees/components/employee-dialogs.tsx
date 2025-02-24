@@ -1,4 +1,4 @@
-import { useEmployees } from '../context/users-context'
+import { useEmployees } from '../context/employees-context.tsx'
 import { EmployeeActionDialog } from './employee-action-dialog.tsx'
 import { EmployeeDeleteDialog } from './employee-delete-dialog.tsx'
 

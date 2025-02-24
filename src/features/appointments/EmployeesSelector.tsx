@@ -2,8 +2,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Button } from '@/components/ui/button.tsx'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils.ts'
-import type { Employee } from '@/features/appointments/types.ts'
 import { Checkbox } from '@/components/ui/checkbox.tsx'
+import { Employee } from '../employees/types'
 
 type EmployeesSelectorProps = {
   isEmployeesOpen: boolean

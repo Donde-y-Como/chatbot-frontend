@@ -61,6 +61,7 @@ export const useUploadMedia = () => {
       return response.data.url
     } finally {
       setIsUploading(false)
+      setProgress(0)
     }
   }
 

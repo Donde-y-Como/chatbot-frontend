@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import useDialogState from '@/hooks/use-dialog-state'
-import { Employee } from '@/features/appointments/types.ts'
+import { Employee } from '../types'
 
-type EmployeeDialogType = | 'add' | 'edit' | 'delete'
+type EmployeeDialogType =  'add' | 'edit' | 'delete'
 
 interface EmployeesContextType {
   open: EmployeeDialogType | null

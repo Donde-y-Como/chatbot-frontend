@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { appointmentService } from '@/features/appointments/appointmentService.ts'
+import { EmployeeService } from '../../employees/EmployeeService'
 
 export function useGetEmployees() {
   return useQuery({
     queryKey: ['employees'],
-    queryFn: appointmentService.getEmployees,
+    queryFn: EmployeeService.getEmployees,
     staleTime: Infinity
   })
 }

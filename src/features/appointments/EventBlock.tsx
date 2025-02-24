@@ -22,7 +22,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Client } from '@/features/chats/ChatTypes.ts'
-import type { Appointment, Employee, Service } from './types'
+import type { Appointment, Service } from './types'
+import { Employee } from '../employees/types'
 
 interface EventBlockProps {
   cancelAppointment: (id: string) => void

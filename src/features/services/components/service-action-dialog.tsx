@@ -1,5 +1,3 @@
-'use client'
-
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -78,7 +76,7 @@ export function ServiceActionDialog({
           durationValue: 30,
           durationUnit: 'minutes',
           priceAmount: 0,
-          priceCurrency: 'USD',
+          priceCurrency: 'MXN',
           maxConcurrentBooks: 1,
           minBookingLeadHours: 0,
         },

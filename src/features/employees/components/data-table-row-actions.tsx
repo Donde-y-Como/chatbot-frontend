@@ -10,8 +10,8 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useEmployees } from '../context/users-context'
-import { Employee } from '@/features/appointments/types.ts'
+import { useEmployees } from '../context/employees-context'
+import { Employee } from '../types'
 
 interface DataTableRowActionsProps {
   row: Row<Employee>

@@ -1,12 +1,11 @@
-import React from 'react'
-import { format, parseISO } from 'date-fns'
-import { ColumnDef } from '@tanstack/react-table'
-import { es } from 'date-fns/locale/es'
+import { DataTableColumnHeader } from '@/components/tables/data-table-column-header.tsx'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
-import { DataTableColumnHeader } from '@/components/tables/data-table-column-header.tsx'
-import { Employee } from '@/features/appointments/types.ts'
+import { ColumnDef } from '@tanstack/react-table'
+import { format, parseISO } from 'date-fns'
+import { es } from 'date-fns/locale/es'
 import { DataTableRowActions } from './data-table-row-actions'
+import { Employee } from '../types'
 
 export const columns: ColumnDef<Employee>[] = [
   {

@@ -1,6 +1,6 @@
 import { IconUserPlus } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
-import { useEmployees } from '../context/users-context'
+import { useEmployees } from '../context/employees-context'
 
 export function EmployeePrimaryButtons() {
   const { setOpen } = useEmployees()

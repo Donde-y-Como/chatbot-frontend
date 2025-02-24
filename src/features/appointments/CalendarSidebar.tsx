@@ -13,7 +13,7 @@ import { MakeAppointmentDialog } from '@/features/appointments/MakeAppointmentDi
 import { es } from 'date-fns/locale/es'
 import { MenuIcon } from 'lucide-react'
 import { useState } from 'react'
-import type { Employee } from './types'
+import { Employee } from '../employees/types'
 
 interface SidebarProps {
   selectedDate: Date
