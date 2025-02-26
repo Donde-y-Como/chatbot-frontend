@@ -7,6 +7,7 @@ import { useGetAppointments } from '@/features/appointments/hooks/useGetAppointm
 import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
 import { SidebarTrigger } from '../../components/ui/sidebar'
 import { Separator } from '@radix-ui/react-separator'
+import { MakeAppointmentDialog } from './MakeAppointmentDialog'
 
 export function Calendar() {
   const { data: employees } = useGetEmployees()
@@ -35,11 +36,16 @@ export function Calendar() {
 
   return (
     <div className='flex flex-col h-screen p-2 w-full'>
-      <div className='flex gap-2'>
+      <div className='flex gap-2 mb-2'>
         <SidebarTrigger variant='outline' className='sm:hidden' />
         <Separator orientation='vertical' className='h-7 sm:hidden' />
         <h1 className='text-2xl font-bold'>Citas</h1>
       </div>
+
+      <div className="w-full sm:hidden">
+        <MakeAppointmentDialog />
+      </div>
+
       <div className='h-screen w-full flex bg-background text-foreground'>
 
         <CalendarSidebar

@@ -56,7 +56,9 @@ export function CalendarSidebar({
 
           <ScrollArea className='h-screen pr-3'>
             <CollapsibleContent className='mb-10 h-full space-y-6 flex flex-col'>
-              <MakeAppointmentDialog />
+              <div className="w-full hidden sm:block">
+                <MakeAppointmentDialog />
+              </div>
               {/*<CreateEventDialog />*/}
               <div className='relative rounded-xl border w-full grid place-items-center  hover:shadow-lg'>
                 <Calendar
