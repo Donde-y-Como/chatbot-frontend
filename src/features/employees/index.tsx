@@ -9,6 +9,8 @@ import EmployeesProvider from './context/employees-context.tsx'
 import { TableSkeleton } from '@/components/TableSkeleton.tsx'
 import { CustomTable } from '@/components/tables/custom-table.tsx'
 import { Employee } from './types.ts'
+import { SidebarTrigger } from '../../components/ui/sidebar.tsx'
+import { Separator } from '../../components/ui/separator.tsx'
 
 export default function Employees() {
   const { data: employees, isLoading } = useGetEmployees()
@@ -19,17 +21,18 @@ export default function Employees() {
 
   return (
     <EmployeesProvider>
-      <Header fixed>
-        <Search />
-      </Header>
-
       <Main fixed>
-        <section className='px-2'>
+        <section className='p-2'>
           <div
-            className="mb-2 flex items-center justify-center text-center sm:text-justify sm:justify-between space-y-2 flex-wrap">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight">Empleados</h2>
-              <p className="text-muted-foreground">
+            className="mb-2 w-full flex sm:items-center flex-col sm:flex-row  sm:justify-between">
+            <div className='flex flex-col gap-2'>
+              <div className='flex gap-2 items-center'>
+                <SidebarTrigger variant='outline' className='sm:hidden' />
+                <Separator orientation='vertical' className='h-7 sm:hidden' />
+                <h1 className='text-2xl font-bold'>Empleados</h1>
+              </div>
+
+              <p className="text-muted-foreground self-start mb-2 sm:mb-0">
                 Gestiona los empleados de tu negocio aqui.
               </p>
             </div>

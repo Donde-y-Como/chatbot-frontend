@@ -42,6 +42,8 @@ import moment from "moment-timezone"
 import { useMemo, useState } from 'react'
 import { EventCalendarView } from './event-calendar-view'
 import { useEventMutations } from './hooks/useEventMutations'
+import { SidebarTrigger } from '../../components/ui/sidebar'
+import { Separator } from '@radix-ui/react-separator'
 
 type DateRange = {
   from: Date | null;
@@ -215,13 +217,16 @@ export default function EventsView() {
   }
 
   return (
-
-    <div className='p-2 md:p-6 w-full'>
+    <div className='p-2 w-full'>
       <ScrollArea className="w-full h-full" type="auto">
-        <div className='mb-6 bg-background pt-2 pb-4 z-10'>
+        <div className='mb-6 bg-background pb-4 z-10'>
           <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
             <div>
-              <h1 className='text-2xl font-bold'>Eventos</h1>
+              <div className='flex gap-2'>
+                <SidebarTrigger variant='outline' className='sm:hidden'/>
+                <Separator orientation='vertical' className='h-7 sm:hidden' />
+                <h1 className='text-2xl font-bold'>Eventos</h1>
+              </div>
               <p className='text-muted-foreground'>
                 {totalUpcomingEvents} eventos próximos, {todayEvents} hoy
               </p>
@@ -409,7 +414,7 @@ export default function EventsView() {
             </Card>
           </TabsContent>
         </Tabs>
-        
+
         <EventCreateModal
           open={showCreate}
           onClose={() => setShowCreate(false)}

@@ -22,7 +22,7 @@ export function DataTableToolbar<TData>({
           onChange={(event) =>
             table.getColumn('name')?.setFilterValue(event.target.value)
           }
-          className='h-8 w-[150px] lg:w-[250px]'
+          className='h-8 sm:w-[150px] lg:w-[250px] w-full'
         />
         {isFiltered && (
           <Button
