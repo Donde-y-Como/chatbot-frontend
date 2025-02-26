@@ -19,7 +19,14 @@ import {
 import { EventDetailBookings } from './details/event-detail-bookings'
 import { EventDetailItem } from './details/event-detail-item'
 import { EventDetailsSkeleton } from './details/event-details-skeleton'
-import { formatDateRange, formatEventDuration, formatPrice, formatRecurrence } from './details/utils/formatters'
+import {
+  formatDateRange,
+  formatEventDuration,
+  formatPrice,
+  formatRecurrence,
+} from './details/utils/formatters'
+import { generateOccurrences } from './utils/occurrence'
+import { EventDetailBookingsByDate } from './details/event-details-booking-by-date'
 
 export function EventDetailsModal({
   eventId,
@@ -32,18 +39,49 @@ export function EventDetailsModal({
 }) {
   const { data: event, isLoading } = useGetEventWithBookings(eventId)
 
+  // Added null check and return a loading state.  This fixes a bug when the event hasn't loaded yet.
+  if (isLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className='w-full max-w-4xl max-h-[90vh] p-0'>
+            <EventDetailsSkeleton />
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  if (!event) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className='w-full max-w-4xl max-h-[90vh] p-0'>
+           <div className='p-6 text-center text-muted-foreground'>
+              No se encontró información del evento.
+            </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+
+  const occurrences = generateOccurrences(
+    event.duration,
+    event.recurrence.frequency,
+    event.recurrence.endCondition
+  )
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className='w-full max-w-4xl max-h-[90vh] overflow-hidden p-0'>
-        <ScrollArea className='h-full'>
-          {isLoading ? (
-            <EventDetailsSkeleton />
-          ) : event ? (
-            <div className='flex flex-col md:flex-row'>
-              <div className='md:w-1/2'>
-                <EventCarousel event={event} />
-              </div>
-              <div className='p-6 md:w-1/2'>
+      <DialogContent className='max-w-4xl max-h-[90vh] overflow-hidden p-0'>
+        {/* Removed w-full and h-full classes from dialogContent to prevent scroll area from breaking layout,
+          added flex and flex-col to ensure proper layout.
+        */}
+          <div className='flex flex-col md:flex-row'>
+            <div className='md:w-1/2'>
+              <EventCarousel event={event} />
+            </div>
+            {/* Applied ScrollArea to the content that needs to scroll */}
+            <ScrollArea className='md:w-1/2 h-[calc(90vh-48px)]'> {/*Added a max-height here  and wrapped scrollArea in a div*/}
+              <div className='p-6'>
                 <DialogHeader>
                   <DialogTitle className='text-2xl font-bold mb-2'>
                     {event.name}
@@ -106,20 +144,19 @@ export function EventDetailsModal({
                 </div>
 
                 <div className='mt-8'>
-                  <EventDetailBookings event={event} />
+                  {occurrences.length > 1 ? (
+                    <EventDetailBookingsByDate
+                      event={event}
+                      occurrences={occurrences}
+                    />
+                  ) : (
+                    <EventDetailBookings event={event} />
+                  )}
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className='p-6 text-center text-muted-foreground'>
-              No se encontró información del evento.
-            </div>
-          )}
-        </ScrollArea>
+            </ScrollArea>
+          </div>
       </DialogContent>
     </Dialog>
   )
 }
-
-
-
