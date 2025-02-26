@@ -6,8 +6,11 @@ import { EventAvailability } from '@/features/events/types.ts'
 export function useCheckEventAvailability(eventId: string, date: Date | null) {
   return useQuery({
     queryKey: ['event', eventId, 'availability', date],
-    enabled: !!date,
+    enabled: date instanceof Date,
     queryFn: () =>
-      api.get<EventAvailability>('/events/' + eventId + '/availability', {data: {date: format(date as Date, "yyyy-MM-DD")}}).then((res) => res.data),
+      date ?
+        api.get<EventAvailability>(`/events/${eventId}/availability?date=${format(date, 'yyyy-MM-dd')}`)
+          .then((res) => res.data)
+        : Promise.resolve(null)
   })
 }

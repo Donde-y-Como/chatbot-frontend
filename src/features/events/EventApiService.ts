@@ -23,10 +23,27 @@ export const EventApiService = {
     }
   },
 
-  bookEvent: async (eventId: string, clientIds: string[], date:string) => {
+  bookGroupEvent: async (eventId: string, clientIds: string[], date: string) => {
     const response = await api.post(`/events/${eventId}/group-booking`, { clientIds, date })
     if (response.status !== 201) {
+      throw new Error('Error booking group event')
+    }
+  },
+
+  bookEvent: async (data: { eventId: string, clientId: string, date: string, participants: number, notes: string }) => {
+    const { eventId, ...bookData } = data;
+    const response = await api.post(`/events/${eventId}/book`, { ...bookData })
+
+    if (response.status !== 201) {
       throw new Error('Error booking event')
+    }
+
+  },
+
+  cancelBooking: async (bookingId: string) => {
+    const response = await api.delete(`/bookings/${bookingId}`)
+    if (response.status !== 200) {
+      throw new Error('Error removing the booking for the event')
     }
   },
 }

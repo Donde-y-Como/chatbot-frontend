@@ -15,6 +15,7 @@ export type RecurrencePrimitives = {
   frequency: Frequency
   endCondition: EndCondition
 }
+
 export type DurationPrimitives = {
   startAt: string
   endAt: string

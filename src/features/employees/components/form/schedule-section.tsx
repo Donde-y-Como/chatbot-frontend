@@ -1,15 +1,14 @@
+import { AnimatePresence, motion } from "framer-motion"
+import { Calendar, Clock, PlusCircle, Trash2 } from "lucide-react"
 import { useMemo, useState } from "react"
-import { PlusCircle, Trash2, Clock, Calendar } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { minutesToTimeString, timeStringToMinutes } from "../../utils/mappers"
 
 const diasSemana = {

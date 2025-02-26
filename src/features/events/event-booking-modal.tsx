@@ -1,260 +1,309 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
-import { Client } from '@/features/chats/ChatTypes.ts'
-import { useCheckEventAvailability } from '@/features/events/hooks/useCheckEventAvailability'
-import { useGetEventWithBookings } from '@/features/events/hooks/useGetEventWithBookings'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { AlertCircle, Loader2, Search, X } from 'lucide-react'
-import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useGetClients } from '@/features/appointments/hooks/useGetClients';
+import { useGetEventWithBookings } from '@/features/events/hooks/useGetEventWithBookings';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { format, isSameDay, parseISO, startOfDay } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Loader2, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { useGetEventAvailableDates } from './hooks/useGetEventAvailableDates';
+import { Booking } from './types';
+import { Client } from '../chats/ChatTypes';
 
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .map((word) => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-}
+const bookingFormSchema = z.object({
+  clientId: z.string().min(1, { message: 'Debes seleccionar un cliente.' }),
+  participants: z
+    .number({ invalid_type_error: 'El número de participantes es requerido.' })
+    .min(1, { message: 'Mínimo 1 participante.' }),
+});
+type BookingFormValues = z.infer<typeof bookingFormSchema>;
 
-function getClientsByIds(
-  clients: Client[] | undefined,
-  ids: string[]
-): Client[] {
-  if (!clients) return []
-  return clients.filter((client) => ids.includes(client.id))
+interface EventBookingModalProps {
+  eventId: string;
+  open: boolean;
+  onClose: () => void;
+  onSaveBooking: (data: { clientId: string; participants: number; date: Date }) => Promise<void>;
+  onRemoveBooking: (bookingId: string) => Promise<void>;
 }
 
 export function EventBookingModal({
   eventId,
   open,
   onClose,
-  onSave,
-}: {
-  eventId: string
-  open: boolean
-  onClose: () => void
-  onSave: (clientIds: string[], date: Date) => void
-}) {
-  const { data: event, isLoading: isEventLoading } =
-    useGetEventWithBookings(eventId)
-  const { data: clients, isLoading: isClientsLoading } = useGetClients()
-  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
-    return event
-      ? new Date(event.duration.startAt)
-      : null
-  })
+  onSaveBooking,
+  onRemoveBooking,
+}: EventBookingModalProps) {
+  const { data: event, isLoading: isEventLoading } = useGetEventWithBookings(eventId);
+  const { data: clients, isLoading: isClientsLoading } = useGetClients();
 
+  const availableDates = useGetEventAvailableDates(event);
+
+  // Selected occurrence date.
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   useEffect(() => {
-    if(event) {
-      const date = new Date(event.duration.startAt)
-      setSelectedDate(date)
+    if (availableDates.length && !selectedDate) {
+      setSelectedDate(availableDates[0]);
     }
-  }, [event])
+  }, [availableDates, selectedDate]);
 
-  const { data: availability, isLoading: isAvailabilityLoading } =
-    useCheckEventAvailability(eventId, selectedDate)
-  const [selectedClientIds, setSelectedClientIds] = useState<string[]>([])
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  // React-hook-form for adding a new booking.
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<BookingFormValues>({
+    resolver: zodResolver(bookingFormSchema),
+    defaultValues: { clientId: '', participants: 1 },
+  });
 
-  useEffect(() => {
-    if (event && selectedDate) {
-      const dateBookings = event.bookings.filter((booking) => {
-        return new Date(booking.date).getTime() === selectedDate.getTime()
-      })
-      setSelectedClientIds(dateBookings.map((booking) => booking.clientId))
-    }
-  }, [event, selectedDate])
+  const onSubmit = async (data: BookingFormValues) => {
+    if (!selectedDate) return;
+    await onSaveBooking({ ...data, date: selectedDate });
+    reset();
+  };
 
-  const handleAddClient = (clientId: string) => {
-    if (selectedClientIds.includes(clientId)) return
-
-    const remainingSpots = availability?.remainingSpots ?? null
-    if (remainingSpots !== null && remainingSpots <= 0) {
-      setError('No hay lugares disponibles para más clientes.')
-      return
-    }
-
-    setSelectedClientIds((prev) => [...prev, clientId])
-    setSearchOpen(false)
-    setSearchQuery('')
+  const handleRemoveBooking = async (booking: Booking) => {
+    await onRemoveBooking(booking.id)
   }
 
-  const handleRemoveClient = (clientId: string) => {
-    setSelectedClientIds((prev) => prev.filter((id) => id !== clientId))
-  }
+  // Filter bookings that match the selected date.
+  const bookingsForSelectedDate = useMemo(() => {
+    if (!event || !selectedDate) return [] as Booking[];
+    return event.bookings.filter((booking: Booking) =>
+      isSameDay(startOfDay(parseISO(booking.date)), selectedDate)
+    );
+  }, [event, selectedDate]);
 
-  const filteredClients = React.useMemo(() => {
-    if (!clients) return []
-    return clients.filter(
-      (client) =>
-        client.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !selectedClientIds.includes(client.id)
-    )
-  }, [clients, searchQuery, selectedClientIds])
+  // For searching/selecting clients.
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  const selectedClients = getClientsByIds(clients, selectedClientIds)
+  const filteredClients = useMemo(() => {
+    if (!clients) return [];
+    return clients.filter((client) =>
+      client.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [clients, searchQuery]);
 
-  const saveAndClose = () => {
-    const newClientIds = selectedClientIds.filter(
-      (clientId) =>
-        !event?.bookings.find((booking) => booking.clientId === clientId)
-    )
-    if (selectedDate) onSave(newClientIds, selectedDate)
-    onClose()
-  }
+  // When a client is selected from the search, update the form value.
+  const handleSelectClient = (clientId: string) => {
+    // We update the form control manually.
+    reset({ clientId, participants: 1 });
+    setIsSearchOpen(false);
+    setSearchQuery('');
+  };
 
   if (isEventLoading || isClientsLoading) {
     return (
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className='sm:max-w-[600px]'>
-          <div className='flex justify-center items-center h-40'>
-            <Loader2 className='h-8 w-8 animate-spin' />
+        <DialogContent className="sm:max-w-[600px]">
+          <div className="flex justify-center items-center h-40">
+            <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         </DialogContent>
       </Dialog>
-    )
+    );
   }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className='sm:max-w-[600px]'>
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle>Agregar invitados</DialogTitle>
+          <DialogTitle>Administrar Reservas</DialogTitle>
           <DialogDescription>
-            {selectedDate && format(selectedDate, "EEEE d 'de' MMMM, yyyy", { locale: es })}
+            {selectedDate ? format(selectedDate, "EEEE, d 'de' MMMM yyyy", { locale: es }) : ''}
           </DialogDescription>
         </DialogHeader>
 
-        <div className='space-y-4'>
-          <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant='outline'
-                role='combobox'
-                aria-expanded={searchOpen}
-                className='w-full justify-between'
-              >
-                <Search className='mr-2 h-4 w-4' />
-                Buscar clientes...
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className='w-full p-0'>
-              <Command>
-                <CommandInput
-                  placeholder='Buscar por nombre...'
-                  value={searchQuery}
-                  onValueChange={setSearchQuery}
-                />
-                <CommandList>
-                  <CommandEmpty>No se encontraron clientes.</CommandEmpty>
-                  <CommandGroup>
-                    {filteredClients.map((client) => (
-                      <CommandItem
-                        key={client.id}
-                        onSelect={() => handleAddClient(client.id)}
-                        className='flex items-center gap-2'
-                      >
-                        <Avatar className='h-8 w-8'>
-                        <AvatarFallback>
-                            {getInitials(client.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{client.name}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+        <div className="space-y-6">
+          {/* Occurrence Date Selector */}
+          <div className="flex flex-col gap-2">
+            <label className="font-medium">Selecciona una fecha:</label>
+            <Select value={selectedDate?.toISOString()} onValueChange={(value) => setSelectedDate(new Date(value))}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Fecha" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableDates.map((date) => (
+                  <SelectItem key={date.toISOString()} value={date.toISOString()}>
+                    {format(date, "EEEE, d 'de' MMMM yyyy", { locale: es })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <ScrollArea className='h-[200px]'>
-            <div className='flex flex-wrap gap-2'>
-              {selectedClients.map((client) => (  
-                <div
-                  key={client.id}
-                  className='flex items-center gap-2 bg-secondary p-2 rounded-full'
-                >
-                  <Avatar className='h-8 w-8'>
-                    <AvatarFallback>
-                      {getInitials(client.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className='text-sm font-medium'>
-                    {client.name}
-                  </span>
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    className='h-6 w-6 p-0 rounded-full'
-                    onClick={() => handleRemoveClient(client.id)}
-                  >
-                    <X className='h-4 w-4' />
-                  </Button>
-                </div>
-              ))}
+          {/* Add Booking Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <label className="font-medium">Cliente</label>
+              <Controller
+                control={control}
+                name="clientId"
+                render={({ field }) => (
+                  <div className="relative">
+                    <Input
+                      {...field}
+                      placeholder="Buscar cliente..."
+                      value={
+                        filteredClients.find((client) => client.id === field.value)?.name || searchQuery
+                      }
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => setIsSearchOpen(true)}
+                    />
+                    <AnimatePresence>
+                      {isSearchOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-background shadow-md"
+                        >
+                          <Command>
+                            <CommandInput
+                              placeholder="Buscar por nombre..."
+                              value={searchQuery}
+                              onValueChange={setSearchQuery}
+                            />
+                            <CommandList>
+                              <CommandEmpty>No se encontraron clientes.</CommandEmpty>
+                              <CommandGroup>
+                                {filteredClients.map((client) => (
+                                  <CommandItem
+                                    key={client.id}
+                                    onSelect={() => handleSelectClient(client.id)}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <Avatar className="h-8 w-8">
+                                      <AvatarFallback>
+                                        {client.name
+                                          .split(' ')
+                                          .map((w) => w[0])
+                                          .join('')
+                                          .toUpperCase()
+                                          .slice(0, 2)}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span>{client.name}</span>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              />
+              {errors.clientId && (
+                <p className="text-sm text-red-600">{errors.clientId.message}</p>
+              )}
             </div>
-          </ScrollArea>
 
-          {availability && (
-            <div className='text-sm text-muted-foreground'>
-              Lugares disponibles: {availability.remainingSpots ?? 'Ilimitados'}
+            <div className="flex flex-col gap-2">
+              <label className="font-medium">Número de Participantes</label>
+              <Controller
+                control={control}
+                name="participants"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    type="number"
+                    min={1}
+                    className="w-full"
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                )}
+              />
+              {errors.participants && (
+                <p className="text-sm text-red-600">{errors.participants.message}</p>
+              )}
             </div>
-          )}
 
-          {error && (
-            <Alert variant='destructive'>
-              <AlertCircle className='h-4 w-4' />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+            <Button type="submit" className="w-full">
+              Agregar Reserva
+            </Button>
+          </form>
+
+          {/* List Existing Bookings for Selected Date */}
+          {clients && (<BookingsList bookingsForSelectedDate={bookingsForSelectedDate} clients={clients} handleRemoveBooking={handleRemoveBooking} />)}
         </div>
 
         <DialogFooter>
-          <Button variant='outline' onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button onClick={saveAndClose} disabled={isAvailabilityLoading}>
-            {isAvailabilityLoading ? (
-              <>
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                Verificando...
-              </>
-            ) : (
-              'Guardar Cambios'
-            )}
+          <Button variant="outline" onClick={onClose}>
+            Cerrar
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
+}
+
+
+
+export function BookingsList({ bookingsForSelectedDate, clients, handleRemoveBooking }: { bookingsForSelectedDate: Booking[], clients: Client[], handleRemoveBooking: (booking: Booking) => void }) {
+  return (
+    <div>
+      <h3 className="font-semibold mb-2">Reservas existentes</h3>
+      {bookingsForSelectedDate.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No hay reservas para esta fecha.</p>
+      ) : (
+        <ScrollArea className="h-64 rounded-md border">
+          <div className="p-4">
+            <AnimatePresence>
+              {bookingsForSelectedDate.map((booking: Booking) => {
+                const client = clients.find((c: Client) => c.id === booking.clientId);
+                return (
+                  <motion.div
+                    key={booking.id}
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="flex items-center justify-between p-3 border-b"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback>
+                          {client?.name
+                            .split(' ')
+                            .map((w) => w[0])
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{client?.name || 'Cliente desconocido'}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Participantes: {booking.participants}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveBooking(booking)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        </ScrollArea>
+      )}
+    </div>
+  );
 }

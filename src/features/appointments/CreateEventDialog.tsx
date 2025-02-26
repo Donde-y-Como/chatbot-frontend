@@ -175,6 +175,7 @@ export function CreateEventDialog() {
           locale={es}
           mode='single'
           selected={startDate}
+          required
           onSelect={(date) => setStartDate(date as Date)}
         />
       </label>
@@ -183,6 +184,7 @@ export function CreateEventDialog() {
         <Input
           type='time'
           value={startTime}
+          required
           onChange={(e) => setStartTime(e.target.value)}
           placeholder='Hora de inicio'
         />
@@ -193,6 +195,7 @@ export function CreateEventDialog() {
           locale={es}
           mode='single'
           selected={endDate}
+          required
           onSelect={(date) => setEndDate(date as Date)}
         />
       </label>
@@ -201,6 +204,7 @@ export function CreateEventDialog() {
         <Input
           type='time'
           value={endTime}
+          required
           onChange={(e) => setEndTime(e.target.value)}
           placeholder='Hora de finalización'
         />

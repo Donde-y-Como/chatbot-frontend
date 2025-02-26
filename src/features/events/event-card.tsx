@@ -1,8 +1,3 @@
-import { useState } from 'react'
-import { format } from 'date-fns'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { MoreHorizontal } from 'lucide-react'
-import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { Card, CardContent } from '@/components/ui/card.tsx'
@@ -12,191 +7,171 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx'
-import { EventApiService } from '@/features/events/EventApiService.ts'
 import { EventBookingModal } from '@/features/events/event-booking-modal.tsx'
 import { EventDeleteDialog } from '@/features/events/event-delete-dialog.tsx'
 import { EventDetailsModal } from '@/features/events/event-details-modal.tsx'
 import { EventEditModal } from '@/features/events/event-edit-modal.tsx'
-import {
-  Booking,
-  EventPrimitives,
-  EventWithBookings,
-} from '@/features/events/types.ts'
-import { fromZonedTime } from 'date-fns-tz'
-
-function translateRecurrente(frequency: string) {
-  return frequency === 'weekly'
-    ? 'semanalmente'
-    : frequency === 'daily'
-      ? 'diariamente'
-      : frequency === 'monthly'
-        ? 'mensualmente'
-        : 'anualmente'
-}
-
-function getRecurrenceText(event: EventPrimitives) {
-  if (event.recurrence.frequency === 'never') return null
-
-  let text = `Se repite ${translateRecurrente(event.recurrence.frequency)}`
-
-  if (event.recurrence.endCondition) {
-    if (event.recurrence.endCondition.type === 'occurrences') {
-      text += `, ${event.recurrence.endCondition.occurrences} veces`
-    } else if (event.recurrence.endCondition.type === 'date') {
-      text += `, hasta ${format(event.recurrence.endCondition.until, 'MMM d, yyyy')}`
-    }
-  }
-
-  return text
-}
+import { Booking, EventPrimitives } from '@/features/events/types.ts'
+import { format } from 'date-fns'
+import { Clock, MapPin, MoreHorizontal, Users } from 'lucide-react'
+import { useState } from 'react'
+import { BookingDeleteDialog } from './booking-delete-dialog'
+import { getRecurrenceText } from './utils/occurrence'
+import { useEventMutations } from './hooks/useEventMutations'
 
 export function EventCard({
   event,
-  onDelete,
   bookings,
 }: {
   bookings: Booking[]
   event: EventPrimitives
-  onDelete: (id: string) => void
 }) {
   const [showDetails, setShowDetails] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [showBooking, setShowBooking] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const recurrenceText = getRecurrenceText(event)
-  const queryClient = useQueryClient()
-  const bookGroupMutation = useMutation({
-    mutationKey: ['bookGroupEvent'],
-    mutationFn: async (variables: {
-      eventId: string
-      date: string
-      clientIds: string[]
-    }) => {
-      await EventApiService.bookEvent(
-        variables.eventId,
-        variables.clientIds,
-        variables.date
-      )
-    },
-    onSuccess: (_data, changes) => {
-      toast.success('Clients agendados correctamente')
-
-      void queryClient.invalidateQueries({
-        queryKey: ['event', event.id],
-      })
-    },
-    onError: (data) => {
-      console.log(data)
-      toast.error('Hubo un error al agendar clientes en el evento')
-    },
-  })
-  const updateEventMutation = useMutation({
-    mutationKey: ['updateEvent'],
-    mutationFn: async (changes: Partial<EventPrimitives>) => {
-      await EventApiService.updateEvent(event.id, changes)
-    },
-    onSuccess: (_data, changes) => {
-      toast.success('Evento actualizado correctamente')
-
-      queryClient.setQueryData<EventPrimitives[]>(['events'], (oldEvents) => {
-        if (!oldEvents) return oldEvents
-
-        return oldEvents.map((existingEvent) =>
-          existingEvent.id === event.id
-            ? { ...existingEvent, ...changes }
-            : existingEvent
-        )
-      })
-
-      queryClient.setQueryData<EventWithBookings>(
-        ['event', event.id],
-        (oldEvent) => {
-          if (!oldEvent) return oldEvent
-
-          return { ...oldEvent, ...changes }
-        }
-      )
-    },
-    onError: (data) => {
-      console.log(data)
-      toast.error('Hubo un error al actualizar el evento')
-    },
-  })
+  const [showBookingDeleteDialog, setShowBookingDeleteDialog] = useState(false)
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null)
+  
+  const { updateEvent, bookEvent, deleteBooking, deleteEvent } = useEventMutations()
 
   const handleEditedEvent = (changes: Partial<EventPrimitives>) => {
-    updateEventMutation.mutate(changes)
+    updateEvent(event.id, changes)
+    setShowEdit(false)
   }
 
-  const handleBookingEvent = async (clients: string[], date: Date) => {
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    const utcDate = fromZonedTime(date, timeZone)
-    bookGroupMutation.mutate({
+  const handleBookingEvent = async ({ clientId, date, participants }: { 
+    clientId: string, 
+    date: Date, 
+    participants: number 
+  }) => {
+    bookEvent({
       eventId: event.id,
-      clientIds: clients,
-      date: utcDate.toISOString(),
+      clientId,
+      date,
+      participants,
+      notes: ''
     })
+  }
+
+  const confirmBookingDeletion = async () => {
+    if (!selectedBookingId) return
+
+    try {
+      deleteBooking({bookingId: selectedBookingId, eventId: event.id})
+    } finally {
+      setShowBookingDeleteDialog(false)
+      setSelectedBookingId(null)
+    }
+  }
+
+  const handleRemoveBooking = async (bookingId: Booking["id"]) => {
+    setSelectedBookingId(bookingId)
+    setShowBookingDeleteDialog(true)
+  }
+
+  const handleDeleteEvent = () => {
+    deleteEvent(event.id)
+    setShowDeleteDialog(false)
   }
 
   return (
     <>
-      <Card className='mb-2'>
-        <CardContent className='flex items-start gap-4 p-4'>
-          <div className='w-1 self-stretch rounded-full bg-primary' />
-          <div className='flex-1'>
-            <div className='flex items-start justify-between'>
-              <div>
-                <h3 className='font-semibold'>{event.name}</h3>
-                <div className='text-sm text-muted-foreground'>
-                  {format(event.duration.startAt, 'h:mm a')}
-                  {event.capacity.isLimited && (
-                    <Badge variant='secondary' className='ml-2'>
-                      {`${bookings.length} /  ${event.capacity.maxCapacity} agendados`}
-                    </Badge>
+      <Card key={event.id} className="overflow-hidden transition-shadow duration-200 hover:shadow-md">
+        <div className="flex flex-col md:flex-row">
+          {event.photos && event.photos.length > 0 && (
+            <div className="md:w-48 h-32 md:h-auto bg-muted relative">
+              <img
+                src={event.photos[0]}
+                alt={event.name}
+                className="object-cover w-full h-full"
+                onError={(e) => { e.currentTarget.src = "https://placehold.co/600x400?text=Sin+imagen" }}
+              />
+            </div>
+          )}
+          <div className="flex-1 flex flex-col md:flex-row">
+            <CardContent className="flex-1 p-4">
+              <div className="flex flex-col md:flex-row justify-between gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-lg">{event.name}</h3>
+                    <div className="block">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant='ghost' size='icon'>
+                            <MoreHorizontal className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem onClick={() => setShowDetails(true)}>
+                            Ver detalles
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setShowEdit(true)}>
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setShowBooking(true)}>
+                            Agendar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className='text-destructive'
+                            onClick={() => setShowDeleteDialog(true)}
+                          >
+                            Eliminar Evento
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
+                  {getRecurrenceText(event) && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {getRecurrenceText(event)}
+                    </p>
                   )}
                 </div>
-                {recurrenceText && (
-                  <p className='mt-1 text-xs text-muted-foreground'>
-                    {recurrenceText}
-                  </p>
-                )}
-              </div>
-              <div className='flex items-center gap-2'>
-                {event.price.amount > 0 && (
-                  <Badge variant='secondary'>
-                    {new Intl.NumberFormat('es-MX', {
-                      style: 'currency',
-                      currency: event.price.currency,
-                    }).format(event.price.amount)}
+                <div className="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-1">
+                  <Badge
+                    variant={
+                      event.capacity.isLimited &&
+                        event.capacity.maxCapacity &&
+                        bookings.reduce((sum, b) => sum + b.participants, 0) >= event.capacity.maxCapacity
+                        ? "destructive"
+                        : "outline"
+                    }
+                    className="whitespace-nowrap"
+                  >
+                    {event.capacity.isLimited && event.capacity.maxCapacity
+                      ? `${bookings.reduce((sum, b) => sum + b.participants, 0)}/${event.capacity.maxCapacity} asistentes`
+                      : `${bookings.reduce((sum, b) => sum + b.participants, 0)} asistentes`}
                   </Badge>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant='ghost' size='icon'>
-                      <MoreHorizontal className='h-4 w-4' />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    <DropdownMenuItem onClick={() => setShowDetails(true)}>
-                      Ver detalles
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setShowEdit(true)}>
-                      Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setShowBooking(true)}>
-                      Agendar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className='text-destructive'
-                      onClick={() => setShowDeleteDialog(true)}
-                    >
-                      Eliminar Evento
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  <div className="text-sm font-medium">
+                    {event.price.amount > 0
+                      ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: event.price.currency }).format(event.price.amount)
+                      : "Gratis"}
+                  </div>
+                </div>
               </div>
-            </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="flex items-center text-sm">
+                  <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                  <span>
+                    {format(new Date(event.duration.startAt), 'HH:mm')} -
+                    {format(new Date(event.duration.endAt), 'HH:mm')}
+                  </span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <Users className="h-4 w-4 mr-1 text-muted-foreground" />
+                  <span>{bookings.length} reservas</span>
+                </div>
+                <div className="flex items-center text-sm col-span-2 truncate">
+                  <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
+                  <span className="truncate">{event.location}</span>
+                </div>
+              </div>
+            </CardContent>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       <EventDetailsModal
@@ -216,16 +191,20 @@ export function EventCard({
         eventId={event.id}
         open={showBooking}
         onClose={() => setShowBooking(false)}
-        onSave={handleBookingEvent}
+        onSaveBooking={handleBookingEvent}
+        onRemoveBooking={handleRemoveBooking}
+      />
+
+      <BookingDeleteDialog
+        open={showBookingDeleteDialog}
+        onClose={() => setShowBookingDeleteDialog(false)}
+        onConfirm={confirmBookingDeletion}
       />
 
       <EventDeleteDialog
         open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
-        onConfirm={() => {
-          onDelete(event.id)
-          setShowDeleteDialog(false)
-        }}
+        onConfirm={handleDeleteEvent}
       />
     </>
   )
