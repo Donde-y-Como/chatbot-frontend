@@ -26,7 +26,7 @@ export function ClientDialogs() {
             currentClient={currentRow}
           />
 
-          <ClientDeleteDialog
+          {/* <ClientDeleteDialog
             key={`client-delete-${currentRow.id}`}
             open={open === 'delete'}
             onOpenChange={() => {
@@ -36,7 +36,7 @@ export function ClientDialogs() {
               }, 500)
             }}
             currentRow={currentRow}
-          />
+          /> */}
         </>
       )}
     </>

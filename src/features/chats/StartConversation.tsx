@@ -180,7 +180,7 @@ export const StartConversation: React.FC<StartConversationProps> = React.memo(
                   onChange={(e) =>
                     handleInputChange('phoneNumber', e.target.value)
                   }
-                  placeholder='951-201-0452'
+                  placeholder='000-000-0000'
                 />
               </div>
             </div>
@@ -257,6 +257,7 @@ export const StartConversation: React.FC<StartConversationProps> = React.memo(
                 !formData.phoneNumber ||
                 !selectedTemplate ||
                 Object.keys(variables).length === 0
+                || Object.values(variables).some((v) => !v.trim().length)
               }
             >
               Iniciar conversación

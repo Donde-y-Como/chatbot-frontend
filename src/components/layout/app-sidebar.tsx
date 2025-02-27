@@ -24,6 +24,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: authService.getMe,
+    staleTime: Infinity,
   })
 
   const { toggleSidebar } = useSidebar()
