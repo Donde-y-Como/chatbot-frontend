@@ -1,10 +1,12 @@
-import { useMemo } from 'react'
 import { Chat } from '@/features/chats/ChatTypes'
+import { useMemo } from 'react'
+import { Tag } from '../../clients/types'
 
 export function useFilteredChats(
   chats: Chat[] | undefined,
   search: string,
-  activeFilter: string | null
+  activeFilter: string | null,
+  tags: Tag[] | undefined
 ) {
   return useMemo(() => {
     return (
@@ -15,11 +17,25 @@ export function useFilteredChats(
         let matchesFilter = true
 
         if (activeFilter) {
-          matchesFilter = chat.platformName === activeFilter
+          if (activeFilter.toLowerCase() === "instagram"
+            || activeFilter.toLowerCase() === "whatsapp"
+            || activeFilter.toLowerCase() === "facebook") {
+            matchesFilter = chat.platformName === activeFilter
+          } else if (tags && tags.length > 0) {
+            const tagId = tags.find(
+              (tag) => tag.name.toLowerCase() === activeFilter.toLowerCase()
+            )?.id;
+
+            if (tagId) {
+              matchesFilter = chat.client.tagIds.length > 0 && chat.client.tagIds.includes(tagId)
+            } else {
+              matchesFilter = false
+            }
+          }
         }
 
         return searchQuery && matchesFilter
       }) || []
     )
-  }, [chats, search, activeFilter])
+  }, [chats, search, activeFilter, tags])
 }

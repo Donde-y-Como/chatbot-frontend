@@ -10,6 +10,7 @@ import { ChatListItem } from '@/features/chats/ChatListItem.tsx'
 import { Chat } from '@/features/chats/ChatTypes'
 import { useChats } from '@/features/chats/hooks/useChats.ts'
 import { useFilteredChats } from '@/features/chats/hooks/useFilteredChats.ts'
+import { useGetTags } from '../clients/hooks/useGetTags'
 
 interface ChatBarProps {
   selectedChatId: string | null
@@ -31,9 +32,9 @@ export function ChatBar({
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const queryClient = useQueryClient()
   const { user } = useAuth()
-  const {chats, isChatsLoading, toggleAllIaMutation} = useChats()
-
-  const filteredChatList = useFilteredChats(chats, search, activeFilter)
+  const { chats, isChatsLoading, toggleAllIaMutation } = useChats()
+  const { data: tags } = useGetTags()
+  const filteredChatList = useFilteredChats(chats, search, activeFilter, tags)
 
   const handleSelectChat = (chatId: string) => {
     setSelectedChatId(chatId)
@@ -72,21 +73,21 @@ export function ChatBar({
       <ScrollArea className='h-full pl-2 pr-3'>
         {isChatsLoading
           ? Array.from({ length: 5 }).map((_, index) => (
-              <Fragment key={index}>
-                <Skeleton className='h-16 w-full rounded-md' />
-                <Separator className='my-1' />
-              </Fragment>
-            ))
+            <Fragment key={index}>
+              <Skeleton className='h-16 w-full rounded-md' />
+              <Separator className='my-1' />
+            </Fragment>
+          ))
           : filteredChatList.map((chat) => (
-              <Fragment key={chat.id}>
-                <ChatListItem
-                  chat={chat}
-                  isSelected={selectedChatId === chat.id}
-                  onClick={() => handleSelectChat(chat.id)}
-                />
-                <Separator className='my-1' />
-              </Fragment>
-            ))}
+            <Fragment key={chat.id}>
+              <ChatListItem
+                chat={chat}
+                isSelected={selectedChatId === chat.id}
+                onClick={() => handleSelectChat(chat.id)}
+              />
+              <Separator className='my-1' />
+            </Fragment>
+          ))}
       </ScrollArea>
     </div>
   )

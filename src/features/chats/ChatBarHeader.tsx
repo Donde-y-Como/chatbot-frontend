@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   IconBrandFacebook,
@@ -17,6 +17,8 @@ import {
   NewConversation,
   StartConversation,
 } from '@/features/chats/StartConversation.tsx'
+import { useGetTags } from '../clients/hooks/useGetTags'
+import type { Tag } from '../clients/types'
 
 interface ChatSearchInputProps {
   value: string
@@ -32,6 +34,7 @@ export function ChatBarHeader({
   onToggleAllAI,
 }: ChatSearchInputProps) {
   const [allAIEnabled, setAllAIEnabled] = useState(true)
+  const { data: tags, isLoading: isTagsLoading } = useGetTags();
   const queryClient = useQueryClient()
   const { data: templates } = useQuery({
     queryKey: ['templates'],
@@ -60,16 +63,29 @@ export function ChatBarHeader({
   }
 
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
+
   const toggleFilter = (platform: string) => {
     setActiveFilter((prev) => (prev === platform ? null : platform))
     onFilterChange(activeFilter === platform ? null : platform)
   }
 
-  const platforms = [
-    { name: 'whatsapp', icon: IconBrandWhatsapp, color: 'text-green-500' },
-    { name: 'facebook', icon: IconBrandFacebook, color: 'text-blue-500' },
-    { name: 'instagram', icon: IconBrandInstagram, color: 'text-pink-500' },
-  ]
+  const platforms = useMemo(() => {
+    const metaPlatforms = [
+      { name: 'whatsapp', icon: IconBrandWhatsapp, color: 'text-green-500' },
+      { name: 'facebook', icon: IconBrandFacebook, color: 'text-blue-500' },
+      { name: 'instagram', icon: IconBrandInstagram, color: 'text-pink-500' },
+    ]
+
+    if (tags && !isTagsLoading) {
+      return [...metaPlatforms, ...tags.map((tag: Tag) => ({
+        name: tag.name,
+        icon: null,
+        color: "text-foreground"
+      }))];
+    }
+
+    return metaPlatforms;
+  }, [isTagsLoading, tags])
 
   const handleOnNewConversation = (data: NewConversation) => {
     startConversationMutation.mutate(data)
@@ -110,7 +126,7 @@ export function ChatBarHeader({
         />
       </label>
 
-      <div className='flex gap-2 px-4 mt-2 mb-2'>
+      <div className='mx-4 flex gap-2 my-2 overflow-x-auto overflow-y-hidden whitespace-nowrap no-scrollbar' style={{ maskImage: 'linear-gradient(to right, transparent, black 10px, black calc(100% - 10px), transparent)' }}>
         {platforms.map(({ name, icon: Icon, color }) => (
           <Badge
             key={name}
@@ -118,7 +134,7 @@ export function ChatBarHeader({
             className='cursor-pointer select-none'
             onClick={() => toggleFilter(name)}
           >
-            <Icon size={14} className={`mr-1 ${color}`} />
+            {Icon && <Icon size={14} className={`mr-1 ${color}`} />}
             {name.charAt(0).toUpperCase() + name.slice(1)}
           </Badge>
         ))}
