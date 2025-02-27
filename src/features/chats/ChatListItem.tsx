@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input.tsx'
 import { Chat, ChatMessages } from '@/features/chats/ChatTypes'
 import { toast } from 'sonner'
 import { AvatarImage } from '@radix-ui/react-avatar'
+import { useChatMutations } from './hooks/useChatMutations'
 
 interface ChatListItemProps {
   chat: Chat
@@ -37,6 +38,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   // const [isAIEnabled, setIsAIEnabled] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
+  const { markAsUnread } = useChatMutations()
   const updateProfileNameMutation = useMutation({
     mutationKey: ['send-message'],
     async mutationFn(data: { clientId: string; profileName: string }) {
@@ -95,6 +97,12 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
     instagram: IconBrandInstagram,
   }[chat.platformName.toLowerCase()]
 
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [isEditing])
+
   const handleNameChange = async (newName: string) => {
     try {
       if (!newName.trim() || newName === chat.client.name) {
@@ -144,11 +152,9 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   //   }
   // }
 
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus()
-    }
-  }, [isEditing])
+  const handleMarkAsUnread = () => {
+    markAsUnread(chat.id)
+  }
 
   return (
     <div
@@ -235,6 +241,14 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                     }}
                   >
                     Cambiar nombre
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleMarkAsUnread()
+                    }}
+                  >
+                    Marcar como no leido
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={(e) => {

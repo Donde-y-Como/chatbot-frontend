@@ -11,4 +11,8 @@ export const chatService = {
     const response = await api.get<ChatMessages>(`/chats/${id}`)
     return response.data
   },
+
+  markAsUnread: async (data: { chatId: string }) => {
+    await api.post(`/chats/${data.chatId}/mark-as-unread`)
+  }
 }
