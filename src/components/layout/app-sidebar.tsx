@@ -1,7 +1,5 @@
-import * as React from 'react'
-import { ComponentProps } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { PanelLeft } from 'lucide-react'
+import { NavGroup } from '@/components/layout/nav-group'
+import { NavUser } from '@/components/layout/nav-user'
 import { Button } from '@/components/ui/button.tsx'
 import {
   Sidebar,
@@ -15,10 +13,14 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
-import { NavGroup } from '@/components/layout/nav-group'
-import { NavUser } from '@/components/layout/nav-user'
 import { authService } from '@/features/auth/AuthService.ts'
-import { sidebarData } from './data/sidebar-data'
+import { IconChecklist, IconMessages, IconPackages, IconUsers } from '@tabler/icons-react'
+import { useQuery } from '@tanstack/react-query'
+import { BookUserIcon, CalendarFold, Command, PanelLeft } from 'lucide-react'
+import * as React from 'react'
+import { ComponentProps } from 'react'
+import { useUnreadChats } from './data/useUnreadChats'
+import { SidebarData } from './types'
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const { data: user } = useQuery({
@@ -27,12 +29,75 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
     staleTime: Infinity,
   })
 
+  const { count: unreadCount, isLoading } = useUnreadChats();
+
   const { toggleSidebar } = useSidebar()
+
+  const [data, setData] = React.useState<SidebarData>({
+    teams: [
+      {
+        name: 'Vende más',
+        logo: Command,
+        plan: 'Plan',
+      },
+    ],
+    navGroups: [
+      {
+        title: 'General',
+        items: [
+          {
+            title: 'Chats',
+            url: '/chats',
+            badge: isLoading ? '...' : unreadCount?.toString() || '0',
+            icon: IconMessages,
+          },
+          {
+            title: 'Citas',
+            url: '/citas',
+            icon: IconChecklist,
+          },
+          {
+            title: 'Eventos',
+            url: '/eventos',
+            icon: CalendarFold,
+          },
+          {
+            title: 'Servicios',
+            url: '/servicios',
+            icon: IconPackages,
+          },
+          {
+            title: 'Empleados',
+            url: '/empleados',
+            icon: IconUsers,
+          },
+          {
+            title: 'Clientes',
+            url: '/clientes',
+            icon: BookUserIcon,
+          },
+        ],
+      },
+    ],
+  })
+
+  React.useEffect(() => {
+    if (unreadCount !== undefined) {
+      setData(prev => {
+        const newData = prev;
+        const chatsItem = newData.navGroups[0].items.find(item => item.title === 'Chats');
+        if (chatsItem) {
+          chatsItem.badge = unreadCount.toString();
+        }
+        return newData;
+      });
+    }
+  }, [unreadCount]);
 
   return (
     <Sidebar collapsible='icon' {...props}>
       <SidebarContent>
-        {sidebarData.navGroups.map((props) => (
+        {data.navGroups.map((props) => (
           <NavGroup key={props.title} {...props} />
         ))}
         <SidebarGroup>

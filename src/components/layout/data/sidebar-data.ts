@@ -22,7 +22,6 @@ export const sidebarData: SidebarData = {
         {
           title: 'Chats',
           url: '/chats',
-          badge: '3',
           icon: IconMessages,
         },
         {
