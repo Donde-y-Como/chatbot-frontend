@@ -1,12 +1,3 @@
-import React, { useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconBrandWhatsapp,
-  IconSearch,
-} from '@tabler/icons-react'
-import { toast } from 'sonner'
 import { api } from '@/api/axiosInstance.ts'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -17,8 +8,17 @@ import {
   NewConversation,
   StartConversation,
 } from '@/features/chats/StartConversation.tsx'
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconBrandWhatsapp,
+  IconSearch,
+} from '@tabler/icons-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { CheckCheckIcon } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { useGetTags } from '../clients/hooks/useGetTags'
-import type { Tag } from '../clients/types'
 
 interface ChatSearchInputProps {
   value: string
@@ -26,6 +26,8 @@ interface ChatSearchInputProps {
   onFilterChange: (value: string | null) => void
   onToggleAllAI: (enabled: boolean) => void
 }
+
+export const UNREAD_LABEL_FILTER = 'No leídos'
 
 export function ChatBarHeader({
   value,
@@ -74,18 +76,22 @@ export function ChatBarHeader({
       { name: 'whatsapp', icon: IconBrandWhatsapp, color: 'text-green-500' },
       { name: 'facebook', icon: IconBrandFacebook, color: 'text-blue-500' },
       { name: 'instagram', icon: IconBrandInstagram, color: 'text-pink-500' },
-    ]
+    ];
 
-    if (tags && !isTagsLoading) {
-      return [...metaPlatforms, ...tags.map((tag: Tag) => ({
-        name: tag.name,
-        icon: null,
-        color: "text-foreground"
-      }))];
+    const unread = { name: UNREAD_LABEL_FILTER, icon: CheckCheckIcon, color: 'text-foreground' };
+
+    if (!tags || isTagsLoading) {
+      return [...metaPlatforms, unread];
     }
 
-    return metaPlatforms;
-  }, [isTagsLoading, tags])
+    const tagPlatforms = tags.map((tag) => ({
+      name: tag.name,
+      icon: null,
+      color: "text-foreground"
+    }));
+
+    return [...metaPlatforms, unread, ...tagPlatforms];
+  }, [isTagsLoading, tags]);
 
   const handleOnNewConversation = (data: NewConversation) => {
     startConversationMutation.mutate(data)

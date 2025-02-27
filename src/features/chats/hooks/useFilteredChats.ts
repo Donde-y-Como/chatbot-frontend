@@ -1,6 +1,7 @@
 import { Chat } from '@/features/chats/ChatTypes'
 import { useMemo } from 'react'
 import { Tag } from '../../clients/types'
+import { UNREAD_LABEL_FILTER } from '../ChatBarHeader'
 
 export function useFilteredChats(
   chats: Chat[] | undefined,
@@ -17,7 +18,10 @@ export function useFilteredChats(
         let matchesFilter = true
 
         if (activeFilter) {
-          if (activeFilter.toLowerCase() === "instagram"
+
+          if (activeFilter === UNREAD_LABEL_FILTER) {
+            matchesFilter = chat.newClientMessagesCount > 0
+          } else if (activeFilter.toLowerCase() === "instagram"
             || activeFilter.toLowerCase() === "whatsapp"
             || activeFilter.toLowerCase() === "facebook") {
             matchesFilter = chat.platformName === activeFilter
