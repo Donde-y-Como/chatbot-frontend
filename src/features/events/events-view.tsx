@@ -1,5 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import {
   Card,
   CardContent,
@@ -26,11 +27,13 @@ import { useGetEvents } from '@/features/events/hooks/useGetEvents.ts'
 import {
   EventPrimitives
 } from '@/features/events/types.ts'
+import { Separator } from '@radix-ui/react-separator'
 import { format, isAfter, isBefore, isToday } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import {
   AlertCircle,
   Calendar,
+  CalendarIcon,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -41,12 +44,9 @@ import {
 } from 'lucide-react'
 import moment from "moment-timezone"
 import { useMemo, useState } from 'react'
+import { SidebarTrigger } from '../../components/ui/sidebar'
 import { EventCalendarView } from './event-calendar-view'
 import { useEventMutations } from './hooks/useEventMutations'
-import { SidebarTrigger } from '../../components/ui/sidebar'
-import { Separator } from '@radix-ui/react-separator'
-import { CalendarIcon } from 'lucide-react'
-import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 
 type DateRange = {
   from: Date | null;
@@ -61,7 +61,7 @@ export default function EventsView() {
   const { data: allBookings, isLoading: isBookingsLoading, error: bookingsError } = useGetBookings()
   const { data: events, isLoading: isEventsLoading, error: eventsError } = useGetEvents()
   const [showCreate, setShowCreate] = useState<boolean>(false)
-  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [viewMode, setViewMode] = useState<string>('list')
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('upcoming')
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [searchQuery, setSearchQuery] = useState<string>('')

@@ -42,13 +42,13 @@ export function ClientActionDialog({ currentClient, open, onOpenChange }: Client
     mutationKey: ['client-form'],
     mutationFn: async (values: CreateClientForm) => {
       if (isEdit && currentClient) {
-        await ClientApiService.update(values)
+        await ClientApiService.update(currentClient.id, values)
         return
       }
       await ClientApiService.create(values)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] })
+      queryClient.refetchQueries({ queryKey: ['clients'] })
       toast.success('Cliente guardado correctamente')
       form.reset()
       setPhotos([])
@@ -136,10 +136,10 @@ export function ClientActionDialog({ currentClient, open, onOpenChange }: Client
                 <div className="space-y-8 flex flex-col justify-center">
                   <ClientDataSection form={form} tags={tags} />
                   <ClientDetailsSection
-                      form={form}
-                      files={photos}
-                      onFilesChange={setPhotos}
-                    />
+                    form={form}
+                    files={photos}
+                    onFilesChange={setPhotos}
+                  />
                 </div>
               ) : (
                 <Tabs value={selectedTab} onValueChange={setSelectedTab}>

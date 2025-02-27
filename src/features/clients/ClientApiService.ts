@@ -23,8 +23,8 @@ export const ClientApiService = {
         }
         return response.data
     },
-    update: async (client: Partial<ClientPrimitives>) => {
-        const response = await api.put<Partial<ClientPrimitives>>(`/clients/${client.id}`, client)
+    update: async (id: string, client: Partial<ClientPrimitives>) => {
+        const response = await api.put<Partial<ClientPrimitives>>(`/clients/${id}`, client)
         if (response.status !== 200) {
             throw new Error("Error al actualizar el cliente")
         }
