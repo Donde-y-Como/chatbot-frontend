@@ -1,5 +1,5 @@
 import { IconChecklist, IconMessages, IconPackages, IconUsers } from '@tabler/icons-react'
-import { CalendarFold, Command } from 'lucide-react'
+import { BookUserIcon, CalendarFold, Command } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
@@ -44,6 +44,11 @@ export const sidebarData: SidebarData = {
           title: 'Empleados',
           url: '/empleados',
           icon: IconUsers,
+        },
+        {
+          title: 'Clientes',
+          url: '/clientes',
+          icon: BookUserIcon,
         },
       ],
     },

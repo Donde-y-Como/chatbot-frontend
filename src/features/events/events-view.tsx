@@ -36,7 +36,8 @@ import {
   Filter,
   List,
   Plus,
-  Search
+  Search,
+  X
 } from 'lucide-react'
 import moment from "moment-timezone"
 import { useMemo, useState } from 'react'
@@ -44,6 +45,8 @@ import { EventCalendarView } from './event-calendar-view'
 import { useEventMutations } from './hooks/useEventMutations'
 import { SidebarTrigger } from '../../components/ui/sidebar'
 import { Separator } from '@radix-ui/react-separator'
+import { CalendarIcon } from 'lucide-react'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 
 type DateRange = {
   from: Date | null;
@@ -58,12 +61,13 @@ export default function EventsView() {
   const { data: allBookings, isLoading: isBookingsLoading, error: bookingsError } = useGetBookings()
   const { data: events, isLoading: isEventsLoading, error: eventsError } = useGetEvents()
   const [showCreate, setShowCreate] = useState<boolean>(false)
-  const [viewMode, setViewMode] = useState<string>('list')
-  const [filterStatus, setFilterStatus] = useState<string>('upcoming')
-  const [sortBy, setSortBy] = useState<string>('date-asc')
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('upcoming')
+  const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null })
   const [currentPage, setCurrentPage] = useState<number>(1)
+  const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false)
   const eventsPerPage = 10
   const { createEvent } = useEventMutations()
 
@@ -95,11 +99,21 @@ export default function EventsView() {
 
     // Apply date range filter
     if (dateRange.from instanceof Date) {
-      filtered = filtered.filter(event => isAfter(new Date(event.duration.startAt), dateRange.from as Date))
+      const fromDate = new Date(dateRange.from)
+      fromDate.setHours(0, 0, 0, 0)
+      filtered = filtered.filter(event => {
+        const eventDate = new Date(event.duration.startAt)
+        return isAfter(eventDate, fromDate) || format(eventDate, 'yyyy-MM-dd') === format(fromDate, 'yyyy-MM-dd')
+      })
     }
 
     if (dateRange.to instanceof Date) {
-      filtered = filtered.filter(event => isBefore(new Date(event.duration.startAt), dateRange.to as Date))
+      const toDate = new Date(dateRange.to)
+      toDate.setHours(23, 59, 59, 999)
+      filtered = filtered.filter(event => {
+        const eventDate = new Date(event.duration.startAt)
+        return isBefore(eventDate, toDate) || format(eventDate, 'yyyy-MM-dd') === format(toDate, 'yyyy-MM-dd')
+      })
     }
 
     // Apply sorting
@@ -185,6 +199,22 @@ export default function EventsView() {
     setFilterStatus('upcoming')
     setDateRange({ from: null, to: null })
     setSortBy('date-asc')
+    setCurrentPage(1)
+  }
+
+  const formatDateRange = () => {
+    if (dateRange.from && dateRange.to) {
+      return `${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`
+    } else if (dateRange.from) {
+      return `Desde ${format(dateRange.from, 'dd/MM/yyyy')}`
+    } else if (dateRange.to) {
+      return `Hasta ${format(dateRange.to, 'dd/MM/yyyy')}`
+    }
+    return 'Rango de fechas'
+  }
+
+  const clearDateRange = () => {
+    setDateRange({ from: null, to: null })
   }
 
   // Loading and error states
@@ -223,7 +253,7 @@ export default function EventsView() {
           <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
             <div>
               <div className='flex gap-2'>
-                <SidebarTrigger variant='outline' className='sm:hidden'/>
+                <SidebarTrigger variant='outline' className='sm:hidden' />
                 <Separator orientation='vertical' className='h-7 sm:hidden' />
                 <h1 className='text-2xl font-bold'>Eventos</h1>
               </div>
@@ -269,7 +299,10 @@ export default function EventsView() {
               </div>
             </div>
 
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <Select value={filterStatus} onValueChange={(value) => {
+              setFilterStatus(value as FilterStatus)
+              setCurrentPage(1)
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
@@ -282,11 +315,49 @@ export default function EventsView() {
             </Select>
 
             <div className="flex gap-2">
+              <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={`justify-between flex-1 ${dateRange.from || dateRange.to ? 'text-primary' : ''}`}>
+                    <div className="flex items-center">
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      <span className="truncate">{formatDateRange()}</span>
+                    </div>
+                    {(dateRange.from || dateRange.to) && (
+                      <X
+                        className="h-4 w-4 ml-1 opacity-60 hover:opacity-100"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          clearDateRange()
+                        }}
+                      />
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    initialFocus
+                    mode="range"
+                    defaultMonth={dateRange.from || new Date()}
+                    selected={{
+                      from: dateRange.from as Date,
+                      to: dateRange.to as Date
+                    }}
+                    onSelect={(range) => {
+                      setDateRange({
+                        from: range?.from || null,
+                        to: range?.to || null
+                      })
+                      setCurrentPage(1)
+                    }}
+                    numberOfMonths={2}
+                  />
+                </PopoverContent>
+              </Popover>
+
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="flex-1">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Filtros
+                  <Button variant="outline" className="flex-none px-3">
+                    <Filter className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
@@ -295,7 +366,10 @@ export default function EventsView() {
 
                     <div className="space-y-2">
                       <h5 className="text-sm font-medium">Ordenar por</h5>
-                      <Select value={sortBy} onValueChange={setSortBy}>
+                      <Select value={sortBy} onValueChange={(value) => {
+                        setSortBy(value as SortOption)
+                        setCurrentPage(1)
+                      }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Ordenar por" />
                         </SelectTrigger>
@@ -310,16 +384,78 @@ export default function EventsView() {
                       </Select>
                     </div>
 
-
                     <Button variant="outline" size="sm" onClick={resetFilters}>
                       Limpiar filtros
                     </Button>
-
                   </div>
                 </PopoverContent>
               </Popover>
             </div>
           </div>
+
+          {/* Active filters display */}
+          {(searchQuery || filterStatus !== 'upcoming' || dateRange.from || dateRange.to || sortBy !== 'date-asc') && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {searchQuery && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <span>Búsqueda: {searchQuery}</span>
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => setSearchQuery('')}
+                  />
+                </Badge>
+              )}
+
+              {filterStatus !== 'upcoming' && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <span>Estado: {
+                    filterStatus === 'today' ? 'Hoy' :
+                      filterStatus === 'past' ? 'Pasados' :
+                        filterStatus === 'all' ? 'Todos' : 'Próximos'
+                  }</span>
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => setFilterStatus('upcoming')}
+                  />
+                </Badge>
+              )}
+
+              {(dateRange.from || dateRange.to) && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <span>Fechas: {formatDateRange()}</span>
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={clearDateRange}
+                  />
+                </Badge>
+              )}
+
+              {sortBy !== 'date-asc' && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <span>Orden: {
+                    sortBy === 'date-desc' ? 'Fecha (desc)' :
+                      sortBy === 'name-asc' ? 'Nombre (A-Z)' :
+                        sortBy === 'name-desc' ? 'Nombre (Z-A)' :
+                          sortBy === 'price-asc' ? 'Precio (menor a mayor)' :
+                            sortBy === 'price-desc' ? 'Precio (mayor a menor)' : ''
+                  }</span>
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => setSortBy('date-asc')}
+                  />
+                </Badge>
+              )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-6"
+                onClick={resetFilters}
+              >
+                Limpiar todo
+              </Button>
+            </div>
+          )}
         </div>
 
         {filteredEvents.length === 0 && (
@@ -404,14 +540,16 @@ export default function EventsView() {
           </TabsContent>
 
           <TabsContent value="calendar">
-            <Card>
-              <CardContent className="p-6">
-                <EventCalendarView
-                  events={filteredEvents}
-                  bookings={allBookings || []}
-                />
-              </CardContent>
-            </Card>
+            {filteredEvents.length > 0 && (
+              <Card>
+                <CardContent className="p-6">
+                  <EventCalendarView
+                    events={filteredEvents}
+                    bookings={allBookings || []}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
 
@@ -422,5 +560,25 @@ export default function EventsView() {
         />
       </ScrollArea >
     </div >
+  )
+}
+
+// Badge component for active filters display
+const Badge = ({
+  children,
+  variant = 'default',
+  className = ''
+}) => {
+  const baseStyle = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+  const variantStyles = {
+    default: "bg-primary text-primary-foreground hover:bg-primary/80",
+    secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+    outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+  }
+
+  return (
+    <div className={`${baseStyle} ${variantStyles[variant]} ${className}`}>
+      {children}
+    </div>
   )
 }

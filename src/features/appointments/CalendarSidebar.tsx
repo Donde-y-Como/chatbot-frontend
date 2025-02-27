@@ -41,7 +41,7 @@ export function CalendarSidebar({
       <Collapsible
         open={isOpen}
         onOpenChange={setIsOpen}
-        className='bg-background pr-2 py-2 border-r shadow-lg duration-500 ease-in-out transform h-full'
+        className='bg-background pr-2 py-2 border-r h-full'
       >
         <div className={mainSidebarOpen ? 'pl-2' : ''}>
           <CollapsibleTrigger asChild>

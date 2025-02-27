@@ -1,16 +1,14 @@
-import { Header } from '@/components/layout/header'
+import { TableSkeleton } from '@/components/TableSkeleton.tsx'
 import { Main } from '@/components/layout/main'
-import { Search } from '@/components/search'
+import { CustomTable } from '@/components/tables/custom-table.tsx'
 import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
-import { columns } from './components/employees-columns.tsx'
+import { Separator } from '../../components/ui/separator.tsx'
+import { SidebarTrigger } from '../../components/ui/sidebar.tsx'
 import { EmployeeDialogs } from './components/employee-dialogs.tsx'
 import { EmployeePrimaryButtons } from './components/employee-primary-buttons.tsx'
+import { columns } from './components/employees-columns.tsx'
 import EmployeesProvider from './context/employees-context.tsx'
-import { TableSkeleton } from '@/components/TableSkeleton.tsx'
-import { CustomTable } from '@/components/tables/custom-table.tsx'
 import { Employee } from './types.ts'
-import { SidebarTrigger } from '../../components/ui/sidebar.tsx'
-import { Separator } from '../../components/ui/separator.tsx'
 
 export default function Employees() {
   const { data: employees, isLoading } = useGetEmployees()
