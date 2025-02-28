@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge.tsx'
 import { Button } from '@/components/ui/button.tsx'
-import { Card, CardContent } from '@/components/ui/card.tsx'
+import { Card, CardContent, CardFooter } from '@/components/ui/card.tsx'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import { EventDetailsModal } from '@/features/events/event-details-modal.tsx'
 import { EventEditModal } from '@/features/events/event-edit-modal.tsx'
 import { Booking, EventPrimitives } from '@/features/events/types.ts'
 import { format } from 'date-fns'
-import { Clock, MapPin, MoreHorizontal, Users } from 'lucide-react'
+import { Calendar, Clock, MapPin, MoreHorizontal, Tag, Users } from 'lucide-react'
 import { useState } from 'react'
 import { BookingDeleteDialog } from './booking-delete-dialog'
 import { getRecurrenceText, generateOccurrences } from './utils/occurrence'
@@ -21,7 +21,7 @@ import { useEventMutations } from './hooks/useEventMutations'
 
 export function EventCard({
   event,
-  bookings: allBookings, // Rename prop to avoid shadowing and clarify its content
+  bookings: allBookings,
 }: {
   bookings: Booking[]
   event: EventPrimitives
@@ -76,155 +76,160 @@ export function EventCard({
   }
 
   const occurrences = generateOccurrences(event.duration, event.recurrence.frequency, event.recurrence.endCondition);
+  const totalParticipants = allBookings.reduce((sum, b) => sum + b.participants, 0);
+  const remainingSpots = event.capacity.isLimited && event.capacity.maxCapacity 
+    ? Math.max(0, event.capacity.maxCapacity - totalParticipants) 
+    : null;
+  const isFullyBooked = event.capacity.isLimited && 
+    event.capacity.maxCapacity && 
+    totalParticipants >= event.capacity.maxCapacity;
 
   return (
     <>
-      <Card key={event.id} className="overflow-hidden transition-shadow duration-200 hover:shadow-md">
-        <div className="flex flex-col md:flex-row">
-          {event.photos && event.photos.length > 0 && (
-            <div className="md:w-48 h-32 md:h-auto bg-muted relative">
-              <img
-                src={event.photos[0]}
-                alt={event.name}
-                className="object-cover w-full h-full"
-                onError={(e) => { e.currentTarget.src = "https://placehold.co/600x400?text=Sin+imagen" }}
-              />
-            </div>
-          )}
-          <div className="flex-1 flex flex-col md:flex-row">
-            <CardContent className="flex-1 p-4">
-              <div className="flex flex-col md:flex-row justify-between gap-2">
+      <Card 
+        key={event.id} 
+        className="overflow-hidden transition-all duration-300 shadow-lg border-1 h-full"
+      >
+        {/* Desktop: Horizontal layout with image on left */}
+        {/* Mobile: Vertical layout with image on top */}
+        <div className="flex flex-col lg:flex-row h-full">
+          {/* Image container */}
+          <div className="lg:w-1/3 xl:w-1/4 aspect-[3/4] relative overflow-hidden">
+            <img
+              src={event.photos && event.photos.length ? event.photos[0] : "https://placehold.co/600x400?text=Sin+imagen"}
+              alt={event.name}
+              className="object-cover w-full h-full transition-transform duration-500 hover:scale-105"
+            />
+            {event.price.amount > 0 ? (
+              <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold shadow-md">
+                {new Intl.NumberFormat('es-MX', { style: 'currency', currency: event.price.currency }).format(event.price.amount)}
+              </div>
+            ) : (
+              <div className="absolute top-2 right-2 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-md">
+                Gratis
+              </div>
+            )}
+          </div>
+
+          {/* Content container */}
+          <div className="flex-1 flex flex-col">
+            <CardContent className="p-4 lg:p-6 flex-1">
+              <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-lg">{event.name}</h3>
-                    <div className="block">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' size='icon'>
-                            <MoreHorizontal className='h-4 w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuItem onClick={() => setShowDetails(true)}>
-                            Ver detalles
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setShowEdit(true)}>
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setShowBooking(true)}>
-                            Agendar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className='text-destructive'
-                            onClick={() => setShowDeleteDialog(true)}
-                          >
-                            Eliminar Evento
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                  <h3 className="font-semibold text-xl mb-1">{event.name}</h3>
+                  
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    {isFullyBooked ? (
+                      <Badge variant="destructive" className="text-xs">Agotado</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">
+                        {remainingSpots !== null 
+                          ? `${remainingSpots} lugares disponibles` 
+                          : 'Cupo disponible'}
+                      </Badge>
+                    )}
+                    
+                    {getRecurrenceText(event) && (
+                      <Badge variant="secondary" className="text-xs">
+                        Recurrente
+                      </Badge>
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
-                  {getRecurrenceText(event) && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {getRecurrenceText(event)}
-                    </p>
-                  )}
+                  
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{event.description}</p>
                 </div>
-                <div className="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-1">
-                  <div className="text-sm font-medium">
-                    {event.price.amount > 0
-                      ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: event.price.currency }).format(event.price.amount)
-                      : "Gratis"}
-                  </div>
+                
+                <div className="ml-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant='ghost' size='icon' className="h-8 w-8">
+                        <MoreHorizontal className='h-4 w-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end'>
+                      <DropdownMenuItem onClick={() => setShowDetails(true)}>
+                        Ver detalles
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setShowEdit(true)}>
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setShowBooking(true)}>
+                        Agendar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className='text-destructive'
+                        onClick={() => setShowDeleteDialog(true)}
+                      >
+                        Eliminar Evento
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
                 <div className="flex items-center text-sm">
-                  <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                  <Clock className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
                   <span>
                     {format(new Date(event.duration.startAt), 'HH:mm')} -
                     {format(new Date(event.duration.endAt), 'HH:mm')}
                   </span>
                 </div>
                 <div className="flex items-center text-sm">
-                  <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
+                  <MapPin className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
                   <span className="truncate">{event.location}</span>
                 </div>
               </div>
+
+              {getRecurrenceText(event) && (
+                <div className="flex items-center text-sm mb-2">
+                  <Calendar className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
+                  <span className="text-muted-foreground">
+                    {getRecurrenceText(event)}
+                  </span>
+                </div>
+              )}
+              
+              <div className="flex items-center text-sm">
+                <Users className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
+                <span>
+                  {event.capacity.isLimited && event.capacity.maxCapacity
+                    ? `${totalParticipants}/${event.capacity.maxCapacity} asistentes`
+                    : `${totalParticipants} asistentes`}
+                </span>
+              </div>
             </CardContent>
+
+            <CardFooter className="px-4 py-3 bg-muted/20 border-t">
+              {occurrences.length > 1 ? (
+                <div className="w-full">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => setShowDetails(true)}
+                  >
+                    Ver {occurrences.length} fechas disponibles
+                  </Button>
+                </div>
+              ) : (
+                <div className="w-full flex justify-between items-center">
+                  <div className="text-sm flex items-center">
+                    <Tag className="h-4 w-4 mr-1 text-muted-foreground" />
+                    <span>{allBookings.length} reservas</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowBooking(true)}
+                  >
+                    Agendar
+                  </Button>
+                </div>
+              )}
+            </CardFooter>
           </div>
         </div>
-        {occurrences.length > 1 && (
-          <div className="px-4 pb-4">
-            <p className="text-sm text-muted-foreground mb-2">Este evento tiene {occurrences.length} fechas:</p>
-            <div className="flex flex-col gap-2">
-              {occurrences.map((occurrence, index) => {
-                const occurrenceDate = new Date(occurrence.startAt);
-                const formattedDate = format(occurrenceDate, 'MMM d, yyyy');
-                const bookingsForDate = allBookings.filter(booking => format(new Date(booking.date), 'MMM d, yyyy') === formattedDate);
-                const totalParticipantsForDate = bookingsForDate.reduce((sum, b) => sum + b.participants, 0);
-                const remainingSpotsForDate = event.capacity.isLimited && event.capacity.maxCapacity ? Math.max(0, event.capacity.maxCapacity - totalParticipantsForDate) : null;
-
-                return (
-                  <div key={index} className="border rounded-md p-2">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-semibold text-sm">{formattedDate}</h4>
-                      <Badge
-                        variant={
-                          event.capacity.isLimited &&
-                            event.capacity.maxCapacity &&
-                            totalParticipantsForDate >= event.capacity.maxCapacity
-                            ? "destructive"
-                            : "outline"
-                        }
-                        className="whitespace-nowrap text-xs"
-                      >
-                        {event.capacity.isLimited && event.capacity.maxCapacity
-                          ? `${totalParticipantsForDate}/${event.capacity.maxCapacity} asistentes`
-                          : `${totalParticipantsForDate} asistentes`}
-                        {remainingSpotsForDate !== null && remainingSpotsForDate === 0 && ' - Lleno'}
-                        {remainingSpotsForDate !== null && remainingSpotsForDate > 0 && ` - ${remainingSpotsForDate} lugares`}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center text-xs mt-1">
-                      <Users className="h-3 w-3 mr-1 text-muted-foreground" />
-                      <span>{bookingsForDate.length} reservas</span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-        {occurrences.length <= 1 && ( // Show default info only if not recurring or only one occurrence (original logic)
-          <CardContent className="p-4">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex items-center text-sm">
-                <Users className="h-4 w-4 mr-1 text-muted-foreground" />
-                <span>{allBookings.length} reservas</span>
-              </div>
-
-              {allBookings.length > 0 && (
-                <Badge
-                  variant={
-                    event.capacity.isLimited &&
-                      event.capacity.maxCapacity &&
-                      allBookings.reduce((sum, b) => sum + b.participants, 0) >= event.capacity.maxCapacity
-                      ? "destructive"
-                      : "outline"
-                  }
-                  className="whitespace-nowrap col-span-2"
-                >
-                  {event.capacity.isLimited && event.capacity.maxCapacity
-                    ? `${allBookings.reduce((sum, b) => sum + b.participants, 0)}/${event.capacity.maxCapacity} asistentes`
-                    : `${allBookings.reduce((sum, b) => sum + b.participants, 0)} asistentes`}
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        )}
       </Card>
 
       <EventDetailsModal
