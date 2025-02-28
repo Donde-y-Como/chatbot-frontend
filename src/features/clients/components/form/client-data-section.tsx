@@ -87,7 +87,7 @@ export function ClientDataSection({ form, tags = [] }: { form: UseFormReturn<Cre
   const onCreateTag = (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     tagForm.handleSubmit((data) => {
       createTagMutation.mutate(data);
     })(e);
@@ -110,6 +110,20 @@ export function ClientDataSection({ form, tags = [] }: { form: UseFormReturn<Cre
         )}
       />
 
+      <FormField
+        control={control}
+        name="email"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Email</FormLabel>
+            <FormControl>
+              <Input placeholder="example@example.com" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       {/* Tags Section */}
       <div className="space-y-3">
         <div className="flex justify-between items-center">
@@ -125,7 +139,7 @@ export function ClientDataSection({ form, tags = [] }: { form: UseFormReturn<Cre
               <Plus className="h-4 w-4" />
               <span>Nueva etiqueta</span>
             </Button>
-            <DialogContent className="sm:max-w-md"  onPointerDownOutside={(e) => e.preventDefault()}>
+            <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
               <DialogHeader>
                 <DialogTitle>Crear nueva etiqueta</DialogTitle>
               </DialogHeader>

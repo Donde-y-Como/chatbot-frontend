@@ -43,7 +43,7 @@ export const createClientSchema = z.object({
     annexes: z.array(annexSchema).default([]),
     photo: z.string().default(""),
     notes: z.string().default(""),
-    email: z.string().default(""),
+    email: z.string().email("El correo electrónico no es válido").default(""),
     address: z.string().default(""),
     birthdate: z.string().optional(),
 })
