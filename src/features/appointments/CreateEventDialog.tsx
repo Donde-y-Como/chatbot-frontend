@@ -43,7 +43,7 @@ export function CreateEventDialog() {
   // Usamos inputs de tipo "time" para capturar la hora (formato HH:mm)
   const [startTime, setStartTime] = useState<string>('')
   const [endTime, setEndTime] = useState<string>('')
-  const [capacity, setCapacity] = useState<number | ''>('')
+  const [capacity, setCapacity] = useState<number | null>(null)
   const [price, setPrice] = useState<number | ''>('')
   const [isLimited, setIsLimited] = useState(false)
   const [repeatEvery, setRepeatEvery] = useState<
@@ -143,8 +143,8 @@ export function CreateEventDialog() {
           <span>Capacidad</span>
           <Input
             type='number'
-            value={capacity}
-            onChange={(e) => setCapacity(Number(e.target.value) || '')}
+            value={capacity || ''}
+            onChange={(e) => setCapacity(Number(e.target.value) || null)}
             placeholder='Capacidad'
           />
         </label>
@@ -259,8 +259,8 @@ export function CreateEventDialog() {
               <span>Capacidad</span>
               <Input
                 type='number'
-                value={capacity}
-                onChange={(e) => setCapacity(Number(e.target.value) || '')}
+                value={capacity || ""}
+                onChange={(e) => setCapacity(Number(e.target.value) || null)}
                 placeholder='Capacidad'
               />
             </label>
