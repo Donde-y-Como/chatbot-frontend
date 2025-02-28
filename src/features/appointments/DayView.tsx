@@ -14,7 +14,7 @@ import { usePositionedEvents } from '@/features/appointments/hooks/usePositioned
 import type { Appointment } from './types'
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
 import { toast } from 'sonner'
-import { format } from 'date-fns'
+import { format, isSameDay } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
 
 export function DayView({
@@ -61,7 +61,7 @@ export function DayView({
     return (startMinutesRelative * 64) / 60
   }
 
-  const handleCancel = async (id:string) => {
+  const handleCancel = async (id: string) => {
     try {
       await appointmentService.cancelAppointment(id)
       await queryClient.invalidateQueries({
@@ -112,7 +112,7 @@ export function DayView({
           <TimeSlots startAt={workHours.startAt} endAt={workHours.endAt} />
         </div>
 
-        {workHours && currentTime.getHours() * 60 < workHours.endAt && (
+        {isSameDay(currentTime, date) && workHours && currentTime.getHours() * 60 < workHours.endAt && (
           <div
             className='absolute left-16 right-0 z-10 border-t-2 border-red-500'
             style={{ top: `${getCurrentTimePosition()}px` }}
