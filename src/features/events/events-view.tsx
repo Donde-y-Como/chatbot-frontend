@@ -69,7 +69,6 @@ export default function EventsView() {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false)
   const eventsPerPage = 10
-  const { createEvent } = useEventMutations()
 
   // Apply filters and search to events
   const filteredEvents = useMemo(() => {
@@ -188,11 +187,6 @@ export default function EventsView() {
     if (!events) return 0
     return events.filter(event => isToday(new Date(event.duration.startAt))).length
   }, [events])
-
-  const handleCreateEvent = async (event: Omit<EventPrimitives, 'id' | 'businessId'>): Promise<void> => {
-    createEvent(event)
-    setShowCreate(false)
-  }
 
   const resetFilters = (): void => {
     setSearchQuery('')
@@ -556,7 +550,6 @@ export default function EventsView() {
         <EventCreateModal
           open={showCreate}
           onClose={() => setShowCreate(false)}
-          onSave={handleCreateEvent}
         />
       </ScrollArea >
     </div >

@@ -1,5 +1,5 @@
 import { EventApiService } from '@/features/events/EventApiService.ts'
-import { EventPrimitives, EventWithBookings } from '@/features/events/types.ts'
+import { CreatableEvent, EventPrimitives, EventWithBookings } from '@/features/events/types.ts'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { fromZonedTime } from 'date-fns-tz'
 import { toast } from 'sonner'
@@ -33,9 +33,7 @@ export function useEventMutations() {
 
     const createEventMutation = useMutation({
         mutationKey: ['createEvent'],
-        mutationFn: async (variables: {
-            event: Omit<EventPrimitives, 'id' | 'businessId'>
-        }) => {
+        mutationFn: async (variables: { event: CreatableEvent }) => {
             await EventApiService.createEvent(variables.event)
         },
         onSuccess: () => {

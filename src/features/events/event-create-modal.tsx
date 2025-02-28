@@ -1,8 +1,3 @@
-import * as React from 'react'
-import { addHours } from 'date-fns'
-import { useForm, Controller } from 'react-hook-form'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { DateTimePicker } from '@/components/ui/date-time-picker'
 import {
@@ -13,8 +8,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -24,115 +27,27 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-  FormDescription,
-} from '@/components/ui/form'
-import { Frequency, EndCondition, EventPrimitives } from '@/features/events/types'
+import { Textarea } from '@/components/ui/textarea'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { addHours } from 'date-fns'
+import * as React from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import { FileUpload } from '../../components/file-upload'
+import { CreatableEvent, creatableEventSchema, Currency, EndConditionType, RecurrenceFrequency } from './types'
+import { useUploadMedia } from '../chats/hooks/useUploadMedia'
+import { toast } from 'sonner'
+import { useEventMutations } from './hooks/useEventMutations'
 
-/* Define types */
-type CreatableEvent = Omit<EventPrimitives, 'id' | 'businessId'>
-
-// Define currency as a proper enum
-enum Currency {
-  USD = 'USD',
-  EUR = 'EUR',
-  MXN = 'MXN',
-}
-
-// Define frequency as a proper enum
-enum RecurrenceFrequency {
-  NEVER = 'never',
-  DAILY = 'daily',
-  WEEKLY = 'weekly',
-  MONTHLY = 'monthly',
-  YEARLY = 'yearly',
-}
-
-// Define end condition type as a proper enum
-enum EndConditionType {
-  OCCURRENCES = 'occurrences',
-  DATE = 'date',
-  NULL = 'null',
-}
-
-/* Zod Schemas */
-const capacitySchema = z
-  .object({
-    isLimited: z.boolean(),
-    maxCapacity: z.number().min(1, 'Debe ser al menos 1').nullable(),
-  })
-  .refine(
-    (data) => !data.isLimited || (data.isLimited && data.maxCapacity !== null),
-    {
-      message: 'La capacidad máxima es requerida cuando la capacidad es limitada',
-      path: ['maxCapacity'],
-    }
-  )
-
-const priceSchema = z.object({
-  amount: z.number().min(0, { message: 'El precio no puede ser negativo' }),
-  currency: z.nativeEnum(Currency),
-})
-
-const durationSchema = z.object({
-  startAt: z.string().datetime({ message: 'Fecha de inicio inválida' }),
-  endAt: z.string().datetime({ message: 'Fecha de fin inválida' }),
-}).refine(
-  (data) => new Date(data.endAt) > new Date(data.startAt),
-  {
-    message: 'La fecha de fin debe ser posterior a la fecha de inicio',
-    path: ['endAt'],
-  }
-)
-
-const recurrenceEndConditionSchema = z.discriminatedUnion('type', [
-  z.object({
-    type: z.literal('occurrences'),
-    occurrences: z.number().int().min(1, 'Debe ser al menos 1'),
-  }),
-  z.object({
-    type: z.literal('date'),
-    until: z.date().min(new Date(), 'La fecha debe ser en el futuro'),
-  }),
-])
-
-const recurrenceSchema = z.object({
-  frequency: z.nativeEnum(RecurrenceFrequency),
-  endCondition: recurrenceEndConditionSchema.nullable(),
-}).refine(
-  (data) => data.frequency === 'never' ? data.endCondition === null : true,
-  {
-    message: "La condición de finalización debe ser nula cuando la recurrencia es 'never'",
-    path: ['endCondition'],
-  }
-)
-
-const creatableEventSchema = z.object({
-  name: z.string().min(1, { message: 'El nombre es requerido' }),
-  description: z.string().min(1, { message: 'La descripción es requerida' }),
-  price: priceSchema,
-  capacity: capacitySchema,
-  duration: durationSchema,
-  recurrence: recurrenceSchema,
-  location: z.string().min(1, { message: 'La ubicación es requerida' }),
-  photos: z.array(z.string()),
-})
-
-export function EventCreateModal({
-  open,
-  onClose,
-  onSave,
-}: {
+interface CreateEventModelProps {
   open: boolean
   onClose: () => void
-  onSave: (changes: CreatableEvent) => void
-}) {
+}
+
+export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
+  const [photos, setPhotos] = React.useState<File[]>([])
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const { createEvent } = useEventMutations()
+  const { uploadFile, validateFile, isUploading } = useUploadMedia()
   const defaultValues = React.useMemo(() => ({
     name: '',
     description: '',
@@ -164,6 +79,7 @@ export function EventCreateModal({
   React.useEffect(() => {
     if (open) {
       reset(defaultValues)
+      setPhotos([])
     }
   }, [open, reset, defaultValues])
 
@@ -175,10 +91,39 @@ export function EventCreateModal({
   // Determine the end condition type
   const endConditionType = recurrenceEndCondition?.type || EndConditionType.NULL
 
-  const onSubmit = React.useCallback((data: CreatableEvent) => {
-    onSave(data)
+  const handleImageUpload = React.useCallback(
+    async (file: File) => {
+      const { isValid } = validateFile(file)
+      if (!isValid) {
+        form.setError("photos", { message: "Algun archivo no es válido" })
+        toast.error("El archivo no es válido")
+        return
+      }
+
+      try {
+        const url = await uploadFile(file)
+        form.setValue("photos",[...form.getValues("photos"), url])
+      } catch (error) {
+        toast.error("Hubo un error al subir la imagen")
+      }
+    },
+    [uploadFile, validateFile, form],
+  )
+
+  const onSubmit = React.useCallback(async (_data: CreatableEvent) => {
+    setIsSubmitting(true)
+
+    if (photos.length > 0) {
+      for (const photo of photos) {
+        await handleImageUpload(photo)
+      }
+    }
+
+    createEvent(form.getValues())
+    setIsSubmitting(false)
+    setPhotos([])
     onClose()
-  }, [onSave, onClose])
+  }, [photos, createEvent, onClose, handleImageUpload, form])
 
   // Handle capacity value changes
   React.useEffect(() => {
@@ -196,7 +141,7 @@ export function EventCreateModal({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-3xl">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogHeader>
@@ -284,6 +229,10 @@ export function EventCreateModal({
                       </FormItem>
                     )}
                   />
+
+
+
+
                   <FormField
                     control={control}
                     name="price.currency"
@@ -312,6 +261,16 @@ export function EventCreateModal({
                     )}
                   />
                 </div>
+
+                <div className="mb-2">
+                  <FileUpload
+                    maxFiles={5}
+                    maxSize={100 * 1024 * 1024}
+                    value={photos}
+                    onChange={setPhotos}
+                  />
+                </div>
+
               </TabsContent>
 
               {/* Capacity Tab */}
@@ -553,11 +512,11 @@ export function EventCreateModal({
               </TabsContent>
             </Tabs>
 
-            <DialogFooter className="mt-6">
-              <Button variant="outline" type="button" onClick={onClose}>
+            <DialogFooter className="mt-6 gap-2">
+              <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting || isUploading}>
                 Cancelar
               </Button>
-              <Button type="submit">Guardar Cambios</Button>
+              <Button type="submit" disabled={isSubmitting || isUploading}>Guardar Cambios</Button>
             </DialogFooter>
           </form>
         </Form>
