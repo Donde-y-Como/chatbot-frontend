@@ -84,9 +84,14 @@ export function ClientDataSection({ form, tags = [] }: { form: UseFormReturn<Cre
   };
 
   // Handle tag creation form submission
-  const onCreateTag = tagForm.handleSubmit((data) => {
-    createTagMutation.mutate(data);
-  });
+  const onCreateTag = (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    tagForm.handleSubmit((data) => {
+      createTagMutation.mutate(data);
+    })(e);
+  };
 
   return (
     <div className="space-y-6">
@@ -120,7 +125,7 @@ export function ClientDataSection({ form, tags = [] }: { form: UseFormReturn<Cre
               <Plus className="h-4 w-4" />
               <span>Nueva etiqueta</span>
             </Button>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md"  onPointerDownOutside={(e) => e.preventDefault()}>
               <DialogHeader>
                 <DialogTitle>Crear nueva etiqueta</DialogTitle>
               </DialogHeader>
