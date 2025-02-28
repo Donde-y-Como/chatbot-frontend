@@ -167,7 +167,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
       <div className='flex gap-2 w-full'>
         <div className='relative flex-shrink-0'>
           <Avatar>
-            {chat.client.photo.length > 0 && <AvatarImage src={chat.client.photo} alt={chat.client.name} className="object-cover" />}
+            {chat.client.photo.length > 0 && <AvatarImage src={chat.client.photo} alt={chat.client.name} className="object-cover w-full" />}
             <AvatarFallback>{chat.client.name[0]}</AvatarFallback>
           </Avatar>
           {PlatformIcon && (

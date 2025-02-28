@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ChatMessages } from '@/features/chats/ChatTypes.ts'
@@ -77,6 +77,7 @@ export function ConversationHeader({
         </Button>
         <div className='relative flex items-center gap-2 lg:gap-4'>
           <Avatar className='size-9 lg:size-11'>
+            {chatData.client.photo.length > 0 && <AvatarImage src={chatData.client.photo} alt={chatData.client.name} className="object-cover w-full" />}
             <AvatarFallback className='bg-background'>
               {chatData.client.name[0]}
             </AvatarFallback>
