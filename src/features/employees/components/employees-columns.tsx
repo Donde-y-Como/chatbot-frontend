@@ -18,7 +18,7 @@ export const columns: ColumnDef<Employee>[] = [
       return (
         <div className='flex items-center space-x-2'>
           <Avatar className='h-6 w-6'>
-            <AvatarImage src={photo} alt={name} />
+            <AvatarImage src={photo} alt={name} className='object-cover'/>
             <AvatarFallback>{name.charAt(0)}</AvatarFallback>
           </Avatar>
           <p>{name}</p>

@@ -139,8 +139,8 @@ export function EventCreateModal({
     price: { amount: 0, currency: Currency.MXN },
     capacity: { isLimited: false, maxCapacity: null },
     duration: {
-      startAt: new Date().toISOString(),
-      endAt: addHours(new Date(), 1).toISOString(),
+      startAt: addHours(new Date(), 1).toISOString(),
+      endAt: addHours(new Date(), 2).toISOString(),
     },
     recurrence: { frequency: RecurrenceFrequency.NEVER, endCondition: null },
     location: '',
@@ -376,7 +376,7 @@ export function EventCreateModal({
                               name="duration.startAt"
                               render={({ field: controllerField }) => (
                                 <DateTimePicker
-                                htmlId="startAt"
+                                  htmlId="startAt"
                                   defaultValue={new Date(controllerField.value)}
                                   aria-label="Fecha y hora de inicio"
                                   onChange={(date: Date) => {

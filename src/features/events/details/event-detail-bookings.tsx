@@ -126,7 +126,7 @@ export function EventDetailBookings({ event }: EventDetailBookingsProps) {
                           zIndex: visibleBookings.length - index,
                         }}
                       >
-                        <AvatarImage src={booking.client.photo} alt={booking.client.name} />
+                        <AvatarImage src={booking.client.photo} alt={booking.client.name} className="object-cover" />
                         <AvatarFallback>{getInitials(booking.client.name)}</AvatarFallback>
                       </Avatar>
                     </DialogTrigger>
@@ -134,7 +134,7 @@ export function EventDetailBookings({ event }: EventDetailBookingsProps) {
                   <HoverCardContent className="w-80">
                     <div className="flex space-x-4">
                       <Avatar>
-                        <AvatarImage src={booking.client.photo} />
+                        <AvatarImage src={booking.client.photo} alt={booking.client.name} className="object-cover" />
                         <AvatarFallback>{getInitials(booking.client.name)}</AvatarFallback>
                       </Avatar>
                       <div className="space-y-1 flex-1 overflow-hidden">
@@ -158,7 +158,7 @@ export function EventDetailBookings({ event }: EventDetailBookingsProps) {
                   <div className="grid gap-6 py-4">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                       <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
-                        <AvatarImage src={booking.client.photo} alt={booking.client.name} />
+                        <AvatarImage src={booking.client.photo} alt={booking.client.name} className="object-cover" />
                         <AvatarFallback className="text-xl sm:text-2xl">
                           {getInitials(booking.client.name)}
                         </AvatarFallback>

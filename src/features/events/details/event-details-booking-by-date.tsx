@@ -123,7 +123,7 @@ export function EventDetailBookingsByDate({ event, occurrences }: EventDetailBoo
                                                                 className="ring-2 ring-background cursor-pointer transition-transform hover:scale-105 hover:z-10"
                                                                 style={{ zIndex: bookingsForDate.length - bookingIndex }}
                                                             >
-                                                                <AvatarImage src={client.photo} alt={client.name} />
+                                                                <AvatarImage src={client.photo} alt={client.name} className='object-cover'/>
                                                                 <AvatarFallback>{getInitials(client.name)}</AvatarFallback>
                                                             </Avatar>
                                                         </DialogTrigger>
@@ -131,7 +131,7 @@ export function EventDetailBookingsByDate({ event, occurrences }: EventDetailBoo
                                                     <HoverCardContent className="w-80">
                                                         <div className="flex space-x-4">
                                                             <Avatar>
-                                                                <AvatarImage src={client.photo} />
+                                                                <AvatarImage src={client.photo} alt={client.name} className='object-cover'/>
                                                                 <AvatarFallback>{getInitials(client.name)}</AvatarFallback>
                                                             </Avatar>
                                                             <div className="space-y-1 flex-1 overflow-hidden">
@@ -222,7 +222,7 @@ function BookingDetailsDialogContent({
         <div className="grid gap-6 py-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
-                    <AvatarImage src={client.photo} alt={client.name} />
+                    <AvatarImage src={client.photo} alt={client.name} className='object-cover' />
                     <AvatarFallback className="text-xl sm:text-2xl">
                         {getInitials(client.name)}
                     </AvatarFallback>

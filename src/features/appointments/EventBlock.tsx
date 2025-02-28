@@ -161,7 +161,7 @@ export function EventBlock({
             <section className='flex items-center gap-2'>
               <article className='relative'>
                 <Avatar>
-                  <AvatarImage src={client.photo} alt={client.name} />
+                  <AvatarImage src={client.photo} alt={client.name} className='object-cover'/>
                   <AvatarFallback>
                     {client.name.charAt(0)}
                   </AvatarFallback>
