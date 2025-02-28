@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { EventDetailBookings } from './details/event-detail-bookings'
 import { EventDetailItem } from './details/event-detail-item'
+import { EventDetailBookingsByDate } from './details/event-details-booking-by-date'
 import { EventDetailsSkeleton } from './details/event-details-skeleton'
 import {
   formatDateRange,
@@ -26,7 +27,6 @@ import {
   formatRecurrence,
 } from './details/utils/formatters'
 import { generateOccurrences } from './utils/occurrence'
-import { EventDetailBookingsByDate } from './details/event-details-booking-by-date'
 
 export function EventDetailsModal({
   eventId,
@@ -39,7 +39,6 @@ export function EventDetailsModal({
 }) {
   const { data: event, isLoading } = useGetEventWithBookings(eventId)
 
-  // Added null check and return a loading state.  This fixes a bug when the event hasn't loaded yet.
   if (isLoading) {
     return (
       <Dialog open={open} onOpenChange={onClose}>
@@ -62,7 +61,6 @@ export function EventDetailsModal({
     )
   }
 
-
   const occurrences = generateOccurrences(
     event.duration,
     event.recurrence.frequency,
@@ -72,15 +70,15 @@ export function EventDetailsModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className='max-w-4xl max-h-[90vh] overflow-hidden p-0'>
-        {/* Removed w-full and h-full classes from dialogContent to prevent scroll area from breaking layout,
-          added flex and flex-col to ensure proper layout.
-        */}
-          <div className='flex flex-col md:flex-row'>
-            <div className='md:w-1/2'>
-              <EventCarousel event={event} />
-            </div>
-            {/* Applied ScrollArea to the content that needs to scroll */}
-            <ScrollArea className='md:w-1/2 h-[calc(90vh-48px)]'> {/*Added a max-height here  and wrapped scrollArea in a div*/}
+        <div className='flex flex-col h-full md:flex-row'>
+          {/* Image carousel with fixed height on mobile, 50% width on desktop */}
+          <div className='h-64 md:h-auto md:w-1/2 flex-shrink-0'>
+            <EventCarousel event={event} />
+          </div>
+          
+          {/* Content area that scrolls independently */}
+          <div className='flex-grow md:w-1/2 overflow-hidden'>
+            <ScrollArea className='h-[50vh] md:h-[90vh]'>
               <div className='p-6'>
                 <DialogHeader>
                   <DialogTitle className='text-2xl font-bold mb-2'>
@@ -156,6 +154,7 @@ export function EventDetailsModal({
               </div>
             </ScrollArea>
           </div>
+        </div>
       </DialogContent>
     </Dialog>
   )
