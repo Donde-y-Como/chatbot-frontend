@@ -88,13 +88,13 @@ export function EventCard({
     <>
       <Card 
         key={event.id} 
-        className="overflow-hidden transition-all duration-300 shadow-lg border-1 h-full"
+        className="overflow-hidden transition-all duration-300 shadow-lg border-1 h-full lg:max-h-64"
       >
         {/* Desktop: Horizontal layout with image on left */}
         {/* Mobile: Vertical layout with image on top */}
         <div className="flex flex-col lg:flex-row h-full">
           {/* Image container */}
-          <div className="lg:w-1/3 xl:w-1/4 aspect-[3/4] relative overflow-hidden">
+          <div className="lg:w-1/3 xl:w-1/4 aspect-[3/4] relative overflow-hidden max-h-64">
             <img
               src={event.photos && event.photos.length ? event.photos[0] : "https://placehold.co/600x400?text=Sin+imagen"}
               alt={event.name}
