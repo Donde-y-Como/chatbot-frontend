@@ -28,7 +28,7 @@ export function DayView({
 }) {
   const { data: workHours, isLoading: isWorkHoursLoading } =
     useGetWorkSchedule(date)
-  const { data: employees = [], isLoading: isEmployeesLoading } =
+  const { data: allEmployees = [], isLoading: isEmployeesLoading } =
     useGetEmployees()
   const { data: services = [], isLoading: isServicesLoading } = useGetServices()
   const { data: clients = [], isLoading: isClientsLoading } = useGetClients()
@@ -195,10 +195,9 @@ export function DayView({
                 </div>
               ) : (
                 positionedEvents.map(({ appointment, column, totalColumns }) => {
-                  const employee = employees.find(
-                    (emp) => emp.id === appointment.employeeId
-                  )
-                  if (!employee) return null
+                  const employees = allEmployees.filter(
+                    (emp) => appointment.employeeIds.includes(emp.id)
+                  );
 
                   return (
                     <EventBlock
@@ -206,7 +205,7 @@ export function DayView({
                       key={appointment._id}
                       appointment={appointment}
                       client={clients.find((c) => c.id === appointment.clientId)!}
-                      employee={employee}
+                      employees={employees}
                       service={services.find((s) => s.id === appointment.serviceId)!}
                       column={column}
                       totalColumns={totalColumns}

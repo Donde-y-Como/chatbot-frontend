@@ -1,22 +1,23 @@
-import { useEffect, useState } from 'react'
-import { format } from 'date-fns'
-import { useQueryClient } from '@tanstack/react-query'
-import { now } from '@internationalized/date'
-import { es } from 'date-fns/locale/es'
-import { Calendar as CalendarIcon, Clock, User, Scissors } from 'lucide-react'
-import { toast } from 'sonner'
 import { api } from '@/api/axiosInstance.ts'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button.tsx'
 import { Calendar } from '@/components/ui/calendar.tsx'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from '@/components/ui/dialog.tsx'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Select,
   SelectContent,
@@ -24,6 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select.tsx'
+import {
+  Tabs,
+  TabsContent
+} from '@/components/ui/tabs'
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
@@ -32,25 +37,14 @@ import {
   EmployeeAvailable,
   MinutesTimeRange,
 } from '@/features/appointments/types.ts'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs'
-import { CheckCircle } from 'lucide-react'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { now } from '@internationalized/date'
+import { useQueryClient } from '@tanstack/react-query'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale/es'
+import { Calendar as CalendarIcon, CheckCircle, Clock, Scissors, User } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 export function MakeAppointmentDialog() {
   const [open, setOpen] = useState(false)
@@ -132,12 +126,12 @@ export function MakeAppointmentDialog() {
     const appointmentData = {
       clientId,
       serviceId,
-      employeeId,
+      employeeIds: [employeeId],
       date: format(date, 'yyyy-MM-dd'),
       timeRange: JSON.parse(selectedSlot) satisfies MinutesTimeRange,
       notes: '',
     } satisfies Partial<Appointment>
-
+    
     try {
       const result = await appointmentService.makeAppointment(appointmentData)
       if (result.id) {

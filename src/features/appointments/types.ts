@@ -37,19 +37,6 @@ export interface MinutesTimeRange {
   endAt: number
 }
 
-export type Event = {
-  id: string
-  name: string
-  description: string | null
-  startDate: string
-  endDate: string
-  startTime: number
-  endTime: number
-  capacity: number | null
-  price: number
-  isLimited: boolean
-  repeatEvery: 'never' | 'day' | 'week' | 'month' | 'year'
-}
 
 export type EmployeeAvailable = Pick<
   Employee,
@@ -60,7 +47,7 @@ export const appointmentCreated = z.object({
   id: z.string(),
   clientId: z.string(),
   serviceId: z.string(),
-  employeeId: z.string(),
+  employeeIds: z.array(z.string()),
   date: z.date(),
   timeRange: z.object({
     startAt: z.number(),
@@ -76,7 +63,7 @@ export const appointment = z.object({
   _id: z.string(),
   clientId: z.string(),
   serviceId: z.string(),
-  employeeId: z.string(),
+  employeeIds: z.array(z.string()),
   date: z.string(),
   timeRange: z.object({
     startAt: z.number(),
@@ -86,7 +73,7 @@ export const appointment = z.object({
   folio: z.string(),
   clientName: z.string(),
   serviceName: z.string(),
-  employeeName: z.string(),
+  employeesNames: z.array(z.string()),
 })
 
 export type Appointment = z.infer<typeof appointment>

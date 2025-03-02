@@ -1,17 +1,6 @@
-import React from 'react'
-import { format, isBefore, parseISO, setMinutes } from 'date-fns'
-import { CalendarIcon, ClockIcon } from '@radix-ui/react-icons'
-import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconBrandWhatsapp,
-} from '@tabler/icons-react'
-import { now } from '@internationalized/date'
-import { es } from 'date-fns/locale/es'
-import { cn } from '@/lib/utils.ts'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx'
-import { Badge } from '@/components/ui/badge.tsx'
-import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
+import { Badge } from '@/components/ui/badge.tsx';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogClose,
@@ -20,15 +9,20 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Client } from '@/features/chats/ChatTypes.ts'
-import type { Appointment, Service } from './types'
-import { Employee } from '../employees/types'
+} from '@/components/ui/dialog';
+import { Client } from '@/features/chats/ChatTypes.ts';
+import { now } from '@internationalized/date';
+import { CalendarIcon, ClockIcon } from '@radix-ui/react-icons';
+import { format, isBefore, parseISO, setMinutes } from 'date-fns';
+import { es } from 'date-fns/locale/es';
+import { User as UserIcon } from 'lucide-react';
+import { Employee } from '../employees/types';
+import type { Appointment, Service } from './types';
 
 interface EventBlockProps {
   cancelAppointment: (id: string) => void
   appointment: Appointment
-  employee: Employee
+  employees: Employee[]
   service: Service
   client: Client
   column: number
@@ -45,7 +39,7 @@ const verticalGap = 4
 export function EventBlock({
   cancelAppointment,
   appointment,
-  employee,
+  employees,
   service,
   client,
   column,
@@ -72,7 +66,7 @@ export function EventBlock({
             height: `${adjustedEventHeight}px`,
             left: `calc(${leftPercent}% + 2px)`,
             width: `calc(${widthPercent}% - 4px)`,
-            backgroundColor: employee.color,
+            backgroundColor: employees.length > 0 ? employees[0].color : "bg-gray-500",
           }}
         >
           {adjustedEventHeight >= MINUTE_HEIGHT * 60 - verticalGap ? (
@@ -109,16 +103,41 @@ export function EventBlock({
           </DialogDescription>
         </DialogHeader>
         <div className='space-y-5'>
-          <div className='flex items-center space-x-4'>
-            <Avatar className='h-12 w-12'>
-              <AvatarImage src={employee.photo} alt={employee.name} className='object-cover'/>
-              <AvatarFallback>
-                {employee.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
+          <div className='flex flex-col space-y-4'>
+            <div className='flex -space-x-4'>
+              {employees.map((employee, index) => (
+                <Avatar
+                  key={employee.id}
+                  className='h-12 w-12 border-2 border-background'
+                  style={{ zIndex: employees.length - index }}
+                >
+                  <AvatarImage src={employee.photo} alt={employee.name} className='object-cover' />
+                  <AvatarFallback>
+                    {employee.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+              ))}
+
+              {employees.length === 0 && (
+                <Avatar className='h-12 w-12 border-2 border-background bg-muted'>
+                  <AvatarFallback>
+                    <UserIcon className="h-6 w-6 text-muted-foreground" />
+                  </AvatarFallback>
+                </Avatar>
+              )}
+            </div>
+
             <div>
-              <h3 className='text-lg font-semibold'>{employee.name}</h3>
-              <p className='text-sm text-muted-foreground'>{employee.role}</p>
+              <h3 className='text-lg font-semibold'>
+                {employees.length > 0
+                  ? employees.length === 1
+                    ? employees[0].name
+                    : `${employees.length} profesionales asignados`
+                  : 'Sin asignación'}
+              </h3>
+              {employees.length === 1 && (
+                <p className='text-sm text-muted-foreground'>{employees[0].role}</p>
+              )}
             </div>
           </div>
 
@@ -161,7 +180,7 @@ export function EventBlock({
             <section className='flex items-center gap-2'>
               <article className='relative'>
                 <Avatar>
-                  <AvatarImage src={client.photo} alt={client.name} className='object-cover'/>
+                  <AvatarImage src={client.photo} alt={client.name} className='object-cover' />
                   <AvatarFallback>
                     {client.name.charAt(0)}
                   </AvatarFallback>

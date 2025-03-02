@@ -25,14 +25,25 @@ export function Calendar() {
   }, [employees])
 
   const filteredEvents = useMemo(() => {
-    if (!events) return []
-
-    return events.filter(
-      (event) =>
-        selectedEmployees.has(event.employeeId) &&
-        isSameDay(event.date, selectedDate)
-    )
-  }, [events, selectedEmployees, selectedDate])
+    if (!events) return [];
+  
+    return events.filter((event) => {
+      // Handle empty employeeIds array
+      if (!event.employeeIds || event.employeeIds.length === 0) {
+        // You can decide if unassigned events should be shown or not
+        // Option 1: Always show unassigned events
+        return isSameDay(event.date, selectedDate);
+        
+        // Option 2: Only show unassigned events if specifically selected
+        // return selectedEmployees.has('unassigned') && isSameDay(event.date, selectedDate);
+      }
+      
+      // Check if any of the event's employeeIds are in the selectedEmployees set
+      const hasSelectedEmployee = event.employeeIds.some(id => selectedEmployees.has(id));
+      
+      return hasSelectedEmployee && isSameDay(event.date, selectedDate);
+    });
+  }, [events, selectedEmployees, selectedDate]);
 
   return (
     <div className='flex flex-col h-screen p-2 w-full'>
