@@ -66,7 +66,7 @@ export function EventBlock({
             height: `${adjustedEventHeight}px`,
             left: `calc(${leftPercent}% + 2px)`,
             width: `calc(${widthPercent}% - 4px)`,
-            backgroundColor: employees.length > 0 ? employees[0].color : "bg-gray-500",
+            backgroundColor: employees.length > 0 ? employees[0].color : "darkgray",
           }}
         >
           {adjustedEventHeight >= MINUTE_HEIGHT * 60 - verticalGap ? (

@@ -42,7 +42,7 @@ import { now } from '@internationalized/date'
 import { useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
-import { Calendar as CalendarIcon, CheckCircle, Clock, Scissors, User } from 'lucide-react'
+import { Calendar as CalendarIcon, CheckCircle, Clock, Scissors, User, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -56,7 +56,7 @@ export function MakeAppointmentDialog() {
     { slot: MinutesTimeRange; employees: EmployeeAvailable[] }[]
   >([])
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
-  const [employeeId, setEmployeeId] = useState('')
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const { data: clients } = useGetClients()
   const { data: services } = useGetServices()
@@ -65,7 +65,7 @@ export function MakeAppointmentDialog() {
   // Reset slot and employee when date or service changes
   useEffect(() => {
     setSelectedSlot(null)
-    setEmployeeId('')
+    setSelectedEmployeeIds([])
     setAvailableSlots([])
   }, [date, serviceId])
 
@@ -99,25 +99,23 @@ export function MakeAppointmentDialog() {
       setActiveStep(1)
     } else if (!selectedSlot) {
       setActiveStep(2)
-    } else if (!employeeId) {
-      setActiveStep(3)
     } else {
-      setActiveStep(4)
+      setActiveStep(3)
     }
-  }, [clientId, serviceId, selectedSlot, employeeId])
+  }, [clientId, serviceId, selectedSlot])
 
   const resetForm = () => {
     setClientId('')
     setServiceId('')
     setSelectedSlot(null)
-    setEmployeeId('')
+    setSelectedEmployeeIds([])
     setAvailableSlots([])
     setActiveStep(1)
   }
 
   const handleSubmit = async () => {
-    if (!clientId || !serviceId || !selectedSlot || !employeeId) {
-      toast.error('Por favor, completa todos los campos')
+    if (!clientId || !serviceId || !selectedSlot) {
+      toast.error('Por favor, completa todos los campos requeridos')
       return
     }
 
@@ -126,7 +124,7 @@ export function MakeAppointmentDialog() {
     const appointmentData = {
       clientId,
       serviceId,
-      employeeIds: [employeeId],
+      employeeIds: selectedEmployeeIds, // Can be empty array or array with selected employee IDs
       date: format(date, 'yyyy-MM-dd'),
       timeRange: JSON.parse(selectedSlot) satisfies MinutesTimeRange,
       notes: '',
@@ -165,8 +163,17 @@ export function MakeAppointmentDialog() {
     ? availableSlots.find(s => JSON.stringify(s.slot) === selectedSlot)?.employees || []
     : []
   
-  // Get selected employee
-  const selectedEmployee = slotEmployees.find(emp => emp.id === employeeId)
+  // Get selected employees
+  const selectedEmployees = slotEmployees.filter(emp => selectedEmployeeIds.includes(emp.id))
+
+  // Handle employee selection/deselection
+  const toggleEmployeeSelection = (employeeId: string) => {
+    setSelectedEmployeeIds(prev => 
+      prev.includes(employeeId)
+        ? prev.filter(id => id !== employeeId)
+        : [...prev, employeeId]
+    )
+  }
 
   // Format slot time for display
   const selectedSlotTime = selectedSlot 
@@ -218,7 +225,7 @@ export function MakeAppointmentDialog() {
                   <span className="text-xs hidden sm:block">
                     {step === 1 && "Información"}
                     {step === 2 && "Fecha y Hora"}
-                    {step === 3 && "Empleado"}
+                    {step === 3 && "Empleados (Opcional)"}
                     {step === 4 && "Confirmación"}
                   </span>
                 </div>
@@ -353,41 +360,65 @@ export function MakeAppointmentDialog() {
               </div>
             </TabsContent>
 
-            {/* Step 3: Employee Selection */}
+            {/* Step 3: Employee Selection (Optional) */}
             <TabsContent value="3" className="space-y-4">
-              <label className="text-sm font-medium mb-2 block">Empleado</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {slotEmployees.map((employee) => (
-                  <Card 
-                    key={employee.id} 
-                    className={cn(
-                      "cursor-pointer hover:border-primary transition-all",
-                      { "border-primary bg-primary/5": employeeId === employee.id }
-                    )}
-                    onClick={() => setEmployeeId(employee.id)}
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium block">Empleados (Opcional)</label>
+                {selectedEmployeeIds.length > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setSelectedEmployeeIds([])}
+                    className="text-xs h-8"
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={employee.photo} alt={employee.name} className="object-cover"/>
-                          <AvatarFallback>{employee.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{employee.name}</p>
-                          <p className="text-sm text-muted-foreground">Empleado</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                    Desmarcar todos
+                  </Button>
+                )}
               </div>
+              
+              {slotEmployees.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {slotEmployees.map((employee) => (
+                    <Card 
+                      key={employee.id} 
+                      className={cn(
+                        "cursor-pointer hover:border-primary transition-all",
+                        { "border-primary bg-primary/5": selectedEmployeeIds.includes(employee.id) }
+                      )}
+                      onClick={() => toggleEmployeeSelection(employee.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={employee.photo} alt={employee.name} className="object-cover"/>
+                              <AvatarFallback>{employee.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{employee.name}</p>
+                              <p className="text-sm text-muted-foreground">Empleado</p>
+                            </div>
+                          </div>
+                          {selectedEmployeeIds.includes(employee.id) && (
+                            <CheckCircle className="h-5 w-5 text-primary" />
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 border rounded-md text-muted-foreground">
+                  <User className="h-8 w-8 mb-2" />
+                  <p className="text-center">No hay empleados disponibles para este horario</p>
+                </div>
+              )}
 
               <div className="flex justify-between gap-2 mt-4">
                 <Button variant="outline" onClick={() => setActiveStep(2)}>
                   Atrás
                 </Button>
                 <Button 
-                  disabled={!employeeId || loading}
                   onClick={() => setActiveStep(4)}
                 >
                   Continuar
@@ -437,20 +468,31 @@ export function MakeAppointmentDialog() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Empleado</p>
-                      <div className="flex items-center gap-2">
-                        {selectedEmployee && (
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={selectedEmployee.photo} alt={selectedEmployee.name} className='object-cover' />
-                            <AvatarFallback>{selectedEmployee.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                        )}
-                        <p className="font-medium">{selectedEmployee?.name}</p>
-                      </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <User className="h-5 w-5 text-primary" />
+                      <p className="text-sm text-muted-foreground">
+                        {selectedEmployees.length > 0 ? 'Empleados seleccionados' : 'Sin empleados específicos'}
+                      </p>
                     </div>
+                    
+                    {selectedEmployees.length > 0 ? (
+                      <div className="ml-7 space-y-2">
+                        {selectedEmployees.map(employee => (
+                          <div key={employee.id} className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={employee.photo} alt={employee.name} className='object-cover' />
+                              <AvatarFallback>{employee.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <p className="font-medium">{employee.name}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="ml-7 text-sm italic text-muted-foreground">
+                        Se asignará cualquier empleado disponible
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
