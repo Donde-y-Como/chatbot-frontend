@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { EventBlock } from '@/features/appointments/EventBlock.tsx'
 import {
   ServiceFilter,
@@ -16,6 +17,7 @@ import { appointmentService } from '@/features/appointments/appointmentService.t
 import { toast } from 'sonner'
 import { format, isSameDay } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
+import { CalendarX, Loader2, Calendar, Clock } from 'lucide-react'
 
 export function DayView({
   appointments,
@@ -48,10 +50,10 @@ export function DayView({
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTime(date)
+      setCurrentTime(new Date())
     }, 60000)
     return () => clearInterval(interval)
-  }, [date])
+  }, [])
 
   const getCurrentTimePosition = () => {
     if (!workHours) return -100 // Position off-screen
@@ -85,76 +87,138 @@ export function DayView({
 
   if (isLoading) {
     return (
-      <div className='flex flex-col space-y-2 h-full'>
-        <Skeleton className='h-10 w-full' />
-        <div className='flex relative'>
-          <Skeleton className='w-16 h-screen' />
-          <Skeleton className='flex-1 h-screen' />
+      <div className="flex flex-col space-y-6 h-full w-full items-center justify-center p-8">
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <Loader2 className="h-12 w-12 text-primary animate-spin" />
+          <h3 className="text-lg font-medium">Cargando agenda del día</h3>
+          <div className="grid grid-cols-2 gap-4 w-full max-w-md">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
   if (!workHours) {
-    return <div>No working hours available for this date</div>
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center p-8">
+        <CalendarX className="h-24 w-24 text-muted-foreground mb-6" />
+        <h2 className="text-2xl font-bold mb-2">¡Día libre!</h2>
+        <p className="text-lg text-muted-foreground mb-6">
+          Hoy no hay horario laboral programado. ¡Disfruta de tu tiempo libre!
+        </p>
+        <div className="flex items-center justify-center p-4 bg-muted rounded-lg max-w-md">
+          <Calendar className="h-5 w-5 mr-2 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
+            {format(date, 'EEEE, d MMMM yyyy')}
+          </p>
+        </div>
+      </div>
+    )
   }
 
+  // Calculate the total height needed for the schedule
+  const totalHeight = ((workHours.endAt - workHours.startAt) / 60) * 64
+
   return (
-    <div className='flex flex-col space-y-2 h-full'>
-      <ServiceFilter
-        services={services}
-        selectedService={selectedService}
-        onServiceSelect={handleSelectedService}
-      />
+    <div className="flex flex-col space-y-4 h-full">
+      <div className="sticky top-0 z-20 bg-background pt-2 pb-4 border-b">
+        <ServiceFilter
+          services={services}
+          selectedService={selectedService}
+          onServiceSelect={handleSelectedService}
+        />
+      </div>
 
-      <div className='flex relative'>
-        <div className='w-16 flex-shrink-0 border-r'>
-          <TimeSlots startAt={workHours.startAt} endAt={workHours.endAt} />
-        </div>
+      <div className="flex-1 overflow-hidden border rounded-lg flex flex-col">
+        <ScrollArea className="h-full">
+          <div className="flex relative">
+            <div className="w-16 flex-shrink-0 border-r bg-muted/30">
+              <TimeSlots startAt={workHours.startAt} endAt={workHours.endAt} />
+            </div>
 
-        {isSameDay(currentTime, date) && workHours && currentTime.getHours() * 60 < workHours.endAt && (
-          <div
-            className='absolute left-16 right-0 z-10 border-t-2 border-red-500'
-            style={{ top: `${getCurrentTimePosition()}px` }}
-          >
-            <div className='absolute -left-1 -top-1 w-2 h-2 rounded-full bg-red-500' />
+            <div
+              className="flex-1 relative"
+              style={{
+                backgroundImage: `repeating-linear-gradient(
+                  to bottom,
+                  transparent,
+                  transparent 63px,
+                  hsl(var(--border)) 63px,
+                  hsl(var(--border)) 64px
+                )`,
+                backgroundSize: '100% 64px',
+                height: `${totalHeight}px`,
+                minHeight: `${totalHeight}px`,
+              }}
+            >
+              {isSameDay(currentTime, date) && 
+                workHours && 
+                currentTime.getHours() * 60 + currentTime.getMinutes() >= workHours.startAt && 
+                currentTime.getHours() * 60 + currentTime.getMinutes() <= workHours.endAt && (
+                <div
+                  className="absolute left-0 right-0 z-10 border-t-2 border-red-500"
+                  style={{ top: `${getCurrentTimePosition()}px` }}
+                >
+                  <div className="absolute -left-3 -top-1.5 flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <div className="absolute text-xs font-medium text-red-500 -left-10">
+                      {format(currentTime, 'HH:mm')}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {positionedEvents.length === 0 ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center p-6">
+                    <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      No hay citas programadas para este día
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                positionedEvents.map(({ appointment, column, totalColumns }) => {
+                  const employee = employees.find(
+                    (emp) => emp.id === appointment.employeeId
+                  )
+                  if (!employee) return null
+
+                  return (
+                    <EventBlock
+                      cancelAppointment={handleCancel}
+                      key={appointment._id}
+                      appointment={appointment}
+                      client={clients.find((c) => c.id === appointment.clientId)!}
+                      employee={employee}
+                      service={services.find((s) => s.id === appointment.serviceId)!}
+                      column={column}
+                      totalColumns={totalColumns}
+                      workHours={workHours}
+                    />
+                  )
+                })
+              )}
+            </div>
           </div>
-        )}
-
-        <div
-          className='flex-1 relative'
-          style={{
-            backgroundImage: `repeating-linear-gradient(
-              to bottom,
-              transparent,
-              transparent 63px,
-              hsl(var(--border)) 63px,
-              hsl(var(--border)) 64px
-            )`,
-            backgroundSize: '100% 64px',
-          }}
-        >
-          {positionedEvents.map(({ appointment, column, totalColumns }) => {
-            const employee = employees.find(
-              (emp) => emp.id === appointment.employeeId
-            )
-            if (!employee) return null
-
-            return (
-              <EventBlock
-                cancelAppointment={handleCancel}
-                key={appointment._id}
-                appointment={appointment}
-                client={clients.find((c) => c.id === appointment.clientId)!}
-                employee={employee}
-                service={services.find((s) => s.id === appointment.serviceId)!}
-                column={column}
-                totalColumns={totalColumns}
-                workHours={workHours}
-              />
-            )
-          })}
-        </div>
+          <ScrollBar orientation="vertical" />
+        </ScrollArea>
       </div>
     </div>
   )

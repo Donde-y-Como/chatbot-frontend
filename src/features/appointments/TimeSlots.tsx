@@ -1,4 +1,3 @@
-import React from 'react'
 
 export function TimeSlots({ startAt = 400, endAt = 1400 }) {
   const startHour = Math.floor(startAt / 60)
