@@ -61,6 +61,10 @@ socket.on(
   }
 )
 
+socket.on("assistantFailed", (data: { conversationId: string }) => {
+  toast.error('El asistente tuvo un problema al ejecutar una accion')
+})
+
 export const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false)
 

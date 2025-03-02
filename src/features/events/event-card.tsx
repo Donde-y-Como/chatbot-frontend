@@ -88,13 +88,13 @@ export function EventCard({
     <>
       <Card 
         key={event.id} 
-        className="overflow-hidden transition-all duration-300 shadow-lg border-1 h-full lg:max-h-64"
+        className="overflow-hidden transition-all duration-300 shadow-lg border-1 h-full"
       >
         {/* Desktop: Horizontal layout with image on left */}
         {/* Mobile: Vertical layout with image on top */}
         <div className="flex flex-col lg:flex-row h-full">
           {/* Image container */}
-          <div className="lg:w-1/3 xl:w-1/4 aspect-[3/4] relative overflow-hidden max-h-64">
+          <div className="lg:w-1/3 xl:w-1/4 relative overflow-hidden max-h-64 md:max-h-full">
             <img
               src={event.photos && event.photos.length ? event.photos[0] : "https://placehold.co/600x400?text=Sin+imagen"}
               alt={event.name}
@@ -105,7 +105,7 @@ export function EventCard({
                 {new Intl.NumberFormat('es-MX', { style: 'currency', currency: event.price.currency }).format(event.price.amount)}
               </div>
             ) : (
-              <div className="absolute top-2 right-2 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-md">
+              <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold shadow-md">
                 Gratis
               </div>
             )}

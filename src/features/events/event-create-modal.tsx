@@ -102,7 +102,7 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
 
       try {
         const url = await uploadFile(file)
-        form.setValue("photos",[...form.getValues("photos"), url])
+        form.setValue("photos", [...form.getValues("photos"), url])
       } catch (error) {
         toast.error("Hubo un error al subir la imagen")
       }
@@ -392,7 +392,17 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
                         <FormControl>
                           <Select
                             value={field.value}
-                            onValueChange={field.onChange}
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              if (value === RecurrenceFrequency.NEVER) {
+                                setValue('recurrence.endCondition', null)
+                              } else {
+                                setValue('recurrence.endCondition', {
+                                  type: EndConditionType.OCCURRENCES,
+                                  occurrences: 1,
+                                });
+                              }
+                            }}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccionar frecuencia" />
@@ -445,7 +455,6 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
                                   <SelectValue placeholder="Seleccionar tipo de finalización" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value={EndConditionType.NULL}>Sin fecha final</SelectItem>
                                   <SelectItem value={EndConditionType.OCCURRENCES}>Después de varias ocurrencias</SelectItem>
                                   <SelectItem value={EndConditionType.DATE}>En fecha específica</SelectItem>
                                 </SelectContent>
