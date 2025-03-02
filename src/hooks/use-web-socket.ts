@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 import { makeLastMessageContent } from '@/features/chats/hooks/makeLastMessageContent.ts'
 import { playNotification } from '@/lib/audio.ts'
+import { UserQueryKey } from '../components/layout/hooks/useGetUser'
 
 export const socket = io(import.meta.env.VITE_WS_URL || 'http://localhost:3000')
 
@@ -25,7 +26,7 @@ socket.on(
 
     if (chat === undefined) {
       setTimeout(async () => {
-        await queryClient.invalidateQueries({
+        await queryClient.refetchQueries({
           queryKey: ['chats'],
         })
       }, 1000)
@@ -64,6 +65,21 @@ socket.on(
 socket.on("assistantFailed", (data: { conversationId: string }) => {
   toast.error('El asistente tuvo un problema al ejecutar una accion')
 })
+
+socket.on("newEventBooked", () => {
+  toast.success('Un nuevo evento ha sido reservado.')
+})
+
+socket.on("newAppointmentCreated", () => {
+  toast.success('Una nueva cita ha sido creada.')
+})
+
+socket.on("creditsUpdated", () => {
+  queryClient.refetchQueries({
+    queryKey: UserQueryKey
+  })
+})
+
 
 export const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false)

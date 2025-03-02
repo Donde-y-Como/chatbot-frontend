@@ -13,21 +13,16 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
-import { authService } from '@/features/auth/AuthService.ts'
 import { IconChecklist, IconMessages, IconPackages, IconUsers } from '@tabler/icons-react'
-import { useQuery } from '@tanstack/react-query'
 import { BookUserIcon, CalendarFold, Command, PanelLeft } from 'lucide-react'
 import * as React from 'react'
 import { ComponentProps } from 'react'
 import { useUnreadChats } from './data/useUnreadChats'
 import { SidebarData } from './types'
+import { useGetUser } from './hooks/useGetUser'
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: authService.getMe,
-    staleTime: Infinity,
-  })
+  const { data: user } = useGetUser()
 
   const { count: unreadCount, isLoading } = useUnreadChats();
 
