@@ -103,13 +103,10 @@ export function FileUpload({
         )}
       >
         <input {...getInputProps()} aria-label="File upload" />
-        <div className="text-center">
+        <div className="text-center cursor-pointer">
           <Upload className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground" aria-hidden="true" />
           <h3 className="mt-2 text-sm font-medium">
-            Arrastra archivos aquí o{" "}
-            <Button variant="link" className="px-0" onClick={(e) => e.stopPropagation()}>
-              selecciona
-            </Button>
+            Arrastra archivos aquí o selecciona
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
             PNG, JPG, GIF hasta {(maxSize / 1024 / 1024).toFixed(0)}MB

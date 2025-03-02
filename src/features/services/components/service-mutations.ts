@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { api } from '@/api/axiosInstance'
+import { MinutesTimeRange } from '../../appointments/types'
 
 // Form data shape for service creation/update
 export interface ServiceFormData {
@@ -12,6 +13,7 @@ export interface ServiceFormData {
   priceCurrency: string
   maxConcurrentBooks: number
   minBookingLeadHours: number
+  schedule: Record<string, MinutesTimeRange>
 }
 
 /**
@@ -82,7 +84,7 @@ export const useUpdateService = (options?: {
       const body = transformFormToApiData(formData)
       
       const res = await api.put(`/services/${id}`, body)
-      if (res.status !== 201) {
+      if (res.status !== 200) {
         throw new Error('Error al actualizar servicio')
       }
       return res.data

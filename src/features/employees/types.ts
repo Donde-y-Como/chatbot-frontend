@@ -1,6 +1,39 @@
 import { z } from "zod"
 import { MinutesTimeRange } from "../appointments/types"
 
+export const scheduleSchema = z.object({
+    MONDAY: z.object({
+        startAt: z.number(),
+        endAt: z.number(),
+    }).optional(),
+    TUESDAY: z.object({
+        startAt: z.number(),
+        endAt: z.number(),
+    }).optional(),
+    WEDNESDAY: z.object({
+        startAt: z.number(),
+        endAt: z.number(),
+    }).optional(),
+    THURSDAY: z.object({
+        startAt: z.number(),
+        endAt: z.number(),
+    }).optional(),
+    FRIDAY: z.object({
+        startAt: z.number(),
+        endAt: z.number(),
+    }).optional(),
+    SATURDAY: z.object({
+        startAt: z.number(),
+        endAt: z.number(),
+    }).optional(),
+    SUNDAY: z.object({
+        startAt: z.number(),
+        endAt: z.number(),
+    }).optional(),
+}).refine((value) => {
+    return Object.values(value).some((day) => day !== undefined)
+}, { message: "Al menos un día de la semana es obligatorio" })
+
 export const employeeFormSchema = z.object({
     name: z.string().min(1, { message: "El nombre es obligatorio" }),
     role: z.string().min(1, { message: "El rol es obligatorio" }),
@@ -9,38 +42,7 @@ export const employeeFormSchema = z.object({
     birthDate: z.string().optional(),
     address: z.string().optional(),
     photo: z.string().optional(),
-    schedule: z.object({
-        MONDAY: z.object({
-            startAt: z.number(),
-            endAt: z.number(),
-        }).optional(),
-        TUESDAY: z.object({
-            startAt: z.number(),
-            endAt: z.number(),
-        }).optional(),
-        WEDNESDAY: z.object({
-            startAt: z.number(),
-            endAt: z.number(),
-        }).optional(),
-        THURSDAY: z.object({
-            startAt: z.number(),
-            endAt: z.number(),
-        }).optional(),
-        FRIDAY: z.object({
-            startAt: z.number(),
-            endAt: z.number(),
-        }).optional(),
-        SATURDAY: z.object({
-            startAt: z.number(),
-            endAt: z.number(),
-        }).optional(),
-        SUNDAY: z.object({
-            startAt: z.number(),
-            endAt: z.number(),
-        }).optional(),
-    }).refine((value) => {
-        return Object.values(value).some((day) => day !== undefined)
-    }, { message: "Al menos un día de la semana es obligatorio" }),
+    schedule: scheduleSchema,
 })
 
 export type EmployeeFormValues = z.infer<typeof employeeFormSchema>

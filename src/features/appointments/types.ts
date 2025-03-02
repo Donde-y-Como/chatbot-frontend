@@ -16,6 +16,7 @@ export interface Service {
   }
   maxConcurrentBooks: number
   minBookingLeadHours: number
+  schedule: Record<string, MinutesTimeRange>
 }
 
 export interface Schedule {

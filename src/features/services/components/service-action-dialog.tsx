@@ -24,6 +24,8 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { SelectDropdown } from '@/components/select-dropdown'
 import { Service } from '../../appointments/types'
+import { scheduleSchema } from '../../employees/types'
+import { ScheduleSection } from '../../employees/components/form/schedule-section'
 
 // Form validation schema
 const formSchema = z.object({
@@ -45,6 +47,7 @@ const formSchema = z.object({
   minBookingLeadHours: z.coerce.number().min(0, {
     message: 'El tiempo mínimo de anticipación debe ser de al menos 0 horas.',
   }),
+  schedule: scheduleSchema
 })
 
 type ServiceForm = z.infer<typeof formSchema>
@@ -72,6 +75,7 @@ export function ServiceActionDialog({
         durationUnit: currentService.duration.unit,
         priceAmount: currentService.price.amount,
         priceCurrency: currentService.price.currency,
+        schedule: currentService.schedule,
       }
       : {
         name: '',
@@ -82,6 +86,13 @@ export function ServiceActionDialog({
         priceCurrency: 'MXN',
         maxConcurrentBooks: 1,
         minBookingLeadHours: 0,
+        schedule: {
+          MONDAY: { startAt: 480, endAt: 1020 },
+          TUESDAY: { startAt: 480, endAt: 1020 },
+          WEDNESDAY: { startAt: 480, endAt: 1020 },
+          THURSDAY: { startAt: 480, endAt: 1020 },
+          FRIDAY: { startAt: 480, endAt: 1020 },
+        },
       }
   }, [currentService, isEdit])
 
@@ -329,6 +340,14 @@ export function ServiceActionDialog({
                     </FormItem>
                   )}
                 />
+
+                <div className="col-span-2 ">
+                  <FormLabel htmlFor="schedule">Horario</FormLabel>
+                  <div className='-mx-2 mt-2'>
+                    <ScheduleSection form={form} />
+                  </div>
+                </div>
+
               </div>
             </form>
           </Form>
