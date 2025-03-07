@@ -7,7 +7,10 @@ import { Button } from '@/components/ui/button.tsx'
 import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 import { MediaUpload } from '@/features/chats/MediaUpload.tsx'
 
-export default function ChatFooter({ selectedChatId }) {
+export default function ChatFooter({ selectedChatId, canSendMessage }: {
+  selectedChatId: string
+  canSendMessage: boolean
+}) {
   const [newMessage, setNewMessage] = useState('')
   const queryClient = useQueryClient()
   const { sendMessage: sendToWebSocket } = useWebSocket()
@@ -94,29 +97,33 @@ export default function ChatFooter({ selectedChatId }) {
       className='flex w-full flex-none gap-2'
     >
       <div className='flex flex-1 items-center gap-2 rounded-md border border-input px-2 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring lg:gap-4'>
-        <MediaUpload onSend={handleMediaSend} />
+        {canSendMessage ? (
+          <>
+            <MediaUpload onSend={handleMediaSend} />
 
-        <input
-          type='text'
-          placeholder='Escribe tu mensaje...'
-          className='h-8 w-full bg-inherit focus-visible:outline-none'
-          value={newMessage}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              handleSendMessage(e)
-            }
-          }}
-          onChange={(e) => setNewMessage(e.target.value)}
-        />
-        <Button
-          variant='ghost'
-          size='icon'
-          className='hidden sm:inline-flex'
-          type='submit'
-        >
-          <IconSend size={20} />
-        </Button>
+            <input
+              type='text'
+              placeholder='Escribe tu mensaje...'
+              className='h-8 w-full bg-inherit focus-visible:outline-none'
+              value={newMessage}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleSendMessage(e)
+                }
+              }}
+              onChange={(e) => setNewMessage(e.target.value)}
+            />
+            <Button
+              variant='ghost'
+              size='icon'
+              className='hidden sm:inline-flex'
+              type='submit'
+            >
+              <IconSend size={20} />
+            </Button>
+          </>
+        ) : <p className='text-sm opacity-60 italic'>No puedes enviar mensajes a esta conversación</p>}
       </div>
       <Button className='h-full sm:hidden' type='submit'>
         <IconSend size={18} />
