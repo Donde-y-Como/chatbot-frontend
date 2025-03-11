@@ -19,6 +19,7 @@ import { CheckCheckIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useGetTags } from '../clients/hooks/useGetTags'
+import { AddTagButton } from './AddTagButton'
 
 interface ChatSearchInputProps {
   value: string
@@ -144,6 +145,7 @@ export function ChatBarHeader({
             {name.charAt(0).toUpperCase() + name.slice(1)}
           </Badge>
         ))}
+        <AddTagButton />
       </div>
     </div>
   )

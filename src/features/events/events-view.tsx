@@ -61,7 +61,7 @@ export default function EventsView() {
   const { data: allBookings, isLoading: isBookingsLoading, error: bookingsError } = useGetBookings()
   const { data: events, isLoading: isEventsLoading, error: eventsError } = useGetEvents()
   const [showCreate, setShowCreate] = useState<boolean>(false)
-  const [viewMode, setViewMode] = useState<string>('list')
+  const [viewMode, setViewMode] = useState<string>('calendar')
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('upcoming')
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [searchQuery, setSearchQuery] = useState<string>('')
