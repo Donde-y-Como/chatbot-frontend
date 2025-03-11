@@ -1,29 +1,31 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { formatDistanceToNowStrict } from 'date-fns'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconBrandWhatsapp,
-} from '@tabler/icons-react'
-import { es } from 'date-fns/locale/es'
-import { Check, MoreVertical } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input.tsx'
+import { useWebSocket } from '@/hooks/use-web-socket.ts'
+import { cn } from '@/lib/utils'
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconBrandWhatsapp,
+} from '@tabler/icons-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { formatDistanceToNowStrict } from 'date-fns'
+import { es } from 'date-fns/locale/es'
+import { Check, MoreVertical } from 'lucide-react'
+import React, { useEffect, useRef, useState } from 'react'
 //import { Switch } from '@/components/ui/switch.tsx'
 import { Chat, ChatMessages } from '@/features/chats/ChatTypes'
-import { toast } from 'sonner'
 import { AvatarImage } from '@radix-ui/react-avatar'
+import { toast } from 'sonner'
+import { AddTagsModal } from './components/AddTagsModal'
 import { useChatMutations } from './hooks/useChatMutations'
+import { useUpdateClientTags } from './hooks/useUpdateClientTags'
 
 interface ChatListItemProps {
   chat: Chat
@@ -153,13 +155,20 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   // }
 
   const handleMarkAsUnread = () => {
-    markAsUnread(chat.id)
-  }
+    markAsUnread(chat.id);
+  };
+
+  const [isAddTagsModalOpen, setIsAddTagsModalOpen] = useState(false);
+  const { updateClientTags, isLoading: isUpdateClientTagsLoading } = useUpdateClientTags();
+
+  const handleAddTags = (tagIds: string[]) => {
+    updateClientTags(chat.client.id, tagIds);
+  };
 
   return (
     <div
       className={cn(
-        'flex w-full rounded-md px-2 py-2 text-left text-sm hover:bg-secondary/75 cursor-pointer',
+        "flex w-full rounded-md px-2 py-2 text-left text-sm hover:bg-secondary/75 cursor-pointer",
         isSelected && 'sm:bg-muted'
       )}
       onClick={onClick}
@@ -253,10 +262,10 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation()
-                      // Handle profile view
+                      setIsAddTagsModalOpen(true);
                     }}
                   >
-                    Ver perfil
+                    Agregar etiqueta
                   </DropdownMenuItem>
                   {/*<DropdownMenuItem*/}
                   {/*  className='flex justify-between'*/}
@@ -275,6 +284,12 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
           </span>
         </div>
       </div>
+      <AddTagsModal
+        open={isAddTagsModalOpen}
+        setOpen={setIsAddTagsModalOpen}
+        client={chat.client}
+        onSave={handleAddTags}
+      />
     </div>
   )
 }
