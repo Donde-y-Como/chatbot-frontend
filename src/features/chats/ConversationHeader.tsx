@@ -14,6 +14,7 @@ import {
   IconPhone,
 } from '@tabler/icons-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
 
 interface ConversationHeaderProps {
   onBackClick: () => void
@@ -64,6 +65,22 @@ export function ConversationHeader({
     instagram: IconBrandInstagram,
   }[chatData.platformName.toLowerCase()]
 
+  const platformId = useMemo(() => {
+    const identity = chatData.client.platformIdentities.filter(i => i.platformName === chatData.platformName).at(0)
+
+    if(chatData.platformName === 'whatsapp') {
+      const platformId = identity?.platformId;
+      if (platformId) {
+        const lastTenDigits = platformId.slice(-10);
+        const countryCode = platformId.slice(0, -10);
+        return `+${countryCode} ${lastTenDigits}`;
+      }
+      return platformId;
+    }
+
+    return identity?.platformId || ''
+  }, [chatData])
+
   return (
     <div className='mb-1 flex flex-none justify-between rounded-t-md bg-secondary p-4 shadow-lg'>
       <div className='flex gap-3'>
@@ -98,8 +115,9 @@ export function ConversationHeader({
             </div>
           )}
         </div>
-        <span className='text-sm font-medium lg:text-base  flex items-center'>
+        <span className='text-sm font-medium lg:text-base  flex flex-col justify-center'>
           {chatData.client.name || <Skeleton className='h-3 w-24' />}
+          <small className='opacity-60'>{platformId}</small>
         </span>
       </div>
 
