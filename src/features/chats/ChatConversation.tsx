@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils.ts'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { ChatMessage } from '@/features/chats/ChatMessage.tsx'
 import { Message } from '@/features/chats/ChatTypes'
 import { useMessageGroups } from './hooks/useMessageGroups'
@@ -27,11 +28,12 @@ export function ChatConversation({
 
   return (
     <div className='flex size-full flex-1'>
-      <div className='chat-text-container relative -mr-4 flex flex-1 flex-col overflow-y-hidden'>
-        <div
+      <div className='chat-text-container relative -mr-4 flex flex-1 flex-col'>
+        <ScrollArea
           key={mobileSelectedChatId}
-          className='chat-flex flex h-40 w-full flex-grow flex-col justify-start gap-4 overflow-y-auto py-2 pb-4 pr-4'
+          className='chat-flex flex h-40 w-full flex-grow flex-col py-2 pb-4 pr-4'
         >
+          <div className='flex flex-col space-y-1'>
           {Object.entries(messageGroups).map(([date, groupMessages]) => {
             return (
               <Fragment key={date}>
@@ -52,7 +54,8 @@ export function ChatConversation({
             )
           })}
           <div ref={messagesEndRef} />
-        </div>
+          </div>
+        </ScrollArea>
       </div>
     </div>
   )
@@ -61,8 +64,9 @@ export function ChatConversation({
 export function ChatConversationSkeleton() {
   return (
     <div className='flex size-full flex-1'>
-      <div className='chat-text-container relative -mr-4 flex flex-1 flex-col overflow-y-hidden'>
-        <div className='chat-flex flex h-40 w-full flex-grow flex-col justify-start gap-4 overflow-y-auto py-2 pb-4 pr-4'>
+      <div className='chat-text-container relative -mr-4 flex flex-1 flex-col'>
+        <ScrollArea className='chat-flex flex h-40 w-full flex-grow flex-col py-2 pb-4 pr-4'>
+          <div className='flex flex-col space-y-6'>
           {Array.from({ length: 3 }).map((_, index) => (
             <Skeleton
               key={index}
@@ -72,7 +76,8 @@ export function ChatConversationSkeleton() {
               )}
             />
           ))}
-        </div>
+          </div>
+        </ScrollArea>
       </div>
     </div>
   )
