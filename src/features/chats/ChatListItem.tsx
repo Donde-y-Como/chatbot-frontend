@@ -15,7 +15,7 @@ import {
   IconBrandWhatsapp,
 } from '@tabler/icons-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { formatDistanceToNowStrict } from 'date-fns'
+import { formatDistanceToNowStrict, format, differenceInDays } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import { Check, MoreVertical } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
@@ -214,10 +214,23 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
           </span>
 
           <span className='col-span-1 text-xs text-right font-normal text-muted-foreground'>
-            {formatDistanceToNowStrict(new Date(chat.lastMessage.timestamp), {
-              addSuffix: false,
-              locale: es,
-            })}
+            {(() => {
+              const messageDate = new Date(chat.lastMessage.timestamp);
+              const daysDifference = differenceInDays(new Date(), messageDate);
+              
+              if (daysDifference > 2) {
+                return format(messageDate, 'dd/MM/yy');
+              } else if (daysDifference === 1) {
+                return 'ayer';
+              } else if (daysDifference === 2) {
+                return 'anteayer';
+              } else {
+                return formatDistanceToNowStrict(messageDate, {
+                  addSuffix: false,
+                  locale: es,
+                });
+              }
+            })()}
           </span>
 
           <span className='col-span-4 text-sm text-muted-foreground truncate'>
