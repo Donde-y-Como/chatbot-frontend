@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react'
+import { FormEvent, useState, useRef, useEffect } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { IconSend } from '@tabler/icons-react'
 import { uid } from 'uid'
@@ -12,6 +12,26 @@ export default function ChatFooter({ selectedChatId, canSendMessage }: {
   canSendMessage: boolean
 }) {
   const [newMessage, setNewMessage] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const adjustTextareaHeight = (element: HTMLTextAreaElement) => {
+    element.style.height = '0'
+    element.style.height = `${Math.min(element.scrollHeight, 128)}px` // 128px is equivalent to max-h-32
+  }
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      adjustTextareaHeight(textareaRef.current)
+    }
+  }, [])
+
+  // Reset height when message is sent
+  useEffect(() => {
+    if (newMessage === '' && textareaRef.current) {
+      textareaRef.current.style.height = '32px' // reset to h-8
+    }
+  }, [newMessage])
+
   const queryClient = useQueryClient()
   const { sendMessage: sendToWebSocket } = useWebSocket()
   const sendMessageMutation = useMutation({
@@ -96,36 +116,44 @@ export default function ChatFooter({ selectedChatId, canSendMessage }: {
       }}
       className='flex w-full flex-none gap-2'
     >
-      <div className='flex flex-1 items-center gap-2 rounded-md border border-input px-2 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring lg:gap-4'>
+      <div className='flex flex-1 items-start gap-2 rounded-md border border-input px-2 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring lg:gap-4'>
         {canSendMessage ? (
           <>
-            <MediaUpload onSend={handleMediaSend} />
+            <div className="self-center">
+              <MediaUpload onSend={handleMediaSend} />
+            </div>
 
-            <input
-              type='text'
+            <textarea
+              ref={textareaRef}
+              rows={1}
               placeholder='Escribe tu mensaje...'
-              className='h-8 w-full bg-inherit focus-visible:outline-none'
+              className='h-8 min-h-8 max-h-32 w-full bg-inherit resize-none overflow-y-auto py-1 pt-2 focus-visible:outline-none'
               value={newMessage}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
                   handleSendMessage(e)
                 }
               }}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={(e) => {
+                setNewMessage(e.target.value)
+                adjustTextareaHeight(e.target)
+              }}
             />
-            <Button
-              variant='ghost'
-              size='icon'
-              className='hidden sm:inline-flex'
-              type='submit'
-            >
-              <IconSend size={20} />
-            </Button>
+            <div className="self-center">
+              <Button
+                variant='ghost'
+                size='icon'
+                className='hidden sm:inline-flex'
+                type='submit'
+              >
+                <IconSend size={20} />
+              </Button>
+            </div>
           </>
         ) : <p className='text-sm opacity-60 italic'>No puedes enviar mensajes a esta conversación</p>}
       </div>
-      <Button className='h-full sm:hidden' type='submit'>
+      <Button className='self-start h-10 sm:hidden' type='submit'>
         <IconSend size={18} />
       </Button>
     </form>
