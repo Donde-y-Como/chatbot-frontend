@@ -1,4 +1,5 @@
 import { FormEvent, useState, useRef, useEffect } from 'react'
+import { EmojiClickData } from 'emoji-picker-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { IconSend } from '@tabler/icons-react'
 import { uid } from 'uid'
@@ -6,6 +7,7 @@ import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { Button } from '@/components/ui/button.tsx'
 import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 import { MediaUpload } from '@/features/chats/MediaUpload.tsx'
+import { EmojiPickerButton } from '@/features/chats/components/EmojiPickerButton'
 
 export default function ChatFooter({ selectedChatId, canSendMessage }: {
   selectedChatId: string
@@ -119,15 +121,22 @@ export default function ChatFooter({ selectedChatId, canSendMessage }: {
       <div className='flex flex-1 items-start gap-2 rounded-md border border-input px-2 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring lg:gap-4'>
         {canSendMessage ? (
           <>
-            <div className="self-center">
+            <div className="self-center flex items-center gap-1">
               <MediaUpload onSend={handleMediaSend} />
+              <EmojiPickerButton onEmojiSelect={(emoji) => {
+                setNewMessage(prev => prev + emoji.emoji)
+                if (textareaRef.current) {
+                  adjustTextareaHeight(textareaRef.current)
+                  textareaRef.current.focus()
+                }
+              }} />
             </div>
 
             <textarea
               ref={textareaRef}
               rows={1}
               placeholder='Escribe tu mensaje...'
-              className='h-8 min-h-8 max-h-32 w-full bg-inherit resize-none overflow-y-auto py-1 pt-2 focus-visible:outline-none'
+              className='h-8 min-h-8 max-h-32 w-full bg-inherit resize-none overflow-y-auto md:pt-1.5 pt-1 focus-visible:outline-none'
               value={newMessage}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
