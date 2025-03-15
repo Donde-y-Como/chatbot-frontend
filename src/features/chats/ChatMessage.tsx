@@ -18,11 +18,13 @@ export function ChatMessage({ message }: ChatMessageProps) {
       "flex w-full",
       isUser ? "justify-start" : "justify-end"
     )}>
-      <div className="flex flex-col gap-1 max-w-[70%]">
+      <div className="flex flex-col gap-1 max-w-[70%] md:max-w-[50%]">
         {message.content && (<div
           onClick={() => setShowTime(!showTime)}
           className={cn(
-            "px-4 py-2 rounded-2xl break-words cursor-pointer overflow-hidden",
+            "px-4 py-2 rounded-2xl cursor-pointer",
+            "break-words overflow-wrap-anywhere hyphens-auto", 
+            "max-w-full overflow-hidden",
             isUser
               ? "bg-gray-200 text-gray-900"
               : "bg-blue-500 text-white"

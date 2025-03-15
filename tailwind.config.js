@@ -73,4 +73,5 @@ export default {
     },
   },
   plugins: [tailwindCssAnimate],
+  safelist: ['hyphens-auto', 'overflow-wrap-anywhere']
 }
