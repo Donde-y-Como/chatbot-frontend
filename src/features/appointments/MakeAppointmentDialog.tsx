@@ -2,6 +2,7 @@ import { api } from '@/api/axiosInstance.ts'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button.tsx'
 import { Calendar } from '@/components/ui/calendar.tsx'
+import { CreateOrSelectClient } from './components/CreateOrSelectClient'
 import {
   Card,
   CardContent,
@@ -124,7 +125,7 @@ export function MakeAppointmentDialog() {
     const appointmentData = {
       clientId,
       serviceId,
-      employeeIds: selectedEmployeeIds, // Can be empty array or array with selected employee IDs
+      employeeIds: selectedEmployeeIds,
       date: format(date, 'yyyy-MM-dd'),
       timeRange: JSON.parse(selectedSlot) satisfies MinutesTimeRange,
       notes: '',
@@ -245,26 +246,7 @@ export function MakeAppointmentDialog() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-1 block">Cliente</label>
-                  <Select value={clientId} onValueChange={setClientId}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona un cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients?.map((client) => (
-                        <SelectItem key={client.id} value={client.id} className="py-2">
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={client.photo} alt={client.name} className="object-cover"/>
-                              <AvatarFallback className="bg-primary/10 text-primary">
-                                {client.name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span>{client.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <CreateOrSelectClient value={clientId} onChange={setClientId} />
                 </div>
 
                 <div>

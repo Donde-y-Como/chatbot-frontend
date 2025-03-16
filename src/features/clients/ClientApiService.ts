@@ -16,11 +16,12 @@ export const ClientApiService = {
         }
         return response.data
     },
-    create: async (client: Omit<ClientPrimitives, "id" | "businessId" | "createdAt" | "updatedAt">) => {
-        const response = await api.post<Omit<ClientPrimitives, "id" | "businessId" | "createdAt" | "updatedAt">>('/clients', client)
+    create: async (client: Omit<ClientPrimitives, "id" | "businessId" | "createdAt" | "updatedAt">): Promise<ClientPrimitives> => {
+        const response = await api.post<ClientPrimitives>('/clients', client)
         if (response.status !== 201) {
             throw new Error("Error al crear el cliente")
         }
+
         return response.data
     },
     update: async (id: string, client: Partial<ClientPrimitives>) => {
