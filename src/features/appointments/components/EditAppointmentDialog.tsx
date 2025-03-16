@@ -150,7 +150,7 @@ export function EditAppointmentDialog({
       setAvailableSlots([])
       fetchAvailability()
     }
-  }, [date, serviceId, appointment._id, appointment.timeRange, employees, appointment.date, service.id])
+  }, [date, serviceId, appointment.id, appointment.timeRange, employees, appointment.date, service.id])
 
   // Update active step based on selections
   useEffect(() => {
@@ -204,7 +204,7 @@ export function EditAppointmentDialog({
     }
 
     try {
-      const result = await appointmentService.editAppointment(appointment._id, appointmentData)
+      const result = await appointmentService.editAppointment(appointment.id, appointmentData)
       if (result) {
         void queryClient.invalidateQueries({
           queryKey: [

@@ -203,7 +203,7 @@ export function DayView({
                   return (
                     <EventBlock
                       cancelAppointment={handleCancel}
-                      key={appointment._id}
+                      key={appointment.id}
                       appointment={appointment}
                       client={clients.find((c) => c.id === appointment.clientId)!}
                       employees={employees}

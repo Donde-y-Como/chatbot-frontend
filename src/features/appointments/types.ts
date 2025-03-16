@@ -60,7 +60,7 @@ export const appointmentCreated = z.object({
 export type AppointmentCreated = z.infer<typeof appointmentCreated>
 
 export const appointment = z.object({
-  _id: z.string(),
+  id: z.string(),
   clientId: z.string(),
   serviceId: z.string(),
   employeeIds: z.array(z.string()),

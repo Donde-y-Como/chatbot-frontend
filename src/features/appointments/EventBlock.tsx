@@ -218,7 +218,7 @@ export function EventBlock({
           ) && (
               <Button
                 variant='destructive'
-                onClick={() => cancelAppointment(appointment._id)}
+                onClick={() => cancelAppointment(appointment.id)}
                 className='w-full sm:w-auto'
               >
                 Cancelar
