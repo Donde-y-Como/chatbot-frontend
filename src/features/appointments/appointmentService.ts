@@ -22,6 +22,14 @@ export const appointmentService = {
     return response.data.appointment
   },
 
+  editAppointment: async (id: string, appointment: Partial<Appointment>) => {
+    const response = await api.put(
+      `/appointments/${id}`,
+      appointment
+    )
+    return response.data as AppointmentCreated;
+  },
+
   getAppointments: async (startDate: string, endDate: string) => {
     let endpoint = '/appointments'
     if (startDate && endDate) {

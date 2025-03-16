@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { EditAppointmentDialog } from './components/EditAppointmentDialog';
 import { Client } from '@/features/chats/ChatTypes.ts';
 import { now } from '@internationalized/date';
 import { CalendarIcon, ClockIcon } from '@radix-ui/react-icons';
@@ -21,6 +22,7 @@ import type { Appointment, Service } from './types';
 
 interface EventBlockProps {
   cancelAppointment: (id: string) => void
+  editAppointment?: (id: string, data: Partial<Appointment>) => void
   appointment: Appointment
   employees: Employee[]
   service: Service
@@ -38,6 +40,7 @@ const verticalGap = 4
 
 export function EventBlock({
   cancelAppointment,
+  editAppointment,
   appointment,
   employees,
   service,
@@ -97,6 +100,20 @@ export function EventBlock({
             <DialogTitle className='text-xl font-semibold'>
               {client.name} - {service.name}
             </DialogTitle>
+            {isBefore(
+              now('America/Mexico_City').toDate(),
+              setMinutes(
+                parseISO(appointment.date),
+                appointment.timeRange.startAt
+              )
+            ) && (
+              <EditAppointmentDialog
+                appointment={appointment}
+                employees={employees}
+                service={service}
+                client={client}
+              />
+            )}
           </div>
           <DialogDescription className='text-sm text-foreground/50'>
             {appointment.notes || 'Sin notas adicionales'}

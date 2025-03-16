@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { format, isSameDay } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
 import { CalendarX, Loader2, Calendar, Clock } from 'lucide-react'
+import { es } from 'date-fns/locale'
 
 export function DayView({
   appointments,
@@ -124,8 +125,8 @@ export function DayView({
         </p>
         <div className="flex items-center justify-center p-4 bg-muted rounded-lg max-w-md">
           <Calendar className="h-5 w-5 mr-2 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            {format(date, 'EEEE, d MMMM yyyy')}
+          <p className="text-sm text-muted-foreground first-letter:uppercase">
+            {format(date, 'EEEE, d MMMM yyyy', { locale: es })}
           </p>
         </div>
       </div>
