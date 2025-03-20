@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      animation: {
+        'pulse-once': 'pulse-once 1.5s ease-in-out forwards',
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',

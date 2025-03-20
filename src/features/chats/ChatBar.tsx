@@ -11,6 +11,7 @@ import { Chat } from '@/features/chats/ChatTypes'
 import { useChats } from '@/features/chats/hooks/useChats.ts'
 import { useFilteredChats } from '@/features/chats/hooks/useFilteredChats.ts'
 import { useGetTags } from '../clients/hooks/useGetTags'
+import { MessagesFound } from './MessagesFound'
 
 interface ChatBarProps {
   selectedChatId: string | null
@@ -36,7 +37,7 @@ export function ChatBar({
   const { data: tags } = useGetTags()
   const filteredChatList = useFilteredChats(chats, search, activeFilter, tags)
 
-  const handleSelectChat = (chatId: string) => {
+  const handleSelectChat = (chatId: string, messageId?: string) => {
     setSelectedChatId(chatId)
     setMobileSelectedChatId(chatId)
 
@@ -52,7 +53,11 @@ export function ChatBar({
     // emit a message to the server to mark the chat as read
 
     navigate({
-      search: (prev: SearchChatParams) => ({ ...prev, chatId }),
+      search: (prev: SearchChatParams) => ({ 
+        ...prev, 
+        chatId,
+        highlightMessageId: messageId || undefined
+      }),
       replace: true,
     })
   }
@@ -68,6 +73,11 @@ export function ChatBar({
         onInputChange={setSearch}
         onFilterChange={setActiveFilter}
         onToggleAllAI={onToggleAllAI}
+      />
+
+      <MessagesFound 
+        search={search} 
+        onMessageClick={(chatId, messageId) => handleSelectChat(chatId, messageId)} 
       />
 
       <ScrollArea className='h-full pl-2 pr-3'>

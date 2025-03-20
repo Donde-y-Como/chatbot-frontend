@@ -14,10 +14,12 @@ export type Chat = {
   newClientMessagesCount: number
 }
 
+export type MessageRole = 'business' | 'user' | 'assistant'
+
 export type Message = {
   id: string
   content: string
-  role: 'business' | 'user' | 'assistant'
+  role: MessageRole
   timestamp: number
   media: Media | null
 }

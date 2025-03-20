@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef } from 'react'
+import { useSearch } from '@tanstack/react-router'
 import { cn } from '@/lib/utils.ts'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -17,6 +18,7 @@ export function ChatConversation({
 }: ChatConversationProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messageGroups = useMessageGroups(messages)
+  const { highlightMessageId } = useSearch({ from: '/_authenticated/chats/' })
 
   useEffect(() => {
     if (!mobileSelectedChatId) return
