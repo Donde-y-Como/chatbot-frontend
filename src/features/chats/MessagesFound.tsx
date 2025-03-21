@@ -10,6 +10,44 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MessageRole } from './ChatTypes'
 
+ // Helper function to highlight matching text
+ const highlightText = (text: string, query: string) => {
+  if (!query.trim()) return text
+
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+  const parts = text.split(regex)
+
+  return (
+    <>
+      {parts.map((part, i) =>
+        regex.test(part) ? (
+          <span key={i} className="bg-yellow-200 text-black px-0.5 rounded">
+            {part}
+          </span>
+        ) : (
+          part
+        )
+      )}
+    </>
+  )
+}
+
+const getPlatformIcon = (platform: string) => {
+  const platformMap = {
+    whatsapp: { Icon: IconBrandWhatsapp, color: 'text-green-500' },
+    facebook: { Icon: IconBrandFacebook, color: 'text-blue-500' },
+    instagram: { Icon: IconBrandInstagram, color: 'text-pink-500' }
+  }
+
+  const platformKey = platform.toLowerCase() as keyof typeof platformMap
+  if (platformMap[platformKey]) {
+    const { Icon, color } = platformMap[platformKey]
+    return <Icon size={14} className={color} />
+  }
+
+  return null
+}
+
 interface MessageFoundProps {
   message: {
     id: string
@@ -58,45 +96,7 @@ export function MessagesFound({ search, onMessageClick }: MessagesFoundProps) {
   // If search is empty or less than 2 characters, don't show the component
   if (!search || search.length < 2) {
     return null
-  }
-
-  // Helper function to highlight matching text
-  const highlightText = (text: string, query: string) => {
-    if (!query.trim()) return text
-
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-    const parts = text.split(regex)
-
-    return (
-      <>
-        {parts.map((part, i) =>
-          regex.test(part) ? (
-            <span key={i} className="bg-yellow-200 text-black px-0.5 rounded">
-              {part}
-            </span>
-          ) : (
-            part
-          )
-        )}
-      </>
-    )
-  }
-
-  const getPlatformIcon = (platform: string) => {
-    const platformMap = {
-      whatsapp: { Icon: IconBrandWhatsapp, color: 'text-green-500' },
-      facebook: { Icon: IconBrandFacebook, color: 'text-blue-500' },
-      instagram: { Icon: IconBrandInstagram, color: 'text-pink-500' }
-    }
-
-    const platformKey = platform.toLowerCase() as keyof typeof platformMap
-    if (platformMap[platformKey]) {
-      const { Icon, color } = platformMap[platformKey]
-      return <Icon size={14} className={color} />
-    }
-
-    return null
-  }
+  }  
 
   return (
     <div className="mt-2 mx-4 bg-gray-50 rounded-md border overflow-hidden">
