@@ -1,17 +1,15 @@
-import { useEffect, useState } from 'react'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
 import { api } from '@/api/axiosInstance'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { AvatarImage } from '@radix-ui/react-avatar'
-import { format } from 'date-fns'
-import { IconBrandFacebook, IconBrandInstagram, IconBrandWhatsapp } from '@tabler/icons-react'
-import { useDebounce } from '@/hooks/useDebounce'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useDebounce } from '@/hooks/useDebounce'
+import { AvatarImage } from '@radix-ui/react-avatar'
+import { IconBrandFacebook, IconBrandInstagram, IconBrandWhatsapp } from '@tabler/icons-react'
+import { format } from 'date-fns'
+import { useEffect, useState } from 'react'
 import { MessageRole } from './ChatTypes'
 
- // Helper function to highlight matching text
- const highlightText = (text: string, query: string) => {
+const highlightText = (text: string, query: string) => {
   if (!query.trim()) return text
 
   const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
@@ -72,6 +70,7 @@ export function MessagesFound({ search, onMessageClick }: MessagesFoundProps) {
   const debouncedSearch = useDebounce(search, 250)
 
   useEffect(() => {
+    setIsLoading(true)
     const fetchMessages = async () => {
       if (!debouncedSearch || debouncedSearch.length < 2) {
         setMessages([])
@@ -93,21 +92,20 @@ export function MessagesFound({ search, onMessageClick }: MessagesFoundProps) {
     fetchMessages()
   }, [debouncedSearch])
 
-  // If search is empty or less than 2 characters, don't show the component
   if (!search || search.length < 2) {
     return null
-  }  
+  }
 
   return (
-    <div className="mt-2 mx-4 bg-gray-50 rounded-md border overflow-hidden">
-      <div className="px-3 py-2 font-medium bg-gray-100 border-b flex justify-between">
+    <div className="mt-2 mx-4 bg-background rounded-md border overflow-hidden">
+      <div className="px-3 py-2 font-medium bg-secondary border-b flex justify-between">
         <span>Mensajes encontrados</span>
         <span className="text-muted-foreground text-sm">
           {isLoading ? 'Buscando...' : `${messages.length} resultado${messages.length !== 1 ? 's' : ''}`}
         </span>
       </div>
 
-      <ScrollArea className="h-80">
+      <ScrollArea className="h-96 w-full">
         {isLoading ? (
           // Loading skeleton
           <div className="p-2 space-y-2">
@@ -126,42 +124,46 @@ export function MessagesFound({ search, onMessageClick }: MessagesFoundProps) {
             No se encontraron mensajes para "{search}"
           </div>
         ) : (
-          <div className="p-2">
-            {messages.map((message, index) => (
-              <div
-                key={message.message.id}
-                className="hover:bg-gray-100 rounded-md p-2 cursor-pointer transition-colors"
-                onClick={() => onMessageClick(message.conversationId, message.message.id)}
-              >
-                <div className="flex gap-2">
-                  <div className="relative flex-shrink-0">
-                    <Avatar className="h-10 w-10">
-                      {message.clientPhoto && <AvatarImage src={message.clientPhoto} alt={message.clientName} className="object-cover" />}
-                      <AvatarFallback>{message.clientName[0]}</AvatarFallback>
-                    </Avatar>
-                    {message.platformName && (
-                      <div className="absolute -bottom-0.5 -right-0.5 rounded-full bg-white p-0.5 shadow-md">
-                        {getPlatformIcon(message.platformName)}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <span className="font-medium">{message.clientName}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(message.message.timestamp), 'dd/MM/yy HH:mm')}
-                      </span>
+          <div className="flex flex-col gap-2 w-full p-2">
+            <div className='space-y-2'>
+              {messages.map((message) => (
+                <div
+                  key={message.message.id}
+                  className="hover:bg-muted rounded-md p-3 cursor-pointer transition-colors"
+                  onClick={() => onMessageClick(message.conversationId, message.message.id)}
+                >
+                  <div className="flex gap-3">
+                    <div className="relative flex-shrink-0">
+                      <Avatar className="h-10 w-10">
+                        {message.clientPhoto && <AvatarImage src={message.clientPhoto} alt={message.clientName} className="object-cover" />}
+                        <AvatarFallback className="bg-primary text-secondary">{message.clientName[0]}</AvatarFallback>
+                      </Avatar>
+                      {message.platformName && (
+                        <div className="absolute -bottom-0.5 -right-0.5 rounded-full bg-white p-0.5 shadow-md">
+                          {getPlatformIcon(message.platformName)}
+                        </div>
+                      )}
                     </div>
-                    <div className="mt-1 text-sm text-muted-foreground overflow-hidden">
-                      {message.message.role !== 'user' && <span className="font-semibold">Tú:</span>}{' '}
-                      {highlightText(message.message.content, debouncedSearch)}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium truncate">{message.clientName}</span>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {format(new Date(message.message.timestamp), 'dd/MM/yy HH:mm')}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-sm text-muted-foreground break-words">
+                        <span className="mr-1">
+                          {message.message.role !== 'user' && <span className="font-semibold">Tú:</span>}
+                        </span>
+                        {highlightText(message.message.content, debouncedSearch)}
+                      </div>
                     </div>
                   </div>
                 </div>
-                {index < messages.length - 1 && <Separator className="my-2" />}
-              </div>
-            ))}
+              ))}
+            </div>
+            <div className="h-8 my-2"></div>
           </div>
         )}
       </ScrollArea>

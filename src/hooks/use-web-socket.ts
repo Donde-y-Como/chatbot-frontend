@@ -26,7 +26,7 @@ socket.on(
 
     if (chat === undefined) {
       setTimeout(async () => {
-        await queryClient.refetchQueries({
+        await queryClient.invalidateQueries({
           queryKey: ['chats'],
         })
       }, 1000)
@@ -40,7 +40,7 @@ socket.on(
           if (chat.id === data.conversationId) {
             return {
               ...chat,
-              newClientMessagesCount: chat.newClientMessagesCount + 1,
+              newClientMessagesCount: data.message.role === "user" ? chat.newClientMessagesCount + 1 : chat.newClientMessagesCount,
               lastMessage: makeLastMessageContent(data.message),
             }
           }
