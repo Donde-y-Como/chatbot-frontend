@@ -65,7 +65,7 @@ export function EventBlock({
         <div
           className='absolute rounded  overflow-hidden cursor-pointer transition-opacity hover:opacity-90'
           style={{
-            top: `${adjustedTopOffset}px`,
+            top: `calc(${adjustedTopOffset}px + 21px)`,
             height: `${adjustedEventHeight}px`,
             left: `calc(${leftPercent}% + 2px)`,
             width: `calc(${widthPercent}% - 4px)`,

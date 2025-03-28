@@ -138,7 +138,7 @@ export function DayView({
 
   return (
     <div className="flex flex-col space-y-4 h-full">
-      <div className="sticky top-0 z-20 bg-background pt-2 pb-4 border-b">
+      <div className="sticky top-0 z-20 bg-background border-b">
         <ServiceFilter
           services={services}
           selectedService={selectedService}
