@@ -89,6 +89,7 @@ export function CreditsDisplay({
   const daysRemaining = getDaysRemaining(endTimestamp)
   const isExpirationSoon = daysRemaining > 0 && daysRemaining <= 7
   const expiryDate = formatDate(endTimestamp)
+  const noCredits = percentage == 0
 
   return (
     <>
@@ -97,18 +98,22 @@ export function CreditsDisplay({
           <div className='flex items-center gap-3'>
             <CircularProgress value={percentage} isLowCredits={isLowCredits} />
             <div>
-              <div className='font-medium'>Mensajes</div>
-              {isLowCredits && (
-                <div className='text-xs text-red-500 font-medium'>¡Créditos bajos!</div>
-              )}
+              <div>
+                <div className="font-medium">Mensajes</div>
+                {noCredits ? (
+                  <div className="text-xs text-red-500 font-medium">¡Sin créditos restantes!</div>
+                ) : (
+                  isLowCredits && <div className="text-xs text-red-500 font-medium">¡Créditos bajos!</div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-        
-        <div className='space-y-2 text-sm'>
-          <div className='flex justify-between'>
-            <span className='text-muted-foreground'>Plan</span>
-            <span className='font-medium flex items-center gap-1'>
+
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Plan</span>
+            <span className="font-medium flex items-center gap-1">
               {planName}
               {active ? (
                 <span className='inline-block w-2 h-2 bg-green-500 rounded-full'></span>
