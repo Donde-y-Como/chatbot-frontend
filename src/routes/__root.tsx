@@ -13,7 +13,7 @@ export const Route = createRootRouteWithContext<{
     return (
       <>
         <Outlet />
-        <Toaster richColors position="top-center" />
+        <Toaster richColors position="top-right" />
         {import.meta.env.MODE === 'development' && (
           <>
             <ReactQueryDevtools buttonPosition='top-left' />

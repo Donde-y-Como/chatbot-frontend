@@ -13,12 +13,13 @@ declare module '@tanstack/react-router' {
 }
 
 const rootElement = document.getElementById('root')!
+
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme='light' storageKey='vite-ui-theme'>
+        <ThemeProvider defaultTheme='light' storageKey='vite-ui-the me'>
           <RouterProvider router={router} />
         </ThemeProvider>
       </QueryClientProvider>
