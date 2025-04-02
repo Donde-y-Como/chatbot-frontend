@@ -2,8 +2,7 @@ import React, { useState } from 'react'
 import useDialogState from '@/hooks/use-dialog-state'
 import { ClientPrimitives } from '../types'
 
-type ClientDialogType =  'add' | 'edit' | 'delete'
-
+type ClientDialogType =  'add' | 'edit' | 'delete' | 'view'
 interface ClientsContextType {
   open: ClientDialogType | null
   setOpen: (str: ClientDialogType | null) => void

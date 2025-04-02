@@ -1,6 +1,7 @@
 import { useClients } from "../context/clients-context"
 import { ClientActionDialog } from "./client-action-dialog"
 import { ClientDeleteDialog } from "./client-delete-dialog"
+import { ClientViewDialog } from "./client-view-dialog"
 
 export function ClientDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useClients()
@@ -19,6 +20,18 @@ export function ClientDialogs() {
             open={open === 'edit'}
             onOpenChange={() => {
               setOpen('edit')
+              setTimeout(() => {
+                setCurrentRow(null)
+              }, 500)
+            }}
+            currentClient={currentRow}
+          />
+
+          <ClientViewDialog
+            key={`client-view-${currentRow.id}`}
+            open={open === 'view'}
+            onOpenChange={() => {
+              setOpen('view')
               setTimeout(() => {
                 setCurrentRow(null)
               }, 500)

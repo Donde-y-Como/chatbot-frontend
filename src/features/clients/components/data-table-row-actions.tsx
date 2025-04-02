@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
-import { IconEdit, IconTrash } from '@tabler/icons-react'
+import { IconEdit, IconEye, IconTrash } from '@tabler/icons-react'
 import { Row } from '@tanstack/react-table'
 import { useClients } from '../context/clients-context'
 import { ClientPrimitives } from '../types'
@@ -32,7 +32,19 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end' className='w-[160px]'>
-          <DropdownMenuItem
+        <DropdownMenuItem
+            onClick={() => {
+              setCurrentRow(row.original)
+              setOpen('view')
+            }}
+          >
+            Ver
+            <DropdownMenuShortcut>
+              <IconEye size={16} />
+            </DropdownMenuShortcut>
+        </DropdownMenuItem>
+          <DropdownMenuSeparator/>
+        <DropdownMenuItem
             onClick={() => {
               setCurrentRow(row.original)
               setOpen('edit')
@@ -42,7 +54,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             <DropdownMenuShortcut>
               <IconEdit size={16} />
             </DropdownMenuShortcut>
-          </DropdownMenuItem>
+        </DropdownMenuItem>
           {/* <DropdownMenuSeparator /> */}
           {/* <DropdownMenuItem
             onClick={() => {
