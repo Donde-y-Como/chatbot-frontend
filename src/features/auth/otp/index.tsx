@@ -9,21 +9,21 @@ export default function Otp() {
       <Card className='p-6'>
         <div className='mb-2 flex flex-col space-y-2 text-left'>
           <h1 className='text-md font-semibold tracking-tight'>
-            Two-factor Authentication
+            Verificación de cuenta
           </h1>
           <p className='text-sm text-muted-foreground'>
-            Please enter the authentication code. <br /> We have sent the
-            authentication code to your email.
+            Por favor, ingrese el código de autenticación. <br /> Hemos enviado el
+            código de autenticación a su correo electrónico.
           </p>
         </div>
         <OtpForm />
         <p className='mt-4 px-8 text-center text-sm text-muted-foreground'>
-          Haven't received it?{' '}
+          ¿No has recibido el código?{' '}
           <Link
             to='/iniciar-sesion'
             className='underline underline-offset-4 hover:text-primary'
           >
-            Resend a new code.
+            Reenviar un nuevo código.
           </Link>
           .
         </p>

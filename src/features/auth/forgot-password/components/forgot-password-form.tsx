@@ -1,8 +1,3 @@
-import { HTMLAttributes, useState } from 'react'
-import { z } from 'zod'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -13,6 +8,14 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { HTMLAttributes, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import { authService } from '../../AuthService'
+import { useRouter } from '@tanstack/react-router'
 
 type ForgotFormProps = HTMLAttributes<HTMLDivElement>
 
@@ -25,20 +28,19 @@ const formSchema = z.object({
 
 export function ForgotForm({ className, ...props }: ForgotFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { email: '' },
   })
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
-    // eslint-disable-next-line no-console
-    console.log(data)
-
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 3000)
+    await authService.forgotPassword(data.email);
+    setIsLoading(false)
+    toast.success('Correo enviado, revisa tu bandeja de entrada')
+    form.reset()
   }
 
   return (
@@ -59,9 +61,18 @@ export function ForgotForm({ className, ...props }: ForgotFormProps) {
                 </FormItem>
               )}
             />
-            <Button className='mt-2' disabled={isLoading}>
-              Continue
-            </Button>
+            <div className="flex flex-col items-center w-full gap-2 ">
+              <Button type="submit" className='mt-2 w-full' disabled={isLoading}>
+                Continuar
+              </Button>
+              <Button
+                variant="link"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => router.navigate({ to: '/iniciar-sesion' })}
+              >
+                Volver a iniciar sesión
+              </Button>
+            </div>
           </div>
         </form>
       </Form>

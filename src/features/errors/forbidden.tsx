@@ -15,7 +15,7 @@ export default function ForbiddenError() {
         </p>
         <div className='mt-6 flex gap-4'>
           <Button variant='outline' onClick={() => history.go(-1)}>
-            Volver
+            Regresar
           </Button>
           <Button onClick={() => navigate({ to: '/' })}>Ir a inicio</Button>
         </div>
