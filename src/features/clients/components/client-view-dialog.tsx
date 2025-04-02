@@ -25,11 +25,11 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
   if (!currentClient) return null;
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Not specified';
+    if (!dateString) return 'No especificado';
     try {
       return format(new Date(dateString), 'PPP');
     } catch {
-      return 'Invalid date';
+      return 'Fecha inválida';
     }
   };
 
@@ -49,10 +49,11 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
               </AvatarFallback>
             </Avatar>
             <div>
-              <DialogTitle className="text-2xl font-bold">{currentClient.name}</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">Detalles del Cliente</DialogTitle>
+              <p className="text-sm font-medium mt-1">{currentClient.name}</p>
               <DialogDescription className="flex items-center mt-1">
                 <Mail className="h-4 w-4 mr-2" />
-                {currentClient.email || 'No email provided'}
+                {currentClient.email || 'Sin correo electrónico'}
               </DialogDescription>
             </div>
           </div>
@@ -61,9 +62,9 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
         <ScrollArea className="max-h-[70vh] w-full">
           <Tabs defaultValue="details" className="w-full mt-2" orientation="horizontal">
             <TabsList className="grid w-full grid-cols-3 mb-4">
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="annexes">Annexes</TabsTrigger>
-              <TabsTrigger value="notes">Notes</TabsTrigger>
+              <TabsTrigger value="details">Detalles</TabsTrigger>
+              <TabsTrigger value="annexes">Anexos</TabsTrigger>
+              <TabsTrigger value="notes">Notas</TabsTrigger>
             </TabsList>
 
             <TabsContent value="details" className="space-y-4">
@@ -71,7 +72,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                 {/* Personal Information */}
                 <Card>
                   <CardContent className="p-4 space-y-3">
-                    <h3 className="font-semibold text-lg">Personal Information</h3>
+                    <h3 className="font-semibold text-lg">Información Personal</h3>
                     <Separator />
                     
                     <div className="space-y-2">
@@ -85,7 +86,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                       {currentClient.birthdate && (
                         <div className="flex items-center">
                           <Calendar className="h-5 w-5 mr-2 text-muted-foreground flex-shrink-0" />
-                          <span>Born: {formatDate(currentClient.birthdate)}</span>
+                          <span>Nacimiento: {formatDate(currentClient.birthdate)}</span>
                         </div>
                       )}
                     </div>
@@ -95,7 +96,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                 {/* Platform Identities */}
                 <Card>
                   <CardContent className="p-4 space-y-3">
-                    <h3 className="font-semibold text-lg">Platform Identities</h3>
+                    <h3 className="font-semibold text-lg">Cuentas de Plataforma</h3>
                     <Separator />
                     
                     {currentClient.platformIdentities && currentClient.platformIdentities.length > 0 ? (
@@ -113,7 +114,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                         ))}
                       </div>
                     ) : (
-                      <p className="text-muted-foreground">No platform identities associated</p>
+                      <p className="text-muted-foreground">Sin identidades de plataforma asociadas</p>
                     )}
                   </CardContent>
                 </Card>
@@ -121,7 +122,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                 {/* Tags */}
                 <Card>
                   <CardContent className="p-4 space-y-3">
-                    <h3 className="font-semibold text-lg">Tags</h3>
+                    <h3 className="font-semibold text-lg">Etiquetas</h3>
                     <Separator />
                     
                     {currentClient.tagIds && currentClient.tagIds.length > 0 ? (
@@ -134,7 +135,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                         ))}
                       </div>
                     ) : (
-                      <p className="text-muted-foreground">No tags assigned</p>
+                      <p className="text-muted-foreground">Sin etiquetas asignadas</p>
                     )}
                   </CardContent>
                 </Card>
@@ -142,23 +143,23 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                 {/* System Info */}
                 <Card>
                   <CardContent className="p-4 space-y-3">
-                    <h3 className="font-semibold text-lg">System Information</h3>
+                    <h3 className="font-semibold text-lg">Información del Sistema</h3>
                     <Separator />
                     
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="text-muted-foreground">Created: {formatDate(currentClient.createdAt)}</span>
+                        <span className="text-muted-foreground">Creado: {formatDate(currentClient.createdAt)}</span>
                       </div>
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="text-muted-foreground">Updated: {formatDate(currentClient.updatedAt)}</span>
+                        <span className="text-muted-foreground">Actualizado: {formatDate(currentClient.updatedAt)}</span>
                       </div>
                       <div className="flex items-center">
                         <span className="text-xs text-muted-foreground">ID: {currentClient.id}</span>
                       </div>
                       <div className="flex items-center">
-                        <span className="text-xs text-muted-foreground">Business ID: {currentClient.businessId}</span>
+                        <span className="text-xs text-muted-foreground">Negocio ID: {currentClient.businessId}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -169,7 +170,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
             <TabsContent value="annexes">
               <Card>
                 <CardContent className="p-4 space-y-3">
-                  <h3 className="font-semibold text-lg">Attached Media & Documents</h3>
+                  <h3 className="font-semibold text-lg">Archivos Adjuntos & Documentos</h3>
                   <Separator />
                   
                   {currentClient.annexes && currentClient.annexes.length > 0 ? (
@@ -178,7 +179,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                         <Card key={index} className="p-3 hover:bg-accent/50 cursor-pointer transition-colors">
                           <div className="flex items-center">
                             <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" />
-                            <span className="font-medium truncate">{annex.name || 'Untitled'}</span>
+                            <span className="font-medium truncate">{annex.name || 'Sin título'}</span>
                           </div>
                           {annex.media && (
                             <div className="mt-2 flex items-center justify-between">
@@ -196,7 +197,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                                   className="text-xs text-primary flex items-center hover:underline"
                                 >
                                   <ExternalLink className="h-3 w-3 mr-1" />
-                                  View
+                                  Ver
                                 </a>
                               )}
                             </div>
@@ -205,7 +206,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">No annexes or documents attached</p>
+                    <p className="text-muted-foreground">Sin documentos adjuntos</p>
                   )}
                 </CardContent>
               </Card>
@@ -214,7 +215,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
             <TabsContent value="notes">
               <Card>
                 <CardContent className="p-4 space-y-3">
-                  <h3 className="font-semibold text-lg">Notes</h3>
+                  <h3 className="font-semibold text-lg">Notas</h3>
                   <Separator />
                   
                   {currentClient.notes ? (
@@ -222,7 +223,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                       {currentClient.notes}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">No notes available</p>
+                    <p className="text-muted-foreground">Sin notas disponibles</p>
                   )}
                 </CardContent>
               </Card>
