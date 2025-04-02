@@ -1,6 +1,7 @@
 import { useServices } from '../context/services-context.tsx'
 import { ServiceActionDialog } from './service-action-dialog.tsx'
 import { ServicesDeleteDialog } from './services-delete-dialog.tsx'
+import { ServiceViewDialog } from '@/features/services/components/service-view-dialog.tsx'
 
 export function ServicesDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useServices()
@@ -14,6 +15,18 @@ export function ServicesDialogs() {
 
       {currentRow && (
         <>
+          <ServiceViewDialog
+            key={`user-view-${currentRow.id}`}
+            open={open === 'view'}
+            onOpenChange={() => {
+              setOpen('view')
+              setTimeout(() => {
+                setCurrentRow(null)
+              }, 500)
+            }}
+            currentService={currentRow}
+          />
+
           <ServiceActionDialog
             key={`user-edit-${currentRow.id}`}
             open={open === 'edit'}

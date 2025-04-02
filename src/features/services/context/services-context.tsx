@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import useDialogState from '@/hooks/use-dialog-state'
 import { Service } from '@/features/appointments/types.ts'
 
-type ServicesDialogType = 'add' | 'edit' | 'delete'
+type ServicesDialogType = 'add' | 'edit' | 'delete' | 'view'
 
 interface ServicesContextType {
   open: ServicesDialogType | null
