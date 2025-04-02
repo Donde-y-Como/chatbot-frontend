@@ -1,12 +1,4 @@
-import { HTMLAttributes, useState } from 'react'
-import { z } from 'zod'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link, useRouter } from '@tanstack/react-router'
-import { useAuth } from '@/stores/authStore.ts'
-import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
+import { PasswordInput } from '@/components/password-input'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -17,32 +9,41 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { PasswordInput } from '@/components/password-input'
 import { authService } from '@/features/auth/AuthService.ts'
+import { useAuth } from '@/stores/authStore.ts'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Link, useRouter } from '@tanstack/react-router'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
 
-type UserAuthFormProps = HTMLAttributes<HTMLDivElement>
+interface UserAuthFormProps {
+  emailOnly?: boolean
+}
 
-const formSchema = z.object({
+const authSchema = z.object({
   email: z
     .string()
     .min(1, { message: 'Ingresa tu correo' })
     .email({ message: 'Correo invalido' }),
   password: z.string().min(1, {
     message: 'Ingresa tu contraseña',
-  }),
+  }).optional(),
 })
 
-export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
+export function UserAuthForm({ emailOnly = false }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const queryClient = useQueryClient()
   const { setAccessToken, setUser } = useAuth()
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+  type FormValues = z.infer<typeof authSchema>
+  const form = useForm<FormValues>({
+    resolver: zodResolver(authSchema),
+    defaultValues: emailOnly
+      ? { email: '' }
+      : { email: '', password: '' },
   })
 
   const { mutateAsync: login, isPending } = useMutation({
@@ -59,25 +60,38 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       router.navigate({ to: '/', replace: true })
     },
     onError: () => {
-      toast.error('Error de autenticación',{
-        description: 'Credenciales inválidas',
-      })
+      toast.error('Credenciales incorrectas')
     },
   })
 
-  async function onSubmit(data: z.infer<typeof formSchema>) {
+  async function onSubmit(data: FormValues) {
     try {
       setIsLoading(true)
-      await login(data)
+
+      if (emailOnly) {
+        await authService.requestLoginLink(data.email)
+        toast.success('Enlace de acceso enviado a tu correo')
+        form.reset()
+      } else {
+        if (!data.password) {
+          toast.error('Ingresa tu contraseña')
+          return;
+        }
+
+        await login({
+          email: data.email,
+          password: data.password,
+        })
+      }
     } catch (_e: unknown) {
-      /* empty */
+      toast.error('Ocurrió un error, por favor intenta de nuevo.')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className={cn('grid gap-6', className)} {...props}>
+    <div className='grid gap-6'>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className='grid gap-2'>
@@ -94,29 +108,33 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name='password'
-              render={({ field }) => (
-                <FormItem className='space-y-1'>
-                  <div className='flex items-center justify-between'>
-                    <FormLabel>Contraseña</FormLabel>
-                    <Link
-                      to='/forgot-password'
-                      className='text-sm font-medium text-muted-foreground hover:opacity-75'
-                    >
-                      Olvidaste tu contraseña?
-                    </Link>
-                  </div>
-                  <FormControl>
-                    <PasswordInput autoComplete="current-password" placeholder='********' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+            {!emailOnly && (
+              <FormField
+                control={form.control}
+                name='password'
+                render={({ field }) => (
+                  <FormItem className='space-y-1'>
+                    <div className='flex items-center justify-between'>
+                      <FormLabel>Contraseña</FormLabel>
+                      <Link
+                        to='/recuperar-cuenta'
+                        className='text-sm font-medium text-muted-foreground hover:opacity-75'
+                      >
+                        Olvidaste tu contraseña?
+                      </Link>
+                    </div>
+                    <FormControl>
+                      <PasswordInput autoComplete="current-password" placeholder='********' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <Button className='mt-2' disabled={isLoading}>
-              {isPending ? 'Cargando...' : 'Iniciar sesión'}
+              {isPending ? 'Cargando...' : emailOnly ? 'Enviar enlace' : 'Iniciar sesión'}
             </Button>
           </div>
         </form>

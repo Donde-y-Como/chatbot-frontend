@@ -1,6 +1,7 @@
 import { useEmployees } from '../context/employees-context.tsx'
 import { EmployeeActionDialog } from './employee-action-dialog.tsx'
 import { EmployeeDeleteDialog } from './employee-delete-dialog.tsx'
+import { EmployeeViewDialog } from './employee-view-dialog.tsx'
 
 export function EmployeeDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useEmployees()
@@ -26,6 +27,18 @@ export function EmployeeDialogs() {
             currentEmployee={currentRow}
           />
 
+          <EmployeeViewDialog
+            key={`user-view-${currentRow.id}`}
+            open={open === 'view'}
+            onOpenChange={() => {
+              setOpen('view')
+              setTimeout(() => {
+                setCurrentRow(null)
+              }, 500)
+            }}
+            currentEmployee={currentRow}
+          />
+          
           <EmployeeDeleteDialog
             key={`user-delete-${currentRow.id}`}
             open={open === 'delete'}

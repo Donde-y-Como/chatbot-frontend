@@ -16,8 +16,9 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexImport } from './routes/_authenticated/index'
 import { Route as authOtpImport } from './routes/(auth)/otp'
-import { Route as auth500Import } from './routes/(auth)/500'
 import { Route as AuthenticatedChatsIndexImport } from './routes/_authenticated/chats/index'
+import { Route as authRestablecerContrasenaTokenImport } from './routes/(auth)/restablecer-contrasena.$token'
+import { Route as authLinkIniciarSesionTokenImport } from './routes/(auth)/link-iniciar-sesion.$token'
 
 // Create Virtual Routes
 
@@ -27,11 +28,10 @@ const errors404LazyImport = createFileRoute('/(errors)/404')()
 const errors403LazyImport = createFileRoute('/(errors)/403')()
 const errors401LazyImport = createFileRoute('/(errors)/401')()
 const authSignUpLazyImport = createFileRoute('/(auth)/sign-up')()
-const authSignIn2LazyImport = createFileRoute('/(auth)/sign-in-2')()
-const authIniciarSesionLazyImport = createFileRoute('/(auth)/iniciar-sesion')()
-const authForgotPasswordLazyImport = createFileRoute(
-  '/(auth)/forgot-password',
+const authRecuperarCuentaLazyImport = createFileRoute(
+  '/(auth)/recuperar-cuenta',
 )()
+const authIniciarSesionLazyImport = createFileRoute('/(auth)/iniciar-sesion')()
 const AuthenticatedSettingsRouteLazyImport = createFileRoute(
   '/_authenticated/settings',
 )()
@@ -127,13 +127,15 @@ const authSignUpLazyRoute = authSignUpLazyImport
   } as any)
   .lazy(() => import('./routes/(auth)/sign-up.lazy').then((d) => d.Route))
 
-const authSignIn2LazyRoute = authSignIn2LazyImport
+const authRecuperarCuentaLazyRoute = authRecuperarCuentaLazyImport
   .update({
-    id: '/(auth)/sign-in-2',
-    path: '/sign-in-2',
+    id: '/(auth)/recuperar-cuenta',
+    path: '/recuperar-cuenta',
     getParentRoute: () => rootRoute,
   } as any)
-  .lazy(() => import('./routes/(auth)/sign-in-2.lazy').then((d) => d.Route))
+  .lazy(() =>
+    import('./routes/(auth)/recuperar-cuenta.lazy').then((d) => d.Route),
+  )
 
 const authIniciarSesionLazyRoute = authIniciarSesionLazyImport
   .update({
@@ -143,16 +145,6 @@ const authIniciarSesionLazyRoute = authIniciarSesionLazyImport
   } as any)
   .lazy(() =>
     import('./routes/(auth)/iniciar-sesion.lazy').then((d) => d.Route),
-  )
-
-const authForgotPasswordLazyRoute = authForgotPasswordLazyImport
-  .update({
-    id: '/(auth)/forgot-password',
-    path: '/forgot-password',
-    getParentRoute: () => rootRoute,
-  } as any)
-  .lazy(() =>
-    import('./routes/(auth)/forgot-password.lazy').then((d) => d.Route),
   )
 
 const AuthenticatedSettingsRouteLazyRoute =
@@ -167,12 +159,6 @@ const AuthenticatedSettingsRouteLazyRoute =
 const authOtpRoute = authOtpImport.update({
   id: '/(auth)/otp',
   path: '/otp',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const auth500Route = auth500Import.update({
-  id: '/(auth)/500',
-  path: '/500',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -280,6 +266,21 @@ const AuthenticatedSettingsAccountLazyRoute =
     ),
   )
 
+const authRestablecerContrasenaTokenRoute =
+  authRestablecerContrasenaTokenImport.update({
+    id: '/(auth)/restablecer-contrasena/$token',
+    path: '/restablecer-contrasena/$token',
+    getParentRoute: () => rootRoute,
+  } as any)
+
+const authLinkIniciarSesionTokenRoute = authLinkIniciarSesionTokenImport.update(
+  {
+    id: '/(auth)/link-iniciar-sesion/$token',
+    path: '/link-iniciar-sesion/$token',
+    getParentRoute: () => rootRoute,
+  } as any,
+)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -289,13 +290,6 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRoute
-    }
-    '/(auth)/500': {
-      id: '/(auth)/500'
-      path: '/500'
-      fullPath: '/500'
-      preLoaderRoute: typeof auth500Import
       parentRoute: typeof rootRoute
     }
     '/(auth)/otp': {
@@ -312,13 +306,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteLazyImport
       parentRoute: typeof AuthenticatedRouteImport
     }
-    '/(auth)/forgot-password': {
-      id: '/(auth)/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof authForgotPasswordLazyImport
-      parentRoute: typeof rootRoute
-    }
     '/(auth)/iniciar-sesion': {
       id: '/(auth)/iniciar-sesion'
       path: '/iniciar-sesion'
@@ -326,11 +313,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authIniciarSesionLazyImport
       parentRoute: typeof rootRoute
     }
-    '/(auth)/sign-in-2': {
-      id: '/(auth)/sign-in-2'
-      path: '/sign-in-2'
-      fullPath: '/sign-in-2'
-      preLoaderRoute: typeof authSignIn2LazyImport
+    '/(auth)/recuperar-cuenta': {
+      id: '/(auth)/recuperar-cuenta'
+      path: '/recuperar-cuenta'
+      fullPath: '/recuperar-cuenta'
+      preLoaderRoute: typeof authRecuperarCuentaLazyImport
       parentRoute: typeof rootRoute
     }
     '/(auth)/sign-up': {
@@ -381,6 +368,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexImport
       parentRoute: typeof AuthenticatedRouteImport
+    }
+    '/(auth)/link-iniciar-sesion/$token': {
+      id: '/(auth)/link-iniciar-sesion/$token'
+      path: '/link-iniciar-sesion/$token'
+      fullPath: '/link-iniciar-sesion/$token'
+      preLoaderRoute: typeof authLinkIniciarSesionTokenImport
+      parentRoute: typeof rootRoute
+    }
+    '/(auth)/restablecer-contrasena/$token': {
+      id: '/(auth)/restablecer-contrasena/$token'
+      path: '/restablecer-contrasena/$token'
+      fullPath: '/restablecer-contrasena/$token'
+      preLoaderRoute: typeof authRestablecerContrasenaTokenImport
+      parentRoute: typeof rootRoute
     }
     '/_authenticated/settings/account': {
       id: '/_authenticated/settings/account'
@@ -518,18 +519,19 @@ const AuthenticatedRouteRouteWithChildren =
 
 export interface FileRoutesByFullPath {
   '': typeof AuthenticatedRouteRouteWithChildren
-  '/500': typeof errors500LazyRoute
   '/otp': typeof authOtpRoute
   '/settings': typeof AuthenticatedSettingsRouteLazyRouteWithChildren
-  '/forgot-password': typeof authForgotPasswordLazyRoute
   '/iniciar-sesion': typeof authIniciarSesionLazyRoute
-  '/sign-in-2': typeof authSignIn2LazyRoute
+  '/recuperar-cuenta': typeof authRecuperarCuentaLazyRoute
   '/sign-up': typeof authSignUpLazyRoute
   '/401': typeof errors401LazyRoute
   '/403': typeof errors403LazyRoute
   '/404': typeof errors404LazyRoute
+  '/500': typeof errors500LazyRoute
   '/503': typeof errors503LazyRoute
   '/': typeof AuthenticatedIndexRoute
+  '/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
+  '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceLazyRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
@@ -544,17 +546,18 @@ export interface FileRoutesByFullPath {
 }
 
 export interface FileRoutesByTo {
-  '/500': typeof errors500LazyRoute
   '/otp': typeof authOtpRoute
-  '/forgot-password': typeof authForgotPasswordLazyRoute
   '/iniciar-sesion': typeof authIniciarSesionLazyRoute
-  '/sign-in-2': typeof authSignIn2LazyRoute
+  '/recuperar-cuenta': typeof authRecuperarCuentaLazyRoute
   '/sign-up': typeof authSignUpLazyRoute
   '/401': typeof errors401LazyRoute
   '/403': typeof errors403LazyRoute
   '/404': typeof errors404LazyRoute
+  '/500': typeof errors500LazyRoute
   '/503': typeof errors503LazyRoute
   '/': typeof AuthenticatedIndexRoute
+  '/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
+  '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceLazyRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
@@ -571,12 +574,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/(auth)/500': typeof auth500Route
   '/(auth)/otp': typeof authOtpRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteLazyRouteWithChildren
-  '/(auth)/forgot-password': typeof authForgotPasswordLazyRoute
   '/(auth)/iniciar-sesion': typeof authIniciarSesionLazyRoute
-  '/(auth)/sign-in-2': typeof authSignIn2LazyRoute
+  '/(auth)/recuperar-cuenta': typeof authRecuperarCuentaLazyRoute
   '/(auth)/sign-up': typeof authSignUpLazyRoute
   '/(errors)/401': typeof errors401LazyRoute
   '/(errors)/403': typeof errors403LazyRoute
@@ -584,6 +585,8 @@ export interface FileRoutesById {
   '/(errors)/500': typeof errors500LazyRoute
   '/(errors)/503': typeof errors503LazyRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/(auth)/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
+  '/(auth)/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceLazyRoute
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
@@ -601,18 +604,19 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | ''
-    | '/500'
     | '/otp'
     | '/settings'
-    | '/forgot-password'
     | '/iniciar-sesion'
-    | '/sign-in-2'
+    | '/recuperar-cuenta'
     | '/sign-up'
     | '/401'
     | '/403'
     | '/404'
+    | '/500'
     | '/503'
     | '/'
+    | '/link-iniciar-sesion/$token'
+    | '/restablecer-contrasena/$token'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
@@ -626,17 +630,18 @@ export interface FileRouteTypes {
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/500'
     | '/otp'
-    | '/forgot-password'
     | '/iniciar-sesion'
-    | '/sign-in-2'
+    | '/recuperar-cuenta'
     | '/sign-up'
     | '/401'
     | '/403'
     | '/404'
+    | '/500'
     | '/503'
     | '/'
+    | '/link-iniciar-sesion/$token'
+    | '/restablecer-contrasena/$token'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
@@ -651,12 +656,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
-    | '/(auth)/500'
     | '/(auth)/otp'
     | '/_authenticated/settings'
-    | '/(auth)/forgot-password'
     | '/(auth)/iniciar-sesion'
-    | '/(auth)/sign-in-2'
+    | '/(auth)/recuperar-cuenta'
     | '/(auth)/sign-up'
     | '/(errors)/401'
     | '/(errors)/403'
@@ -664,6 +667,8 @@ export interface FileRouteTypes {
     | '/(errors)/500'
     | '/(errors)/503'
     | '/_authenticated/'
+    | '/(auth)/link-iniciar-sesion/$token'
+    | '/(auth)/restablecer-contrasena/$token'
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/display'
@@ -680,32 +685,32 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  auth500Route: typeof auth500Route
   authOtpRoute: typeof authOtpRoute
-  authForgotPasswordLazyRoute: typeof authForgotPasswordLazyRoute
   authIniciarSesionLazyRoute: typeof authIniciarSesionLazyRoute
-  authSignIn2LazyRoute: typeof authSignIn2LazyRoute
+  authRecuperarCuentaLazyRoute: typeof authRecuperarCuentaLazyRoute
   authSignUpLazyRoute: typeof authSignUpLazyRoute
   errors401LazyRoute: typeof errors401LazyRoute
   errors403LazyRoute: typeof errors403LazyRoute
   errors404LazyRoute: typeof errors404LazyRoute
   errors500LazyRoute: typeof errors500LazyRoute
   errors503LazyRoute: typeof errors503LazyRoute
+  authLinkIniciarSesionTokenRoute: typeof authLinkIniciarSesionTokenRoute
+  authRestablecerContrasenaTokenRoute: typeof authRestablecerContrasenaTokenRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  auth500Route: auth500Route,
   authOtpRoute: authOtpRoute,
-  authForgotPasswordLazyRoute: authForgotPasswordLazyRoute,
   authIniciarSesionLazyRoute: authIniciarSesionLazyRoute,
-  authSignIn2LazyRoute: authSignIn2LazyRoute,
+  authRecuperarCuentaLazyRoute: authRecuperarCuentaLazyRoute,
   authSignUpLazyRoute: authSignUpLazyRoute,
   errors401LazyRoute: errors401LazyRoute,
   errors403LazyRoute: errors403LazyRoute,
   errors404LazyRoute: errors404LazyRoute,
   errors500LazyRoute: errors500LazyRoute,
   errors503LazyRoute: errors503LazyRoute,
+  authLinkIniciarSesionTokenRoute: authLinkIniciarSesionTokenRoute,
+  authRestablecerContrasenaTokenRoute: authRestablecerContrasenaTokenRoute,
 }
 
 export const routeTree = rootRoute
@@ -719,17 +724,17 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/_authenticated",
-        "/(auth)/500",
         "/(auth)/otp",
-        "/(auth)/forgot-password",
         "/(auth)/iniciar-sesion",
-        "/(auth)/sign-in-2",
+        "/(auth)/recuperar-cuenta",
         "/(auth)/sign-up",
         "/(errors)/401",
         "/(errors)/403",
         "/(errors)/404",
         "/(errors)/500",
-        "/(errors)/503"
+        "/(errors)/503",
+        "/(auth)/link-iniciar-sesion/$token",
+        "/(auth)/restablecer-contrasena/$token"
       ]
     },
     "/_authenticated": {
@@ -745,9 +750,6 @@ export const routeTree = rootRoute
         "/_authenticated/servicios/"
       ]
     },
-    "/(auth)/500": {
-      "filePath": "(auth)/500.tsx"
-    },
     "/(auth)/otp": {
       "filePath": "(auth)/otp.tsx"
     },
@@ -762,14 +764,11 @@ export const routeTree = rootRoute
         "/_authenticated/settings/"
       ]
     },
-    "/(auth)/forgot-password": {
-      "filePath": "(auth)/forgot-password.lazy.tsx"
-    },
     "/(auth)/iniciar-sesion": {
       "filePath": "(auth)/iniciar-sesion.lazy.tsx"
     },
-    "/(auth)/sign-in-2": {
-      "filePath": "(auth)/sign-in-2.lazy.tsx"
+    "/(auth)/recuperar-cuenta": {
+      "filePath": "(auth)/recuperar-cuenta.lazy.tsx"
     },
     "/(auth)/sign-up": {
       "filePath": "(auth)/sign-up.lazy.tsx"
@@ -792,6 +791,12 @@ export const routeTree = rootRoute
     "/_authenticated/": {
       "filePath": "_authenticated/index.tsx",
       "parent": "/_authenticated"
+    },
+    "/(auth)/link-iniciar-sesion/$token": {
+      "filePath": "(auth)/link-iniciar-sesion.$token.tsx"
+    },
+    "/(auth)/restablecer-contrasena/$token": {
+      "filePath": "(auth)/restablecer-contrasena.$token.tsx"
     },
     "/_authenticated/settings/account": {
       "filePath": "_authenticated/settings/account.lazy.tsx",
