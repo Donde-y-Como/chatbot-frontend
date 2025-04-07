@@ -215,7 +215,58 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
 
           <span className='col-span-1 text-xs text-right font-normal text-muted-foreground'>
             {(() => {
-              const messageDate = new Date(chat.lastMessage.timestamp);
+              // Hotfix for invalid timestamp
+              const messageDate = (() => {
+                try {
+                  // First check if the timestamp exists
+                  if (!chat.lastMessage?.timestamp) {
+                    console.warn('Missing timestamp in chat:', { 
+                      chatId: chat.id, 
+                      clientName: chat.client.name 
+                    });
+                    return new Date(); // Fallback to current date if no timestamp
+                  }
+                  
+                  // Try to create a valid date
+                  const timestamp = chat.lastMessage.timestamp;
+                  
+                  // Enhanced debugging - log both value and chat details
+                  console.log('Processing timestamp:', {
+                    timestamp,
+                    type: typeof timestamp,
+                    chatId: chat.id,
+                    clientName: chat.client.name,
+                    lastMessageContent: chat.lastMessage.content?.substring(0, 20) + '...',
+                    platformName: chat.platformName
+                  });
+                  
+                  // If timestamp is a number, handle it directly
+                  const date = typeof timestamp === 'number' 
+                    ? new Date(timestamp) 
+                    : new Date(String(timestamp));
+                  
+                  // Check if the date is valid
+                  if (isNaN(date.getTime())) {
+                    console.error('❌ Invalid timestamp detected:', {
+                      timestamp,
+                      chatId: chat.id,
+                      clientName: chat.client.name,
+                      platformName: chat.platformName
+                    });
+                    return new Date(); // Fallback to current date
+                  }
+                  
+                  return date;
+                } catch (error) {
+                  console.error('❌ Error parsing timestamp:', {
+                    error,
+                    chatId: chat.id,
+                    clientName: chat.client.name,
+                    timestamp: chat.lastMessage?.timestamp
+                  });
+                  return new Date(); // Fallback to current date
+                }
+              })();
               const daysDifference = differenceInDays(new Date(), messageDate);
               
               if (daysDifference > 2) {
