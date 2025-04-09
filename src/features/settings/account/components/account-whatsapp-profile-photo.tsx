@@ -40,7 +40,7 @@ const AccountWhatsappProfilePhoto: React.FC<ProfilePhotoProps> = ({
     const { isValid, type } = validateFile(file);
 
     if (!isValid || type !== 'image') {
-      toast.error('Please upload a valid image file (PNG, JPG, JPEG)');
+      toast.error('Cargue un archivo de imagen válido (PNG, JPG, JPEG)');
       return;
     }
 
@@ -68,10 +68,10 @@ const AccountWhatsappProfilePhoto: React.FC<ProfilePhotoProps> = ({
         onPhotoUpdated(uploadedUrl);
       }
 
-      toast.success('Photo ready to update. you need to update de profile')
+      toast.success('Foto lista para actualizar. Necesitas actualizar el perfil.')
 
     } catch (error) {
-       toast.error('Error uploading photo to update');
+       toast.error('Error al cargar la foto para actualizar');
     }
   };
 
