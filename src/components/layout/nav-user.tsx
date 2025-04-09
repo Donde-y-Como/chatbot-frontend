@@ -141,7 +141,7 @@ export function NavUser({ user }: { user: UserData }) {
                 </div>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to='/settings/account'>
+                <Link to='/settings'>
                   <BadgeCheck />
                   Perfil
                 </Link>
