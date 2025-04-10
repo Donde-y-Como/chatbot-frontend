@@ -1,15 +1,9 @@
 import { useForm } from 'react-hook-form'
 import {
   Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
   FormLabel,
-  FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
 import { ChevronDown, ChevronUp, Plus, X, Edit, Save, Clock } from 'lucide-react'
@@ -21,6 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UpdateBusinessScheduleRequest, WeekDay, WorkDay } from '@/features/settings/profile/types.ts'
 import { useUploadMedia } from '@/features/chats/hooks/useUploadMedia.ts'
 import { toast } from 'sonner';
+import SocialMediaSection from '@/features/settings/profile/SocialMediaSection.tsx'
+import PlanDetailsSection from '@/features/settings/profile/PlanDetailsSection.tsx'
+import ProfileHeader from '@/features/settings/profile/ProfileHeader.tsx'
 
 export default function ProfileForm() {
   const form = useForm({
@@ -34,7 +31,8 @@ export default function ProfileForm() {
   })
 
   const [isPlanExpanded, setIsPlanExpanded] = useState(false)
-  const [isScheduleExpanded, setIsScheduleExpanded] = useState(false)
+  const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
+  const [isSocialMediaExpanded, setIsSocialMediaExpanded] = useState(false);
   const [isEditingSchedule, setIsEditingSchedule] = useState(false)
   const [isAddingNonWorkDate, setIsAddingNonWorkDate] = useState(false)
 
@@ -179,238 +177,15 @@ export default function ProfileForm() {
   return (
     <Form {...form}>
       <div className="space-y-8">
-        <FormField
-          control={form.control}
-          name="logo"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Foto de Perfil</FormLabel>
-              <FormControl>
-                <div className="flex items-center space-x-4">
-                  <Avatar>
-                    <AvatarImage src={field.value || user?.logo} alt="Logo" className="h-24 w-24 rounded-md overflow-hidden" />
-                    <AvatarFallback>{user?.name}</AvatarFallback>
-                  </Avatar>
-                  {isEditingProfile && (
-                    <div>
-                      <label
-                        htmlFor="upload-logo"
-                        className="cursor-pointer bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition-colors"
-                      >
-                        {isUploading ? 'Cargando...' : 'Seleccionar imagen'}
-                      </label>
-                      <input
-                        id="upload-logo"
-                        type="file"
-                        accept="image/png, image/jpeg"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            handleLogoUpload(file);
-                          }
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </FormControl>
-              <FormDescription>Selecciona una nueva foto de perfil.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
+        <ProfileHeader
+          user={user}
+          isEditingProfile={isEditingProfile}
+          setIsEditingProfile={setIsEditingProfile}
+          form={form}
+          handleLogoUpload={handleLogoUpload}
+          saveProfileChanges={saveProfileChanges}
+          isUploading={isUploading}
         />
-
-        {/* Nombre de la Empresa */}
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nombre de la Empresa</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder={user?.name ?? ''}
-                  {...field}
-                  disabled={!isEditingProfile} // Habilitar solo en modo edición
-                />
-              </FormControl>
-              <FormDescription>Este nombre no es público.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Botones de edición/guardado */}
-        <div className="flex space-x-2">
-          {isEditingProfile ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditingProfile(false)}
-              >
-                <X className="h-4 w-4 mr-1" /> Cancelar
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={saveProfileChanges}
-                disabled={updateProfileMutation.isPending || isUploading}
-              >
-                {updateProfileMutation.isPending ? (
-                  <span>Guardando...</span>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-1" /> Guardar
-                  </>
-                )}
-              </Button>
-            </>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setIsEditingProfile(true);
-                form.setValue('name', user?.name || '');
-                form.setValue('logo', user?.logo || '');
-              }}
-            >
-              <Edit className="h-4 w-4 mr-1" /> Editar
-            </Button>
-          )}
-        </div>
-
-        {/* Social Media Section (Read-only) */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Redes Sociales</h3>
-          <div className="grid grid-cols-1 gap-4">
-            {/* WhatsApp */}
-            <FormItem>
-              <FormLabel>WhatsApp</FormLabel>
-              <FormControl>
-                <Input value={user?.socialPlatforms?.whatsapp ?? ''} readOnly />
-              </FormControl>
-            </FormItem>
-
-            {/* Facebook */}
-            <FormItem>
-              <FormLabel>Facebook</FormLabel>
-              <FormControl>
-                <Input value={user?.socialPlatforms?.facebook ?? ''} readOnly />
-              </FormControl>
-            </FormItem>
-
-            {/* Instagram */}
-            <FormItem>
-              <FormLabel>Instagram</FormLabel>
-              <FormControl>
-                <Input value={user?.socialPlatforms?.instagram ?? ''} readOnly />
-              </FormControl>
-            </FormItem>
-          </div>
-        </div>
-
-        {/* Plan Details Section (Read-only) */}
-        <div className="space-y-4">
-          {/* Header with toggle button */}
-          <div
-            className="flex items-center justify-between cursor-pointer"
-            onClick={() => setIsPlanExpanded(!isPlanExpanded)} // Toggle visibility
-          >
-            <h3 className="text-lg font-medium">Detalles del Plan</h3>
-            {isPlanExpanded ? (
-              <ChevronUp className="h-5 w-5 text-gray-500" /> // Flecha hacia arriba
-            ) : (
-              <ChevronDown className="h-5 w-5 text-gray-500" /> // Flecha hacia abajo
-            )}
-          </div>
-
-          {/* Conditional rendering of plan details */}
-          {isPlanExpanded && (
-            <div className="grid grid-cols-2 gap-4">
-              {/* Plan Name */}
-              <FormItem>
-                <FormLabel>Paquete actual</FormLabel>
-                <FormControl>
-                  <Input value={user?.plan?.name ?? ''} readOnly />
-                </FormControl>
-              </FormItem>
-
-              {/* Plan Status */}
-              <FormItem>
-                <FormLabel>Estatus</FormLabel>
-                <FormControl>
-                  <Input value={user?.plan?.status ?? ''} readOnly />
-                </FormControl>
-              </FormItem>
-
-              {/* Total Messages */}
-              <FormItem>
-                <FormLabel>Mensajes incluidos</FormLabel>
-                <FormControl>
-                  <Input value={user?.plan?.totalMessages ?? ''} readOnly />
-                </FormControl>
-              </FormItem>
-
-              {/* Messages Left */}
-              <FormItem>
-                <FormLabel>Mensajes Restantes</FormLabel>
-                <FormControl>
-                  <Input value={user?.plan?.leftMessages ?? ''} readOnly />
-                </FormControl>
-              </FormItem>
-
-              {/* Messages Used */}
-              <FormItem>
-                <FormLabel>Mensajes Usados</FormLabel>
-                <FormControl>
-                  <Input value={user?.plan?.usedMessages ?? ''} readOnly />
-                </FormControl>
-              </FormItem>
-
-              {/* Plan Type */}
-              <FormItem>
-                <FormLabel>Tipo</FormLabel>
-                <FormControl>
-                  <Input value={user?.plan?.type ?? ''} readOnly />
-                </FormControl>
-              </FormItem>
-
-              {/* Start Date */}
-              <FormItem>
-                <FormLabel>Fecha de contratación</FormLabel>
-                <FormControl>
-                  <Input
-                    value={
-                      user?.plan?.startTimestamp
-                        ? new Date(user.plan.startTimestamp).toLocaleDateString()
-                        : 'No disponible'
-                    }
-                    readOnly
-                  />
-                </FormControl>
-              </FormItem>
-
-              {/* End Date */}
-              <FormItem>
-                <FormLabel>Fecha de vencimiento</FormLabel>
-                <FormControl>
-                  <Input
-                    value={
-                      user?.plan?.endTimestamp
-                        ? new Date(user.plan.endTimestamp).toLocaleDateString()
-                        : 'No disponible'
-                    }
-                    readOnly
-                  />
-                </FormControl>
-              </FormItem>
-            </div>
-          )}
-        </div>
-
 
         {/* Business Schedule Section */}
         <div className="space-y-4">
@@ -732,6 +507,22 @@ export default function ProfileForm() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+
+
+        {/* Sección de Detalles del Plan */}
+        <PlanDetailsSection
+          user={user}
+          isPlanExpanded={isPlanExpanded}
+          setIsPlanExpanded={setIsPlanExpanded}
+        />
+
+        {/* Sección de Redes Sociales */}
+        <SocialMediaSection
+          user={user}
+          isSocialMediaExpanded={isSocialMediaExpanded}
+          setIsSocialMediaExpanded={setIsSocialMediaExpanded}
+        />
       </div>
     </Form>
   )
@@ -746,7 +537,7 @@ function formatDay(day: string): string {
     'THURSDAY': 'Jueves',
     'FRIDAY': 'Viernes',
     'SATURDAY': 'Sábado',
-    'SUNDAY': 'Domingo'
+    'SUNDAY': 'Domingo',
   }
   return dayMap[day] || day
 }
