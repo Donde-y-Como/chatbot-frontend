@@ -1,7 +1,12 @@
 import { api } from '@/api/axiosInstance'
-import { Chat, ChatMessages } from '@/features/chats/ChatTypes.ts'
+import { Chat, ChatMessages, ChatResponse, ChatParams } from '@/features/chats/ChatTypes.ts'
 
 export const chatService = {
+  getChatsPaginated: async (params?: ChatParams): Promise<ChatResponse> => {
+    const response = await api.get<ChatResponse>('/chats', { params });
+    return response.data
+  },
+
   getChats: async () => {
     const response = await api.get<{ messages: Chat[] }>('/chats')
     return response.data.messages

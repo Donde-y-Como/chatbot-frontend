@@ -78,3 +78,25 @@ export type Client = {
   createdAt: string;
   updatedAt: string;
 }
+
+// Nuevos tipos para la paginación
+export type ChatPaginationMeta = {
+  perPage: number;
+  pageNumber: number;
+  total: number;
+  hasNextPage: boolean;
+  nextPage: number;
+}
+
+export type ChatResponse = {
+  businessId: string;
+  messages: Chat[];
+  meta: ChatPaginationMeta;
+}
+
+export type ChatParams = {
+  pageNumber?: number;
+  perPage?: number;
+  platformName?: string;
+  clientName?: string;
+}
