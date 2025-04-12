@@ -53,7 +53,7 @@ export const MediaPreview: React.FC<MediaProps> = ({ media }) => {
 
   const MediaContent = () => (
     <div className='relative w-full h-full flex items-center justify-center'>
-      {media.type === 'image' ? (
+      {media.type === 'image' || media.type === "sticker" ? (
         <img
           src={media.url}
           alt='Media preview'
@@ -84,7 +84,7 @@ export const MediaPreview: React.FC<MediaProps> = ({ media }) => {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <div className='cursor-pointer max-w-[200px] rounded-lg overflow-hidden'>
-          {media.type === 'image' ? (
+          {media.type === 'image' || media.type === "sticker" ? (
             <img
               src={media.url}
               alt='Preview'

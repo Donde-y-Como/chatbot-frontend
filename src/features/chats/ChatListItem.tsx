@@ -42,7 +42,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   const queryClient = useQueryClient()
   const { markAsUnread } = useChatMutations()
   const updateProfileNameMutation = useMutation({
-    mutationKey: ['send-message'],
+    mutationKey: ['set-profile-name'],
     async mutationFn(data: { clientId: string; profileName: string }) {
       emit('setProfileName', data)
     },
@@ -94,6 +94,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
     )
 
   const PlatformIcon = {
+    whatsappWeb: IconBrandWhatsapp,
     whatsapp: IconBrandWhatsapp,
     facebook: IconBrandFacebook,
     instagram: IconBrandInstagram,
@@ -184,7 +185,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
               <PlatformIcon
                 size={14}
                 className={cn(
-                  chat.platformName.toLowerCase() === 'whatsapp' &&
+                  (chat.platformName.toLowerCase() === 'whatsapp' || chat.platformName.toLowerCase() === 'whatsappWeb') &&
                   'text-green-500',
                   chat.platformName.toLowerCase() === 'facebook' &&
                   'text-blue-500',
@@ -229,16 +230,6 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                   
                   // Try to create a valid date
                   const timestamp = chat.lastMessage.timestamp;
-                  
-                  // Enhanced debugging - log both value and chat details
-                  console.log('Processing timestamp:', {
-                    timestamp,
-                    type: typeof timestamp,
-                    chatId: chat.id,
-                    clientName: chat.client.name,
-                    lastMessageContent: chat.lastMessage.content?.substring(0, 20) + '...',
-                    platformName: chat.platformName
-                  });
                   
                   // If timestamp is a number, handle it directly
                   const date = typeof timestamp === 'number' 

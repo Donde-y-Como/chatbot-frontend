@@ -15,6 +15,7 @@ export enum PlatformName {
     Whatsapp = "whatsapp",
     Facebook = "facebook",
     Instagram = "instagram",
+    WhatsappWeb = "whatsappWeb",
 }
 
 export type Media = {

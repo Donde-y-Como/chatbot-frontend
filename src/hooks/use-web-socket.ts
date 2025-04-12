@@ -21,15 +21,15 @@ socket.on(
       playNotification()
     }
 
+    console.info(data)
+
     const chats = queryClient.getQueryData(['chats']) as Chat[] | undefined
     const chat = chats?.find((chat) => chat.id === data.conversationId)
 
     if (chat === undefined) {
-      setTimeout(async () => {
-        await queryClient.invalidateQueries({
-          queryKey: ['chats'],
-        })
-      }, 1000)
+      await queryClient.invalidateQueries({
+        queryKey: ['chats'],
+      })
       return
     }
 
@@ -78,6 +78,11 @@ socket.on("creditsUpdated", () => {
   queryClient.refetchQueries({
     queryKey: UserQueryKey
   })
+})
+
+socket.on("qrStatus", (data) => {
+  console.log(data);
+
 })
 
 

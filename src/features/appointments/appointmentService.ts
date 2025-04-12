@@ -5,7 +5,7 @@ import {
   Schedule,
   Service
 } from '@/features/appointments/types.ts'
-import { Client } from '@/features/chats/ChatTypes.ts'
+import { ClientPrimitives } from '../clients/types'
 
 
 
@@ -50,7 +50,7 @@ export const appointmentService = {
   },
 
   getClients: async () => {
-    const response = await api.get<Client[]>('/clients')
+    const response = await api.get<ClientPrimitives[]>('/clients')
     return response.data
   },
 
