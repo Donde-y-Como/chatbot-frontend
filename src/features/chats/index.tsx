@@ -7,6 +7,7 @@ import { ChatBar } from '@/features/chats/ChatBar'
 import { ChatContent } from '@/features/chats/ChatContent'
 import { chatService } from '@/features/chats/ChatService'
 import EmptyChatSelectedState from '@/features/chats/EmptyChatSelectedState.tsx'
+import { ChatBarUnlimited } from './chatBarUnlimited'
 
 const route = getRouteApi('/_authenticated/chats/')
 
@@ -51,7 +52,7 @@ export default function Chats() {
   return (
     <Main fixed>
       <section className='flex h-full gap-2'>
-        <ChatBar
+        <ChatBarUnlimited
           navigate={navigate}
           selectedChatId={selectedChatId}
           setSelectedChatId={setSelectedChatId}

@@ -215,7 +215,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
 
           <span className='col-span-1 text-xs text-right font-normal text-muted-foreground'>
             {(() => {
-              const messageDate = new Date(chat.lastMessage.timestamp);
+              const messageDate = chat.lastMessage.timestamp ? new Date(chat.lastMessage.timestamp) : new Date();
               const daysDifference = differenceInDays(new Date(), messageDate);
               
               if (daysDifference > 2) {

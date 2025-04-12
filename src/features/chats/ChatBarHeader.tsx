@@ -12,6 +12,7 @@ import {
   IconBrandFacebook,
   IconBrandInstagram,
   IconBrandWhatsapp,
+  IconRefresh,
   IconSearch,
 } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -20,12 +21,14 @@ import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useGetTags } from '../clients/hooks/useGetTags'
 import { AddTagButton } from './AddTagButton'
+import { Button } from '@/components/ui/button'
 
 interface ChatSearchInputProps {
   value: string
   onInputChange: (value: string) => void
   onFilterChange: (value: string | null) => void
   onToggleAllAI: (enabled: boolean) => void
+  onRefresh?: () => void
 }
 
 export const UNREAD_LABEL_FILTER = 'No leídos'
@@ -35,6 +38,7 @@ export function ChatBarHeader({
   onInputChange,
   onFilterChange,
   onToggleAllAI,
+  onRefresh,
 }: ChatSearchInputProps) {
   const [allAIEnabled, setAllAIEnabled] = useState(true)
   const { data: tags, isLoading: isTagsLoading } = useGetTags();
@@ -99,6 +103,13 @@ export function ChatBarHeader({
     toast.success('Mensaje enviado')
   }
 
+  const handleRefresh = () => {
+    if (onRefresh) {
+      onRefresh();
+      toast.success('Chats actualizados');
+    }
+  }
+
   return (
     <div className='sticky top-0 z-10 bg-background pb-3 w-full shadow-sm sm:pt-2'>
       <div className='flex items-center justify-between px-3  mb-2'>
@@ -108,6 +119,17 @@ export function ChatBarHeader({
           <h1 className='text-2xl font-bold'>Chats</h1>
         </div>
         <div className='flex items-center gap-2'>
+          {onRefresh && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleRefresh} 
+              title="Refrescar chats"
+              className="h-8 w-8"
+            >
+              <IconRefresh size={18} />
+            </Button>
+          )}
           <IconIaEnabled
             enabled={allAIEnabled}
             onToggle={handleAIToggle}
