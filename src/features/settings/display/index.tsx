@@ -5,7 +5,7 @@ export default function SettingsDisplay() {
   return (
     <ContentSection
       title='Display'
-      desc="Turn items on or off to control what's displayed in the app."
+      desc="Activa o desactiva elementos para controlar lo que se muestra en la aplicación."
     >
       <DisplayForm />
     </ContentSection>

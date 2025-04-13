@@ -17,39 +17,39 @@ import {
 const items = [
   {
     id: 'recents',
-    label: 'Recents',
+    label: 'Recientes',
   },
   {
     id: 'home',
-    label: 'Home',
+    label: 'Inicio',
   },
   {
     id: 'applications',
-    label: 'Applications',
+    label: 'Aplicaciones',
   },
   {
     id: 'desktop',
-    label: 'Desktop',
+    label: 'Escritorio',
   },
   {
     id: 'downloads',
-    label: 'Downloads',
+    label: 'Descargas',
   },
   {
     id: 'documents',
-    label: 'Documents',
+    label: 'Documentos',
   },
 ] as const
 
 const displayFormSchema = z.object({
   items: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: 'You have to select at least one item.',
+    message: 'Debes seleccionar al menos un elemento.',
   }),
 })
 
 type DisplayFormValues = z.infer<typeof displayFormSchema>
 
-// This can come from your database or API.
+// Esto puede provenir de tu base de datos o API.
 const defaultValues: Partial<DisplayFormValues> = {
   items: ['recents', 'home'],
 }
@@ -62,7 +62,7 @@ export function DisplayForm() {
 
   function onSubmit(data: DisplayFormValues) {
     toast({
-      title: 'You submitted the following values:',
+      title: 'Has enviado los siguientes valores:',
       description: (
         <pre className='mt-2 w-[340px] rounded-md bg-slate-950 p-4'>
           <code className='text-white'>{JSON.stringify(data, null, 2)}</code>
@@ -80,9 +80,9 @@ export function DisplayForm() {
           render={() => (
             <FormItem>
               <div className='mb-4'>
-                <FormLabel className='text-base'>Sidebar</FormLabel>
+                <FormLabel className='text-base'>Barra lateral</FormLabel>
                 <FormDescription>
-                  Select the items you want to display in the sidebar.
+                  Selecciona los elementos que quieres mostrar en la barra lateral.
                 </FormDescription>
               </div>
               {items.map((item) => (
@@ -122,7 +122,7 @@ export function DisplayForm() {
             </FormItem>
           )}
         />
-        <Button type='submit'>Update display</Button>
+        <Button type='submit'>Actualizar visualización</Button>
       </form>
     </Form>
   )

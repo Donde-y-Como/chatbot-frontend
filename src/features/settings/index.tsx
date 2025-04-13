@@ -56,7 +56,7 @@ const sidebarNavItems = [
     href: '/settings',
   },
   {
-    title: 'Cuenta',
+    title: 'WhatsApp API',
     icon: <IconTool size={18} />,
     href: '/settings/account',
   },
