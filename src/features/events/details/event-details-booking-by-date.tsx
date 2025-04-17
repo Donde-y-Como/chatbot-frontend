@@ -8,7 +8,8 @@ import { es } from "date-fns/locale"
 import { Calendar, Clipboard, Clock, Users, PhoneIcon as WhatsApp } from 'lucide-react'
 import { ScrollArea } from "../../../components/ui/scroll-area"
 import { useGetClients } from "../../appointments/hooks/useGetClients"
-import { Client, PlatformName } from "../../chats/ChatTypes"
+import { PlatformName } from "../../chats/ChatTypes"
+import { ClientPrimitives } from "../../clients/types"
 import { Booking, DurationPrimitives, EventWithBookings } from "../types"
 
 interface EventDetailBookingsByDateProps {
@@ -198,7 +199,7 @@ export function EventDetailBookingsByDate({ event, occurrences }: EventDetailBoo
 
 interface BookingDetailsDialogContentProps {
     booking: Booking;
-    client: Client;
+    client: ClientPrimitives;
     event: EventWithBookings;
     formatDate: (isoDate: string) => string;
     formatDateRange: (startAt: string, endAt: string) => string;

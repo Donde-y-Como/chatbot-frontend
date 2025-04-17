@@ -1,3 +1,5 @@
+import { ClientPrimitives } from "../clients/types"
+
 export type Template = {
   businessId: string
   name: string
@@ -9,7 +11,7 @@ export type Template = {
 export type Chat = {
   id: string
   platformName: string
-  client: Client
+  client: ClientPrimitives
   lastMessage: Message
   newClientMessagesCount: number
 }
@@ -45,10 +47,11 @@ export enum PlatformName {
   Whatsapp = "whatsapp",
   Facebook = "facebook",
   Instagram = "instagram",
+  WhatsappWeb = "whatsappWeb"
 }
 
 export type Media = {
-  type: 'image' | 'video' | 'audio' | 'document'
+  type: 'image' | 'video' | 'audio' | 'document' | 'sticker'
   url: string
 }
 

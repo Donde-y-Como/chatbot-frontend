@@ -42,7 +42,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   const queryClient = useQueryClient()
   const { markAsUnread } = useChatMutations()
   const updateProfileNameMutation = useMutation({
-    mutationKey: ['send-message'],
+    mutationKey: ['set-profile-name'],
     async mutationFn(data: { clientId: string; profileName: string }) {
       emit('setProfileName', data)
     },
@@ -94,6 +94,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
     )
 
   const PlatformIcon = {
+    whatsappWeb: IconBrandWhatsapp,
     whatsapp: IconBrandWhatsapp,
     facebook: IconBrandFacebook,
     instagram: IconBrandInstagram,
@@ -184,7 +185,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
               <PlatformIcon
                 size={14}
                 className={cn(
-                  chat.platformName.toLowerCase() === 'whatsapp' &&
+                  (chat.platformName.toLowerCase() === 'whatsapp' || chat.platformName.toLowerCase() === 'whatsappWeb') &&
                   'text-green-500',
                   chat.platformName.toLowerCase() === 'facebook' &&
                   'text-blue-500',
@@ -215,7 +216,48 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
 
           <span className='col-span-1 text-xs text-right font-normal text-muted-foreground'>
             {(() => {
-              const messageDate = chat.lastMessage.timestamp ? new Date(chat.lastMessage.timestamp) : new Date();
+              // Hotfix for invalid timestamp
+              const messageDate = (() => {
+                try {
+                  // First check if the timestamp exists
+                  if (!chat.lastMessage?.timestamp) {
+                    console.warn('Missing timestamp in chat:', { 
+                      chatId: chat.id, 
+                      clientName: chat.client.name 
+                    });
+                    return new Date(); // Fallback to current date if no timestamp
+                  }
+                  
+                  // Try to create a valid date
+                  const timestamp = chat.lastMessage.timestamp;
+                  
+                  // If timestamp is a number, handle it directly
+                  const date = typeof timestamp === 'number' 
+                    ? new Date(timestamp) 
+                    : new Date(String(timestamp));
+                  
+                  // Check if the date is valid
+                  if (isNaN(date.getTime())) {
+                    console.error('❌ Invalid timestamp detected:', {
+                      timestamp,
+                      chatId: chat.id,
+                      clientName: chat.client.name,
+                      platformName: chat.platformName
+                    });
+                    return new Date(); // Fallback to current date
+                  }
+                  
+                  return date;
+                } catch (error) {
+                  console.error('❌ Error parsing timestamp:', {
+                    error,
+                    chatId: chat.id,
+                    clientName: chat.client.name,
+                    timestamp: chat.lastMessage?.timestamp
+                  });
+                  return new Date(); // Fallback to current date
+                }
+              })();
               const daysDifference = differenceInDays(new Date(), messageDate);
               
               if (daysDifference > 2) {

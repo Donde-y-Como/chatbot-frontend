@@ -34,26 +34,25 @@ import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import {
   Appointment,
-  AppointmentCreated,
   EmployeeAvailable,
   MinutesTimeRange,
+  Service
 } from '@/features/appointments/types.ts'
+import { Employee } from '@/features/employees/types'
 import { cn } from '@/lib/utils'
+import { useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import { Calendar as CalendarIcon, CheckCircle, Clock, PencilLine, Scissors, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { useQueryClient } from '@tanstack/react-query'
-import { Client } from '@/features/chats/ChatTypes.ts'
-import { Employee } from '@/features/employees/types'
-import { Service } from '@/features/appointments/types.ts'
+import { ClientPrimitives } from '../../clients/types'
 
 interface EditAppointmentDialogProps {
   appointment: Appointment
   employees: Employee[]
   service: Service
-  client: Client
+  client: ClientPrimitives
 }
 
 export function EditAppointmentDialog({

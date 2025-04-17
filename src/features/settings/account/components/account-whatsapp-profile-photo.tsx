@@ -1,7 +1,6 @@
 import React, { useState, useRef, ChangeEvent } from 'react'
 import { Camera, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { api } from '@/api/axiosInstance'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'

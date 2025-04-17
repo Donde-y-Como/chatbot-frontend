@@ -32,6 +32,10 @@ export function ChatContent({
 
   const canSendMessages = useMemo(() => {
     if (!chatData) return false;
+    
+    if(chatData.platformName === "whatsappWeb") {
+      return true;  
+    }
 
     const userMessages = chatData.messages.filter((message) => message.role === 'user');
     const lastUserMessage = userMessages.at(-1);

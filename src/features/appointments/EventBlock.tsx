@@ -10,14 +10,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { EditAppointmentDialog } from './components/EditAppointmentDialog';
-import { Client } from '@/features/chats/ChatTypes.ts';
 import { now } from '@internationalized/date';
 import { CalendarIcon, ClockIcon } from '@radix-ui/react-icons';
 import { format, isBefore, parseISO, setMinutes } from 'date-fns';
 import { es } from 'date-fns/locale/es';
 import { User as UserIcon } from 'lucide-react';
+import { ClientPrimitives } from '../clients/types';
 import { Employee } from '../employees/types';
+import { EditAppointmentDialog } from './components/EditAppointmentDialog';
 import type { Appointment, Service } from './types';
 
 interface EventBlockProps {
@@ -26,7 +26,7 @@ interface EventBlockProps {
   appointment: Appointment
   employees: Employee[]
   service: Service
-  client: Client
+  client: ClientPrimitives
   column: number
   totalColumns: number
   workHours: {

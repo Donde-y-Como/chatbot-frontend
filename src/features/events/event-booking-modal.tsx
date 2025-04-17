@@ -15,9 +15,9 @@ import { Loader2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { ClientPrimitives } from '../clients/types';
 import { useGetEventAvailableDates } from './hooks/useGetEventAvailableDates';
 import { Booking } from './types';
-import { Client } from '../chats/ChatTypes';
 
 const bookingFormSchema = z.object({
   clientId: z.string().min(1, { message: 'Debes seleccionar un cliente.' }),
@@ -252,7 +252,7 @@ export function EventBookingModal({
 
 
 
-export function BookingsList({ bookingsForSelectedDate, clients, handleRemoveBooking }: { bookingsForSelectedDate: Booking[], clients: Client[], handleRemoveBooking: (booking: Booking) => void }) {
+export function BookingsList({ bookingsForSelectedDate, clients, handleRemoveBooking }: { bookingsForSelectedDate: Booking[], clients: ClientPrimitives[], handleRemoveBooking: (booking: Booking) => void }) {
   return (
     <div>
       <h3 className="font-semibold mb-2">Reservas existentes</h3>
@@ -263,7 +263,7 @@ export function BookingsList({ bookingsForSelectedDate, clients, handleRemoveBoo
           <div className="p-4">
             <AnimatePresence>
               {bookingsForSelectedDate.map((booking: Booking) => {
-                const client = clients.find((c: Client) => c.id === booking.clientId);
+                const client = clients.find((c: ClientPrimitives) => c.id === booking.clientId);
                 return (
                   <motion.div
                     key={booking.id}
