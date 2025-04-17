@@ -1,13 +1,13 @@
 import ContentSection from '../components/content-section'
-import { AppearanceForm } from './appearance-form'
+import { ConnectWhatsAppWeb } from './connect-whats-app-web.tsx'
 
-export default function SettingsAppearance() {
+export default function SettingsWhatsappWeb() {
   return (
     <ContentSection
-      title='Apariencia'
-      desc='Personaliza la apariencia de la app. Cambia automáticamente entre los temas Claro y Obscuro'
+      title='Conecta tu Whatsapp'
+      desc='Conecta tu Whatsapp con codigo QR'
     >
-      <AppearanceForm />
+      <ConnectWhatsAppWeb />
     </ContentSection>
   )
 }
