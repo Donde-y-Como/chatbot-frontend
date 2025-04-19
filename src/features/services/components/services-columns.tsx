@@ -12,8 +12,11 @@ export const columns: ColumnDef<Service>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Nombre' />
     ),
-    cell: ({ row }) => <LongText className=''>{row.getValue('name')}</LongText>,
-
+    cell: ({ row }) => {
+      const name = row.getValue('name');
+      const truncatedName = typeof name === 'string' && name.length > 30 ? `${name.substring(0, 30)}...` : name;
+      return <LongText className=''>{typeof truncatedName === 'string' ? truncatedName : ''}</LongText>;
+    },
     enableHiding: false,
     enableSorting: false,
   },
@@ -23,7 +26,9 @@ export const columns: ColumnDef<Service>[] = [
       <DataTableColumnHeader column={column} title='Descripción' />
     ),
     cell: ({ row }) => {
-      return <LongText className=''>{row.original.description}</LongText>
+      const description = row.original.description;
+      const truncatedDescription = description.length > 25 ? `${description.substring(0, 25)}...` : description;
+      return <LongText className=''>{truncatedDescription || ''}</LongText>;
     },
     meta: { className: '' },
     enableSorting: false,
