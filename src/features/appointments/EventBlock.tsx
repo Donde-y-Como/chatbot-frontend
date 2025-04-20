@@ -19,6 +19,17 @@ import { ClientPrimitives } from '../clients/types';
 import { Employee } from '../employees/types';
 import { EditAppointmentDialog } from './components/EditAppointmentDialog';
 import type { Appointment, Service } from './types';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface EventBlockProps {
   cancelAppointment: (id: string) => void
@@ -40,7 +51,6 @@ const verticalGap = 4
 
 export function EventBlock({
   cancelAppointment,
-  editAppointment,
   appointment,
   employees,
   service,
@@ -216,13 +226,32 @@ export function EventBlock({
               appointment.timeRange.startAt
             )
           ) && (
-              <Button
-                variant='destructive'
-                onClick={() => cancelAppointment(appointment.id)}
-                className='w-full sm:w-auto'
-              >
-                Cancelar
-              </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="w-full sm:w-auto"
+                >
+                  Cancelar Cita
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción cancelará la cita permanentemente. ¿Deseas continuar?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => cancelAppointment(appointment.id)}
+                  >
+                    Sí, cancelar cita
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             )}
           <DialogClose asChild>
             <Button className='w-full sm:w-auto'>Cerrar</Button>

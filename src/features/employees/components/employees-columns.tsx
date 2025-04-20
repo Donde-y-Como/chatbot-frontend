@@ -15,13 +15,14 @@ export const columns: ColumnDef<Employee>[] = [
     ),
     cell: ({ row }) => {
       const { photo, name } = row.original
+      const truncatedName = name.length > 30 ? `${name.substring(0, 30)}...` : name;
       return (
         <div className='flex items-center space-x-2'>
           <Avatar className='h-6 w-6'>
             <AvatarImage src={photo} alt={name} className='object-cover'/>
             <AvatarFallback>{name.charAt(0)}</AvatarFallback>
           </Avatar>
-          <p>{name}</p>
+          <p>{truncatedName}</p>
         </div>
       )
     },
@@ -60,7 +61,11 @@ export const columns: ColumnDef<Employee>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Dirección' />
     ),
-    cell: ({ row }) => <div>{row.original.address}</div>,
+    cell: ({ row }) => {
+      const address = row.original.address || '';
+      const truncatedAddress = address.length > 25 ? `${address.substring(0, 25)}...` : address;
+      return <div>{truncatedAddress}</div>;
+    },
     enableSorting: false,
     enableHiding: true,
   },
