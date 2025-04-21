@@ -1,80 +1,68 @@
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import { useCallback, useEffect, useMemo } from 'react'
+import {
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from '@tanstack/react-query'
 import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { chatService } from '@/features/chats/ChatService.ts'
 import { Chat, ChatMessages, ChatParams } from '@/features/chats/ChatTypes.ts'
-import { useCallback, useMemo } from 'react'
 
 interface UseChatsOptions extends ChatParams {
-  initialPerPage?: number;
+  initialPerPage?: number
 }
 
 export function usePaginatedChats(options: UseChatsOptions = {}) {
-  const {
-    initialPerPage = 10,
-    platformName,
-    clientName
-  } = options
+  const { initialPerPage = 10, platformName, clientName } = options
 
   const queryClient = useQueryClient()
   const { emit } = useWebSocket()
 
-  // Para mantener compatibilidad con código existente - sigue usando la misma queryKey
+  // Use a single query key for the infinite query
+  const queryKey = ['chats', { platformName, clientName }]
+
   const {
     data: infiniteData,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-    refetch
+    refetch,
+    isError,
+    error,
   } = useInfiniteQuery({
-    queryKey: ['chats', { platformName, clientName, perPage: initialPerPage }],
+    queryKey,
     queryFn: async ({ pageParam = 1 }) => {
       return await chatService.getChatsPaginated({
         pageNumber: pageParam,
         perPage: initialPerPage,
         platformName,
-        clientName
+        clientName,
       })
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       return lastPage.meta.hasNextPage ? lastPage.meta.nextPage : undefined
     },
-    // Mantener en caché por 5 minutos
+    // Cache for 5 minutes
     gcTime: 5 * 60 * 1000,
-    // Considerar frescos los datos por 30 segundos
-    staleTime: 30 * 1000
+    // Stale after 60 seconds
+    staleTime: 60 * 1000,
   })
 
-  // Para compatibilidad con el código existente
+  // Flatten the pages into a single array of chats
   const chats = useMemo(() => {
     if (!infiniteData?.pages) return []
-    return infiniteData.pages.flatMap(page => page.messages)
+    return infiniteData.pages.flatMap((page) => page.messages)
   }, [infiniteData])
 
-  // La metadata de la última página para saber el total, etc.
+  // Get metadata from the latest page
   const meta = useMemo(() => {
     if (!infiniteData?.pages.length) return null
     return infiniteData.pages[infiniteData.pages.length - 1].meta
   }, [infiniteData])
 
-  // Para mantener compatibilidad con el código existente
-  const { data: originalChatsData } = useQuery({
-    queryKey: ['chats'],
-    queryFn: () => chatService.getChatsPaginated({}),
-    staleTime: Infinity,
-    // No ejecutamos esta consulta realmente, solo mantenemos la estructura
-    enabled: false,
-  })
-
-  // Registramos los datos paginados bajo la misma clave para compatibilidad
-  useMemo(() => {
-    if (chats.length > 0) {
-      queryClient.setQueryData(['chats'], chats)
-    }
-  }, [chats, queryClient])
-
-  // Función para cargar la siguiente página
+  // Load next page of data with debounce protection
   const loadNextPage = useCallback(async () => {
     if (!hasNextPage || isFetchingNextPage) {
       return
@@ -82,11 +70,12 @@ export function usePaginatedChats(options: UseChatsOptions = {}) {
     await fetchNextPage()
   }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
-  // Función para refrescar los chats
+  // Refresh chats from the beginning
   const refreshChats = useCallback(async () => {
     await refetch()
   }, [refetch])
 
+  // Toggle AI assistants for all chats
   const toggleAllIaMutation = useMutation({
     mutationKey: ['all-ia-toggle'],
     async mutationFn(data: { enabled: boolean; userId: string }) {
@@ -94,36 +83,40 @@ export function usePaginatedChats(options: UseChatsOptions = {}) {
         data.enabled ? 'enableAllAssistants' : 'disableAllAssistants',
         data.userId
       )
+
+      return { success: true, enabled: data.enabled }
     },
     onSuccess: async (_data, { enabled }) => {
-      const previousChats = queryClient.getQueryData<Chat[]>(['chats'])
-
-      if (!previousChats) return
-
-      previousChats.forEach((chat) => {
-        queryClient.setQueryData(['chat', chat.id], (oldChat: ChatMessages) =>
-          oldChat
-            ? { ...oldChat, thread: { ...oldChat.thread, enabled } }
-            : oldChat
-        )
-      })
+      // Update the chat data in cache
+      queryClient.setQueriesData(
+        { queryKey: ['chat'] },
+        (oldData: ChatMessages | undefined) => {
+          if (!oldData) return oldData
+          return {
+            ...oldData,
+            thread: { ...oldData.thread, enabled },
+          }
+        }
+      )
     },
   })
 
   return {
-    // Valores originales para compatibilidad
+    // Core data
     chats,
     isChatsLoading: isLoading,
+    isError,
+    error,
     toggleAllIaMutation,
 
-    // Nuevos valores para paginación
+    // Pagination controls
     hasNextPage,
     isFetchingNextPage,
     loadNextPage,
     refreshChats,
     meta,
 
-    // Los datos completos por si se necesitan
-    infiniteData
+    // Raw data access if needed
+    infiniteData,
   }
 }

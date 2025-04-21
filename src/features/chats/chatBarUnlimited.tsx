@@ -1,12 +1,13 @@
-import { Fragment, useState, useEffect, useRef, useCallback } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { SearchChatParams } from '@/routes/_authenticated/chats'
+import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/stores/authStore.ts'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
 import { ChatBarHeader } from '@/features/chats/ChatBarHeader.tsx'
 import { ChatListItem } from '@/features/chats/ChatListItem.tsx'
+import { ChatListItemSkeleton } from '@/features/chats/ChatListItemSkeleton.tsx'
 import { Chat } from '@/features/chats/ChatTypes'
 import { useFilteredChats } from '@/features/chats/hooks/useFilteredChats.ts'
 import { useGetTags } from '../clients/hooks/useGetTags'
@@ -34,8 +35,6 @@ export function ChatBarUnlimited({
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const [reachedEnd, setReachedEnd] = useState(false)
-  const observerRef = useRef<IntersectionObserver | null>(null)
   const loadingRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -46,88 +45,37 @@ export function ChatBarUnlimited({
     isFetchingNextPage,
     loadNextPage,
     refreshChats,
+    isError,
   } = usePaginatedChats({
-    initialPerPage: 50,
+    initialPerPage: 20,
   })
 
   const { data: tags } = useGetTags()
   const filteredChatList = useFilteredChats(chats, search, activeFilter, tags)
 
+  // Setup IntersectionObserver for infinite scrolling
   const handleIntersection = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
+    async (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries
-      if (
-        entry.isIntersecting &&
-        hasNextPage &&
-        !isFetchingNextPage &&
-        !reachedEnd
-      ) {
-        loadNextPage()
+      if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        await loadNextPage()
       }
     },
-    [hasNextPage, isFetchingNextPage, loadNextPage, reachedEnd]
+    [hasNextPage, isFetchingNextPage, loadNextPage]
   )
 
   useEffect(() => {
     if (!loadingRef.current) return
 
-    if (observerRef.current) {
-      observerRef.current.disconnect()
-    }
-
-    observerRef.current = new IntersectionObserver(handleIntersection, {
-      rootMargin: '100px',
+    const observer = new IntersectionObserver(handleIntersection, {
+      rootMargin: '200px', // Load earlier when scrolling
+      threshold: 0.1,
     })
 
-    observerRef.current.observe(loadingRef.current)
+    observer.observe(loadingRef.current)
 
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect()
-      }
-    }
-  }, [handleIntersection, filteredChatList.length])
-
-  useEffect(() => {
-    const scrollArea = scrollAreaRef.current
-    if (!scrollArea) return
-
-    const handleScroll = (e: Event) => {
-      const target = e.target as HTMLDivElement
-      const scrollContainer = target.querySelector(
-        '[data-radix-scroll-area-viewport]'
-      )
-
-      if (!scrollContainer) return
-
-      const isNearBottom =
-        scrollContainer.scrollHeight -
-          scrollContainer.scrollTop -
-          scrollContainer.clientHeight <
-        150
-
-      if (isNearBottom && hasNextPage && !isFetchingNextPage && !reachedEnd) {
-        loadNextPage()
-      }
-
-      if (!hasNextPage && !reachedEnd) {
-        setReachedEnd(true)
-      }
-    }
-
-    scrollArea.addEventListener('scroll', handleScroll, {
-      capture: true,
-      passive: true,
-    })
-
-    return () => {
-      scrollArea.removeEventListener('scroll', handleScroll, { capture: true })
-    }
-  }, [hasNextPage, isFetchingNextPage, loadNextPage, reachedEnd])
-
-  useEffect(() => {
-    setReachedEnd(false)
-  }, [search, activeFilter])
+    return () => observer.disconnect()
+  }, [handleIntersection])
 
   const handleSelectChat = useCallback(
     (chatId: string, messageId?: string) => {
@@ -163,8 +111,7 @@ export function ChatBarUnlimited({
   )
 
   const handleRefresh = useCallback(() => {
-    refreshChats()
-    setReachedEnd(false)
+    void refreshChats()
   }, [refreshChats])
 
   return (
@@ -185,11 +132,14 @@ export function ChatBarUnlimited({
       />
 
       <ScrollArea className='h-full pl-2 pr-3' ref={scrollAreaRef}>
-        {isChatsLoading ? (
-          Array.from({ length: 5 }).map((_, index) => (
+        {isError ? (
+          <div className='py-4 text-center text-sm text-red-500'>
+            Error al cargar los chats. Intente refrescar.
+          </div>
+        ) : isChatsLoading ? (
+          Array.from({ length: 7}).map((_, index) => (
             <Fragment key={`loading-${index}`}>
-              <Skeleton className='h-16 w-full rounded-md' />
-              <Separator className='my-1' />
+              <ChatListItemSkeleton />
             </Fragment>
           ))
         ) : filteredChatList.length > 0 ? (
@@ -213,12 +163,14 @@ export function ChatBarUnlimited({
           </div>
         )}
 
-        <div ref={loadingRef}>
+        {/* Loader reference element - this is where we observe for intersection */}
+        <div ref={loadingRef} className='py-4 flex justify-center'>
           {isFetchingNextPage && (
-            <div className='py-2'>
-              <Skeleton className='h-16 w-full rounded-md' />
-              <Separator className='my-1' />
-              <Skeleton className='h-16 w-full rounded-md' />
+            <div className='flex flex-col items-center gap-2'>
+              <Loader2 className='h-6 w-6 animate-spin text-primary' />
+              <span className='text-xs text-muted-foreground'>
+                Cargando más chats...
+              </span>
             </div>
           )}
         </div>

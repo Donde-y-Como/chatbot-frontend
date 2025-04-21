@@ -19,7 +19,6 @@ import { formatDistanceToNowStrict, format, differenceInDays } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import { Check, MoreVertical } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
-//import { Switch } from '@/components/ui/switch.tsx'
 import { Chat, ChatMessages } from '@/features/chats/ChatTypes'
 import { AvatarImage } from '@radix-ui/react-avatar'
 import { toast } from 'sonner'
@@ -37,7 +36,6 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   const { emit } = useWebSocket()
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState(chat.client.name)
-  // const [isAIEnabled, setIsAIEnabled] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
   const { markAsUnread } = useChatMutations()
@@ -144,17 +142,6 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
     void handleNameChange(tempName)
   }
 
-  // const handleAIToggle = async () => {
-  //   try {
-  //     const newState = !isAIEnabled
-  //     // Here you would call your API to update AI state
-  //     console.log('Toggling AI to:', newState)
-  //     setIsAIEnabled(newState)
-  //   } catch (error) {
-  //     console.error('Failed to toggle AI:', error)
-  //   }
-  // }
-
   const handleMarkAsUnread = () => {
     markAsUnread(chat.id);
   };
@@ -221,21 +208,21 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                 try {
                   // First check if the timestamp exists
                   if (!chat.lastMessage?.timestamp) {
-                    console.warn('Missing timestamp in chat:', { 
-                      chatId: chat.id, 
-                      clientName: chat.client.name 
+                    console.warn('Missing timestamp in chat:', {
+                      chatId: chat.id,
+                      clientName: chat.client.name
                     });
                     return new Date(); // Fallback to current date if no timestamp
                   }
-                  
+
                   // Try to create a valid date
                   const timestamp = chat.lastMessage.timestamp;
-                  
+
                   // If timestamp is a number, handle it directly
-                  const date = typeof timestamp === 'number' 
-                    ? new Date(timestamp) 
+                  const date = typeof timestamp === 'number'
+                    ? new Date(timestamp)
                     : new Date(String(timestamp));
-                  
+
                   // Check if the date is valid
                   if (isNaN(date.getTime())) {
                     console.error('❌ Invalid timestamp detected:', {
@@ -246,7 +233,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                     });
                     return new Date(); // Fallback to current date
                   }
-                  
+
                   return date;
                 } catch (error) {
                   console.error('❌ Error parsing timestamp:', {
@@ -259,7 +246,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                 }
               })();
               const daysDifference = differenceInDays(new Date(), messageDate);
-              
+
               if (daysDifference > 2) {
                 return format(messageDate, 'dd/MM/yy');
               } else if (daysDifference === 1) {
@@ -322,17 +309,6 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                   >
                     Agregar etiqueta
                   </DropdownMenuItem>
-                  {/*<DropdownMenuItem*/}
-                  {/*  className='flex justify-between'*/}
-                  {/*  onClick={(e) => e.stopPropagation()}*/}
-                  {/*>*/}
-                  {/*  <span>IA {isAIEnabled ? 'Encendida' : 'Apagada'}</span>*/}
-                  {/*  <Switch*/}
-                  {/*    checked={isAIEnabled}*/}
-                  {/*    onCheckedChange={handleAIToggle}*/}
-                  {/*    className='ml-2'*/}
-                  {/*  />*/}
-                  {/*</DropdownMenuItem>*/}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
