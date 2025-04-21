@@ -111,19 +111,27 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
   )
 
   const onSubmit = React.useCallback(async (_data: CreatableEvent) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
+
+    // Trigger validation for all fields to ensure errors are displayed
+    const isValid = await form.trigger();
+    if (!isValid) {
+      setIsSubmitting(false);
+      toast.error("Por favor, completa todos los campos obligatorios.");
+      return; // Stop submission if the form is invalid
+    }
 
     if (photos.length > 0) {
       for (const photo of photos) {
-        await handleImageUpload(photo)
+        await handleImageUpload(photo);
       }
     }
 
-    createEvent(form.getValues())
-    setIsSubmitting(false)
-    setPhotos([])
-    onClose()
-  }, [photos, createEvent, onClose, handleImageUpload, form])
+    createEvent(form.getValues());
+    setIsSubmitting(false);
+    setPhotos([]);
+    onClose();
+  }, [photos, createEvent, onClose, handleImageUpload, form]);
 
   // Handle capacity value changes
   React.useEffect(() => {
@@ -380,7 +388,7 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
                               render={({ field: controllerField }) => (
                                 <DateTimePicker
                                   htmlId="endAt"
-                                  defaultValue={new Date(controllerField.value)}
+                                  defaultValue={controllerField.value ? new Date(controllerField.value) : undefined} // Asegúrate de manejar undefined
                                   aria-label="Fecha y hora de fin"
                                   onChange={(date: Date) =>
                                     controllerField.onChange(date.toISOString())
