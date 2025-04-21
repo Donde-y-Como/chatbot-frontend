@@ -4,12 +4,12 @@ import { QueryCache, QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
 import { routeTree } from '@/routeTree.gen.ts'
 import { io } from 'socket.io-client'
-import { useAuthStore } from '@/stores/authStore.ts'
-import { handleServerError } from '@/utils/handle-server-error.ts'
 import { toast } from 'sonner'
+import { useAuthStore } from '@/stores/authStore.ts'
+import { playNotification } from '@/lib/audio.ts'
+import { handleServerError } from '@/utils/handle-server-error.ts'
 import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 import { makeLastMessageContent } from '@/features/chats/hooks/makeLastMessageContent.ts'
-import { playNotification } from '@/lib/audio.ts'
 import { UserQueryKey } from '../components/layout/hooks/useGetUser'
 
 export const socket = io(import.meta.env.VITE_WS_URL || 'http://localhost:3000')
@@ -40,7 +40,10 @@ socket.on(
           if (chat.id === data.conversationId) {
             return {
               ...chat,
-              newClientMessagesCount: data.message.role === "user" ? chat.newClientMessagesCount + 1 : chat.newClientMessagesCount,
+              newClientMessagesCount:
+                data.message.role === 'user'
+                  ? chat.newClientMessagesCount + 1
+                  : chat.newClientMessagesCount,
               lastMessage: makeLastMessageContent(data.message),
             }
           }
@@ -62,29 +65,27 @@ socket.on(
   }
 )
 
-socket.on("assistantFailed", (data: { conversationId: string }) => {
+socket.on('assistantFailed', (data: { conversationId: string }) => {
   toast.error('El asistente tuvo un problema al ejecutar una accion')
 })
 
-socket.on("newEventBooked", () => {
+socket.on('newEventBooked', () => {
   toast.success('Un nuevo evento ha sido reservado.')
 })
 
-socket.on("newAppointmentCreated", () => {
+socket.on('newAppointmentCreated', () => {
   toast.success('Una nueva cita ha sido creada.')
 })
 
-socket.on("creditsUpdated", () => {
-  queryClient.refetchQueries({
-    queryKey: UserQueryKey
+socket.on('creditsUpdated', async () => {
+  await queryClient.refetchQueries({
+    queryKey: UserQueryKey,
   })
 })
 
-socket.on("qrStatus", (data) => {
-  console.log(data);
+socket.on('qrStatus', () => {
 
 })
-
 
 export const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false)
