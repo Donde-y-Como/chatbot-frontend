@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { chatService } from "../../../features/chats/ChatService";
+import { chatService } from '@/features/chats/ChatService.ts';
 
 export function useUnreadChats() {
     const queryClient = useQueryClient();

@@ -1,5 +1,4 @@
-import { FormEvent, useState, useRef, useEffect } from 'react'
-import { EmojiClickData } from 'emoji-picker-react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { IconSend } from '@tabler/icons-react'
 import { uid } from 'uid'
@@ -8,8 +7,12 @@ import { Button } from '@/components/ui/button.tsx'
 import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 import { MediaUpload } from '@/features/chats/MediaUpload.tsx'
 import { EmojiPickerButton } from '@/features/chats/components/EmojiPickerButton'
+import { sortByLastMessageTimestamp } from '@/lib/utils.ts'
 
-export default function ChatFooter({ selectedChatId, canSendMessage }: {
+export default function ChatFooter({
+  selectedChatId,
+  canSendMessage,
+}: {
   selectedChatId: string
   canSendMessage: boolean
 }) {
@@ -55,6 +58,7 @@ export default function ChatFooter({ selectedChatId, canSendMessage }: {
 
       queryClient.setQueryData<Chat[]>(['chats'], (oldChats) => {
         if (oldChats === undefined) return oldChats
+
         return [...oldChats]
           .map((chat) => {
             if (chat.id === variables.conversationId) {
@@ -65,7 +69,7 @@ export default function ChatFooter({ selectedChatId, canSendMessage }: {
             }
             return chat
           })
-          .sort((a, b) => b.lastMessage.timestamp - a.lastMessage.timestamp)
+          .sort(sortByLastMessageTimestamp)
       })
     },
   })
@@ -121,15 +125,17 @@ export default function ChatFooter({ selectedChatId, canSendMessage }: {
       <div className='flex flex-1 items-start gap-2 rounded-md border border-input px-2 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring lg:gap-4'>
         {canSendMessage ? (
           <>
-            <div className="self-center flex items-center gap-1">
+            <div className='self-center flex items-center gap-1'>
               <MediaUpload onSend={handleMediaSend} />
-              <EmojiPickerButton onEmojiSelect={(emoji) => {
-                setNewMessage(prev => prev + emoji.emoji)
-                if (textareaRef.current) {
-                  adjustTextareaHeight(textareaRef.current)
-                  textareaRef.current.focus()
-                }
-              }} />
+              <EmojiPickerButton
+                onEmojiSelect={(emoji) => {
+                  setNewMessage((prev) => prev + emoji.emoji)
+                  if (textareaRef.current) {
+                    adjustTextareaHeight(textareaRef.current)
+                    textareaRef.current.focus()
+                  }
+                }}
+              />
             </div>
 
             <textarea
@@ -149,7 +155,7 @@ export default function ChatFooter({ selectedChatId, canSendMessage }: {
                 adjustTextareaHeight(e.target)
               }}
             />
-            <div className="self-center">
+            <div className='self-center'>
               <Button
                 variant='ghost'
                 size='icon'
@@ -160,7 +166,11 @@ export default function ChatFooter({ selectedChatId, canSendMessage }: {
               </Button>
             </div>
           </>
-        ) : <p className='text-sm opacity-60 italic'>No puedes enviar mensajes a esta conversación</p>}
+        ) : (
+          <p className='text-sm opacity-60 italic'>
+            No puedes enviar mensajes a esta conversación
+          </p>
+        )}
       </div>
       <Button className='self-start h-10 sm:hidden' type='submit'>
         <IconSend size={18} />

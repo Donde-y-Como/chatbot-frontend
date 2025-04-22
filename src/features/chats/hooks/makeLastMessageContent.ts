@@ -16,6 +16,7 @@ function getLasMessageMediaContent(type: string) {
     image: '📷 Foto',
     video: '🎞️ Video',
     document: '📄 Documento',
+    sticker: '🖼️ Sticker',
   }
 
   return mediaMap[type] || 'Archivo'

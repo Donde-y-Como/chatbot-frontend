@@ -11,6 +11,7 @@ import { handleServerError } from '@/utils/handle-server-error.ts'
 import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 import { makeLastMessageContent } from '@/features/chats/hooks/makeLastMessageContent.ts'
 import { UserQueryKey } from '../components/layout/hooks/useGetUser'
+import { sortByLastMessageTimestamp } from '@/lib/utils.ts'
 
 export const socket = io(import.meta.env.VITE_WS_URL || 'http://localhost:3000')
 
@@ -49,7 +50,7 @@ socket.on(
           }
           return chat
         })
-        .sort((a, b) => b.lastMessage.timestamp - a.lastMessage.timestamp)
+        .sort(sortByLastMessageTimestamp)
     })
 
     queryClient.setQueryData<ChatMessages>(

@@ -131,6 +131,8 @@ export function ChatBarHeader({
             </Button>
           )}
           <IconIaEnabled
+            bgColor={"bg-secondary"}
+            iconColor={"bg-background"}
             enabled={allAIEnabled}
             onToggle={handleAIToggle}
             tooltip={allAIEnabled ? 'Desactivar IAs' : 'Activar IAs'}
