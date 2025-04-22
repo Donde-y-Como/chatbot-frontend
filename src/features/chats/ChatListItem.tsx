@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { differenceInDays, format, formatDistanceToNowStrict } from 'date-fns'
 import { AvatarImage } from '@radix-ui/react-avatar'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -6,6 +7,7 @@ import {
   IconBrandInstagram,
   IconBrandWhatsapp,
 } from '@tabler/icons-react'
+import { es } from 'date-fns/locale/es'
 import { Check, MoreVertical } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn, sortByLastMessageTimestamp } from '@/lib/utils'
@@ -134,7 +136,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
       toast.success('Nombre de perfil actualizado')
     } catch (error) {
       toast.error('El nombre de perfil no se actualizó!')
-      setTempName(chat.client?.name || 'Unknown')
+      setTempName(chat.client?.name || 'Desconocido')
       setIsEditing(false)
     }
   }
@@ -144,7 +146,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
       void handleNameChange(tempName)
     } else if (e.key === 'Escape') {
       setIsEditing(false)
-      setTempName(chat.client?.name || 'Unknown')
+      setTempName(chat.client?.name || 'Desconocido')
     }
     e.stopPropagation()
   }
@@ -183,7 +185,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
             {hasPhoto && (
               <AvatarImage
                 src={chat.client?.photo}
-                alt={chat.client?.name || 'Unknown'}
+                alt={chat.client?.name || 'Desconocido'}
                 className='object-cover w-full'
               />
             )}
@@ -225,7 +227,40 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
           </span>
 
           <span className='col-span-1 text-xs text-right font-normal text-muted-foreground'>
-            {/* Timestamp code remains the same */}
+            {(() => {
+              const messageDate = (() => {
+                try {
+                  if (!chat.lastMessage?.timestamp) {
+                    return new Date()
+                  }
+
+                  const timestamp = chat.lastMessage.timestamp
+                  const date = new Date(timestamp)
+
+                  if (isNaN(date.getTime())) {
+                    return new Date()
+                  }
+
+                  return date
+                } catch (error) {
+                  return new Date()
+                }
+              })()
+              const daysDifference = differenceInDays(new Date(), messageDate)
+
+              if (daysDifference > 2) {
+                return format(messageDate, 'dd/MM/yy')
+              } else if (daysDifference === 1) {
+                return 'ayer'
+              } else if (daysDifference === 2) {
+                return 'anteayer'
+              } else {
+                return formatDistanceToNowStrict(messageDate, {
+                  addSuffix: false,
+                  locale: es,
+                })
+              }
+            })()}
           </span>
 
           <span className='col-span-4 text-sm text-muted-foreground truncate'>
