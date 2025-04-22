@@ -54,8 +54,8 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
     price: { amount: 0, currency: Currency.MXN },
     capacity: { isLimited: false, maxCapacity: null },
     duration: {
-      startAt: addHours(new Date(), 1).toISOString(),
-      endAt: addHours(new Date(), 2).toISOString(),
+      startAt: '',
+      endAt: '',
     },
     recurrence: { frequency: RecurrenceFrequency.NEVER, endCondition: null },
     location: '',
@@ -111,19 +111,27 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
   )
 
   const onSubmit = React.useCallback(async (_data: CreatableEvent) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
+
+    // Trigger validation for all fields to ensure errors are displayed
+    const isValid = await form.trigger();
+    if (!isValid) {
+      setIsSubmitting(false);
+      toast.error("Por favor, completa todos los campos obligatorios.");
+      return; // Stop submission if the form is invalid
+    }
 
     if (photos.length > 0) {
       for (const photo of photos) {
-        await handleImageUpload(photo)
+        await handleImageUpload(photo);
       }
     }
 
-    createEvent(form.getValues())
-    setIsSubmitting(false)
-    setPhotos([])
-    onClose()
-  }, [photos, createEvent, onClose, handleImageUpload, form])
+    createEvent(form.getValues());
+    setIsSubmitting(false);
+    setPhotos([]);
+    onClose();
+  }, [photos, createEvent, onClose, handleImageUpload, form]);
 
   // Handle capacity value changes
   React.useEffect(() => {
@@ -212,22 +220,36 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
                   <FormField
                     control={control}
                     name="price.amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Precio</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="0.00"
-                            min="0"
-                            step="0.01"
-                            {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = e.target.value;
+                        // Si el valor es una cadena vacía, establece el campo como undefined o null
+                        field.onChange(value === '' ? undefined : Number(value));
+                      };
+
+                      return (
+                        <FormItem>
+                          <FormLabel>Precio</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="0.00"
+                              min="0"
+                              step="0.01"
+                              {...field}
+                              value={field.value || ''} // Muestra una cadena vacía si el valor es undefined o null
+                              onFocus={(e) => {
+                                if (field.value === 0) {
+                                  field.onChange(undefined); // Borra el valor 0 al enfocar
+                                }
+                              }}
+                              onChange={handleInputChange} // Maneja cambios en el input
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
 
 
@@ -336,15 +358,13 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
                               render={({ field: controllerField }) => (
                                 <DateTimePicker
                                   htmlId="startAt"
-                                  defaultValue={new Date(controllerField.value)}
+                                  defaultValue={controllerField.value ? new Date(controllerField.value) : undefined} // Asegúrate de manejar undefined
                                   aria-label="Fecha y hora de inicio"
                                   onChange={(date: Date) => {
-                                    controllerField.onChange(date.toISOString())
-
-                                    // Update end time if it's before the new start time
-                                    const endTime = new Date(watch('duration.endAt'))
+                                    controllerField.onChange(date.toISOString());
+                                    const endTime = new Date(watch('duration.endAt'));
                                     if (endTime <= date) {
-                                      setValue('duration.endAt', addHours(date, 1).toISOString())
+                                      setValue('duration.endAt', addHours(date, 1).toISOString());
                                     }
                                   }}
                                 />
@@ -368,7 +388,7 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
                               render={({ field: controllerField }) => (
                                 <DateTimePicker
                                   htmlId="endAt"
-                                  defaultValue={new Date(controllerField.value)}
+                                  defaultValue={controllerField.value ? new Date(controllerField.value) : undefined} // Asegúrate de manejar undefined
                                   aria-label="Fecha y hora de fin"
                                   onChange={(date: Date) =>
                                     controllerField.onChange(date.toISOString())
