@@ -1,6 +1,14 @@
+import { PlatformIdentity, PlatformName } from '@/features/clients/types.ts'
+
 export interface LoginData {
   email: string
   password: string
+}
+
+export type PlatformConfig = {
+  platformId: string
+  token: string
+  platformName: PlatformName
 }
 
 export interface UserData {
@@ -8,6 +16,7 @@ export interface UserData {
   logo: string
   name: string
   plan: BillingPlan
+  socialPlatforms: PlatformConfig[]
 }
 
 export interface BillingPlan {
