@@ -11,8 +11,8 @@ export type Template = {
 export type Chat = {
   id: string
   platformName: string
-  client: ClientPrimitives
-  lastMessage: Message
+  client?: ClientPrimitives
+  lastMessage: Message | null
   newClientMessagesCount: number
 }
 
@@ -92,8 +92,7 @@ export type ChatPaginationMeta = {
 }
 
 export type ChatResponse = {
-  businessId: string;
-  messages: Chat[];
+  conversations: Chat[];
   meta: ChatPaginationMeta;
 }
 

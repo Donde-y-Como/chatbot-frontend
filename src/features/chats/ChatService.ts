@@ -8,8 +8,8 @@ export const chatService = {
   },
 
   getChats: async () => {
-    const response = await api.get<{ messages: Chat[] }>('/chats')
-    return response.data.messages
+    const response = await api.get<{ conversations: Chat[] }>('/chats')
+    return response.data.conversations
   },
 
   getChatById: async (id: string) => {

@@ -47,13 +47,12 @@ export function ChatBarUnlimited({
     refreshChats,
     isError,
   } = usePaginatedChats({
-    initialPerPage: 20,
+    initialPerPage: 10,
   })
 
   const { data: tags } = useGetTags()
   const filteredChatList = useFilteredChats(chats, search, activeFilter, tags)
 
-  // Setup IntersectionObserver for infinite scrolling
   const handleIntersection = useCallback(
     async (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries
@@ -137,7 +136,7 @@ export function ChatBarUnlimited({
             Error al cargar los chats. Intente refrescar.
           </div>
         ) : isChatsLoading ? (
-          Array.from({ length: 7}).map((_, index) => (
+          Array.from({ length: 7 }).map((_, index) => (
             <Fragment key={`loading-${index}`}>
               <ChatListItemSkeleton />
             </Fragment>

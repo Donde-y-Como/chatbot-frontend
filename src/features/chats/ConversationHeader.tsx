@@ -123,6 +123,8 @@ export function ConversationHeader({
 
       <div className='-mr-1 flex items-center gap-1 lg:gap-2'>
         <IconIaEnabled
+          bgColor={"bg-background"}
+          iconColor={"bg-secondary"}
           enabled={chatData.thread.enabled}
           onToggle={onToggleIA}
           tooltip={chatData.thread.enabled ? 'Desactivar IA' : 'Activar IA'}
