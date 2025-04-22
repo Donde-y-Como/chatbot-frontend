@@ -1,5 +1,17 @@
+import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconBrandWhatsapp,
+  IconRefresh,
+  IconSearch,
+} from '@tabler/icons-react'
+import { CheckCheckIcon } from 'lucide-react'
+import { toast } from 'sonner'
 import { api } from '@/api/axiosInstance.ts'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Template } from '@/features/chats/ChatTypes.ts'
@@ -8,20 +20,8 @@ import {
   NewConversation,
   StartConversation,
 } from '@/features/chats/StartConversation.tsx'
-import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconBrandWhatsapp,
-  IconRefresh,
-  IconSearch,
-} from '@tabler/icons-react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CheckCheckIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { toast } from 'sonner'
 import { useGetTags } from '../clients/hooks/useGetTags'
 import { AddTagButton } from './AddTagButton'
-import { Button } from '@/components/ui/button'
 
 interface ChatSearchInputProps {
   value: string
@@ -29,19 +29,22 @@ interface ChatSearchInputProps {
   onFilterChange: (value: string | null) => void
   onToggleAllAI: (enabled: boolean) => void
   onRefresh?: () => void
+  AIEnabled: boolean
 }
 
 export const UNREAD_LABEL_FILTER = 'No leídos'
 
 export function ChatBarHeader({
+  AIEnabled,
   value,
   onInputChange,
   onFilterChange,
   onToggleAllAI,
   onRefresh,
 }: ChatSearchInputProps) {
-  const [allAIEnabled, setAllAIEnabled] = useState(true)
-  const { data: tags, isLoading: isTagsLoading } = useGetTags();
+  const [allAIEnabled, setAllAIEnabled] = useState(AIEnabled)
+  console.log(AIEnabled)
+  const { data: tags, isLoading: isTagsLoading } = useGetTags()
   const queryClient = useQueryClient()
   const { data: templates } = useQuery({
     queryKey: ['templates'],
@@ -81,22 +84,26 @@ export function ChatBarHeader({
       { name: 'whatsapp', icon: IconBrandWhatsapp, color: 'text-green-500' },
       { name: 'facebook', icon: IconBrandFacebook, color: 'text-blue-500' },
       { name: 'instagram', icon: IconBrandInstagram, color: 'text-pink-500' },
-    ];
+    ]
 
-    const unread = { name: UNREAD_LABEL_FILTER, icon: CheckCheckIcon, color: 'text-foreground' };
+    const unread = {
+      name: UNREAD_LABEL_FILTER,
+      icon: CheckCheckIcon,
+      color: 'text-foreground',
+    }
 
     if (!tags || isTagsLoading) {
-      return [...metaPlatforms, unread];
+      return [...metaPlatforms, unread]
     }
 
     const tagPlatforms = tags.map((tag) => ({
       name: tag.name,
       icon: null,
-      color: "text-foreground"
-    }));
+      color: 'text-foreground',
+    }))
 
-    return [...metaPlatforms, unread, ...tagPlatforms];
-  }, [isTagsLoading, tags]);
+    return [...metaPlatforms, unread, ...tagPlatforms]
+  }, [isTagsLoading, tags])
 
   const handleOnNewConversation = (data: NewConversation) => {
     startConversationMutation.mutate(data)
@@ -105,8 +112,8 @@ export function ChatBarHeader({
 
   const handleRefresh = () => {
     if (onRefresh) {
-      onRefresh();
-      toast.success('Chats actualizados');
+      onRefresh()
+      toast.success('Chats actualizados')
     }
   }
 
@@ -120,19 +127,19 @@ export function ChatBarHeader({
         </div>
         <div className='flex items-center gap-2'>
           {onRefresh && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleRefresh} 
-              title="Refrescar chats"
-              className="h-8 w-8"
+            <Button
+              variant='ghost'
+              size='icon'
+              onClick={handleRefresh}
+              title='Refrescar chats'
+              className='h-8 w-8'
             >
               <IconRefresh size={18} />
             </Button>
           )}
           <IconIaEnabled
-            bgColor={"bg-secondary"}
-            iconColor={"bg-background"}
+            bgColor={'bg-secondary'}
+            iconColor={'bg-background'}
             enabled={allAIEnabled}
             onToggle={handleAIToggle}
             tooltip={allAIEnabled ? 'Desactivar IAs' : 'Activar IAs'}
@@ -157,7 +164,13 @@ export function ChatBarHeader({
         />
       </label>
 
-      <div className='mx-4 flex gap-2 my-2 overflow-x-auto overflow-y-hidden whitespace-nowrap no-scrollbar' style={{ maskImage: 'linear-gradient(to right, transparent, black 10px, black calc(100% - 10px), transparent)' }}>
+      <div
+        className='mx-4 flex gap-2 my-2 overflow-x-auto overflow-y-hidden whitespace-nowrap no-scrollbar'
+        style={{
+          maskImage:
+            'linear-gradient(to right, transparent, black 10px, black calc(100% - 10px), transparent)',
+        }}
+      >
         {platforms.map(({ name, icon: Icon, color }) => (
           <Badge
             key={name}

@@ -2,9 +2,9 @@ import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { SearchChatParams } from '@/routes/_authenticated/chats'
 import { Loader2 } from 'lucide-react'
-import { useAuth } from '@/stores/authStore.ts'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { useGetUser } from '@/components/layout/hooks/useGetUser.ts'
 import { ChatBarHeader } from '@/features/chats/ChatBarHeader.tsx'
 import { ChatListItem } from '@/features/chats/ChatListItem.tsx'
 import { ChatListItemSkeleton } from '@/features/chats/ChatListItemSkeleton.tsx'
@@ -33,7 +33,7 @@ export function ChatBarUnlimited({
   const [search, setSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const queryClient = useQueryClient()
-  const { user } = useAuth()
+  const { data: user } = useGetUser()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const loadingRef = useRef<HTMLDivElement>(null)
 
@@ -115,13 +115,16 @@ export function ChatBarUnlimited({
 
   return (
     <div className='flex w-full flex-col gap-2 sm:w-[30rem]'>
-      <ChatBarHeader
-        value={search}
-        onInputChange={setSearch}
-        onFilterChange={setActiveFilter}
-        onToggleAllAI={onToggleAllAI}
-        onRefresh={handleRefresh}
-      />
+      {user && (
+        <ChatBarHeader
+          value={search}
+          AIEnabled={user.assistantConfig.enabled}
+          onInputChange={setSearch}
+          onFilterChange={setActiveFilter}
+          onToggleAllAI={onToggleAllAI}
+          onRefresh={handleRefresh}
+        />
+      )}
 
       <MessagesFound
         search={search}
