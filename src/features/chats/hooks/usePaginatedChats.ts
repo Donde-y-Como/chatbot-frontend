@@ -5,8 +5,10 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { useWebSocket } from '@/hooks/use-web-socket.ts'
+import { UserQueryKey } from '@/components/layout/hooks/useGetUser.ts'
+import { UserData } from '@/features/auth/types.ts'
 import { chatService } from '@/features/chats/ChatService.ts'
-import { ChatMessages, ChatParams } from '@/features/chats/ChatTypes.ts'
+import { ChatParams } from '@/features/chats/ChatTypes.ts'
 
 interface UseChatsOptions extends ChatParams {
   initialPerPage?: number
@@ -77,12 +79,12 @@ export function usePaginatedChats(options: UseChatsOptions = {}) {
     },
     onSuccess: async (_data, { enabled }) => {
       queryClient.setQueriesData(
-        { queryKey: ['chat'] },
-        (oldData: ChatMessages | undefined) => {
-          if (!oldData) return oldData
+        { queryKey: UserQueryKey },
+        (cachedUser: UserData | undefined) => {
+          if (!cachedUser) return cachedUser
           return {
-            ...oldData,
-            thread: { ...oldData.thread, enabled },
+            ...cachedUser,
+            assistantConfig: { ...cachedUser.assistantConfig, enabled },
           }
         }
       )

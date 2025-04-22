@@ -16,6 +16,10 @@ export interface UserData {
   logo: string
   name: string
   plan: BillingPlan
+  assistantConfig: {
+    id: string
+    enabled: boolean
+  }
   socialPlatforms: PlatformConfig[]
 }
 
