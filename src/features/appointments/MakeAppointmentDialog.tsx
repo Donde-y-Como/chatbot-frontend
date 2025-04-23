@@ -181,8 +181,19 @@ export function MakeAppointmentDialog() {
     ? `${formatSlotHour(JSON.parse(selectedSlot).startAt)} - ${formatSlotHour(JSON.parse(selectedSlot).endAt)}`
     : null
 
+  // Función para determinar si se han rellenado campos
+  const hasFilledFields = () => {
+    return clientId !== '' || serviceId !== '' || selectedSlot !== null || selectedEmployeeIds.length > 0
+  }
+
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
+      // Si está cerrando (newOpen === false) y hay campos rellenados, no hacemos nada
+      // Solo permitimos cerrar si no hay campos rellenados
+      if (!newOpen && hasFilledFields()) {
+        return
+      }
+      // En caso contrario (abriendo o cerrando sin datos), actualizamos normalmente
       setOpen(newOpen)
       if (!newOpen) resetForm()
     }}>
@@ -266,13 +277,23 @@ export function MakeAppointmentDialog() {
                 </div>
               </div>
 
-              <Button 
-                className="w-full mt-4" 
-                disabled={!clientId || !serviceId}
-                onClick={() => setActiveStep(2)}
-              >
-                Continuar
-              </Button>
+              <div className="flex justify-between gap-4 mt-4">
+                <Button 
+                variant="outline" 
+                onClick={() => {
+                    setOpen(false)
+                  resetForm()
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  disabled={!clientId || !serviceId}
+                  onClick={() => setActiveStep(2)}
+                >
+                  Continuar
+                </Button>
+              </div>
             </TabsContent>
 
             {/* Step 2: Date and Time Selection */}
@@ -330,9 +351,17 @@ export function MakeAppointmentDialog() {
               </div>
 
               <div className="flex justify-between gap-2 mt-4">
-                <Button variant="outline" onClick={() => setActiveStep(1)}>
-                  Atrás
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="destructive" onClick={() => {
+                    setOpen(false)
+                    resetForm()
+                  }}>
+                    Cancelar
+                  </Button>
+                  <Button variant="outline" onClick={() => setActiveStep(1)}>
+                    Atrás
+                  </Button>
+                </div>
                 <Button 
                   disabled={!selectedSlot || loading}
                   onClick={() => setActiveStep(3)}
@@ -397,9 +426,17 @@ export function MakeAppointmentDialog() {
               )}
 
               <div className="flex justify-between gap-2 mt-4">
-                <Button variant="outline" onClick={() => setActiveStep(2)}>
-                  Atrás
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="destructive" onClick={() => {
+                    setOpen(false)
+                    resetForm()
+                  }}>
+                    Cancelar
+                  </Button>
+                  <Button variant="outline" onClick={() => setActiveStep(2)}>
+                    Atrás
+                  </Button>
+                </div>
                 <Button 
                   onClick={() => setActiveStep(4)}
                 >
@@ -480,9 +517,17 @@ export function MakeAppointmentDialog() {
               </Card>
 
               <div className="flex justify-between gap-2 mt-4">
-                <Button variant="outline" onClick={() => setActiveStep(3)}>
-                  Atrás
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="destructive" onClick={() => {
+                    setOpen(false)
+                    resetForm()
+                  }}>
+                    Cancelar
+                  </Button>
+                  <Button variant="outline" onClick={() => setActiveStep(3)}>
+                    Atrás
+                  </Button>
+                </div>
                 <Button 
                   onClick={handleSubmit}
                   disabled={loading}

@@ -226,8 +226,31 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
     }
   }, [recurrenceFrequency, setValue])
 
+  // Función para verificar si se han rellenado campos
+  const hasFilledFields = React.useCallback(() => {
+    const formValues = form.getValues();
+    return (
+      formValues.name !== '' || 
+      formValues.description !== '' || 
+      formValues.location !== '' ||
+      formValues.price.amount !== 0 ||
+      formValues.capacity.isLimited ||
+      formValues.duration.startAt !== '' ||
+      formValues.duration.endAt !== '' ||
+      formValues.recurrence.frequency !== RecurrenceFrequency.NEVER ||
+      photos.length > 0
+    );
+  }, [form, photos]);
+
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Si está cerrando (isOpen === false) y hay campos rellenados, prevenimos el cierre
+      if (!isOpen && hasFilledFields()) {
+        return;
+      }
+      // En caso contrario, permitimos el cierre y llamamos a onClose
+      !isOpen && onClose();
+    }}>
       <DialogContent className="sm:max-w-3xl">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)}>

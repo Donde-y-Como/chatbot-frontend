@@ -265,8 +265,10 @@ export function EditAppointmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
+      if (!newOpen) {
+        return
+      }
       setOpen(newOpen)
-      if (!newOpen) resetForm()
     }}>
       <DialogTrigger asChild>
         <Button
@@ -371,13 +373,23 @@ export function EditAppointmentDialog({
                 </div>
               </div>
 
-              <Button
-                className="w-full mt-4"
-                disabled={!clientId || !serviceId}
-                onClick={() => setActiveStep(2)}
-              >
-                Continuar
-              </Button>
+              <div className="flex justify-between gap-4 mt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setOpen(false)
+                    resetForm()
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  disabled={!clientId || !serviceId}
+                  onClick={() => setActiveStep(2)}
+                >
+                  Continuar
+                </Button>
+              </div>
             </TabsContent>
 
             {/* Step 2: Date and Time Selection */}
@@ -435,9 +447,17 @@ export function EditAppointmentDialog({
               </div>
 
               <div className="flex justify-between gap-2 mt-4">
-                <Button variant="outline" onClick={() => setActiveStep(1)}>
-                  Atrás
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="destructive" onClick={() => {
+                    setOpen(false)
+                    resetForm()
+                  }}>
+                    Cancelar
+                  </Button>
+                  <Button variant="outline" onClick={() => setActiveStep(1)}>
+                    Atrás
+                  </Button>
+                </div>
                 <Button
                   disabled={!selectedSlot || loading}
                   onClick={() => setActiveStep(3)}
@@ -502,9 +522,17 @@ export function EditAppointmentDialog({
               )}
 
               <div className="flex justify-between gap-2 mt-4">
-                <Button variant="outline" onClick={() => setActiveStep(2)}>
-                  Atrás
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="destructive" onClick={() => {
+                    setOpen(false)
+                    resetForm()
+                  }}>
+                    Cancelar
+                  </Button>
+                  <Button variant="outline" onClick={() => setActiveStep(2)}>
+                    Atrás
+                  </Button>
+                </div>
                 <Button
                   onClick={() => setActiveStep(4)}
                 >
@@ -585,9 +613,17 @@ export function EditAppointmentDialog({
               </Card>
 
               <div className="flex justify-between gap-2 mt-4">
-                <Button variant="outline" onClick={() => setActiveStep(3)}>
-                  Atrás
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="destructive" onClick={() => {
+                    setOpen(false)
+                    resetForm()
+                  }}>
+                    Cancelar
+                  </Button>
+                  <Button variant="outline" onClick={() => setActiveStep(3)}>
+                    Atrás
+                  </Button>
+                </div>
                 <Button
                   onClick={handleSubmit}
                   disabled={loading}

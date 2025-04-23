@@ -14,6 +14,14 @@ export function ServiceFilter({
                                 selectedService,
                                 onServiceSelect,
                               }: ServiceFilterProps) {
+
+  const truncateText = (text: string, maxLength: number): string => {
+    if (text.length > maxLength) {
+      return text.slice(0, maxLength) + '...';
+    }
+    return text;
+  };
+
   return (
     <ScrollArea orientation="horizontal" className="w-full overflow-x-auto overflow-y-hidden min-h-fit whitespace-nowrap">
       <div className="flex space-x-2 p-4 ml-16">
@@ -31,11 +39,11 @@ export function ServiceFilter({
             className="cursor-pointer transition-all duration-200 hover:scale-105"
             onClick={() => onServiceSelect(service.id)}
           >
-            {service.name}
+            {truncateText(service.name, 25)}
           </Badge>
         ))}
       </div>
       <ScrollBar orientation="horizontal" />
     </ScrollArea>
-  )
+  );
 }

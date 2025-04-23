@@ -52,7 +52,14 @@ export function EventEditModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Si está cerrando (isOpen === false), prevenimos el cierre al hacer clic afuera
+      if (!isOpen) {
+        return;
+      }
+      // Solo permitimos que se abra
+      onClose();
+    }}>
       <DialogContent className='sm:max-w-[600px]'>
         <DialogHeader>
           <DialogTitle>Editar Evento</DialogTitle>
