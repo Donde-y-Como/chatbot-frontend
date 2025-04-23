@@ -148,7 +148,14 @@ export function ServiceActionDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={handleOpenChange}
+      onOpenChange={(isOpen) => {
+        // Si está cerrando (isOpen === false), prevenimos el cierre al hacer clic afuera
+        if (!isOpen) {
+          return;
+        }
+        // Solo permitimos que se abra
+        handleOpenChange(isOpen);
+      }}
     >
       <DialogContent className="sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto">
         <DialogHeader className="text-left">
