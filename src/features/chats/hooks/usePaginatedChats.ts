@@ -15,7 +15,7 @@ interface UseChatsOptions extends ChatParams {
 }
 
 export function usePaginatedChats(options: UseChatsOptions = {}) {
-  const { initialPerPage = 10, platformName, clientName } = options
+  const { initialPerPage, platformName, clientName } = options
   const queryClient = useQueryClient()
   const { emit } = useWebSocket()
   const queryKey = ['chats', { platformName, clientName }, initialPerPage]
@@ -41,7 +41,7 @@ export function usePaginatedChats(options: UseChatsOptions = {}) {
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
-      return lastPage.meta.hasNextPage ? lastPage.meta.nextPage : undefined
+      return lastPage?.meta.hasNextPage ? lastPage?.meta.nextPage : undefined
     },
     staleTime: Infinity,
   })

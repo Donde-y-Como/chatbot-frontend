@@ -118,7 +118,7 @@ export function ChatBarUnlimited({
       {user && (
         <ChatBarHeader
           value={search}
-          AIEnabled={user.assistantConfig.enabled}
+          AIEnabled={user.assistantConfig?.enabled}
           onInputChange={setSearch}
           onFilterChange={setActiveFilter}
           onToggleAllAI={onToggleAllAI}
