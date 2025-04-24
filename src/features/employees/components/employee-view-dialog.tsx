@@ -93,9 +93,6 @@ export function EmployeeViewDialog({ currentEmployee, open, onOpenChange }: Empl
                     <Badge variant="outline" className="px-2 py-1">
                       {currentEmployee.role || "Sin Rol"}
                     </Badge>
-                    <Badge style={{ backgroundColor: currentEmployee.color, color: '#fff' }} className="px-2 py-1">
-                      ID: {currentEmployee.id.substring(0, 8)}
-                    </Badge>
                   </div>
                 </div>
               </div>
@@ -163,11 +160,6 @@ export function EmployeeViewDialog({ currentEmployee, open, onOpenChange }: Empl
                   <h3 className="text-lg font-semibold">Detalles de Empleo</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4">
-                    <div>
-                      <span className="text-sm text-muted-foreground block">ID de Negocio</span>
-                      <span className="text-sm font-medium">{currentEmployee.businessId}</span>
-                    </div>
-                    
                     <div>
                       <span className="text-sm text-muted-foreground block">Rol</span>
                       <span className="text-sm font-medium">{currentEmployee.role || "-"}</span>

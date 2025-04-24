@@ -105,7 +105,6 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                           <div key={index} className="border rounded-md p-3">
                             <div className="flex items-center justify-between mb-2">
                               <Badge className="mr-2">{identity.platformName}</Badge>
-                              <span className="text-xs text-muted-foreground">ID: {identity.platformId}</span>
                             </div>
                             <div className="flex items-center">
                               <span className="font-medium">{identity.profileName}</span>
