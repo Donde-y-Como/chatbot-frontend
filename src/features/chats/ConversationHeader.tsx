@@ -14,7 +14,20 @@ import {
   IconPhone,
 } from '@tabler/icons-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { IconChecklist } from '@tabler/icons-react'
+import { CalendarFold } from 'lucide-react'
+import * as Tooltip from '@radix-ui/react-tooltip';
+import { MakeAppointmentDialog } from '@/features/appointments/MakeAppointmentDialog.tsx'
+import { AddClientFromChats } from '@/features/events/addClientFromChats.tsx'
+import { useNavigate } from '@tanstack/react-router'
+
+// Declarar la interfaz Window para acceder a openAppointmentDialog
+declare global {
+  interface Window {
+    openAppointmentDialog?: (clientName?: string) => void;
+  }
+}
 
 interface ConversationHeaderProps {
   onBackClick: () => void
@@ -29,6 +42,7 @@ export function ConversationHeader({
 }: ConversationHeaderProps) {
   const { emit } = useWebSocket()
   const queryClient = useQueryClient()
+  const [eventDialogOpen, setEventDialogOpen] = useState(false)
 
   const toggleIAMutation = useMutation({
     mutationKey: ['ia-toggle'],
@@ -81,6 +95,22 @@ export function ConversationHeader({
     return identity?.platformId || ''
   }, [chatData])
 
+  // Función para abrir el diálogo de agendar cita
+  const handleAppointmentClick = () => {
+    // Utilizamos la función global para abrir el diálogo con el nombre del cliente
+    if (typeof window !== 'undefined' && window.openAppointmentDialog && chatData.client.name) {
+      window.openAppointmentDialog(chatData.client.name);
+    } else if (window.openAppointmentDialog) {
+      window.openAppointmentDialog(); // Abrimos el diálogo sin nombre de cliente si no hay
+    }
+  }
+
+  // Función para abrir el diálogo de agendar evento
+  const handleEventClick = () => {
+    // Abrir directamente el diálogo de AddClientFromChats
+    setEventDialogOpen(true);
+  }
+
   return (
     <div className='mb-1 flex flex-none justify-between rounded-t-md bg-secondary p-4 shadow-lg'>
       <div className='flex gap-3'>
@@ -130,6 +160,58 @@ export function ConversationHeader({
           tooltip={chatData.thread.enabled ? 'Desactivar IA' : 'Activar IA'}
         />
 
+        {/* Componente AddClientFromChats para agendar eventos - renderiza condicionalmente */}
+        {eventDialogOpen && (
+          <AddClientFromChats 
+            key="event-dialog"
+            open={eventDialogOpen}
+            onClose={() => setEventDialogOpen(false)}
+            preselectedClientId={chatData.client?.id || ''}
+            title="Agendar Cliente en Evento" /* Agregar título para evitar advertencia de accesibilidad */
+          />
+        )}
+
+        <Tooltip.Provider>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <Button
+                size='icon'
+                variant='ghost'
+                className='size-8 rounded-full sm:inline-flex lg:size-10'
+                onClick={handleAppointmentClick}
+              >
+                <IconChecklist size={22} className='stroke-muted-foreground' />
+              </Button>
+            </Tooltip.Trigger>
+            <Tooltip.Content side="bottom" className="bg-[#020817] text-white px-2 py-1 rounded-md text-xs">
+              Agendar Cita
+            </Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>
+
+        {/* Componente MakeAppointmentDialog (oculto) */}
+        <div className="hidden">
+          <MakeAppointmentDialog />
+        </div>
+
+        <Tooltip.Provider>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <Button
+                size='icon'
+                variant='ghost'
+                className='size-8 rounded-full sm:inline-flex lg:size-10'
+                onClick={handleEventClick}
+              >
+                <CalendarFold size={22} className='stroke-muted-foreground' />
+              </Button>
+            </Tooltip.Trigger>
+            <Tooltip.Content side="bottom" className="bg-[#020817] text-white px-2 py-1 rounded-md text-xs">
+              Agendar a Evento
+            </Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>
+
         <Button
           size='icon'
           variant='ghost'
@@ -150,6 +232,7 @@ export function ConversationHeader({
 }
 
 export function ConversationHeaderSkeleton() {
+  // No es necesario incluir la navegación en el skeleton
   return (
     <div className='mb-1 flex flex-none justify-between rounded-t-md bg-secondary p-4 shadow-lg'>
       <div className='flex gap-3'>
@@ -166,6 +249,23 @@ export function ConversationHeaderSkeleton() {
       </div>
 
       <div className='-mr-1 flex items-center gap-1 lg:gap-2'>
+        <Button
+          size='icon'
+          variant='ghost'
+          className='size-8 rounded-full sm:inline-flex lg:size-10'
+        >
+          <IconChecklist size={22} className='stroke-muted-foreground' />
+        </Button>
+
+        {/* Botón Calendar Fold */}
+        <Button
+          size='icon'
+          variant='ghost'
+          className='size-8 rounded-full sm:inline-flex lg:size-10'
+        >
+          <CalendarFold size={22} className='stroke-muted-foreground' />
+        </Button>
+
         <Button
           size='icon'
           variant='ghost'

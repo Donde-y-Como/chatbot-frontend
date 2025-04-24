@@ -33,6 +33,7 @@ import {
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
+import { useCreateClient } from '@/features/appointments/hooks/useCreateClient.ts'
 import {
   Appointment,
   EmployeeAvailable,
@@ -43,11 +44,49 @@ import { now } from '@internationalized/date'
 import { useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
-import { Calendar as CalendarIcon, CheckCircle, Clock, Scissors, User, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Calendar as CalendarIcon, CheckCircle, Clock, Scissors, User } from 'lucide-react'
+import { useEffect, useState, createContext, useContext } from 'react'
 import { toast } from 'sonner'
 
-export function MakeAppointmentDialog() {
+// Crear un contexto para manejar la apertura del diálogo desde componentes externos
+type AppointmentDialogContextType = {
+  openDialog: () => void;
+};
+
+const AppointmentDialogContext = createContext<AppointmentDialogContextType | undefined>(undefined);
+
+// Hook personalizado para acceder al contexto
+export function useAppointmentDialog() {
+  const context = useContext(AppointmentDialogContext);
+  if (context === undefined) {
+    throw new Error('useAppointmentDialog debe ser usado dentro de un AppointmentDialogProvider');
+  }
+  return context;
+}
+
+// Proveedor del contexto
+export function AppointmentDialogProvider({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  
+  const openDialog = () => {
+    setOpen(true);
+  };
+  
+  return (
+    <AppointmentDialogContext.Provider value={{ openDialog }}>
+      {children}
+    </AppointmentDialogContext.Provider>
+  );
+}
+
+// Define una interfaz que extienda Window
+declare global {
+  interface Window {
+    openAppointmentDialog?: (clientName?: string) => void;
+  }
+}
+
+export function MakeAppointmentDialog({ defaultClientName }: { defaultClientName?: string }) {
   const [open, setOpen] = useState(false)
   const [activeStep, setActiveStep] = useState(1)
   const [clientId, setClientId] = useState('')
@@ -62,6 +101,51 @@ export function MakeAppointmentDialog() {
   const { data: clients } = useGetClients()
   const { data: services } = useGetServices()
   const queryClient = useQueryClient()
+
+  const [isCreatingClient, setIsCreatingClient] = useState(false)
+  const [newClientName, setNewClientName] = useState('')
+  const createClientMutation = useCreateClient()
+
+  // Efecto para manejar la apertura del diálogo y la creación automática de clientes
+  useEffect(() => {
+    window.openAppointmentDialog = (clientName?: string) => {
+      setOpen(true);
+      
+      if (clientName) {
+        // Buscar si el cliente ya existe
+        const existingClient = clients?.find(client => 
+          client.name.toLowerCase() === clientName.toLowerCase());
+        
+        if (existingClient) {
+          // Si existe, seleccionarlo
+          setClientId(existingClient.id);
+        } else {
+          // Si no existe, crear automáticamente
+          createNewClient(clientName);
+        }
+      }
+    };
+    
+    return () => {
+      delete window.openAppointmentDialog;
+    };
+  }, [clients, createClientMutation]);
+
+  // Función para crear un nuevo cliente
+  const createNewClient = async (name: string) => {
+    if (!name.trim()) return;
+    
+    try {
+      const result = await createClientMutation.mutateAsync(name);
+      if (result?.id) {
+        setClientId(result.id);
+        toast.success(`Cliente ${name} creado automáticamente`);
+      }
+    } catch (error) {
+      console.error('Error al crear el cliente:', error);
+      toast.error('No se pudo crear el cliente automáticamente');
+    }
+  };
 
   // Reset slot and employee when date or service changes
   useEffect(() => {
@@ -198,7 +282,7 @@ export function MakeAppointmentDialog() {
       if (!newOpen) resetForm()
     }}>
       <DialogTrigger asChild>
-        <Button className="w-full bg-primary hover:bg-primary/90 transition-all duration-300">
+        <Button className="w-full bg-primary hover:bg-primary/90 transition-all duration-300 appointment-dialog-trigger">
           Agendar Cita
         </Button>
       </DialogTrigger>
