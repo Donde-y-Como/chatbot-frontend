@@ -167,7 +167,7 @@ export function EventBookingModal({
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
-                          className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-background shadow-md"
+                          className="absolute z-10 mt-1 max-h-48 w-full overflow-hiden rounded-md border bg-background shadow-md"
                         >
                           <Command>
                             <CommandInput
@@ -178,6 +178,7 @@ export function EventBookingModal({
                             <CommandList>
                               <CommandEmpty>No se encontraron clientes.</CommandEmpty>
                               <CommandGroup>
+                              <div className='max-h-[30vh] overflow-auto'>
                                 {filteredClients.map((client) => (
                                   <CommandItem
                                     key={client.id}
@@ -197,6 +198,7 @@ export function EventBookingModal({
                                     <span>{client.name}</span>
                                   </CommandItem>
                                 ))}
+                                </div>
                               </CommandGroup>
                             </CommandList>
                           </Command>
