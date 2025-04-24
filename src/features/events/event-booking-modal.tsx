@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -18,6 +17,7 @@ import { z } from 'zod';
 import { ClientPrimitives } from '../clients/types';
 import { useGetEventAvailableDates } from './hooks/useGetEventAvailableDates';
 import { Booking } from './types';
+import { CreateOrSelectClient } from '@/features/appointments/components/CreateOrSelectClient.tsx'
 
 const bookingFormSchema = z.object({
   clientId: z.string().min(1, { message: 'Debes seleccionar un cliente.' }),
@@ -60,16 +60,35 @@ export function EventBookingModal({
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: { clientId: '', participants: 1 },
   });
 
+  const [clientId, setClientId] = useState('');
+
+  // Actualizar clientId en el formulario cuando cambia
+  useEffect(() => {
+    if (clientId) {
+      setValue('clientId', clientId);
+    }
+  }, [clientId, setValue]);
+
+  // Reiniciar el formulario cuando se abre o cierra el modal
+  useEffect(() => {
+    if (!open) {
+      reset({ clientId: '', participants: 1 });
+      setClientId('');
+    }
+  }, [open, reset, setClientId]);
+
   const onSubmit = async (data: BookingFormValues) => {
     if (!selectedDate) return;
     await onSaveBooking({ ...data, date: selectedDate });
     reset();
+    setClientId(''); // Limpiamos el estado local también
   };
 
   const handleRemoveBooking = async (booking: Booking) => {
@@ -84,24 +103,7 @@ export function EventBookingModal({
     );
   }, [event, selectedDate]);
 
-  // For searching/selecting clients.
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  const filteredClients = useMemo(() => {
-    if (!clients) return [];
-    return clients.filter((client) =>
-      client.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [clients, searchQuery]);
-
-  // When a client is selected from the search, update the form value.
-  const handleSelectClient = (clientId: string) => {
-    // We update the form control manually.
-    reset({ clientId, participants: 1 });
-    setIsSearchOpen(false);
-    setSearchQuery('');
-  };
 
   if (isEventLoading || isClientsLoading) {
     return (
@@ -150,65 +152,15 @@ export function EventBookingModal({
               <Controller
                 control={control}
                 name="clientId"
-                render={({ field }) => (
-                  <div className="relative">
-                    <Input
-                      {...field}
-                      placeholder="Buscar cliente..."
-                      value={
-                        filteredClients.find((client) => client.id === field.value)?.name || searchQuery
-                      }
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onFocus={() => setIsSearchOpen(true)}
-                    />
-                    <AnimatePresence>
-                      {isSearchOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-background shadow-md"
-                        >
-                          <Command>
-                            <CommandInput
-                              placeholder="Buscar por nombre..."
-                              value={searchQuery}
-                              onValueChange={setSearchQuery}
-                            />
-                            <CommandList>
-                              <CommandEmpty>No se encontraron clientes.</CommandEmpty>
-                              <CommandGroup>
-                                {filteredClients.map((client) => (
-                                  <CommandItem
-                                    key={client.id}
-                                    onSelect={() => handleSelectClient(client.id)}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <Avatar className="h-8 w-8">
-                                      <AvatarFallback>
-                                        {client.name
-                                          .split(' ')
-                                          .map((w) => w[0])
-                                          .join('')
-                                          .toUpperCase()
-                                          .slice(0, 2)}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <span>{client.name}</span>
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                render={() => (
+                  <>
+                    <CreateOrSelectClient value={clientId} onChange={setClientId} />
+                    {errors.clientId && (
+                      <p className="text-sm text-red-600">{errors.clientId.message}</p>
+                    )}
+                  </>
                 )}
               />
-              {errors.clientId && (
-                <p className="text-sm text-red-600">{errors.clientId.message}</p>
-              )}
             </div>
 
             <div className="flex flex-col gap-2">
