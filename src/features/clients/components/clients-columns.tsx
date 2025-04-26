@@ -6,12 +6,20 @@ import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import { DataTableRowActions } from './data-table-row-actions'
 import { ClientPrimitives, PlatformName, Tag } from '../types'
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconBrandWhatsapp,
+} from '@tabler/icons-react'
+import { cn } from '@/lib/utils'
 
 // Helper function para mostrar nombres de plataformas en español
 function getPlatformDisplayName(platformName: PlatformName): string {
   switch (platformName) {
     case PlatformName.Whatsapp:
       return 'WhatsApp'
+    case PlatformName.WhatsappWeb:
+      return 'WhatsApp Web'
     case PlatformName.Facebook:
       return 'Facebook'
     case PlatformName.Instagram:
@@ -68,15 +76,34 @@ export const createColumns = (tags: Tag[] = []): ColumnDef<ClientPrimitives>[] =
       
       return (
         <div className='flex flex-wrap gap-1'>
-          {platformIdentities.map((identity, index) => (
+          {platformIdentities.map((identity, index) => {
+            // Determinar qué icono mostrar según la plataforma
+            const PlatformIcon = {
+              [PlatformName.Whatsapp]: IconBrandWhatsapp,
+              [PlatformName.WhatsappWeb]: IconBrandWhatsapp,
+              [PlatformName.Facebook]: IconBrandFacebook,
+              [PlatformName.Instagram]: IconBrandInstagram,
+            }[identity.platformName] || null;
+            
+            return (
             <Badge 
               key={index}
               variant='outline' 
-              className='capitalize text-sm'
+              className='capitalize text-sm flex items-center gap-1'
             >
+              {PlatformIcon && (
+                <PlatformIcon 
+                  size={14}
+                  className={cn(
+                    (identity.platformName === PlatformName.Whatsapp || identity.platformName === PlatformName.WhatsappWeb) && 'text-green-500',
+                    identity.platformName === PlatformName.Facebook && 'text-blue-500',
+                    identity.platformName === PlatformName.Instagram && 'text-pink-500'
+                  )}
+                />
+              )}
               {getPlatformDisplayName(identity.platformName)}: {identity.profileName}
             </Badge>
-          ))}
+          )})}
         </div>
       )
     },

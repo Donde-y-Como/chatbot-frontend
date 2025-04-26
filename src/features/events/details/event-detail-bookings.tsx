@@ -7,7 +7,8 @@ import { PhoneIcon as WhatsApp, Calendar, Users, Clipboard, Clock } from 'lucide
 import { useMemo } from "react"
 import { useGetClients } from "../../appointments/hooks/useGetClients"
 import { PlatformName } from "../../chats/ChatTypes"
-import { EventWithBookings, Booking } from "../types"
+import { EventWithBookings } from "../types"
+import { ClientChatButton } from "../components/client-chat-button"
 import { formatDuration, intervalToDuration, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 
@@ -214,10 +215,13 @@ export function EventDetailBookings({ event }: EventDetailBookingsProps) {
                       </div>
 
                       <div className="bg-muted p-4 rounded-lg">
-                        <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
-                          <Clipboard className="h-4 w-4" />
-                          Información adicional
-                        </h3>
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+                            <Clipboard className="h-4 w-4" />
+                            Información adicional
+                          </h3>
+                          <ClientChatButton clientId={booking.clientId} />
+                        </div>
                         <div className="space-y-3">
                           <div className="text-sm">
                             <span className="text-muted-foreground block mb-1">Evento:</span>

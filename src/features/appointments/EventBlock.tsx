@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
 import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button';
+import { ClientChatButton } from './components/client-chat-button';
 import {
   Dialog,
   DialogClose,
@@ -215,6 +216,9 @@ export function EventBlock({
               </article>
               <span>{client.name}</span>
             </section>
+            <div className="mt-2">
+              <ClientChatButton clientId={client.id} />
+            </div>
           </div>
         </div>
 
