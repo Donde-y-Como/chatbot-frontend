@@ -5,6 +5,7 @@ import {
   IconNotification,
   IconTool,
   IconUser,
+  IconMessage
 } from '@tabler/icons-react'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx'
@@ -68,5 +69,10 @@ const sidebarNavItems = [
     title: 'Display',
     icon: <IconBrowserCheck size={18} />,
     href: '/settings/display',
+  },
+  {
+    title: 'Respuestas Rápidas',
+    icon: <IconMessage size={18} />,
+    href: '/settings/quick-responses',
   },
 ]
