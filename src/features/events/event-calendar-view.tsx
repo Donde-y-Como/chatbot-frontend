@@ -158,19 +158,49 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
     return <div className="grid grid-cols-7 mb-2 bg-background z-10">{weekDays}</div>
   }
 
-  const renderEventItem = (event: EventPrimitives) => {
+  const renderEventItem = (event: EventPrimitives, currentDay: Date) => {
     const eventBookings = bookings.filter(b => b.eventId === event.id)
     const totalParticipants = eventBookings.reduce((sum, booking) => sum + booking.participants, 0)
-    const startTime = format(parseISO(event.duration.startAt), 'HH:mm')
+    const eventStart = parseISO(event.duration.startAt)
+    const eventEnd = parseISO(event.duration.endAt)
+    
+    // Check if this is the first day of the event
+    const isFirstDay = isSameDay(eventStart, currentDay)
+    // Check if this is the last day of the event
+    const isLastDay = isSameDay(eventEnd, currentDay)
+    // Check if this event spans multiple days
+    const isMultiDayEvent = !isSameDay(eventStart, eventEnd)
+    
+    // Show start time only on the first day
+    const timeDisplay = isFirstDay ? format(eventStart, 'HH:mm') : ''
+    
+    // Visual indicators for multi-day events
+    let eventIndicator = ''
+    let eventClasses = ''
+    if (isMultiDayEvent) {
+      if (!isFirstDay && !isLastDay) {
+        // Middle day of a multi-day event
+        eventIndicator = '… '
+        eventClasses = 'bg-secondary/90'
+      } else if (!isFirstDay && isLastDay) {
+        // Last day of a multi-day event
+        eventIndicator = '✔ '
+        eventClasses = 'bg-secondary/90'
+      } else if (isFirstDay && !isLastDay) {
+        // First day of a multi-day event
+        eventIndicator = '→ '
+        eventClasses = 'bg-secondary'
+      }
+    }
 
     return (
       <Popover key={event.id}>
         <PopoverTrigger asChild>
           <div
-            className="text-xs bg-secondary p-1 rounded truncate cursor-pointer hover:bg-secondary/80 flex items-center gap-1"
+            className={`text-xs p-1 truncate cursor-pointer hover:opacity-90 flex items-center gap-1 ${eventClasses || 'bg-secondary'} ${isMultiDayEvent ? 'border-l-2 border-primary' : ''} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} ${!isFirstDay && !isLastDay ? '' : 'rounded'}`}
           >
-            <span className="font-medium">{startTime}</span>
-            <span className="truncate flex-1">{event.name}</span>
+            {timeDisplay && <span className="font-medium">{timeDisplay}</span>}
+            <span className="truncate flex-1">{eventIndicator}{event.name}</span>
           </div>
         </PopoverTrigger>
         <PopoverContent className="w-80 p-0">
@@ -182,8 +212,17 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
               <div className="flex items-center text-sm">
                 <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
                 <span>
-                  {format(parseISO(event.duration.startAt), 'HH:mm')} -
-                  {format(parseISO(event.duration.endAt), 'HH:mm')}
+                  {!isSameDay(parseISO(event.duration.startAt), parseISO(event.duration.endAt)) ? (
+                    <>
+                      {format(parseISO(event.duration.startAt), 'dd/MM HH:mm')} -
+                      {format(parseISO(event.duration.endAt), 'dd/MM HH:mm')}
+                    </>
+                  ) : (
+                    <>
+                      {format(parseISO(event.duration.startAt), 'HH:mm')} -
+                      {format(parseISO(event.duration.endAt), 'HH:mm')}
+                    </>
+                  )}
                 </span>
               </div>
               <div className="flex items-center text-sm">
@@ -242,10 +281,14 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
       for (let i = 0; i < 7; i++) {
         formattedDate = format(day, 'd')
 
-        // Encuentra eventos para este día
-        const dayEvents = events.filter(event =>
-          isSameDay(parseISO(event.duration.startAt), day)
-        )
+        // Encuentra eventos para este día (incluyendo eventos multiday)
+        const dayEvents = events.filter(event => {
+          const startDate = parseISO(event.duration.startAt)
+          const endDate = parseISO(event.duration.endAt)
+          
+          // Checks if the current day falls within the event's duration (inclusive)
+          return day >= startDate && day <= endDate
+        })
 
         const isCurrentMonth = isSameMonth(day, monthStart)
         const isToday = isSameDay(day, new Date())
@@ -270,7 +313,7 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
 
             {dayEvents.length > 0 && (
               <div className="space-y-1">
-                {dayEvents.map(event => renderEventItem(event))}
+                {dayEvents.map(event => renderEventItem(event, currentDay))}
               </div>
             )}
           </div>
