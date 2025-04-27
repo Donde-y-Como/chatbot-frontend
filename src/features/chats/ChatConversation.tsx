@@ -5,10 +5,137 @@ import { Message } from '@/features/chats/ChatTypes'
 import { cn } from '@/lib/utils.ts'
 import { Fragment, useEffect, useRef } from 'react'
 import { useMessageGroups } from './hooks/useMessageGroups'
+import { useGetQuickResponses } from '@/features/settings/quickResponse/hooks/useQuickResponses'
+import { QuickResponse } from '@/features/settings/quickResponse/types'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 
 interface ChatConversationProps {
   messages?: Message[]
   mobileSelectedChatId: string | null
+}
+
+/**
+ * QuickResponseDropdown component to display and filter quick responses.
+ * This component is used when typing "/" in the chat input.
+ */
+interface QuickResponseDropdownProps {
+  isOpen: boolean
+  onClose: () => void
+  onSelectResponse: (message: string) => void
+  searchTerm: string
+  selectedIndex?: number | null
+  responses?: QuickResponse[]
+  isLoading?: boolean
+  anchorRef: React.RefObject<HTMLTextAreaElement | null>
+  onSelectionChange?: (index: number | null) => void
+}
+
+export function QuickResponseDropdown({
+  isOpen,
+  onClose,
+  onSelectResponse,
+  searchTerm,
+  selectedIndex = null,
+  responses,
+  isLoading: isLoadingProp,
+  anchorRef,
+  onSelectionChange
+}: QuickResponseDropdownProps) {
+  // Fallback to fetching data directly if responses are not provided through props
+  const { data: quickResponsesData, isLoading: isLoadingData } = useGetQuickResponses()
+  
+  // Use provided responses or fetch them
+  const quickResponses = responses || quickResponsesData
+  const isLoading = isLoadingProp !== undefined ? isLoadingProp : isLoadingData
+  
+  // Filter quick responses based on the search term (text after "/")
+  // Only used if responses are not provided through props
+  const filteredResponses = !responses && quickResponses
+    ? quickResponses.filter(response => 
+        response.shortcut.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        response.message.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : responses || []
+      
+  // Create refs for the selected items
+  const selectedItemRef = useRef<HTMLDivElement>(null)
+  
+  // Effect to scroll selected item into view when selectedIndex changes
+  useEffect(() => {
+    if (selectedItemRef.current) {
+      selectedItemRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'nearest'
+      })
+    }
+  }, [selectedIndex])
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div className="absolute bottom-full left-0 mb-1 w-96 max-h-96 z-50">
+      <div className="bg-popover rounded-md border shadow-md overflow-hidden">
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder="Buscar respuestas rápidas..." 
+            value={searchTerm} 
+            readOnly 
+            className="h-9"
+          />
+          <CommandList className="max-h-80 overflow-auto">
+            <CommandEmpty>No se encontraron respuestas rápidas.</CommandEmpty>
+            {isLoading ? (
+              <div className="p-2 text-sm text-muted-foreground">Cargando respuestas rápidas...</div>
+            ) : (
+              <CommandGroup heading="Respuestas rápidas">
+                {filteredResponses.map((response: QuickResponse, index: number) => {
+                  // Determine if this item is the one that should be highlighted
+                  const isSelected = selectedIndex === index;
+                  
+                  return (
+                    <CommandItem
+                      key={response.id}
+                      onSelect={() => {
+                        // Update the selected index when clicked
+                        if (onSelectionChange) {
+                          onSelectionChange(index);
+                        }
+                        onSelectResponse(response.message);
+                      }}
+                      className={cn(
+                        "flex flex-col items-start gap-1 py-3",
+                        isSelected ? "bg-accent" : ""
+                      )}
+                      onMouseEnter={() => {
+                        // Update the selected index on hover
+                        if (onSelectionChange) {
+                          onSelectionChange(index);
+                        }
+                      }}
+                      onClick={() => {
+                        // Ensure the index is set on click too (for touch screens)
+                        if (onSelectionChange) {
+                          onSelectionChange(index);
+                        }
+                      }}
+                      // Remove onMouseLeave to prevent clearing selection when moving to select button
+                      // This avoids the flickering effect when moving between items
+                      ref={isSelected ? selectedItemRef : null}
+                    >
+                      <div className="font-medium">{response.shortcut}</div>
+                      <div className="text-sm text-muted-foreground truncate w-full">
+                        {response.message}
+                      </div>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+      </div>
+    </div>
+  )
 }
 
 export function ChatConversation({
