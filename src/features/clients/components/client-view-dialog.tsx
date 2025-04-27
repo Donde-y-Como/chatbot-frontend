@@ -12,8 +12,11 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Mail, MapPin, Paperclip, Tag, Clock, ExternalLink, FileType } from "lucide-react"
 import { format } from "date-fns"
-import { ClientPrimitives } from "../types"
+import { ClientPrimitives, PlatformName } from '../types'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { IconBrandFacebook, IconBrandInstagram, IconBrandWhatsapp } from '@tabler/icons-react'
+import { cn } from '@/lib/utils.ts'
+import { PlatformChatButton } from './platform-chat-button'
 
 interface ClientViewDialogProps {
   currentClient?: ClientPrimitives
@@ -104,7 +107,47 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                         {currentClient.platformIdentities.map((identity, index) => (
                           <div key={index} className="border rounded-md p-3">
                             <div className="flex items-center justify-between mb-2">
-                              <Badge className="mr-2">{identity.platformName}</Badge>
+                              <Badge 
+                                variant="outline" 
+                                className="capitalize text-sm flex items-center gap-1 cursor-pointer hover:bg-accent"
+                                onClick={() => {
+                                  const chatButton = document.getElementById(`platform-detail-${currentClient.id}-${identity.platformName}`);
+                                  if (chatButton) {
+                                    chatButton.click();
+                                  }
+                                }}
+                              >
+                                {(() => {
+                                  // Determinar qué icono mostrar según la plataforma
+                                  const PlatformIcon = {
+                                    [PlatformName.Whatsapp]: IconBrandWhatsapp,
+                                    [PlatformName.WhatsappWeb]: IconBrandWhatsapp,
+                                    [PlatformName.Facebook]: IconBrandFacebook,
+                                    [PlatformName.Instagram]: IconBrandInstagram,
+                                  }[identity.platformName] || null;
+                                  
+                                  return PlatformIcon && (
+                                    <PlatformIcon
+                                      size={14}
+                                      className={cn(
+                                        (identity.platformName === PlatformName.Whatsapp ||
+                                          identity.platformName === PlatformName.WhatsappWeb) &&
+                                        'text-green-500',
+                                        identity.platformName === PlatformName.Facebook && 'text-blue-500',
+                                        identity.platformName === PlatformName.Instagram && 'text-pink-500',
+                                      )}
+                                    />
+                                  );
+                                })()}
+                                <span className="ml-1">{identity.platformName}</span>
+                                <PlatformChatButton 
+                                  clientId={currentClient.id}
+                                  platformName={identity.platformName}
+                                  profileName={identity.profileName}
+                                  id={`platform-detail-${currentClient.id}-${identity.platformName}`}
+                                  className="hidden"
+                                />
+                              </Badge>
                             </div>
                             <div className="flex items-center">
                               <span className="font-medium">{identity.profileName}</span>
@@ -123,7 +166,7 @@ export function ClientViewDialog({ currentClient, open, onOpenChange }: ClientVi
                   <CardContent className="p-4 space-y-3">
                     <h3 className="font-semibold text-lg">Etiquetas</h3>
                     <Separator />
-                    
+
                     {currentClient.tagIds && currentClient.tagIds.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {currentClient.tagIds.map((tagId, index) => (

@@ -1,6 +1,7 @@
 import { DataTableColumnHeader } from '@/components/tables/data-table-column-header.tsx'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
+import { Button } from '@/components/ui/button'
 import { ColumnDef } from '@tanstack/react-table'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale/es'
@@ -12,6 +13,7 @@ import {
   IconBrandWhatsapp,
 } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
+import { PlatformChatButton } from './platform-chat-button'
 
 // Helper function para mostrar nombres de plataformas en español
 function getPlatformDisplayName(platformName: PlatformName): string {
@@ -86,11 +88,24 @@ export const createColumns = (tags: Tag[] = []): ColumnDef<ClientPrimitives>[] =
             }[identity.platformName] || null;
             
             return (
-            <Badge 
+            <Button 
               key={index}
-              variant='outline' 
-              className='capitalize text-sm flex items-center gap-1'
+              variant='ghost' 
+              className='capitalize text-sm flex items-center gap-1 h-8 px-2 rounded-md border'
+              onClick={() => {
+                const chatButton = document.getElementById(`platform-chat-${row.original.id}-${identity.platformName}`);
+                if (chatButton) {
+                  chatButton.click();
+                }
+              }}
             >
+              <PlatformChatButton 
+                clientId={row.original.id}
+                platformName={identity.platformName}
+                profileName={identity.profileName}
+                id={`platform-chat-${row.original.id}-${identity.platformName}`}
+                className="hidden"
+              />
               {PlatformIcon && (
                 <PlatformIcon 
                   size={14}
@@ -101,8 +116,8 @@ export const createColumns = (tags: Tag[] = []): ColumnDef<ClientPrimitives>[] =
                   )}
                 />
               )}
-              {getPlatformDisplayName(identity.platformName)}: {identity.profileName}
-            </Badge>
+              {getPlatformDisplayName(identity.platformName)}
+            </Button>
           )})}
         </div>
       )
