@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import { useIsMobile } from '@/hooks/use-mobile.tsx'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { Main } from '@/components/layout/main'
 import { ChatContent } from '@/features/chats/ChatContent'
-import { chatService } from '@/features/chats/ChatService'
-import EmptyChatSelectedState from '@/features/chats/EmptyChatSelectedState.tsx'
+import { chatService } from '@/features/chats/ChatService.ts'
+import EmptyChatSelectedState from '@/features/chats/EmptyChatSelectedState'
 import { ChatBarUnlimited } from './chatBarUnlimited'
 
 const route = getRouteApi('/_authenticated/chats/')
@@ -13,33 +13,40 @@ const route = getRouteApi('/_authenticated/chats/')
 export default function Chats() {
   const searchParams = route.useSearch()
   const navigate = route.useNavigate()
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
-  const [mobileSelectedChatId, setMobileSelectedChatId] = useState<
-    string | null
-  >(null)
   const isMobile = useIsMobile()
+  
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
+  const [mobileSelectedChatId, setMobileSelectedChatId] = useState<string | null>(null)
 
-  const { data: chats } = useQuery({
+  // Fetch all chats
+  const { data: chats = [] } = useQuery({
     queryKey: ['chats'],
     queryFn: () => chatService.getChats(),
   })
 
+  // Fetch messages for selected chat
   const { data: chatMessages, isLoading: isMessagesLoading } = useQuery({
     queryKey: ['chat', selectedChatId],
-    queryFn: () => chatService.getChatById(selectedChatId as string),
+    queryFn: () => {
+      if (!selectedChatId) return null
+      return chatService.getChatById(selectedChatId)
+    },
     enabled: !!selectedChatId,
   })
 
+  // Handle URL sync and initial chat selection
   useEffect(() => {
-    if (chats?.length) {
-      const urlChatId = searchParams.chatId
-      const isValidChat = urlChatId && chats.some((c) => c.id === urlChatId)
+    if (!chats.length) return
 
-      setSelectedChatId(isValidChat ? urlChatId : null)
-      setMobileSelectedChatId(isValidChat ? urlChatId : null)
-    }
+    const urlChatId = searchParams.chatId
+    const isValidChat = urlChatId && chats.some((chat) => chat.id === urlChatId)
+    const chatIdToUse = isValidChat ? urlChatId : null
+
+    setSelectedChatId(chatIdToUse)
+    setMobileSelectedChatId(chatIdToUse)
   }, [chats, searchParams.chatId])
 
+  // Handle back button click in mobile view
   const handleBackClick = () => {
     setMobileSelectedChatId(null)
     void navigate({
@@ -48,9 +55,13 @@ export default function Chats() {
     })
   }
 
+  // Determine which component to show based on selection state and device type
+  const showEmptyState = selectedChatId === null && !isMobile
+  const showChatContent = !showEmptyState
+
   return (
     <Main fixed>
-      <section className='flex h-full gap-2'>
+      <section className="flex h-full gap-2">
         <ChatBarUnlimited
           navigate={navigate}
           selectedChatId={selectedChatId}
@@ -58,13 +69,13 @@ export default function Chats() {
           setMobileSelectedChatId={setMobileSelectedChatId}
         />
 
-        {selectedChatId == null && !isMobile ? (
+        {showEmptyState ? (
           <EmptyChatSelectedState />
         ) : (
           <ChatContent
             isLoading={isMessagesLoading}
             chatData={chatMessages}
-            selectedChatId={selectedChatId as string}
+            selectedChatId={selectedChatId || ''}
             mobileSelectedChatId={mobileSelectedChatId}
             isMobileVisible={!!mobileSelectedChatId}
             onBackClick={handleBackClick}

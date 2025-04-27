@@ -14,7 +14,7 @@ import {
 
 interface ChatContentProps {
   isLoading: boolean
-  chatData?: ChatMessages
+  chatData?: ChatMessages | undefined | null
   selectedChatId: string
   mobileSelectedChatId: string | null
   isMobileVisible: boolean
