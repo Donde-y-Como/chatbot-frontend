@@ -1,7 +1,7 @@
 import { useClients } from "../context/clients-context"
 import { ClientActionDialog } from "./client-action-dialog"
 import { ClientDeleteDialog } from "./client-delete-dialog"
-import { ClientViewDialog } from "./client-view-dialog"
+import { ClientViewDialogCopy } from "./client-view-dialogCopy"
 
 export function ClientDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useClients()
@@ -27,7 +27,7 @@ export function ClientDialogs() {
             currentClient={currentRow}
           />
 
-          <ClientViewDialog
+          <ClientViewDialogCopy
             key={`client-view-${currentRow.id}`}
             open={open === 'view'}
             onOpenChange={() => {
