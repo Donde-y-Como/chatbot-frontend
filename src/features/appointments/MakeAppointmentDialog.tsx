@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button.tsx'
 import { Calendar } from '@/components/ui/calendar.tsx'
 import { CreateOrSelectClient } from './components/CreateOrSelectClient'
+import { CreateOrSelectService } from './components/CreateOrSelectService'
 import {
   Card,
   CardContent,
@@ -34,6 +35,7 @@ import { appointmentService } from '@/features/appointments/appointmentService.t
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import { useCreateClient } from '@/features/appointments/hooks/useCreateClient.ts'
+import { useCreateService } from '@/features/appointments/hooks/useCreateService.ts'
 import {
   Appointment,
   EmployeeAvailable,
@@ -66,14 +68,17 @@ export function useAppointmentDialog() {
 
 // Proveedor del contexto
 export function AppointmentDialogProvider({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [defaultClient, setDefaultClient] = useState<string | undefined>(undefined);
   
-  const openDialog = () => {
-    setOpen(true);
+  const openDialog = (clientName?: string) => {
+    setDefaultClient(clientName);
+    setDialogOpen(true);
   };
   
   return (
     <AppointmentDialogContext.Provider value={{ openDialog }}>
+      {dialogOpen && <MakeAppointmentDialog defaultClientName={defaultClient} open={dialogOpen} setOpen={setDialogOpen} />}
       {children}
     </AppointmentDialogContext.Provider>
   );
@@ -86,8 +91,18 @@ declare global {
   }
 }
 
-export function MakeAppointmentDialog({ defaultClientName }: { defaultClientName?: string }) {
-  const [open, setOpen] = useState(false)
+interface MakeAppointmentDialogProps {
+  defaultClientName?: string;
+  open?: boolean;
+  setOpen?: (open: boolean) => void;
+}
+
+export function MakeAppointmentDialog({ defaultClientName, open: externalOpen, setOpen: externalSetOpen }: MakeAppointmentDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  
+  // Use either external or internal state for controlling the dialog
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = externalSetOpen || setInternalOpen;
   const [activeStep, setActiveStep] = useState(1)
   const [clientId, setClientId] = useState('')
   const [serviceId, setServiceId] = useState('')
@@ -131,7 +146,7 @@ export function MakeAppointmentDialog({ defaultClientName }: { defaultClientName
     };
   }, [clients, createClientMutation]);
 
-  // Función para crear un nuevo cliente
+  // Function to create a new client
   const createNewClient = async (name: string) => {
     if (!name.trim()) return;
     
@@ -146,6 +161,7 @@ export function MakeAppointmentDialog({ defaultClientName }: { defaultClientName
       toast.error('No se pudo crear el cliente automáticamente');
     }
   };
+
 
   // Reset slot and employee when date or service changes
   useEffect(() => {
@@ -265,7 +281,7 @@ export function MakeAppointmentDialog({ defaultClientName }: { defaultClientName
     ? `${formatSlotHour(JSON.parse(selectedSlot).startAt)} - ${formatSlotHour(JSON.parse(selectedSlot).endAt)}`
     : null
 
-  // Función para determinar si se han rellenado campos
+  // Function to determine if fields have been filled
   const hasFilledFields = () => {
     return clientId !== '' || serviceId !== '' || selectedSlot !== null || selectedEmployeeIds.length > 0
   }
@@ -346,18 +362,7 @@ export function MakeAppointmentDialog({ defaultClientName }: { defaultClientName
 
                 <div>
                   <label className="text-sm font-medium mb-1 block">Servicio</label>
-                  <Select value={serviceId} onValueChange={setServiceId}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona un servicio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {services?.map((service) => (
-                        <SelectItem key={service.id} value={service.id}>
-                          {service.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <CreateOrSelectService value={serviceId} onChange={setServiceId} />
                 </div>
               </div>
 
