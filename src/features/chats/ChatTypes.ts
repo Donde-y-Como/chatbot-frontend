@@ -16,7 +16,7 @@ export type Chat = {
   newClientMessagesCount: number
 }
 
-export type MessageRole = 'business' | 'user' | 'assistant'
+export type MessageRole = 'business' | 'user' | 'assistant' | 'system'
 
 export type Message = {
   id: string
@@ -24,6 +24,7 @@ export type Message = {
   role: MessageRole
   timestamp: number
   media: Media | null
+  isExpiredNotice?: boolean
 }
 
 export type Thread = {
