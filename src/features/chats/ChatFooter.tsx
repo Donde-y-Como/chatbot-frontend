@@ -17,6 +17,7 @@ import { MediaUpload } from '@/features/chats/MediaUpload.tsx'
 import { EmojiPickerButton } from '@/features/chats/components/EmojiPickerButton'
 import { QuickResponseDropdown } from './ChatConversation.tsx'
 import { useQuickResponsesForChat } from './hooks/useQuickResponsesForChat'
+// No longer using ExpiredChatMessage component
 
 const ChatFooter = memo(
   ({
@@ -28,6 +29,8 @@ const ChatFooter = memo(
   }) => {
     const [newMessage, setNewMessage] = useState('')
     const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+        // No longer checking for expired messages in ChatFooter
 
     // Use the custom hook for quick responses
     const {
@@ -240,6 +243,8 @@ const ChatFooter = memo(
       },
       [adjustTextareaHeight]
     )
+
+    // All chat messages are shown in the chat area, including the expiration message
 
     return (
       <form

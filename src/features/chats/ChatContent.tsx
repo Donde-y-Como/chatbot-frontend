@@ -1,12 +1,14 @@
-import { useMemo } from 'react'
+import { useMemo, useCallback, useEffect, useState } from 'react'
+import { uid } from 'uid'
 import { differenceInHours } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import {
   ChatConversation,
   ChatConversationSkeleton,
 } from '@/features/chats/ChatConversation'
 import ChatFooter from '@/features/chats/ChatFooter.tsx'
-import { ChatMessages } from '@/features/chats/ChatTypes.ts'
+import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 import {
   ConversationHeader,
   ConversationHeaderSkeleton,
@@ -47,6 +49,62 @@ export function ChatContent({
     const now = Date.now()
     return differenceInHours(now, lastTimestamp) < 24
   }, [chatData])
+
+  // Get the timestamp of the last message for the chat expiration check
+  const lastMessageTimestamp = useMemo(() => {
+    if (!chatData || !chatData.messages || chatData.messages.length === 0) return undefined
+    return chatData.messages[chatData.messages.length - 1].timestamp
+  }, [chatData])
+
+  // State to track if we've already sent an expiration message
+  const [hasSentExpirationMessage, setHasSentExpirationMessage] = useState(false)
+  
+  // Check if chat has expired (more than 24 hours since last message)
+  const isChatExpired = useMemo(() => {
+    if (!lastMessageTimestamp) return false
+    
+    const twentyFourHoursInMs = 24 * 60 * 60 * 1000
+    const now = Date.now()
+    
+    return now - lastMessageTimestamp > twentyFourHoursInMs
+  }, [lastMessageTimestamp])
+  
+  // Check if there's already an expiration message in the chat
+  const hasExpirationMessage = useMemo(() => {
+    if (!chatData || !chatData.messages) return false
+    return chatData.messages.some(msg => msg.isExpiredNotice)
+  }, [chatData])
+  
+  // Use the WebSocket to send messages
+  const { sendMessage: sendToWebSocket } = useWebSocket()
+  
+  // Send expiration message if needed
+  useEffect(() => {
+    // Only send if: 
+    // 1. Chat is expired 
+    // 2. We have chat data 
+    // 3. There's no existing expiration message 
+    // 4. We haven't sent one in this session
+    if (isChatExpired && chatData && !hasExpirationMessage && !hasSentExpirationMessage && canSendMessages) {
+      const expirationMessage: Message = {
+        id: uid(),
+        content: 'Este chat ha estado inactivo por más de 24 horas. Por motivos de seguridad y privacidad, la conversación ha sido archivada automáticamente. Si necesitas continuar la conversación, puedes enviar un nuevo mensaje.',
+        role: 'system',
+        timestamp: Date.now(),
+        media: null,
+        isExpiredNotice: true
+      }
+      
+      // Send message via WebSocket
+      sendToWebSocket({
+        conversationId: selectedChatId,
+        message: expirationMessage
+      })
+      
+      // Mark that we've sent the message
+      setHasSentExpirationMessage(true)
+    }
+  }, [isChatExpired, chatData, hasExpirationMessage, hasSentExpirationMessage, canSendMessages, selectedChatId, sendToWebSocket])
 
   return (
     <div
