@@ -18,7 +18,7 @@ import { BookUserIcon, CalendarFold, Command, PanelLeft } from 'lucide-react'
 import * as React from 'react'
 import { ComponentProps } from 'react'
 import { useUnreadChats } from './data/useUnreadChats'
-import { SidebarData } from './types'
+import { SidebarData, NavItem } from './types'
 import { useGetUser } from './hooks/useGetUser'
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
@@ -79,11 +79,27 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   React.useEffect(() => {
     if (unreadCount !== undefined) {
       setData(prev => {
-        const newData = prev;
-        const chatsItem = newData.navGroups[0].items.find(item => item.title === 'Chats');
-        if (chatsItem) {
-          chatsItem.badge = unreadCount.toString();
+        // Crear copias superficiales para mantener la inmutabilidad sin perder referencias a componentes
+        const newData = { ...prev };
+        newData.navGroups = [...prev.navGroups];
+        
+        // Crear copia del primer grupo de navegación
+        newData.navGroups[0] = {
+          ...newData.navGroups[0],
+          items: [...newData.navGroups[0].items],
+        };
+        
+        // Encontrar el índice del elemento Chats
+        const chatItemIndex = newData.navGroups[0].items.findIndex(item => item.title === 'Chats');
+        
+        // Si se encuentra, actualizar solo ese elemento manteniendo todas sus propiedades
+        if (chatItemIndex !== -1) {
+          newData.navGroups[0].items[chatItemIndex] = {
+            ...newData.navGroups[0].items[chatItemIndex],
+            badge: unreadCount.toString(),
+          };
         }
+        
         return newData;
       });
     }
