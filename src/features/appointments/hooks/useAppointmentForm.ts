@@ -8,6 +8,7 @@ import {
   EmployeeAvailable,
   MinutesTimeRange,
 } from '@/features/appointments/types.ts'
+import { ClientPrimitives } from '@/features/clients/types'
 import { now } from '@internationalized/date'
 import { useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
@@ -190,7 +191,7 @@ export function useAppointmentForm(
   }
 
   // Get selected client and service objects
-  const selectedClient = clients?.find(client => client.id === clientId)
+  const selectedClient: ClientPrimitives | undefined = clients?.find(client => client.id === clientId)
   const selectedService = services?.find(service => service.id === serviceId)
   
   // Get employees for selected slot

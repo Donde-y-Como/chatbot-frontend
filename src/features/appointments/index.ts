@@ -13,3 +13,7 @@ export { useAppointmentForm } from './hooks/useAppointmentForm'
 
 // Export utilities
 export * from './utils/formatters'
+
+// Default export for backward compatibility
+import { MakeAppointmentDialog } from './components/MakeAppointmentDialog'
+export default MakeAppointmentDialog
