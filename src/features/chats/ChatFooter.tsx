@@ -21,12 +21,17 @@ import ExpiredChatTemplates from './ExpiredChatTemplates'
 
 const ChatFooter = memo(
   ({
+    isWhatsAppChat,
     selectedChatId,
     canSendMessage,
   }: {
+    isWhatsAppChat:boolean
     selectedChatId: string
     canSendMessage: boolean
   }) => {
+    const queryClient = useQueryClient()
+    // Get chat data to determine the platform type
+  
     const [newMessage, setNewMessage] = useState('')
     const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -64,8 +69,6 @@ const ChatFooter = memo(
         textareaRef.current.style.height = '32px' // reset to h-8
       }
     }, [newMessage])
-
-    const queryClient = useQueryClient()
     const { sendMessage: sendToWebSocket } = useWebSocket()
     const sendMessageMutation = useMutation({
       mutationKey: ['send-message'],
@@ -297,7 +300,12 @@ const ChatFooter = memo(
             </>
           ) : (
             <div className='w-full'>
-              <ExpiredChatTemplates selectedChatId={selectedChatId} />
+              {/* Only show ExpiredChatTemplates for WhatsApp chats, not WhatsApp Web or other platforms */}
+              {isWhatsAppChat ? (
+                <ExpiredChatTemplates selectedChatId={selectedChatId} />
+              ) : (
+                <p className='text-sm opacity-60 italic p-2'>Esta conversación ha expirado.</p>
+              )}
             </div>
           )}
         </div>

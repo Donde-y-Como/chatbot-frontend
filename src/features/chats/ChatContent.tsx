@@ -53,6 +53,16 @@ export function ChatContent({
     return differenceInHours(now, lastTimestamp) < 24
   }, [chatData])
 
+  const isWhatsAppChat= useMemo(()=>{
+    if(!chatData) return false 
+
+    if (chatData.platformName === 'whatsapp') {
+      return true
+    }
+
+    return false
+  },[chatData])
+
   return (
     <div
       className={cn(
@@ -81,6 +91,7 @@ export function ChatContent({
         )}
 
         <ChatFooter
+          isWhatsAppChat={isWhatsAppChat}
           selectedChatId={selectedChatId}
           canSendMessage={canSendMessages}
         />
