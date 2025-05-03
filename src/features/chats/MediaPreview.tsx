@@ -34,7 +34,7 @@ export const MediaPreview: React.FC<MediaProps> = ({ media }) => {
     }
   }
 
-  if (media.type === 'document') {
+  if (media.type === 'document' || media.type === "documentWithCaption") {
     return (
       <div className='flex items-center gap-2 py-1'>
         <span className='text-foreground'>📎</span>

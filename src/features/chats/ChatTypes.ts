@@ -24,7 +24,6 @@ export type Message = {
   role: MessageRole
   timestamp: number
   media: Media | null
-  isExpiredNotice?: boolean
 }
 
 export type Thread = {
@@ -52,7 +51,7 @@ export enum PlatformName {
 }
 
 export type Media = {
-  type: 'image' | 'video' | 'audio' | 'document' | 'sticker'
+  type: 'image' | 'video' | 'audio' | 'document' | 'sticker' | 'documentWithCaption'
   url: string
 }
 
