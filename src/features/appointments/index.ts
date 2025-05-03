@@ -13,3 +13,6 @@ export { useAppointmentForm } from './hooks/useAppointmentForm'
 
 // Export utilities
 export * from './utils/formatters'
+
+// Export default component
+export { default } from './index.tsx'
