@@ -16,3 +16,4 @@ export * from './utils/formatters'
 
 // Export default component
 export { default } from './index.tsx'
+
