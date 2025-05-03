@@ -1,12 +1,12 @@
 import { api } from '@/api/axiosInstance.ts'
+import { UserData } from '@/features/auth/types.ts'
+import { PlatformName } from '@/features/clients/types.ts'
 import {
   baileysApi,
   CreateSessionResponse,
   GetQRCodeResponse,
   QRCodeData,
-  SessionData,
 } from '@/features/settings/whatsappWeb/types.ts'
-import { UserData } from '@/features/auth/types.ts'
 
 export const baileysService = {
   createSession: async (
@@ -16,7 +16,7 @@ export const baileysService = {
       userId: phoneNumber,
     })
 
-    if (response.status >= 400) {
+    if (response.status >= 400 || !response.data.success) {
       throw new Error('No se pudo crear la session de whatsapp web')
     }
 
@@ -25,48 +25,74 @@ export const baileysService = {
 
   stopSession: async (sessionId: string) => {
     const response = await baileysApi.delete('/sessions/' + sessionId)
+    localStorage.removeItem('sessionId')
 
-    if (response.status >= 400 || !response.data.success) {
-      throw new Error('No se pudo detener la sesion de whatsapp web')
+    return !(response.status >= 400 || !response.data.success)
+  },
+
+  getQRCode: async (sessionId: string): Promise<QRCodeData | null> => {
+    try {
+      const response = await baileysApi.get<GetQRCodeResponse>(
+        '/sessions/' + sessionId + '/qr'
+      )
+
+      if (
+        (response.status >= 400 && response.status < 500) ||
+        !response.data.success
+      ) {
+        return null
+      }
+
+      return response.data.data
+    } catch (e) {
+      return null
     }
   },
 
-  getQRCode: async (sessionId: string): Promise<QRCodeData> => {
-    const response = await baileysApi.get<GetQRCodeResponse>(
-      '/sessions/' + sessionId + '/qr'
-    )
+  getCurrentSession: async (
+    givenSessionId?: string
+  ): Promise<CreateSessionResponse | null> => {
+    try {
+      const sessionId =
+        givenSessionId || localStorage.getItem('sessionId') || ''
 
-    if (response.status >= 400 || !response.data.success) {
-      throw new Error('No se pudo obtener el QR de whatsapp web')
+      const response = await baileysApi.get<CreateSessionResponse>(
+        '/sessions/' + sessionId
+      )
+
+      if (
+        (response.status >= 400 && response.status < 500) ||
+        !response.data.success
+      ) {
+        return null
+      }
+
+      return response.data
+    } catch (e) {
+      return null
     }
-
-    return response.data.data
   },
 
-  getCurrentSession: async (sessionId: string): Promise<SessionData> => {
-    const response = await baileysApi.get<CreateSessionResponse>(
-      '/sessions/' + sessionId
-    )
+  connectToBusiness: async (
+    platformId: string,
+    sessionId: string
+  ): Promise<void> => {
+    const response = await api.post('/business/whatsappWeb', {
+      platformId,
+      sessionId,
+    })
 
-    if (response.status >= 400 || !response.data.success) {
-      throw new Error('No se pudo obtener la sesion de whatsapp')
-    }
-
-    return response.data.data
-  },
-
-  connectToBusiness: async (sessionId: string): Promise<void> => {
-    const response = await api.post('/business/whatsappWeb', { sessionId })
+    localStorage.setItem('sessionId', response.data.id)
 
     if (response.status >= 400) {
-      throw new Error('No se pudo obtener la sesion de whatsapp')
+      throw new Error('No se pudo conectar la sesion de whatsapp')
     }
   },
 
   removeWhatsappWebSession: async (user: UserData): Promise<void> => {
-    const response = await api.put('/auth/user', {
+    await api.put('/auth/user', {
       socialPlatforms: user.socialPlatforms.filter(
-        (platform) => platform.platformName !== 'whatsappWeb'
+        (platform) => platform.platformName !== PlatformName.WhatsappWeb
       ),
     })
   },

@@ -9,29 +9,27 @@ baileysApi.interceptors.request.use((config) => {
   return config
 })
 
+export type SessionStatus =
+  | 'creating'
+  | 'starting'
+  | 'scanning_qr'
+  | 'connected'
+  | 'disconnected'
+  | 'error'
+
 export interface SessionData {
   id: string
   userId: string
   status: SessionStatus
   createdAt: string
   lastUsed: string
+  qr?: string
 }
 
 export interface QRCodeData {
   sessionId: string
   qrCode: string
 }
-
-// Session status types
-export type SessionStatus =
-  | 'idle'
-  | 'creating'
-  | 'starting'
-  | 'scanning'
-  | 'connecting'
-  | 'connected'
-  | 'disconnected'
-  | 'error'
 
 export type CreateSessionResponse = {
   success: boolean

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   IconBrandFacebook,
@@ -20,6 +20,7 @@ import {
   NewConversation,
   StartConversation,
 } from '@/features/chats/StartConversation.tsx'
+import { useGetWhatsAppWebSession } from '@/features/settings/whatsappWeb/useGetWhatsAppWebSession.ts'
 import { useGetTags } from '../clients/hooks/useGetTags'
 import { AddTagButton } from './AddTagButton'
 
@@ -43,7 +44,6 @@ export function ChatBarHeader({
   onRefresh,
 }: ChatSearchInputProps) {
   const [allAIEnabled, setAllAIEnabled] = useState(AIEnabled)
-  console.log(AIEnabled)
   const { data: tags, isLoading: isTagsLoading } = useGetTags()
   const queryClient = useQueryClient()
   const { data: templates } = useQuery({
@@ -116,6 +116,15 @@ export function ChatBarHeader({
       toast.success('Chats actualizados')
     }
   }
+  const { data: whatsAppWebData } = useGetWhatsAppWebSession()
+
+  const isWhatsAppWebConnected = useMemo(async () => {
+    if (!whatsAppWebData) {
+      return false
+    }
+
+    return whatsAppWebData.data.status === 'connected'
+  }, [whatsAppWebData])
 
   return (
     <div className='sticky top-0 z-10 bg-background pb-3 w-full shadow-sm sm:pt-2'>
@@ -137,6 +146,24 @@ export function ChatBarHeader({
               <IconRefresh size={18} />
             </Button>
           )}
+
+          <div className='group relative'>
+            <IconBrandWhatsapp
+              color={whatsAppWebData ? 'green' : 'red'}
+              title={
+                whatsAppWebData
+                  ? 'Whatsapp Web Conectado'
+                  : 'Whatsapp Web Desconectado'
+              }
+            />
+            <span className='absolute right-full bottom-0 scale-0 rounded bg-popover p-2 text-xs text-popover-foreground group-hover:scale-100 whitespace-nowrap shadow-md'>
+              {
+                whatsAppWebData
+                  ? 'Whatsapp Web Conectado'
+                  : 'Whatsapp Web Desconectado'
+              }
+            </span>
+          </div>
           <IconIaEnabled
             bgColor={'bg-secondary'}
             iconColor={'bg-background'}
