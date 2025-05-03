@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import { CalendarIcon, Scissors, User } from 'lucide-react'
+import { Client } from '@/features/clients/types'
 import { Service } from '../../types'
-import { ClientPrimitives as Client } from '@/features/clients/types'
 import { EmployeeAvailable } from '../../types'
 import { formatSlotHour } from '../../utils/formatters'
 
