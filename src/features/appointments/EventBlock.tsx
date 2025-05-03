@@ -199,8 +199,12 @@ export function EventBlock({
           </div>
 
           <div className='space-y-2'>
-            <h4 className='font-semibold'>Servicio</h4>
-            <Badge>{appointment.serviceNames.join(', ')}</Badge>
+            <h4 className='font-semibold'>Servicios</h4>
+            <div className='flex gap-2 flex-wrap'>
+              {appointment.serviceNames.map((s) => (
+                <Badge>{s}</Badge>
+              ))}
+            </div>
           </div>
 
           <div className='space-y-2'>
