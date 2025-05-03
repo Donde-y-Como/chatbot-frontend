@@ -7,7 +7,7 @@ import { useGetAppointments } from '@/features/appointments/hooks/useGetAppointm
 import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
 import { SidebarTrigger } from '../../components/ui/sidebar'
 import { Separator } from '@radix-ui/react-separator'
-import { MakeAppointmentDialog } from './MakeAppointmentDialog'
+import { MakeAppointmentDialog } from './components/MakeAppointmentDialog'
 
 export function Calendar() {
   const { data: employees } = useGetEmployees()
