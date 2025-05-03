@@ -17,7 +17,7 @@ import { MediaUpload } from '@/features/chats/MediaUpload.tsx'
 import { EmojiPickerButton } from '@/features/chats/components/EmojiPickerButton'
 import { QuickResponseDropdown } from './ChatConversation.tsx'
 import { useQuickResponsesForChat } from './hooks/useQuickResponsesForChat'
-// No longer using ExpiredChatMessage component
+import ExpiredChatTemplates from './ExpiredChatTemplates'
 
 const ChatFooter = memo(
   ({
@@ -30,7 +30,7 @@ const ChatFooter = memo(
     const [newMessage, setNewMessage] = useState('')
     const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-        // No longer checking for expired messages in ChatFooter
+        // We handle expired chats with a dedicated template selector component
 
     // Use the custom hook for quick responses
     const {
@@ -296,9 +296,9 @@ const ChatFooter = memo(
               </div>
             </>
           ) : (
-            <p className='text-sm opacity-60 italic'>
-              No puedes enviar mensajes a esta conversación
-            </p>
+            <div className='w-full'>
+              <ExpiredChatTemplates selectedChatId={selectedChatId} />
+            </div>
           )}
         </div>
         <Button className='self-start h-10 sm:hidden' type='submit'>
