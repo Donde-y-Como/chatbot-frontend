@@ -47,7 +47,7 @@ export function ChatBarUnlimited({
     refreshChats,
     isError,
   } = usePaginatedChats({
-    initialPerPage: 5,
+    initialPerPage: 20,
   })
 
   const { data: tags } = useGetTags()

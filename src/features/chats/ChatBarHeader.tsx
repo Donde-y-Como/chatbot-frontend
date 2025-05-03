@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   IconBrandFacebook,
   IconBrandInstagram,
@@ -14,12 +14,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { Template } from '@/features/chats/ChatTypes.ts'
 import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
 import {
   NewConversation,
   StartConversation,
 } from '@/features/chats/StartConversation.tsx'
+import { useGetTemplates } from '@/features/clients/hooks/useGetTemplates.ts'
 import { useGetWhatsAppWebSession } from '@/features/settings/whatsappWeb/useGetWhatsAppWebSession.ts'
 import { useGetTags } from '../clients/hooks/useGetTags'
 import { AddTagButton } from './AddTagButton'
@@ -46,13 +46,7 @@ export function ChatBarHeader({
   const [allAIEnabled, setAllAIEnabled] = useState(AIEnabled)
   const { data: tags, isLoading: isTagsLoading } = useGetTags()
   const queryClient = useQueryClient()
-  const { data: templates } = useQuery({
-    queryKey: ['templates'],
-    queryFn: async () => {
-      const t = await api.get<Template[]>('/templates')
-      return t.data
-    },
-  })
+  const { data: templates } = useGetTemplates()
 
   const startConversationMutation = useMutation({
     mutationKey: ['start-conversation'],
@@ -157,11 +151,9 @@ export function ChatBarHeader({
               }
             />
             <span className='absolute right-full bottom-0 scale-0 rounded bg-popover p-2 text-xs text-popover-foreground group-hover:scale-100 whitespace-nowrap shadow-md'>
-              {
-                whatsAppWebData
-                  ? 'Whatsapp Web Conectado'
-                  : 'Whatsapp Web Desconectado'
-              }
+              {whatsAppWebData
+                ? 'Whatsapp Web Conectado'
+                : 'Whatsapp Web Desconectado'}
             </span>
           </div>
           <IconIaEnabled
