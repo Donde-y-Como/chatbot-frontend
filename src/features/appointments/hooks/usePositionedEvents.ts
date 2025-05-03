@@ -8,16 +8,17 @@ interface PositionedAppointment {
 }
 
 export function usePositionedEvents({
-                                            appointments,
-                                            selectedService,
-                                          }: {
+  appointments,
+  selectedService,
+}: {
   appointments: Appointment[]
   selectedService: string | 'all'
 }) {
-  // Filter appointments by service
   const filteredAppointments = useMemo(() => {
     return appointments.filter((appointment) =>
-      selectedService === 'all' ? true : appointment.serviceId === selectedService
+      selectedService === 'all'
+        ? true
+        : appointment.serviceIds.includes(selectedService)
     )
   }, [appointments, selectedService])
 

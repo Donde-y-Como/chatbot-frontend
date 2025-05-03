@@ -4,17 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import { CalendarIcon, Scissors, User } from 'lucide-react'
-import { Client } from '@/features/clients/types'
-import { Service } from '../../types'
-import { EmployeeAvailable } from '../../types'
+import { ClientPrimitives } from '@/features/clients/types'
+import { Service, MinutesTimeRange, EmployeeAvailable } from '../../types'
 import { formatSlotHour } from '../../utils/formatters'
 
 interface ConfirmationStepProps {
   date: Date
-  selectedClient: Client | undefined
-  selectedService: Service | undefined
-  selectedSlot: string | null
-  selectedEmployees: EmployeeAvailable[]
+  timeRange: MinutesTimeRange
+  selectedClient: ClientPrimitives | undefined
+  selectedServices: Service[] | undefined
+  selectedEmployeeIds: string[]
+  availableEmployees: EmployeeAvailable[]
   loading: boolean
   onSubmit: () => void
   onBack: () => void
@@ -26,19 +26,21 @@ interface ConfirmationStepProps {
  */
 export function ConfirmationStep({
   date,
+  timeRange,
   selectedClient,
-  selectedService,
-  selectedSlot,
-  selectedEmployees,
+  selectedServices = [],
+  selectedEmployeeIds,
+  availableEmployees,
   loading,
   onSubmit,
   onBack,
   onCancel
 }: ConfirmationStepProps) {
-  // Format slot time for display
-  const selectedSlotTime = selectedSlot 
-    ? `${formatSlotHour(JSON.parse(selectedSlot).startAt)} - ${formatSlotHour(JSON.parse(selectedSlot).endAt)}`
-    : null
+  // Format time range for display
+  const formattedTimeRange = `${formatSlotHour(timeRange.startAt)} - ${formatSlotHour(timeRange.endAt)}`;
+
+  // Get selected employees
+  const selectedEmployees = availableEmployees.filter(emp => selectedEmployeeIds.includes(emp.id));
 
   return (
     <div className="space-y-4">
@@ -64,11 +66,15 @@ export function ConfirmationStep({
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Scissors className="h-5 w-5 text-primary" />
+          <div className="flex items-start gap-2">
+            <Scissors className="h-5 w-5 text-primary mt-1" />
             <div>
-              <p className="text-sm text-muted-foreground">Servicio</p>
-              <p className="font-medium">{selectedService?.name}</p>
+              <p className="text-sm text-muted-foreground">Servicios</p>
+              <div className="space-y-1 mt-1">
+                {selectedServices.map(service => (
+                  <p key={service.id} className="font-medium">{service.name}</p>
+                ))}
+              </div>
             </div>
           </div>
           
@@ -77,7 +83,7 @@ export function ConfirmationStep({
             <div>
               <p className="text-sm text-muted-foreground">Fecha y Hora</p>
               <p className="font-medium">
-                {format(date, 'PPPP', { locale: es })} • {selectedSlotTime}
+                {format(date, 'PPPP', { locale: es })} • {formattedTimeRange}
               </p>
             </div>
           </div>

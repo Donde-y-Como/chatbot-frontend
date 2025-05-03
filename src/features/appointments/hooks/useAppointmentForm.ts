@@ -1,19 +1,17 @@
-import { api } from '@/api/axiosInstance.ts'
+import { useCallback, useEffect, useState } from 'react'
+import { format } from 'date-fns'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
+import { useCreateClient } from '@/features/appointments/hooks/useCreateClient.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
-import { useCreateClient } from '@/features/appointments/hooks/useCreateClient.ts'
 import {
   Appointment,
   EmployeeAvailable,
   MinutesTimeRange,
 } from '@/features/appointments/types.ts'
 import { ClientPrimitives } from '@/features/clients/types'
-import { now } from '@internationalized/date'
-import { useQueryClient } from '@tanstack/react-query'
-import { format } from 'date-fns'
-import { useState, useEffect } from 'react'
-import { toast } from 'sonner'
 
 /**
  * Hook containing the state and logic for the appointment creation form
@@ -25,86 +23,57 @@ export function useAppointmentForm(
   // State
   const [activeStep, setActiveStep] = useState(1)
   const [clientId, setClientId] = useState('')
-  const [serviceId, setServiceId] = useState('')
-  const [date, setDate] = useState<Date>(now('America/Mexico_City').toDate())
-  const [availableSlots, setAvailableSlots] = useState<
-    { slot: MinutesTimeRange; employees: EmployeeAvailable[] }[]
-  >([])
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
+  const [serviceIds, setServiceIds] = useState<string[]>([])
+  const [date, setDate] = useState<Date>(new Date())
+  const [timeRange, setTimeRange] = useState<MinutesTimeRange>({
+    startAt: 540, // Default to 9:00 AM (9 * 60)
+    endAt: 600, // Default to 10:00 AM (10 * 60)
+  })
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
-  
+
   // Data fetching
   const { data: clients } = useGetClients()
   const { data: services } = useGetServices()
   const queryClient = useQueryClient()
   const createClientMutation = useCreateClient()
 
-  // Create a new client function
-  const createNewClient = async (name: string) => {
-    if (!name.trim()) return
-    
-    try {
-      const result = await createClientMutation.mutateAsync(name)
-      if (result?.id) {
-        setClientId(result.id)
-        toast.success(`Cliente ${name} creado automáticamente`)
-      }
-    } catch (error) {
-      console.error('Error al crear el cliente:', error)
-      toast.error('No se pudo crear el cliente automáticamente')
-    }
-  }
-
-  // Reset slot and employee when date or service changes
-  useEffect(() => {
-    setSelectedSlot(null)
-    setSelectedEmployeeIds([])
-    setAvailableSlots([])
-  }, [date, serviceId])
-
-  // Fetch availability when date and service are selected
-  useEffect(() => {
-    const fetchAvailability = async () => {
-      if (!date || !serviceId) return
-      setLoading(true)
+  const createNewClient = useCallback(
+    async (name: string) => {
+      if (!name.trim()) return
 
       try {
-        const formattedDate = format(date, 'yyyy-MM-dd')
-        const response = await api.get(
-          `/appointments/availability?givenDate=${formattedDate}&serviceId=${serviceId}`
-        )
-        setAvailableSlots(response.data.availableSlots)
+        const result = await createClientMutation.mutateAsync(name)
+        if (result?.id) {
+          setClientId(result.id)
+          toast.success(`Cliente ${name} creado automáticamente`)
+        }
       } catch (error) {
-        console.error(error)
-      } finally {
-        setLoading(false)
+        console.error('Error al crear el cliente:', error)
+        toast.error('No se pudo crear el cliente automáticamente')
       }
-    }
-
-    if (date && serviceId) {
-      fetchAvailability()
-    }
-  }, [date, serviceId])
+    },
+    [createClientMutation]
+  )
 
   // Update active step based on selections
   useEffect(() => {
-    if (!clientId || !serviceId) {
+    if (!clientId || serviceIds.length === 0) {
       setActiveStep(1)
-    } else if (!selectedSlot) {
-      setActiveStep(2)
     } else {
-      setActiveStep(3)
+      setActiveStep(2)
     }
-  }, [clientId, serviceId, selectedSlot])
+  }, [clientId, serviceIds])
 
   // Handle default client name from props
   useEffect(() => {
     if (defaultClientName && clients) {
       // Find if client exists
-      const existingClient = clients.find(client => 
-        client.name.toLowerCase() === defaultClientName.toLowerCase())
-      
+      const existingClient = clients.find(
+        (client) =>
+          client.name.toLowerCase() === defaultClientName.toLowerCase()
+      )
+
       if (existingClient) {
         // If exists, select it
         setClientId(existingClient.id)
@@ -113,16 +82,17 @@ export function useAppointmentForm(
         createNewClient(defaultClientName)
       }
     }
-  }, [defaultClientName, clients])
+  }, [defaultClientName, clients, createNewClient])
 
   // Setup global window function for opening the dialog from external scripts
   useEffect(() => {
     window.openAppointmentDialog = (clientName?: string) => {
       if (clientName) {
         // Find if client exists
-        const existingClient = clients?.find(client => 
-          client.name.toLowerCase() === clientName.toLowerCase())
-        
+        const existingClient = clients?.find(
+          (client) => client.name.toLowerCase() === clientName.toLowerCase()
+        )
+
         if (existingClient) {
           // If exists, select it
           setClientId(existingClient.id)
@@ -132,25 +102,27 @@ export function useAppointmentForm(
         }
       }
     }
-    
+
     return () => {
       delete window.openAppointmentDialog
     }
-  }, [clients])
+  }, [clients, createNewClient])
 
   // Reset form function
   const resetForm = () => {
     setClientId('')
-    setServiceId('')
-    setSelectedSlot(null)
+    setServiceIds([])
+    setTimeRange({
+      startAt: 540,
+      endAt: 600,
+    })
     setSelectedEmployeeIds([])
-    setAvailableSlots([])
     setActiveStep(1)
   }
 
   // Handle form submission
   const handleSubmit = async () => {
-    if (!clientId || !serviceId || !selectedSlot) {
+    if (!clientId || serviceIds.length === 0 || !timeRange) {
       toast.error('Por favor, completa todos los campos requeridos')
       return
     }
@@ -159,13 +131,13 @@ export function useAppointmentForm(
 
     const appointmentData = {
       clientId,
-      serviceId,
+      serviceIds,
       employeeIds: selectedEmployeeIds,
       date: format(date, 'yyyy-MM-dd'),
-      timeRange: JSON.parse(selectedSlot) satisfies MinutesTimeRange,
+      timeRange,
       notes: '',
     } satisfies Partial<Appointment>
-    
+
     try {
       const result = await appointmentService.makeAppointment(appointmentData)
       if (result.id) {
@@ -190,35 +162,38 @@ export function useAppointmentForm(
     }
   }
 
-  // Get selected client and service objects
-  const selectedClient: ClientPrimitives | undefined = clients?.find(client => client.id === clientId)
-  const selectedService = services?.find(service => service.id === serviceId)
-  
-  // Get employees for selected slot
-  const slotEmployees = selectedSlot 
-    ? availableSlots.find(s => JSON.stringify(s.slot) === selectedSlot)?.employees || []
-    : []
-  
-  // Get selected employees
-  const selectedEmployees = slotEmployees.filter(emp => selectedEmployeeIds.includes(emp.id))
+  // Get selected client and services objects
+  const selectedClient: ClientPrimitives | undefined = clients?.find(
+    (client) => client.id === clientId
+  )
+  const selectedServices =
+    services?.filter((service) => serviceIds.includes(service.id)) || []
+
+  // Get employees for selected services - this would need to be updated in a real implementation
+  // For now, we'll set a placeholder until the backend is updated
+  const availableEmployees: EmployeeAvailable[] = []
+
+  // Toggle service selection
+  const toggleServiceSelection = (serviceId: string) => {
+    setServiceIds((prev) =>
+      prev.includes(serviceId)
+        ? prev.filter((id) => id !== serviceId)
+        : [...prev, serviceId]
+    )
+  }
 
   // Toggle employee selection
   const toggleEmployeeSelection = (employeeId: string) => {
-    setSelectedEmployeeIds(prev => 
+    setSelectedEmployeeIds((prev) =>
       prev.includes(employeeId)
-        ? prev.filter(id => id !== employeeId)
+        ? prev.filter((id) => id !== employeeId)
         : [...prev, employeeId]
     )
   }
 
-  // Get the formatted slot time for display
-  const selectedSlotTime = selectedSlot 
-    ? `${JSON.parse(selectedSlot).startAt} - ${JSON.parse(selectedSlot).endAt}`
-    : null
-
   // Function to determine if fields have been filled
   const hasFilledFields = () => {
-    return clientId !== '' || serviceId !== '' || selectedSlot !== null || selectedEmployeeIds.length > 0
+    return clientId !== '' || serviceIds.length > 0
   }
 
   // Return everything needed for the form
@@ -226,28 +201,26 @@ export function useAppointmentForm(
     // State
     activeStep,
     clientId,
-    serviceId,
+    serviceIds,
     date,
-    availableSlots,
-    selectedSlot,
+    timeRange,
     selectedEmployeeIds,
     loading,
-    
+
     // Data
     clients,
     services,
     selectedClient,
-    selectedService,
-    slotEmployees,
-    selectedEmployees,
-    selectedSlotTime,
-    
+    selectedServices,
+    availableEmployees,
+
     // Actions
     setActiveStep,
     setClientId,
-    setServiceId,
+    setServiceIds,
+    toggleServiceSelection,
     setDate,
-    setSelectedSlot,
+    setTimeRange,
     toggleEmployeeSelection,
     resetForm,
     handleSubmit,

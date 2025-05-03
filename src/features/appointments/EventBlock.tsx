@@ -1,25 +1,8 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
-import { Badge } from '@/components/ui/badge.tsx';
-import { Button } from '@/components/ui/button';
-import { ClientChatButton } from './components/client-chat-button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { now } from '@internationalized/date';
-import { CalendarIcon, ClockIcon } from '@radix-ui/react-icons';
-import { format, isBefore, parseISO, setMinutes } from 'date-fns';
-import { es } from 'date-fns/locale/es';
-import { User as UserIcon } from 'lucide-react';
-import { ClientPrimitives } from '../clients/types';
-import { Employee } from '../employees/types';
-import { EditAppointmentDialog } from './components/EditAppointmentDialog';
-import type { Appointment, Service } from './types';
+import { format, isBefore, parseISO, setMinutes } from 'date-fns'
+import { CalendarIcon, ClockIcon } from '@radix-ui/react-icons'
+import { now } from '@internationalized/date'
+import { es } from 'date-fns/locale/es'
+import { User as UserIcon } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,14 +13,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from '@/components/ui/alert-dialog'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx'
+import { Badge } from '@/components/ui/badge.tsx'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { formatTime } from '@/features/appointments/utils/formatters.ts'
+import { ClientPrimitives } from '../clients/types'
+import { Employee } from '../employees/types'
+import { ClientChatButton } from './components/client-chat-button'
+import type { Appointment, Service } from './types'
 
 interface EventBlockProps {
   cancelAppointment: (id: string) => void
   editAppointment?: (id: string, data: Partial<Appointment>) => void
   appointment: Appointment
   employees: Employee[]
-  service: Service
+  services: Service[]
   client: ClientPrimitives
   column: number
   totalColumns: number
@@ -54,7 +54,7 @@ export function EventBlock({
   cancelAppointment,
   appointment,
   employees,
-  service,
+  services,
   client,
   column,
   totalColumns,
@@ -80,7 +80,8 @@ export function EventBlock({
             height: `${adjustedEventHeight}px`,
             left: `calc(${leftPercent}% + 2px)`,
             width: `calc(${widthPercent}% - 4px)`,
-            backgroundColor: employees.length > 0 ? employees[0].color : "darkgray",
+            backgroundColor:
+              employees.length > 0 ? employees[0].color : 'darkgray',
           }}
         >
           {adjustedEventHeight >= MINUTE_HEIGHT * 60 - verticalGap ? (
@@ -92,11 +93,13 @@ export function EventBlock({
                   {formatTime(appointment.timeRange.endAt)}
                 </small>
               </div>
-              <div className='text-white text-xs truncate'>{service.name}</div>
+              <div className='text-white text-xs truncate'>
+                {appointment.serviceNames.join(', ')}
+              </div>
             </div>
           ) : (
             <div className='p-1 flex items-center justify-between text-white text-xs font-semibold truncate'>
-              {client.name} - {service.name}
+              {client.name} - {appointment.serviceNames.join(', ')}
               <small>
                 {formatTime(appointment.timeRange.startAt)} -{' '}
                 {formatTime(appointment.timeRange.endAt)}
@@ -109,22 +112,22 @@ export function EventBlock({
         <DialogHeader className='mb-4 border-b pb-2'>
           <div className='flex items-center justify-between'>
             <DialogTitle className='text-xl font-semibold'>
-              {client.name} - {service.name}
+              {client.name} - {appointment.serviceNames.join(', ')}
             </DialogTitle>
-            {isBefore(
-              now('America/Mexico_City').toDate(),
-              setMinutes(
-                parseISO(appointment.date),
-                appointment.timeRange.startAt
-              )
-            ) && (
-              <EditAppointmentDialog
-                appointment={appointment}
-                employees={employees}
-                service={service}
-                client={client}
-              />
-            )}
+            {/*{isBefore(*/}
+            {/*  now('America/Mexico_City').toDate(),*/}
+            {/*  setMinutes(*/}
+            {/*    parseISO(appointment.date),*/}
+            {/*    appointment.timeRange.startAt*/}
+            {/*  )*/}
+            {/*) && (*/}
+            {/*  <EditAppointmentDialog*/}
+            {/*    appointment={appointment}*/}
+            {/*    employees={employees}*/}
+            {/*    services={services}*/}
+            {/*    client={client}*/}
+            {/*  />*/}
+            {/*)}*/}
           </div>
           <DialogDescription className='text-sm text-foreground/50'>
             {appointment.notes || 'Sin notas adicionales'}
@@ -139,17 +142,19 @@ export function EventBlock({
                   className='h-12 w-12 border-2 border-background'
                   style={{ zIndex: employees.length - index }}
                 >
-                  <AvatarImage src={employee.photo} alt={employee.name} className='object-cover' />
-                  <AvatarFallback>
-                    {employee.name.charAt(0)}
-                  </AvatarFallback>
+                  <AvatarImage
+                    src={employee.photo}
+                    alt={employee.name}
+                    className='object-cover'
+                  />
+                  <AvatarFallback>{employee.name.charAt(0)}</AvatarFallback>
                 </Avatar>
               ))}
 
               {employees.length === 0 && (
                 <Avatar className='h-12 w-12 border-2 border-background bg-muted'>
                   <AvatarFallback>
-                    <UserIcon className="h-6 w-6 text-muted-foreground" />
+                    <UserIcon className='h-6 w-6 text-muted-foreground' />
                   </AvatarFallback>
                 </Avatar>
               )}
@@ -164,7 +169,9 @@ export function EventBlock({
                   : 'Sin asignación'}
               </h3>
               {employees.length === 1 && (
-                <p className='text-sm text-muted-foreground'>{employees[0].role}</p>
+                <p className='text-sm text-muted-foreground'>
+                  {employees[0].role}
+                </p>
               )}
             </div>
           </div>
@@ -193,13 +200,7 @@ export function EventBlock({
 
           <div className='space-y-2'>
             <h4 className='font-semibold'>Servicio</h4>
-            <Badge>{service.name}</Badge>
-            <p className='text-sm text-muted-foreground'>
-              {service.description}
-            </p>
-            <p className='text-sm font-medium'>
-              Precio: {service.price.amount} {service.price.currency}
-            </p>
+            <Badge>{appointment.serviceNames.join(', ')}</Badge>
           </div>
 
           <div className='space-y-2'>
@@ -208,15 +209,17 @@ export function EventBlock({
             <section className='flex items-center gap-2'>
               <article className='relative'>
                 <Avatar>
-                  <AvatarImage src={client.photo} alt={client.name} className='object-cover' />
-                  <AvatarFallback>
-                    {client.name.charAt(0)}
-                  </AvatarFallback>
+                  <AvatarImage
+                    src={client.photo}
+                    alt={client.name}
+                    className='object-cover'
+                  />
+                  <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
                 </Avatar>
               </article>
               <span>{client.name}</span>
             </section>
-            <div className="mt-2">
+            <div className='mt-2'>
               <ClientChatButton clientId={client.id} />
             </div>
           </div>
@@ -232,10 +235,7 @@ export function EventBlock({
           ) && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button
-                  variant="destructive"
-                  className="w-full sm:w-auto"
-                >
+                <Button variant='destructive' className='w-full sm:w-auto'>
                   Cancelar Cita
                 </Button>
               </AlertDialogTrigger>
@@ -243,7 +243,8 @@ export function EventBlock({
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta acción cancelará la cita permanentemente. ¿Deseas continuar?
+                    Esta acción cancelará la cita permanentemente. ¿Deseas
+                    continuar?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -256,7 +257,7 @@ export function EventBlock({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            )}
+          )}
           <DialogClose asChild>
             <Button className='w-full sm:w-auto'>Cerrar</Button>
           </DialogClose>
@@ -264,10 +265,4 @@ export function EventBlock({
       </DialogContent>
     </Dialog>
   )
-}
-
-const formatTime = (minutes: number) => {
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
 }

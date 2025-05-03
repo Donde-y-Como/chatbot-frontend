@@ -1,13 +1,4 @@
-/**
- * Utility functions for formatting time and dates in the appointments feature
- */
-
-/**
- * Formats minutes into a 12-hour time format (e.g., "2:30 PM")
- * @param minutes - Total minutes (e.g., 150 for 2:30)
- * @returns Formatted time string
- */
-export function formatSlotHour(minutes: number): string {
+export function formatSlotHour(minutes: number) {
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60
 
@@ -27,4 +18,10 @@ export function formatSlotHour(minutes: number): string {
 
   // Return formatted time
   return `${displayHours}:${displayMinutes} ${period}`
+}
+
+export function formatTime(minutes: number) {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
 }

@@ -3,11 +3,9 @@ import {
   Appointment,
   AppointmentCreated,
   Schedule,
-  Service
+  Service,
 } from '@/features/appointments/types.ts'
 import { ClientPrimitives } from '../clients/types'
-
-
 
 export const appointmentService = {
   cancelAppointment: async (appointmentId: string) => {
@@ -15,19 +13,16 @@ export const appointmentService = {
   },
 
   makeAppointment: async (appointment: Partial<Appointment>) => {
-    const response = await api.post<{ appointment: AppointmentCreated }>(
+    const response = await api.post<AppointmentCreated>(
       '/appointments',
       appointment
     )
-    return response.data.appointment
+    return response.data
   },
 
   editAppointment: async (id: string, appointment: Partial<Appointment>) => {
-    const response = await api.put(
-      `/appointments/${id}`,
-      appointment
-    )
-    return response.data as AppointmentCreated;
+    const response = await api.put(`/appointments/${id}`, appointment)
+    return response.data as AppointmentCreated
   },
 
   getAppointments: async (startDate: string, endDate: string) => {
@@ -54,4 +49,14 @@ export const appointmentService = {
     return response.data
   },
 
+  // Note: This method would need to be updated once the backend supports it
+  getAvailableEmployees: async (date: string, serviceIds: string[]) => {
+    const response = await api.get('/employees/available', {
+      params: {
+        date,
+        serviceIds: serviceIds.join(','),
+      },
+    })
+    return response.data
+  },
 }

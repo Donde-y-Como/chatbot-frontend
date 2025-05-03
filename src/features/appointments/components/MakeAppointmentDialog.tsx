@@ -38,23 +38,22 @@ export function MakeAppointmentDialog({
     // State and data
     activeStep,
     clientId,
-    serviceId,
+    serviceIds,
     date,
-    availableSlots,
-    selectedSlot,
+    timeRange,
     selectedEmployeeIds,
     loading,
     selectedClient,
-    selectedService,
-    slotEmployees,
-    selectedEmployees,
+    selectedServices,
+    availableEmployees,
     
     // Actions
     setActiveStep,
     setClientId,
-    setServiceId,
+    setServiceIds,
+    toggleServiceSelection,
     setDate,
-    setSelectedSlot,
+    setTimeRange,
     toggleEmployeeSelection,
     resetForm,
     handleSubmit,
@@ -104,9 +103,10 @@ export function MakeAppointmentDialog({
             <TabsContent value="1">
               <ClientServiceStep
                 clientId={clientId}
-                serviceId={serviceId}
+                serviceIds={serviceIds}
                 onClientChange={setClientId}
-                onServiceChange={setServiceId}
+                onServiceIdsChange={setServiceIds}
+                onServiceToggle={toggleServiceSelection}
                 onNext={() => setActiveStep(2)}
                 onCancel={() => {
                   setOpen(false)
@@ -120,10 +120,8 @@ export function MakeAppointmentDialog({
               <DateTimeStep
                 date={date}
                 onDateChange={setDate}
-                availableSlots={availableSlots}
-                selectedSlot={selectedSlot}
-                onSlotSelect={setSelectedSlot}
-                loading={loading}
+                timeRange={timeRange}
+                onTimeRangeChange={setTimeRange}
                 onNext={() => setActiveStep(3)}
                 onBack={() => setActiveStep(1)}
                 onCancel={() => {
@@ -136,7 +134,7 @@ export function MakeAppointmentDialog({
             {/* Step 3: Employee Selection (Optional) */}
             <TabsContent value="3">
               <EmployeeSelectionStep
-                slotEmployees={slotEmployees}
+                availableEmployees={availableEmployees}
                 selectedEmployeeIds={selectedEmployeeIds}
                 onEmployeeToggle={toggleEmployeeSelection}
                 onNext={() => setActiveStep(4)}
@@ -152,10 +150,11 @@ export function MakeAppointmentDialog({
             <TabsContent value="4">
               <ConfirmationStep
                 date={date}
+                timeRange={timeRange}
                 selectedClient={selectedClient}
-                selectedService={selectedService}
-                selectedSlot={selectedSlot}
-                selectedEmployees={selectedEmployees}
+                selectedServices={selectedServices}
+                selectedEmployeeIds={selectedEmployeeIds}
+                availableEmployees={availableEmployees}
                 loading={loading}
                 onSubmit={handleSubmit}
                 onBack={() => setActiveStep(3)}

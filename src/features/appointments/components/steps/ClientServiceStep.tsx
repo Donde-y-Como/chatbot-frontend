@@ -1,12 +1,13 @@
 import { Button } from '@/components/ui/button'
 import { CreateOrSelectClient } from '../CreateOrSelectClient'
-import { CreateOrSelectService } from '../CreateOrSelectService'
+import { CreateOrSelectMultipleServices } from '../CreateOrSelectMultipleServices'
 
 interface ClientServiceStepProps {
   clientId: string
-  serviceId: string
+  serviceIds: string[]
   onClientChange: (id: string) => void
-  onServiceChange: (id: string) => void
+  onServiceIdsChange: (ids: string[]) => void
+  onServiceToggle: (id: string) => void
   onNext: () => void
   onCancel: () => void
 }
@@ -16,9 +17,10 @@ interface ClientServiceStepProps {
  */
 export function ClientServiceStep({
   clientId,
-  serviceId,
+  serviceIds,
   onClientChange,
-  onServiceChange,
+  onServiceIdsChange,
+  onServiceToggle,
   onNext,
   onCancel
 }: ClientServiceStepProps) {
@@ -31,8 +33,12 @@ export function ClientServiceStep({
         </div>
 
         <div>
-          <label className="text-sm font-medium mb-1 block">Servicio</label>
-          <CreateOrSelectService value={serviceId} onChange={onServiceChange} />
+          <label className="text-sm font-medium mb-1 block">Servicios</label>
+          <CreateOrSelectMultipleServices 
+            selectedIds={serviceIds} 
+            onChange={onServiceIdsChange}
+            onToggle={onServiceToggle}
+          />
         </div>
       </div>
 
@@ -41,7 +47,7 @@ export function ClientServiceStep({
           Cancelar
         </Button>
         <Button 
-          disabled={!clientId || !serviceId}
+          disabled={!clientId || serviceIds.length === 0}
           onClick={onNext}
         >
           Continuar

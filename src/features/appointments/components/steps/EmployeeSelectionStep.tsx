@@ -6,7 +6,7 @@ import { CheckCircle, User } from 'lucide-react'
 import { EmployeeAvailable } from '../../types'
 
 interface EmployeeSelectionStepProps {
-  slotEmployees: EmployeeAvailable[]
+  availableEmployees: EmployeeAvailable[]
   selectedEmployeeIds: string[]
   onEmployeeToggle: (employeeId: string) => void
   onNext: () => void
@@ -18,7 +18,7 @@ interface EmployeeSelectionStepProps {
  * Step 3: Employee selection component
  */
 export function EmployeeSelectionStep({
-  slotEmployees,
+  availableEmployees,
   selectedEmployeeIds,
   onEmployeeToggle,
   onNext,
@@ -41,9 +41,9 @@ export function EmployeeSelectionStep({
         )}
       </div>
       
-      {slotEmployees.length > 0 ? (
+      {availableEmployees.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {slotEmployees.map((employee) => (
+          {availableEmployees.map((employee) => (
             <Card 
               key={employee.id} 
               className={cn(
@@ -76,6 +76,9 @@ export function EmployeeSelectionStep({
         <div className="flex flex-col items-center justify-center p-8 border rounded-md text-muted-foreground">
           <User className="h-8 w-8 mb-2" />
           <p className="text-center">No hay empleados disponibles para este horario</p>
+          <p className="text-center text-sm mt-2">
+            Puedes continuar sin seleccionar empleados y se asignará cualquiera disponible
+          </p>
         </div>
       )}
 
