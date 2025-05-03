@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useGetClientChats } from '../hooks/useGetClientChats';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner'
 
 interface RedirectToChatProps {
   clientId: string;
@@ -54,20 +55,11 @@ export function RedirectToChat({ clientId, open, onClose }: RedirectToChatProps)
   }
 
   // Si no hay conversaciones
-  if (chats.length === 0) {
-    return (
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[450px]">
-          <DialogHeader>
-            <DialogTitle>No hay conversaciones</DialogTitle>
-          </DialogHeader>
-          <p className="py-4">No se encontraron conversaciones para este cliente.</p>
-          <DialogFooter>
-            <Button onClick={onClose}>Cerrar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
+  if (!isLoading && !error && chats.length === 0 && open) {
+    // Mostrar toast y cerrar el dialog
+    toast.warning('No se encontraron conversaciones para este cliente.');
+    onClose();
+    return null;
   }
 
   // Si hay exactamente una conversación, redirigir automáticamente

@@ -18,7 +18,7 @@ import { useMemo, useState } from 'react'
 import { IconChecklist } from '@tabler/icons-react'
 import { CalendarFold } from 'lucide-react'
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { MakeAppointmentDialog } from '@/features/appointments/MakeAppointmentDialog.tsx'
+import { MakeAppointmentDialog } from '@/features/appointments/components/MakeAppointmentDialog.tsx'
 import { AddClientFromChats } from '@/features/events/addClientFromChats.tsx'
 import { useNavigate } from '@tanstack/react-router'
 
