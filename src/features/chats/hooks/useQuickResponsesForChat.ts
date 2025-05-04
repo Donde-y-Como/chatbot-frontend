@@ -25,8 +25,8 @@ export const useQuickResponsesForChat = () => {
 
     const searchTermLower = searchTerm.toLowerCase();
     return quickResponses.filter((response) => {
-      const shortcutMatch = response.shortcut.toLowerCase().includes(searchTermLower);
-      const messageMatch = response.message.toLowerCase().includes(searchTermLower);
+      const shortcutMatch = response.title.toLowerCase().includes(searchTermLower);
+      const messageMatch = response.content.toLowerCase().includes(searchTermLower);
       return shortcutMatch || messageMatch;
     });
   }, [searchTerm, quickResponses]);

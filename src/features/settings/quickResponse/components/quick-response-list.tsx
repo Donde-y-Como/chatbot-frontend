@@ -45,10 +45,10 @@ export function QuickResponseList({
           {quickResponses.map((quickResponse) => (
             <TableRow key={quickResponse.id}>
               <TableCell className="font-medium">
-                {quickResponse.shortcut}
+                {quickResponse.title}
               </TableCell>
               <TableCell className="truncate max-w-xs">
-                {quickResponse.message}
+                {quickResponse.content}
               </TableCell>
               <TableCell>
                 <div className="flex space-x-2">

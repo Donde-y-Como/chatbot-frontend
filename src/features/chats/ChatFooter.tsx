@@ -16,8 +16,8 @@ import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 import { MediaUpload } from '@/features/chats/MediaUpload.tsx'
 import { EmojiPickerButton } from '@/features/chats/components/EmojiPickerButton'
 import { QuickResponseDropdown } from './ChatConversation.tsx'
-import { useQuickResponsesForChat } from './hooks/useQuickResponsesForChat'
 import ExpiredChatTemplates from './ExpiredChatTemplates'
+import { useQuickResponsesForChat } from './hooks/useQuickResponsesForChat'
 
 const ChatFooter = memo(
   ({
@@ -25,17 +25,17 @@ const ChatFooter = memo(
     selectedChatId,
     canSendMessage,
   }: {
-    isWhatsAppChat:boolean
+    isWhatsAppChat: boolean
     selectedChatId: string
     canSendMessage: boolean
   }) => {
     const queryClient = useQueryClient()
     // Get chat data to determine the platform type
-  
+
     const [newMessage, setNewMessage] = useState('')
     const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-        // We handle expired chats with a dedicated template selector component
+    // We handle expired chats with a dedicated template selector component
 
     // Use the custom hook for quick responses
     const {
@@ -197,11 +197,11 @@ const ChatFooter = memo(
 
             if (selectedResponse) {
               // If an item is already selected, use it
-              handleSelectQuickResponse(selectedResponse.message)
+              handleSelectQuickResponse(selectedResponse.content)
             } else if (filteredResponses.length > 0 && selectedIndex === null) {
               // If no item is selected yet but we have responses, use the first one
               // This makes the UX more intuitive - pressing Enter without arrow keys selects the first item
-              handleSelectQuickResponse(filteredResponses[0].message)
+              handleSelectQuickResponse(filteredResponses[0].content)
             }
             return
           }
@@ -304,7 +304,9 @@ const ChatFooter = memo(
               {isWhatsAppChat ? (
                 <ExpiredChatTemplates selectedChatId={selectedChatId} />
               ) : (
-                <p className='text-sm opacity-60 italic p-2'>Esta conversación ha expirado.</p>
+                <p className='text-sm opacity-60 italic p-2'>
+                  Esta conversación ha expirado.
+                </p>
               )}
             </div>
           )}

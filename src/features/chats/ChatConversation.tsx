@@ -52,8 +52,8 @@ export function QuickResponseDropdown({
   // Only used if responses are not provided through props
   const filteredResponses = !responses && quickResponses
     ? quickResponses.filter(response => 
-        response.shortcut.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        response.message.toLowerCase().includes(searchTerm.toLowerCase())
+        response.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        response.content.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : responses || []
       
@@ -100,7 +100,7 @@ export function QuickResponseDropdown({
                         if (onSelectionChange) {
                           onSelectionChange(index);
                         }
-                        onSelectResponse(response.message);
+                        onSelectResponse(response.content);
                       }}
                       className={cn(
                         "flex flex-col items-start gap-1 py-3",
@@ -122,9 +122,9 @@ export function QuickResponseDropdown({
                       // This avoids the flickering effect when moving between items
                       ref={isSelected ? selectedItemRef : null}
                     >
-                      <div className="font-medium">{response.shortcut}</div>
+                      <div className="font-medium">{response.title}</div>
                       <div className="text-sm text-muted-foreground truncate w-full">
-                        {response.message}
+                        {response.content}
                       </div>
                     </CommandItem>
                   );

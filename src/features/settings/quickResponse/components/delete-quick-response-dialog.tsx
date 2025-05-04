@@ -32,7 +32,7 @@ export function DeleteQuickResponseDialog({
           <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
           <AlertDialogDescription>
             Esta acción eliminará permanentemente la respuesta rápida{' '}
-            <span className="font-bold">{quickResponse?.shortcut}</span>.
+            <span className="font-bold">{quickResponse?.title}</span>.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

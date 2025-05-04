@@ -1,4 +1,4 @@
-import { ClientPrimitives } from "../clients/types"
+import { ClientPrimitives } from '../clients/types'
 
 export type Template = {
   businessId: string
@@ -44,61 +44,62 @@ export type ChatMessages = {
 }
 
 export enum PlatformName {
-  Whatsapp = "whatsapp",
-  Facebook = "facebook",
-  Instagram = "instagram",
-  WhatsappWeb = "whatsappWeb"
+  Whatsapp = 'whatsapp',
+  Facebook = 'facebook',
+  Instagram = 'instagram',
+  WhatsappWeb = 'whatsappWeb',
 }
 
 export type Media = {
-  type: 'image' | 'video' | 'audio' | 'document' | 'sticker' | 'documentWithCaption'
+  type: string
   url: string
+  caption?: string
 }
 
 export type PlatformIdentity = {
-  platformId: string;
-  platformName: PlatformName;
-  profileName: string;
+  platformId: string
+  platformName: PlatformName
+  profileName: string
 }
 
 export type Annex = {
-  name: string;
-  media: Media;
+  name: string
+  media: Media
 }
 
 export type Client = {
-  id: string;
-  businessId: string;
-  name: string;
-  platformIdentities: PlatformIdentity[];
-  tagIds: string[];
-  annexes: Annex[];
-  photo: string;
-  notes: string;
-  email: string;
-  address: string;
-  birthdate?: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  businessId: string
+  name: string
+  platformIdentities: PlatformIdentity[]
+  tagIds: string[]
+  annexes: Annex[]
+  photo: string
+  notes: string
+  email: string
+  address: string
+  birthdate?: string
+  createdAt: string
+  updatedAt: string
 }
 
 // Nuevos tipos para la paginación
 export type ChatPaginationMeta = {
-  perPage: number;
-  pageNumber: number;
-  total: number;
-  hasNextPage: boolean;
-  nextPage: number;
+  perPage: number
+  pageNumber: number
+  total: number
+  hasNextPage: boolean
+  nextPage: number
 }
 
 export type ChatResponse = {
-  conversations: Chat[];
-  meta: ChatPaginationMeta;
+  conversations: Chat[]
+  meta: ChatPaginationMeta
 }
 
 export type ChatParams = {
-  pageNumber?: number;
-  perPage?: number;
-  platformName?: string;
-  clientName?: string;
+  pageNumber?: number
+  perPage?: number
+  platformName?: string
+  clientName?: string
 }
