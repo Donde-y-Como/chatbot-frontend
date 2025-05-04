@@ -35,11 +35,8 @@ export function ChatContent({
   const canSendMessages = useMemo(() => {
     if (!chatData) return false
 
-    if (
-      chatData.platformName === 'whatsappWeb' &&
-      whatsappData?.data.status === 'connected'
-    ) {
-      return true
+    if (chatData.platformName === 'whatsappWeb') {
+      return whatsappData?.data.status === 'connected'
     }
 
     const userMessages = chatData.messages.filter(
@@ -50,14 +47,20 @@ export function ChatContent({
     if (!lastUserMessage) return false
 
     const lastTimestamp = lastUserMessage.timestamp
-    const now = Date.now()
-    return differenceInHours(now, lastTimestamp) < 24
+
+    return differenceInHours(Date.now(), lastTimestamp) < 24
   }, [chatData, whatsappData?.data.status])
 
   const isWhatsAppChat = useMemo(() => {
     if (!chatData) return false
 
     return chatData.platformName === 'whatsapp'
+  }, [chatData])
+
+  const isWhatsAppWebChat = useMemo(() => {
+    if (!chatData) return false
+
+    return chatData.platformName === 'whatsappWeb'
   }, [chatData])
 
   return (
@@ -88,6 +91,7 @@ export function ChatContent({
         )}
 
         <ChatFooter
+          isWhatsAppWebChat={isWhatsAppWebChat}
           isWhatsAppChat={isWhatsAppChat}
           selectedChatId={selectedChatId}
           canSendMessage={canSendMessages}
