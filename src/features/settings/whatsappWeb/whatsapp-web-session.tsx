@@ -8,6 +8,10 @@ import {
   WifiOff,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
 import {
   useGetUser,
   UserQueryKey,
@@ -16,7 +20,7 @@ import { baileysService } from '@/features/settings/whatsappWeb/baileysService.t
 import { SessionStatus } from '@/features/settings/whatsappWeb/types.ts'
 import { useGetWhatsAppWebSession } from '@/features/settings/whatsappWeb/useGetWhatsAppWebSession.ts'
 
-const formatearFecha = (fechaStr) => {
+const formatearFecha = (fechaStr: string) => {
   const fecha = new Date(fechaStr)
   return new Intl.DateTimeFormat('es-ES', {
     day: '2-digit',
@@ -92,20 +96,23 @@ export function WhatsappWebSession() {
   if (!session) {
     return (
       <div className='p-6 text-center'>
-        <AlertCircle className='w-10 h-10 mx-auto text-red-500 mb-2' />
-        <p className='text-lg font-medium text-gray-800'>
-          No hay datos de sesión disponibles
-        </p>
+        <Alert variant='destructive' className='w-fit mx-auto'>
+          <AlertCircle className='h-5 w-5' />
+          <AlertTitle>Sesión no disponible</AlertTitle>
+          <AlertDescription>
+            No hay datos de sesión disponibles
+          </AlertDescription>
+        </Alert>
       </div>
     )
   }
 
   return (
-    <div className='bg-white rounded-lg shadow-lg overflow-hidden max-w-md mx-auto'>
-      <div className='bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4'>
-        <h2 className='text-xl font-bold text-white'>Información de Sesión</h2>
-        <p className='text-blue-100 text-sm'>ID: {session.data.id}</p>
-      </div>
+    <Card className='max-w-md mx-auto'>
+      <CardHeader className='bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-t-lg px-6 py-4'>
+        <h2 className='text-xl font-bold'>Información de Sesión</h2>
+        <p className='text-sm text-blue-100'>ID: {session.data.id}</p>
+      </CardHeader>
 
       <div
         className={`px-4 py-3 flex items-center ${obtenerColorEstado(session.data.status)}`}
@@ -117,8 +124,8 @@ export function WhatsappWebSession() {
       </div>
 
       {session.data.status === 'scanning_qr' && session.data.qr && (
-        <div className='p-6 flex justify-center bg-gray-50'>
-          <div className='p-2 bg-white rounded shadow-md'>
+        <div className='p-6 flex justify-center bg-muted'>
+          <div className='p-2 bg-background rounded shadow-sm'>
             <img
               src={session.data.qr}
               alt='Código QR para escanear'
@@ -128,58 +135,55 @@ export function WhatsappWebSession() {
         </div>
       )}
 
-      <div className='p-6'>
+      <CardContent className='p-6'>
         <div className='space-y-4'>
           <div>
-            <label className='block text-sm font-medium text-gray-500'>
-              Usuario
-            </label>
-            <p className='mt-1 text-gray-800'>{session.data.userId}</p>
+            <Label className='text-muted-foreground'>Usuario</Label>
+            <p className='mt-1'>{session.data.userId}</p>
           </div>
 
           <div className='grid grid-cols-2 gap-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-500'>
-                Creado
-              </label>
-              <p className='mt-1 text-sm text-gray-800'>
+              <Label className='text-muted-foreground'>Creado</Label>
+              <p className='mt-1 text-sm'>
                 {formatearFecha(session.data.createdAt)}
               </p>
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-500'>
-                Último uso
-              </label>
-              <p className='mt-1 text-sm text-gray-800'>
+              <Label className='text-muted-foreground'>Último uso</Label>
+              <p className='mt-1 text-sm'>
                 {formatearFecha(session.data.lastUsed)}
               </p>
             </div>
           </div>
 
           {session.data.status === 'error' && (
-            <div className='mt-4 p-3 bg-red-50 text-red-700 rounded-md text-sm'>
-              Ocurrió un error con esta sesión. Por favor, inténtelo nuevamente
-              o contacte con soporte.
-            </div>
+            <Alert variant='destructive' className='mt-4'>
+              <AlertTitle>Error de sesión</AlertTitle>
+              <AlertDescription>
+                Ocurrió un error con esta sesión. Por favor, inténtelo
+                nuevamente o contacte con soporte.
+              </AlertDescription>
+            </Alert>
           )}
 
           {session.data.status === 'disconnected' && (
-            <div className='mt-4 p-3 bg-gray-50 text-gray-700 rounded-md text-sm'>
-              La sesión se ha desconectado. Puede intentar reconectar o crear
-              una nueva sesión.
-            </div>
+            <Alert className='mt-4 bg-muted text-muted-foreground'>
+              <AlertTitle>Sesión desconectada</AlertTitle>
+              <AlertDescription>
+                La sesión se ha desconectado. Puede intentar reconectar o crear
+                una nueva sesión.
+              </AlertDescription>
+            </Alert>
           )}
         </div>
-      </div>
+      </CardContent>
 
-      <div className='px-6 py-4 bg-gray-50 flex justify-end'>
-        <button
-          onClick={removeSession}
-          className='bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors'
-        >
+      <div className='px-6 py-4 bg-muted flex justify-end rounded-b-lg'>
+        <Button onClick={removeSession} variant='destructive' size='sm'>
           Desconectar
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   )
 }
