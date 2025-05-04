@@ -7,13 +7,14 @@ import {
   IconRefresh,
   IconSearch,
 } from '@tabler/icons-react'
-import { CheckCheckIcon } from 'lucide-react'
+import { CheckCheckIcon, TagIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/api/axiosInstance.ts'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
 import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
 import {
   NewConversation,
@@ -75,13 +76,35 @@ export function ChatBarHeader({
 
   const platforms = useMemo(() => {
     const metaPlatforms = [
-      { name: 'whatsapp', icon: IconBrandWhatsapp, color: 'text-green-500' },
-      { name: 'facebook', icon: IconBrandFacebook, color: 'text-blue-500' },
-      { name: 'instagram', icon: IconBrandInstagram, color: 'text-pink-500' },
+      {
+        name: 'whatsappweb',
+        label: 'WhatsApp Web',
+        icon: WhatsAppBusinessIcon,
+        color: 'text-green-700',
+      },
+      {
+        name: 'whatsapp',
+        label: 'WhatsApp',
+        icon: IconBrandWhatsapp,
+        color: 'text-green-500',
+      },
+      {
+        name: 'facebook',
+        label: 'Facebook',
+        icon: IconBrandFacebook,
+        color: 'text-blue-500',
+      },
+      {
+        name: 'instagram',
+        label: 'Instagram',
+        icon: IconBrandInstagram,
+        color: 'text-pink-500',
+      },
     ]
 
     const unread = {
       name: UNREAD_LABEL_FILTER,
+      label: UNREAD_LABEL_FILTER,
       icon: CheckCheckIcon,
       color: 'text-foreground',
     }
@@ -92,7 +115,8 @@ export function ChatBarHeader({
 
     const tagPlatforms = tags.map((tag) => ({
       name: tag.name,
-      icon: null,
+      label: tag.name,
+      icon: TagIcon,
       color: 'text-foreground',
     }))
 
@@ -112,13 +136,10 @@ export function ChatBarHeader({
   }
   const { data: whatsAppWebData } = useGetWhatsAppWebSession()
 
-  const isWhatsAppWebConnected = useMemo(async () => {
-    if (!whatsAppWebData) {
-      return false
-    }
-
-    return whatsAppWebData.data.status === 'connected'
-  }, [whatsAppWebData])
+  const isWhatsAppWebConnected = useMemo(
+    () => whatsAppWebData && whatsAppWebData.data.status === 'connected',
+    [whatsAppWebData]
+  )
 
   return (
     <div className='sticky top-0 z-10 bg-background pb-3 w-full shadow-sm sm:pt-2'>
@@ -143,15 +164,15 @@ export function ChatBarHeader({
 
           <div className='group relative'>
             <IconBrandWhatsapp
-              color={whatsAppWebData ? 'green' : 'red'}
+              color={isWhatsAppWebConnected ? 'green' : 'red'}
               title={
-                whatsAppWebData
+                isWhatsAppWebConnected
                   ? 'Whatsapp Web Conectado'
                   : 'Whatsapp Web Desconectado'
               }
             />
             <span className='absolute right-full bottom-0 scale-0 rounded bg-popover p-2 text-xs text-popover-foreground group-hover:scale-100 whitespace-nowrap shadow-md'>
-              {whatsAppWebData
+              {isWhatsAppWebConnected
                 ? 'Whatsapp Web Conectado'
                 : 'Whatsapp Web Desconectado'}
             </span>
@@ -190,15 +211,15 @@ export function ChatBarHeader({
             'linear-gradient(to right, transparent, black 10px, black calc(100% - 10px), transparent)',
         }}
       >
-        {platforms.map(({ name, icon: Icon, color }) => (
+        {platforms.map(({ name, label, icon: Icon, color }) => (
           <Badge
             key={name}
             variant={activeFilter === name ? 'default' : 'outline'}
             className='cursor-pointer select-none'
             onClick={() => toggleFilter(name)}
           >
-            {Icon && <Icon size={14} className={`mr-1 ${color}`} />}
-            {name.charAt(0).toUpperCase() + name.slice(1)}
+            {Icon && <Icon className={`w-3.5 h-3.5 mr-1 ${color}`} />}
+            {label}
           </Badge>
         ))}
         <AddTagButton />

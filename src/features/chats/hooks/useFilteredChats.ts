@@ -3,7 +3,12 @@ import { Chat } from '@/features/chats/ChatTypes'
 import { Tag } from '../../clients/types'
 import { UNREAD_LABEL_FILTER } from '../ChatBarHeader'
 
-const PLATFORM_NAMES = ['instagram', 'whatsapp', 'facebook'] as const
+const PLATFORM_NAMES = [
+  'instagram',
+  'whatsapp',
+  'facebook',
+  'whatsappweb',
+] as const
 type PlatformName = (typeof PLATFORM_NAMES)[number]
 
 export function useFilteredChats(
@@ -38,6 +43,7 @@ export function useFilteredChats(
       const isPlatformFilter = PLATFORM_NAMES.includes(
         filterLower as PlatformName
       )
+
       if (isPlatformFilter) {
         return chat.platformName.toLowerCase() === filterLower
       }

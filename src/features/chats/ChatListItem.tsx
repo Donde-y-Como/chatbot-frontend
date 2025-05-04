@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { differenceInDays, format, formatDistanceToNowStrict } from 'date-fns'
 import { AvatarImage } from '@radix-ui/react-avatar'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input.tsx'
+import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
 import { Chat, ChatMessages } from '@/features/chats/ChatTypes'
 import { AddTagsModal } from './components/AddTagsModal'
 import { useChatMutations } from './hooks/useChatMutations'
@@ -81,26 +82,28 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
     },
   })
 
-  const lastMsg = chat.lastMessage ? (
-    chat.lastMessage.role === 'business' ? (
-      <span>
-        <Check className='inline-block h-3 w-3 mr-1 opacity-80' />
-        Tú: {chat.lastMessage.content}
-      </span>
-    ) : chat.lastMessage.role === 'assistant' ? (
-      <span>
-        <Check className='inline-block w-3 mr-0.5 opacity-80' />
-        Asistente: {chat.lastMessage.content}
-      </span>
+  const lastMsg = useMemo(() => {
+    return chat.lastMessage ? (
+      chat.lastMessage.role === 'business' ? (
+        <span>
+          <Check className='inline-block h-3 w-3 mr-1 opacity-80' />
+          Tú: {chat.lastMessage.content}
+        </span>
+      ) : chat.lastMessage.role === 'assistant' ? (
+        <span>
+          <Check className='inline-block w-3 mr-0.5 opacity-80' />
+          Asistente: {chat.lastMessage.content}
+        </span>
+      ) : (
+        chat.lastMessage.content
+      )
     ) : (
-      chat.lastMessage.content
+      <span className='text-muted-foreground italic'>Sin mensajes</span>
     )
-  ) : (
-    <span className='text-muted-foreground italic'>Sin mensajes</span>
-  )
+  }, [chat.lastMessage])
 
   const PlatformIcon = {
-    whatsappWeb: IconBrandWhatsapp,
+    whatsappweb: WhatsAppBusinessIcon,
     whatsapp: IconBrandWhatsapp,
     facebook: IconBrandFacebook,
     instagram: IconBrandInstagram,
@@ -168,8 +171,15 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
     }
   }
 
-  const clientInitial = chat.client?.name?.[0] || '?'
-  const hasPhoto = chat.client?.photo && chat.client.photo.length > 0
+  const clientInitial = useMemo(
+    () => chat.client?.name?.[0] || '?',
+    [chat.client]
+  )
+
+  const hasPhoto = useMemo(
+    () => chat.client?.photo && chat.client.photo.length > 0,
+    [chat.client]
+  )
 
   return (
     <div
@@ -194,10 +204,11 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
           {PlatformIcon && (
             <div className='absolute -bottom-0.5 -right-0.5 rounded-full bg-white p-0.5 shadow-md'>
               <PlatformIcon
-                size={14}
                 className={cn(
-                  (chat.platformName.toLowerCase() === 'whatsapp' ||
-                    chat.platformName.toLowerCase() === 'whatsappWeb') &&
+                  'w-3.5 h-3.5',
+                  chat.platformName.toLowerCase() === 'whatsappweb' &&
+                    'text-green-700',
+                  chat.platformName.toLowerCase() === 'whatsapp' &&
                     'text-green-500',
                   chat.platformName.toLowerCase() === 'facebook' &&
                     'text-blue-500',

@@ -10,7 +10,7 @@ export type Template = {
 
 export type Chat = {
   id: string
-  platformName: string
+  platformName: PlatformName
   client?: ClientPrimitives
   lastMessage: Message | null
   newClientMessagesCount: number
