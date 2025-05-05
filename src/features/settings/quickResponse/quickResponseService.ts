@@ -1,5 +1,5 @@
 import { api } from '@/api/axiosInstance'
-import { QuickResponse } from './types'
+import { QuickResponse, QuickResponseFormValues } from './types'
 
 const endpoint = '/replies' as const
 
@@ -13,7 +13,7 @@ export const getQuickResponses = async (): Promise<QuickResponse[]> => {
 }
 
 export const createQuickResponse = async (
-  data: Partial<QuickResponse>
+  data: QuickResponseFormValues
 ): Promise<boolean> => {
   try {
     await api.post(endpoint, data)

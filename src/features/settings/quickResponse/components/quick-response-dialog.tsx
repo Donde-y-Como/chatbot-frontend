@@ -1,6 +1,6 @@
-import { QuickResponse } from '../types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { QuickResponseForm, QuickResponseFormValues } from './quick-response-form';
+import { QuickResponse, QuickResponseFormValues } from '../types'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { QuickResponseForm } from '@/features/settings/quickResponse/components/quick-response-form.tsx'
 
 interface QuickResponseDialogProps {
   isOpen: boolean;
@@ -27,6 +27,7 @@ export function QuickResponseDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
+        <DialogDescription className="sr-only">{submitLabel} respuesta rapida</DialogDescription>
         <QuickResponseForm
           onSubmit={onSubmit}
           initialData={initialData}

@@ -1,108 +1,105 @@
-import { useState } from 'react';
-import { Loader2, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import ContentSection from '../components/content-section';
-import { QuickResponseList } from './components/quick-response-list';
-import { QuickResponseDialog } from './components/quick-response-dialog';
-import { DeleteQuickResponseDialog } from './components/delete-quick-response-dialog';
-import { QuickResponse, QuickResponseFormValues } from './types';
-import { 
-  useGetQuickResponses, 
+import { useState } from 'react'
+import { Loader2, Plus } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { ViewQuickResponseDialog } from '@/features/settings/quickResponse/components/view-quick-response-dialog.tsx'
+import ContentSection from '../components/content-section'
+import { DeleteQuickResponseDialog } from './components/delete-quick-response-dialog'
+import { QuickResponseDialog } from './components/quick-response-dialog'
+import { QuickResponseList } from './components/quick-response-list'
+import {
+  useGetQuickResponses,
   useCreateQuickResponse,
   useUpdateQuickResponse,
-  useDeleteQuickResponse
-} from './hooks/useQuickResponses';
+  useDeleteQuickResponse,
+} from './hooks/useQuickResponses'
+import { QuickResponse, QuickResponseFormValues } from './types'
 
 export default function QuickResponsesSection() {
-  // State for dialogs
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedQuickResponse, setSelectedQuickResponse] = useState<QuickResponse | undefined>(undefined);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [selectedQuickResponse, setSelectedQuickResponse] = useState<
+    QuickResponse | undefined
+  >(undefined)
 
-  // Fetching data
-  const { 
+  const {
     data: quickResponses,
-    isLoading: isLoadingQuickResponses,
-    error: quickResponsesError
-  } = useGetQuickResponses();
+    isPending: isLoadingQuickResponses,
+    error: quickResponsesError,
+  } = useGetQuickResponses()
 
-  // Mutations
-  const { mutate: createQuickResponse, isPending: isCreating } = useCreateQuickResponse();
-  const { mutate: updateQuickResponse, isPending: isUpdating } = useUpdateQuickResponse();
-  const { mutate: deleteQuickResponse, isPending: isDeleting } = useDeleteQuickResponse();
+  const { mutateAsync: createQuickResponse, isPending: isCreating } =
+    useCreateQuickResponse()
+  const { mutateAsync: updateQuickResponse, isPending: isUpdating } =
+    useUpdateQuickResponse()
+  const { mutateAsync: deleteQuickResponse, isPending: isDeleting } =
+    useDeleteQuickResponse()
 
-  // Handlers
-  const handleCreate = (values: QuickResponseFormValues) => {
-    createQuickResponse(values, {
-      onSuccess: () => {
-        setIsCreateDialogOpen(false);
-      }
-    });
-  };
+  const handleCreate = async (values: QuickResponseFormValues) => {
 
-  const handleUpdate = (values: QuickResponseFormValues) => {
+    await createQuickResponse(values)
+    setIsCreateDialogOpen(false)
+  }
+
+  const handleUpdate = async (values: QuickResponseFormValues) => {
     if (selectedQuickResponse) {
-      updateQuickResponse(
-        {
-          id: selectedQuickResponse.id,
-          data: values
-        },
-        {
-          onSuccess: () => {
-            setIsEditDialogOpen(false);
-            setSelectedQuickResponse(undefined);
-          }
-        }
-      );
+      await updateQuickResponse({
+        id: selectedQuickResponse.id,
+        data: values,
+      })
+      setIsEditDialogOpen(false)
+      setSelectedQuickResponse(undefined)
     }
-  };
+  }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedQuickResponse) {
-      deleteQuickResponse(selectedQuickResponse.id, {
-        onSuccess: () => {
-          setIsDeleteDialogOpen(false);
-          setSelectedQuickResponse(undefined);
-        }
-      });
+      await deleteQuickResponse(selectedQuickResponse.id)
+      setIsDeleteDialogOpen(false)
+      setSelectedQuickResponse(undefined)
     }
-  };
+  }
 
   const openEditDialog = (quickResponse: QuickResponse) => {
-    setSelectedQuickResponse(quickResponse);
-    setIsEditDialogOpen(true);
-  };
+    setSelectedQuickResponse(quickResponse)
+    setIsEditDialogOpen(true)
+  }
 
   const openDeleteDialog = (quickResponse: QuickResponse) => {
-    setSelectedQuickResponse(quickResponse);
-    setIsDeleteDialogOpen(true);
-  };
+    setSelectedQuickResponse(quickResponse)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const openViewDialog = (quickResponse: QuickResponse) => {
+    setSelectedQuickResponse(quickResponse)
+    setIsViewDialogOpen(true)
+  }
 
   return (
     <ContentSection
-      title="Respuestas Rápidas"
-      desc="Administra tus respuestas rápidas para agilizar la comunicación con tus clientes"
+      title='Respuestas Rápidas'
+      desc='Administra tus respuestas rápidas para agilizar la comunicación con tus clientes'
     >
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-medium">Tus respuestas rápidas</h3>
+      <div className='space-y-6'>
+        <div className='flex justify-between items-center'>
+          <h3 className='text-lg font-medium'>Tus respuestas rápidas</h3>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className='mr-2 h-4 w-4' />
             Agregar respuesta
           </Button>
         </div>
 
         {isLoadingQuickResponses && (
-          <div className="flex justify-center items-center py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2">Cargando respuestas rápidas...</span>
+          <div className='flex justify-center items-center py-10'>
+            <Loader2 className='h-8 w-8 animate-spin text-primary' />
+            <span className='ml-2'>Cargando respuestas rápidas...</span>
           </div>
         )}
 
         {quickResponsesError && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant='destructive' className='mb-6'>
             <AlertTitle>Error al cargar las respuestas rápidas</AlertTitle>
             <AlertDescription>
               No se pudieron cargar las respuestas rápidas. Por favor, intenta
@@ -116,6 +113,15 @@ export default function QuickResponsesSection() {
             quickResponses={quickResponses}
             onEdit={openEditDialog}
             onDelete={openDeleteDialog}
+            onView={openViewDialog}
+          />
+        )}
+
+        {selectedQuickResponse && (
+          <ViewQuickResponseDialog
+            isOpen={isViewDialogOpen}
+            onClose={() => setIsViewDialogOpen(false)}
+            data={selectedQuickResponse}
           />
         )}
 
@@ -125,30 +131,30 @@ export default function QuickResponsesSection() {
           onClose={() => setIsCreateDialogOpen(false)}
           onSubmit={handleCreate}
           isSubmitting={isCreating}
-          title="Crear respuesta rápida"
-          submitLabel="Crear"
+          title='Crear respuesta rápida'
+          submitLabel='Crear'
         />
 
         {/* Edit Dialog */}
         <QuickResponseDialog
           isOpen={isEditDialogOpen}
           onClose={() => {
-            setIsEditDialogOpen(false);
-            setSelectedQuickResponse(undefined);
+            setIsEditDialogOpen(false)
+            setSelectedQuickResponse(undefined)
           }}
           onSubmit={handleUpdate}
           isSubmitting={isUpdating}
           initialData={selectedQuickResponse}
-          title="Editar respuesta rápida"
-          submitLabel="Actualizar"
+          title='Editar respuesta rápida'
+          submitLabel='Actualizar'
         />
 
         {/* Delete Dialog */}
         <DeleteQuickResponseDialog
           isOpen={isDeleteDialogOpen}
           onClose={() => {
-            setIsDeleteDialogOpen(false);
-            setSelectedQuickResponse(undefined);
+            setIsDeleteDialogOpen(false)
+            setSelectedQuickResponse(undefined)
           }}
           onConfirm={handleDelete}
           isDeleting={isDeleting}
@@ -156,5 +162,5 @@ export default function QuickResponsesSection() {
         />
       </div>
     </ContentSection>
-  );
+  )
 }
