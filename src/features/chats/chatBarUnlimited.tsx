@@ -118,7 +118,7 @@ export function ChatBarUnlimited({
       {user && (
         <ChatBarHeader
           value={search}
-          AIEnabled={user.assistantConfig.enabled}
+          AIEnabled={user.assistantConfig?.enabled}
           onInputChange={setSearch}
           onFilterChange={setActiveFilter}
           onToggleAllAI={onToggleAllAI}
@@ -165,8 +165,7 @@ export function ChatBarUnlimited({
           </div>
         )}
 
-        {/* Loader reference element - this is where we observe for intersection */}
-        <div ref={loadingRef} className='py-4 flex justify-center'>
+        <div ref={loadingRef} className='pt-4 flex justify-center'>
           {isFetchingNextPage && (
             <div className='flex flex-col items-center gap-2'>
               <Loader2 className='h-6 w-6 animate-spin text-primary' />
@@ -176,12 +175,6 @@ export function ChatBarUnlimited({
             </div>
           )}
         </div>
-
-        {!hasNextPage && chats.length > 0 && !isChatsLoading && (
-          <div className='py-4 text-center text-sm text-muted-foreground'>
-            No hay más chats para cargar
-          </div>
-        )}
       </ScrollArea>
     </div>
   )

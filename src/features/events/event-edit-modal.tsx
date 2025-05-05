@@ -20,6 +20,9 @@ import {
 import { Switch } from '@/components/ui/switch.tsx'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { FileUpload } from '@/components/file-upload'
+import { toast } from 'sonner'
+import { useUploadMedia } from '../chats/hooks/useUploadMedia'
 import {
   EndCondition,
   EventPrimitives,
@@ -40,6 +43,8 @@ export function EventEditModal({
   onSave: (changes: EditableEvent) => void
 }) {
   const [changes, setChanges] = React.useState<EditableEvent>({})
+  const [photos, setPhotos] = React.useState<File[]>([])
+  const { uploadFile, validateFile, isUploading } = useUploadMedia()
 
   const updateField = <K extends keyof EventPrimitives>(
     field: K,
@@ -51,8 +56,45 @@ export function EventEditModal({
     }))
   }
 
+  const handleImageUpload = React.useCallback(
+    async (file: File) => {
+      const { isValid } = validateFile(file)
+      if (!isValid) {
+        toast.error("El archivo no es válido")
+        return
+      }
+
+      try {
+        const url = await uploadFile(file)
+        updateField('photos', [...(changes.photos || event.photos), url])
+      } catch (error) {
+        toast.error("Hubo un error al subir la imagen")
+      }
+    },
+    [uploadFile, validateFile, changes.photos, event.photos]
+  )
+
+  React.useEffect(() => {
+    if (photos.length > 0) {
+      const uploadPhotos = async () => {
+        for (const photo of photos) {
+          await handleImageUpload(photo)
+        }
+        setPhotos([])
+      }
+      uploadPhotos()
+    }
+  }, [photos, handleImageUpload])
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Si está cerrando (isOpen === false), prevenimos el cierre al hacer clic afuera
+      if (!isOpen) {
+        return;
+      }
+      // Solo permitimos que se abra
+      onClose();
+    }}>
       <DialogContent className='sm:max-w-[600px]'>
         <DialogHeader>
           <DialogTitle>Editar Evento</DialogTitle>
@@ -131,6 +173,46 @@ export function EventEditModal({
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className='grid gap-2'>
+              <Label>Fotos</Label>
+              <div className="mb-2">
+                <FileUpload
+                  maxFiles={5}
+                  maxSize={100 * 1024 * 1024}
+                  value={photos}
+                  onChange={setPhotos}
+                />
+              </div>
+              {event.photos.length > 0 && (
+                <div className="mt-2">
+                  <Label>Fotos actuales</Label>
+                  <div className="mt-2 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                    {(changes.photos || event.photos).map((photoUrl, index) => (
+                      <div key={index} className="group relative aspect-square overflow-hidden rounded-lg border bg-background">
+                        <img
+                          src={photoUrl}
+                          alt={`Foto ${index + 1}`}
+                          className="h-full w-full object-cover transition-all hover:opacity-80"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 rounded-full"
+                          onClick={() => {
+                            const updatedPhotos = [...(changes.photos || event.photos)]
+                            updatedPhotos.splice(index, 1)
+                            updateField('photos', updatedPhotos)
+                          }}
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -349,7 +431,7 @@ export function EventEditModal({
         </Tabs>
 
         <DialogFooter>
-          <Button variant='outline' onClick={onClose}>
+          <Button variant='outline' onClick={onClose} disabled={isUploading}>
             Cancelar
           </Button>
           <Button
@@ -357,8 +439,9 @@ export function EventEditModal({
               onSave(changes)
               onClose()
             }}
+            disabled={isUploading}
           >
-            Guardar Cambios
+            {isUploading ? 'Subiendo...' : 'Guardar Cambios'}
           </Button>
         </DialogFooter>
       </DialogContent>

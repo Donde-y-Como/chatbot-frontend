@@ -112,13 +112,46 @@ export function EmployeeActionDialog({ currentEmployee, open, onOpenChange }: Em
     setIsSubmitting(false)
   }
 
+  // Función para verificar si ha rellenado algún campo
+  const hasFilledFields = useCallback(() => {
+    const values = form.getValues();
+    const defaultValues = isEdit ? {
+      name: currentEmployee?.name || "",
+      role: currentEmployee?.role || "",
+      email: currentEmployee?.email || "",
+      password: "",
+      birthDate: currentEmployee?.birthDate || "",
+      address: currentEmployee?.address || ""
+    } : {
+      name: "",
+      role: "",
+      email: "",
+      password: "",
+      address: ""
+    };
+
+    // Comparar valores actuales con valores por defecto
+    if (values.name !== defaultValues.name) return true;
+    if (values.role !== defaultValues.role) return true;
+    if (values.email !== defaultValues.email) return true;
+    if (values.password !== defaultValues.password) return true;
+    if (values.address !== defaultValues.address) return true;
+    if (values.birthDate !== defaultValues.birthDate) return true;
+    if (photos.length > 0) return true;
+
+    return false;
+  }, [form, photos, isEdit, currentEmployee]);
+
   return (
     <Dialog
       open={open}
-      onOpenChange={(state) => {
-        form.reset()
-        setPhotos([])
-        onOpenChange(state)
+      onOpenChange={(isOpen) => {
+        if (!isOpen && hasFilledFields()) {
+          return;
+        }
+        form.reset();
+        setPhotos([]);
+        onOpenChange(isOpen);
       }}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
@@ -150,6 +183,26 @@ export function EmployeeActionDialog({ currentEmployee, open, onOpenChange }: Em
                   </TabsList>
                   <TabsContent value="user" className="w-full grid place-items-center">
                     <UserDataSection form={form} isEdit={isEdit} />
+                    <div className="flex justify-between gap-4 w-full mt-6">
+                      <Button 
+                        variant="outline" 
+                        type="button"
+                        onClick={() => {
+                          form.reset();
+                          setPhotos([]);
+                          onOpenChange(false);
+                        }}
+                        disabled={isSubmitting || isUploading}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button 
+                        type="button" 
+                        onClick={() => setSelectedTab("employee")}
+                      >
+                        Continuar
+                      </Button>
+                    </div>
                   </TabsContent>
                   <TabsContent value="employee">
                     <EmployeeDataSection
@@ -157,22 +210,72 @@ export function EmployeeActionDialog({ currentEmployee, open, onOpenChange }: Em
                       files={photos}
                       onFilesChange={setPhotos}
                     />
+                    <div className="flex justify-between gap-4 w-full mt-6">
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="destructive" 
+                          type="button"
+                          onClick={() => {
+                            form.reset();
+                            setPhotos([]);
+                            onOpenChange(false);
+                          }}
+                          disabled={isSubmitting || isUploading}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          type="button"
+                          onClick={() => setSelectedTab("user")}
+                        >
+                          Atrás
+                        </Button>
+                      </div>
+                      <Button 
+                        type="button" 
+                        onClick={() => setSelectedTab("schedule")}
+                      >
+                        Continuar
+                      </Button>
+                    </div>
                   </TabsContent>
                   <TabsContent value="schedule">
                     <ScheduleSection form={form} />
+                    <div className="flex justify-between gap-4 w-full mt-6">
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="destructive" 
+                          type="button"
+                          onClick={() => {
+                            form.reset();
+                            setPhotos([]);
+                            onOpenChange(false);
+                          }}
+                          disabled={isSubmitting || isUploading}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          type="button"
+                          onClick={() => setSelectedTab("employee")}
+                        >
+                          Atrás
+                        </Button>
+                      </div>
+                      <Button 
+                        type="submit"
+                        disabled={isSubmitting || isUploading}
+                        form='employee-form'
+                      >
+                        {isSubmitting || isUploading ? "Guardando..." : isEdit ? "Actualizar" : "Guardar cambios"}
+                      </Button>
+                    </div>
                   </TabsContent>
                 </Tabs>
               )}
 
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || isUploading}
-                  form='employee-form'
-                >
-                  {isSubmitting || isUploading ? "Guardando..." : isEdit ? "Actualizar" : "Guardar cambios"}
-                </Button>
-              </DialogFooter>
             </form>
           </Form>
         </ScrollArea>

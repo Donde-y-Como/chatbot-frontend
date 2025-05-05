@@ -94,9 +94,6 @@ export function ServiceViewDialog({
                   <div className="flex flex-col md:flex-row md:items-center justify-between">
                     <div>
                       <h3 className="text-xl font-semibold">{currentService.name}</h3>
-                      <Badge variant="outline" className="mt-1">
-                        ID: {currentService.id.substring(0, 8)}
-                      </Badge>
                     </div>
                     <div className="mt-2 md:mt-0">
                       <Badge className="text-lg bg-primary/20 text-primary hover:bg-primary/30 py-1.5 px-3">

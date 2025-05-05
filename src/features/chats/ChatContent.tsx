@@ -1,20 +1,21 @@
+import { useMemo } from 'react'
+import { differenceInHours } from 'date-fns'
 import { cn } from '@/lib/utils'
 import {
   ChatConversation,
   ChatConversationSkeleton,
-} from '@/features/chats/ChatConversation.tsx'
+} from '@/features/chats/ChatConversation'
 import ChatFooter from '@/features/chats/ChatFooter.tsx'
 import { ChatMessages } from '@/features/chats/ChatTypes.ts'
 import {
   ConversationHeader,
   ConversationHeaderSkeleton,
 } from '@/features/chats/ConversationHeader.tsx'
-import { useMemo } from 'react'
-import { differenceInHours } from 'date-fns'
+import { useGetWhatsAppWebSession } from '@/features/settings/whatsappWeb/useGetWhatsAppWebSession.ts'
 
 interface ChatContentProps {
   isLoading: boolean
-  chatData?: ChatMessages
+  chatData?: ChatMessages | undefined | null
   selectedChatId: string
   mobileSelectedChatId: string | null
   isMobileVisible: boolean
@@ -29,24 +30,38 @@ export function ChatContent({
   isMobileVisible,
   onBackClick,
 }: ChatContentProps) {
+  const { data: whatsappData } = useGetWhatsAppWebSession()
 
   const canSendMessages = useMemo(() => {
-    if (!chatData) return false;
-    
-    if(chatData.platformName === "whatsappWeb") {
-      return true;  
+    if (!chatData) return false
+
+    if (chatData.platformName === 'whatsappWeb') {
+      return whatsappData?.data.status === 'connected'
     }
 
-    const userMessages = chatData.messages.filter((message) => message.role === 'user');
-    const lastUserMessage = userMessages.at(-1);
+    const userMessages = chatData.messages.filter(
+      (message) => message.role === 'user'
+    )
+    const lastUserMessage = userMessages.at(-1)
 
-    if (!lastUserMessage) return false;
+    if (!lastUserMessage) return false
 
-    const lastTimestamp = lastUserMessage.timestamp;
-    const now = Date.now();
-    return differenceInHours(now, lastTimestamp) < 24;
+    const lastTimestamp = lastUserMessage.timestamp
 
-  }, [chatData]);
+    return differenceInHours(Date.now(), lastTimestamp) < 24
+  }, [chatData, whatsappData?.data.status])
+
+  const isWhatsAppChat = useMemo(() => {
+    if (!chatData) return false
+
+    return chatData.platformName === 'whatsapp'
+  }, [chatData])
+
+  const isWhatsAppWebChat = useMemo(() => {
+    if (!chatData) return false
+
+    return chatData.platformName === 'whatsappWeb'
+  }, [chatData])
 
   return (
     <div
@@ -75,7 +90,12 @@ export function ChatContent({
           />
         )}
 
-        <ChatFooter selectedChatId={selectedChatId} canSendMessage={canSendMessages} />
+        <ChatFooter
+          isWhatsAppWebChat={isWhatsAppWebChat}
+          isWhatsAppChat={isWhatsAppChat}
+          selectedChatId={selectedChatId}
+          canSendMessage={canSendMessages}
+        />
       </div>
     </div>
   )

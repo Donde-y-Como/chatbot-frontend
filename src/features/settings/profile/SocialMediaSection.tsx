@@ -23,22 +23,55 @@ export default function SocialMediaSection({ user, isSocialMediaExpanded, setIsS
       {/* Conditional rendering of social media details */}
       {isSocialMediaExpanded && (
         <div className="grid grid-cols-1 gap-4">
+          {/*<FormItem>*/}
+          {/*  <FormLabel>WhatsApp</FormLabel>*/}
+          {/*  <FormControl>*/}
+          {/*    <Input value={user?.socialPlatforms?.whatsapp ?? ''} readOnly />*/}
+          {/*  </FormControl>*/}
+          {/*</FormItem>*/}
+          {/*<FormItem>*/}
+          {/*  <FormLabel>Facebook</FormLabel>*/}
+          {/*  <FormControl>*/}
+          {/*    <Input value={user?.socialPlatforms?.facebook ?? ''} readOnly />*/}
+          {/*  </FormControl>*/}
+          {/*</FormItem>*/}
+          {/*<FormItem>*/}
+          {/*  <FormLabel>Instagram</FormLabel>*/}
+          {/*  <FormControl>*/}
+          {/*    <Input value={user?.socialPlatforms?.instagram ?? ''} readOnly />*/}
+          {/*  </FormControl>*/}
+          {/*</FormItem>*/}
           <FormItem>
             <FormLabel>WhatsApp</FormLabel>
             <FormControl>
-              <Input value={user?.socialPlatforms?.whatsapp ?? ''} readOnly />
+              <Input
+                value={
+                  user?.socialPlatforms?.find(platform => platform.platformName === 'whatsapp')?.displayName ?? ''
+                }
+                readOnly
+              />
             </FormControl>
           </FormItem>
           <FormItem>
             <FormLabel>Facebook</FormLabel>
             <FormControl>
-              <Input value={user?.socialPlatforms?.facebook ?? ''} readOnly />
+              <Input
+                value={
+                  user?.socialPlatforms?.find(platform => platform.platformName === 'facebook')?.displayName ?? ''
+                }
+                readOnly
+              />
             </FormControl>
           </FormItem>
           <FormItem>
             <FormLabel>Instagram</FormLabel>
             <FormControl>
-              <Input value={user?.socialPlatforms?.instagram ?? ''} readOnly />
+              <Input
+                value={
+                  user?.socialPlatforms?.find(platform => platform.platformName === 'instagram')?.displayName ?? ''
+                }
+                readOnly
+              />
             </FormControl>
           </FormItem>
         </div>

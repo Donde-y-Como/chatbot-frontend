@@ -7,11 +7,13 @@ import { io } from 'socket.io-client'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/authStore.ts'
 import { playNotification } from '@/lib/audio.ts'
+import { sortByLastMessageTimestamp } from '@/lib/utils.ts'
 import { handleServerError } from '@/utils/handle-server-error.ts'
 import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 import { makeLastMessageContent } from '@/features/chats/hooks/makeLastMessageContent.ts'
+import { CreateSessionResponse } from '@/features/settings/whatsappWeb/types.ts'
+import { WhatsAppWebSessionQueryKey } from '@/features/settings/whatsappWeb/useGetWhatsAppWebSession.ts'
 import { UserQueryKey } from '../components/layout/hooks/useGetUser'
-import { sortByLastMessageTimestamp } from '@/lib/utils.ts'
 
 export const socket = io(import.meta.env.VITE_WS_URL || 'http://localhost:3000')
 
@@ -21,8 +23,6 @@ socket.on(
     if (data.message.role === 'user') {
       playNotification()
     }
-
-    console.info(data)
 
     const chats = queryClient.getQueryData(['chats']) as Chat[] | undefined
     const chat = chats?.find((chat) => chat.id === data.conversationId)
@@ -84,8 +84,38 @@ socket.on('creditsUpdated', async () => {
   })
 })
 
-socket.on('qrStatus', () => {
+socket.on('qrStatus', (data) => {
+  queryClient.setQueryData(
+    WhatsAppWebSessionQueryKey,
+    (cachedSession: CreateSessionResponse | undefined) => {
+      if (cachedSession === undefined) return cachedSession
 
+      return {
+        ...cachedSession,
+        data: {
+          ...cachedSession.data,
+          qr: data.data.qr,
+        },
+      }
+    }
+  )
+})
+
+socket.on('whatsappWebSessionUpdate', (data) => {
+  queryClient.setQueryData(
+    WhatsAppWebSessionQueryKey,
+    (cachedSession: CreateSessionResponse | undefined) => {
+      if (cachedSession === undefined) return cachedSession
+
+      return {
+        ...cachedSession,
+        data: {
+          ...cachedSession.data,
+          status: data.data.status,
+        },
+      }
+    }
+  )
 })
 
 export const useWebSocket = () => {

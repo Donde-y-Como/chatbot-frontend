@@ -80,3 +80,6 @@ export type Tag = {
 export const createTagSchema = z.object({
     name: z.string().min(1, { message: "El nombre es obligatorio" }),
 })
+
+// Exporting ClientPrimitives as Client for easier usage across the application
+export type Client = ClientPrimitives;

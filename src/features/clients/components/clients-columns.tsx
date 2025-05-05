@@ -1,17 +1,27 @@
 import { DataTableColumnHeader } from '@/components/tables/data-table-column-header.tsx'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
+import { Button } from '@/components/ui/button'
 import { ColumnDef } from '@tanstack/react-table'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import { DataTableRowActions } from './data-table-row-actions'
 import { ClientPrimitives, PlatformName, Tag } from '../types'
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconBrandWhatsapp,
+} from '@tabler/icons-react'
+import { cn } from '@/lib/utils'
+import { PlatformChatButton } from './platform-chat-button'
 
 // Helper function para mostrar nombres de plataformas en español
 function getPlatformDisplayName(platformName: PlatformName): string {
   switch (platformName) {
     case PlatformName.Whatsapp:
       return 'WhatsApp'
+    case PlatformName.WhatsappWeb:
+      return 'WhatsApp Web'
     case PlatformName.Facebook:
       return 'Facebook'
     case PlatformName.Instagram:
@@ -68,15 +78,47 @@ export const createColumns = (tags: Tag[] = []): ColumnDef<ClientPrimitives>[] =
       
       return (
         <div className='flex flex-wrap gap-1'>
-          {platformIdentities.map((identity, index) => (
-            <Badge 
+          {platformIdentities.map((identity, index) => {
+            // Determinar qué icono mostrar según la plataforma
+            const PlatformIcon = {
+              [PlatformName.Whatsapp]: IconBrandWhatsapp,
+              [PlatformName.WhatsappWeb]: IconBrandWhatsapp,
+              [PlatformName.Facebook]: IconBrandFacebook,
+              [PlatformName.Instagram]: IconBrandInstagram,
+            }[identity.platformName] || null;
+            
+            return (
+            <Button 
               key={index}
-              variant='outline' 
-              className='capitalize text-sm'
+              variant='ghost' 
+              className='capitalize text-sm flex items-center gap-1 h-8 px-2 rounded-md border'
+              onClick={() => {
+                const chatButton = document.getElementById(`platform-chat-${row.original.id}-${identity.platformName}`);
+                if (chatButton) {
+                  chatButton.click();
+                }
+              }}
             >
-              {getPlatformDisplayName(identity.platformName)}: {identity.profileName}
-            </Badge>
-          ))}
+              <PlatformChatButton 
+                clientId={row.original.id}
+                platformName={identity.platformName}
+                profileName={identity.profileName}
+                id={`platform-chat-${row.original.id}-${identity.platformName}`}
+                className="hidden"
+              />
+              {PlatformIcon && (
+                <PlatformIcon 
+                  size={14}
+                  className={cn(
+                    (identity.platformName === PlatformName.Whatsapp || identity.platformName === PlatformName.WhatsappWeb) && 'text-green-500',
+                    identity.platformName === PlatformName.Facebook && 'text-blue-500',
+                    identity.platformName === PlatformName.Instagram && 'text-pink-500'
+                  )}
+                />
+              )}
+              {getPlatformDisplayName(identity.platformName)}
+            </Button>
+          )})}
         </div>
       )
     },

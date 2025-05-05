@@ -46,7 +46,7 @@ export type EmployeeAvailable = Pick<
 export const appointmentCreated = z.object({
   id: z.string(),
   clientId: z.string(),
-  serviceId: z.string(),
+  serviceIds: z.array(z.string()),
   employeeIds: z.array(z.string()),
   date: z.date(),
   timeRange: z.object({
@@ -62,7 +62,7 @@ export type AppointmentCreated = z.infer<typeof appointmentCreated>
 export const appointment = z.object({
   id: z.string(),
   clientId: z.string(),
-  serviceId: z.string(),
+  serviceIds: z.array(z.string()),
   employeeIds: z.array(z.string()),
   date: z.string(),
   timeRange: z.object({
@@ -72,7 +72,7 @@ export const appointment = z.object({
   notes: z.string(),
   folio: z.string(),
   clientName: z.string(),
-  serviceName: z.string(),
+  serviceNames: z.array(z.string()),
   employeesNames: z.array(z.string()),
 })
 

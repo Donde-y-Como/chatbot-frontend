@@ -37,6 +37,8 @@ import { CreatableEvent, creatableEventSchema, Currency, EndConditionType, Recur
 import { useUploadMedia } from '../chats/hooks/useUploadMedia'
 import { toast } from 'sonner'
 import { useEventMutations } from './hooks/useEventMutations'
+import { AlertCircle } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 interface CreateEventModelProps {
   open: boolean
@@ -46,6 +48,7 @@ interface CreateEventModelProps {
 export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
   const [photos, setPhotos] = React.useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [formSubmitError, setFormSubmitError] = React.useState<string | null>(null)
   const { createEvent } = useEventMutations()
   const { uploadFile, validateFile, isUploading } = useUploadMedia()
   const defaultValues = React.useMemo(() => ({
@@ -110,15 +113,91 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
     [uploadFile, validateFile, form],
   )
 
+  // Función para verificar si el formulario tiene errores antes de enviar
+  const checkFormErrors = React.useCallback(() => {
+    const formErrors = form.formState.errors;
+    const errorFields = Object.keys(formErrors);
+    
+    if (errorFields.length === 0) return null;
+    
+    // Crear un mensaje con los campos que tienen error
+    let errorMessage = "Por favor, completa los siguientes campos: ";
+    
+    errorFields.forEach((field, index) => {
+      // Formatear el nombre del campo para mostrar de forma más amigable
+      let fieldName = field;
+      
+      // Manejar campos anidados
+      if (field.includes('.')) {
+        const parts = field.split('.');
+        switch(parts[0]) {
+          case 'price':
+            fieldName = parts[1] === 'amount' ? 'Precio' : 'Moneda';
+            break;
+          case 'capacity':
+            fieldName = 'Capacidad máxima';
+            break;
+          case 'duration':
+            fieldName = parts[1] === 'startAt' ? 'Fecha de inicio' : 'Fecha de fin';
+            break;
+          case 'recurrence':
+            fieldName = parts[1] === 'frequency' ? 'Frecuencia' : 'Condición de fin';
+            break;
+          default:
+            fieldName = field;
+        }
+      } else {
+        // Campos principales
+        switch(field) {
+          case 'name':
+            fieldName = 'Nombre del evento';
+            break;
+          case 'description':
+            fieldName = 'Descripción';
+            break;
+          case 'location':
+            fieldName = 'Ubicación';
+            break;
+          case 'photos':
+            fieldName = 'Imágenes';
+            break;
+          case 'duration':
+            fieldName = 'Duración';
+            break;
+          default:
+            fieldName = field;
+        }
+      }
+      
+      errorMessage += fieldName;
+      if (index < errorFields.length - 1) {
+        errorMessage += ", ";
+      }
+    });
+    
+    return errorMessage;
+  }, [form.formState.errors]);
+  
+  // Efecto para mostrar errores cuando cambia el estado de errores del formulario
+  React.useEffect(() => {
+    const errorMessage = checkFormErrors();
+    if (errorMessage && form.formState.isSubmitted) {
+      setFormSubmitError(errorMessage);
+      toast.error(errorMessage);
+    }
+  }, [form.formState.errors, form.formState.isSubmitted, checkFormErrors]);
+
   const onSubmit = React.useCallback(async (_data: CreatableEvent) => {
     setIsSubmitting(true);
+    setFormSubmitError(null);
 
-    // Trigger validation for all fields to ensure errors are displayed
+    // Trigger validation for all fields
     const isValid = await form.trigger();
     if (!isValid) {
       setIsSubmitting(false);
+      // La lógica de errores ahora se maneja en el useEffect
       toast.error("Por favor, completa todos los campos obligatorios.");
-      return; // Stop submission if the form is invalid
+      return;
     }
 
     if (photos.length > 0) {
@@ -147,8 +226,31 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
     }
   }, [recurrenceFrequency, setValue])
 
+  // Función para verificar si se han rellenado campos
+  const hasFilledFields = React.useCallback(() => {
+    const formValues = form.getValues();
+    return (
+      formValues.name !== '' || 
+      formValues.description !== '' || 
+      formValues.location !== '' ||
+      formValues.price.amount !== 0 ||
+      formValues.capacity.isLimited ||
+      formValues.duration.startAt !== '' ||
+      formValues.duration.endAt !== '' ||
+      formValues.recurrence.frequency !== RecurrenceFrequency.NEVER ||
+      photos.length > 0
+    );
+  }, [form, photos]);
+
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Si está cerrando (isOpen === false) y hay campos rellenados, prevenimos el cierre
+      if (!isOpen && hasFilledFields()) {
+        return;
+      }
+      // En caso contrario, permitimos el cierre y llamamos a onClose
+      !isOpen && onClose();
+    }}>
       <DialogContent className="sm:max-w-3xl">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -541,6 +643,14 @@ export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
               </TabsContent>
             </Tabs>
 
+            {/*{formSubmitError && (*/}
+            {/*  <Alert variant="destructive" className="mt-4">*/}
+            {/*    <AlertCircle className="h-4 w-4" />*/}
+            {/*    <AlertDescription>*/}
+            {/*      {formSubmitError}*/}
+            {/*    </AlertDescription>*/}
+            {/*  </Alert>*/}
+            {/*)}*/}
             <DialogFooter className="mt-6 gap-2">
               <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting || isUploading}>
                 Cancelar
