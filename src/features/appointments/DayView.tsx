@@ -13,6 +13,7 @@ import {
 } from '@/features/appointments/ServiceFilter.tsx'
 import { TimeSlots } from '@/features/appointments/TimeSlots.tsx'
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
+import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
@@ -69,11 +70,7 @@ export function DayView({
     try {
       await appointmentService.cancelAppointment(id)
       await queryClient.invalidateQueries({
-        queryKey: [
-          'appointments',
-          format(date, 'yyyy-MM-dd'),
-          format(date, 'yyyy-MM-dd'),
-        ],
+        queryKey: [UseGetAppointmentsQueryKey, date.toISOString()],
       })
       toast.success('Cita cancelada exitosamente')
     } catch (e) {
@@ -172,9 +169,9 @@ export function DayView({
               {isSameDay(currentTime, date) &&
                 workHours &&
                 currentTime.getHours() * 60 + currentTime.getMinutes() >=
-                workHours.startAt &&
+                  workHours.startAt &&
                 currentTime.getHours() * 60 + currentTime.getMinutes() <=
-                workHours.endAt && (
+                  workHours.endAt && (
                   <div
                     className='absolute left-0 right-0 z-10 border-t-2 border-red-500'
                     style={{ top: `${getCurrentTimePosition()}px` }}

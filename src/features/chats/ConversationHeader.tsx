@@ -1,31 +1,30 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { ChatMessages } from '@/features/chats/ChatTypes.ts'
-import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
-import { useWebSocket } from '@/hooks/use-web-socket.ts'
-import { cn } from '@/lib/utils.ts'
+import { useMemo, useState } from 'react'
+import * as Tooltip from '@radix-ui/react-tooltip'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   IconArrowLeft,
   IconBrandFacebook,
   IconBrandInstagram,
   IconBrandWhatsapp,
+  IconChecklist,
   IconDotsVertical,
   IconPhone,
 } from '@tabler/icons-react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
-import { IconChecklist } from '@tabler/icons-react'
 import { CalendarFold } from 'lucide-react'
-import * as Tooltip from '@radix-ui/react-tooltip';
+import { cn } from '@/lib/utils.ts'
+import { useWebSocket } from '@/hooks/use-web-socket.ts'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { MakeAppointmentDialog } from '@/features/appointments/components/MakeAppointmentDialog.tsx'
+import { ChatMessages } from '@/features/chats/ChatTypes.ts'
+import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
 import { AddClientFromChats } from '@/features/events/addClientFromChats.tsx'
-import { useNavigate } from '@tanstack/react-router'
 
 // Declarar la interfaz Window para acceder a openAppointmentDialog
 declare global {
   interface Window {
-    openAppointmentDialog?: (clientName?: string) => void;
+    openAppointmentDialog?: (clientName?: string) => void
   }
 }
 
@@ -80,16 +79,18 @@ export function ConversationHeader({
   }[chatData.platformName.toLowerCase()]
 
   const platformId = useMemo(() => {
-    const identity = chatData.client.platformIdentities.filter(i => i.platformName === chatData.platformName).at(0)
+    const identity = chatData.client.platformIdentities
+      .filter((i) => i.platformName === chatData.platformName)
+      .at(0)
 
-    if(chatData.platformName === 'whatsapp') {
-      const platformId = identity?.platformId;
+    if (chatData.platformName === 'whatsapp') {
+      const platformId = identity?.platformId
       if (platformId) {
-        const lastTenDigits = platformId.slice(-10);
-        const countryCode = platformId.slice(0, -10);
-        return `+${countryCode} ${lastTenDigits}`;
+        const lastTenDigits = platformId.slice(-10)
+        const countryCode = platformId.slice(0, -10)
+        return `+${countryCode} ${lastTenDigits}`
       }
-      return platformId;
+      return platformId
     }
 
     return identity?.platformId || ''
@@ -98,17 +99,21 @@ export function ConversationHeader({
   // Función para abrir el diálogo de agendar cita
   const handleAppointmentClick = () => {
     // Utilizamos la función global para abrir el diálogo con el nombre del cliente
-    if (typeof window !== 'undefined' && window.openAppointmentDialog && chatData.client.name) {
-      window.openAppointmentDialog(chatData.client.name);
+    if (
+      typeof window !== 'undefined' &&
+      window.openAppointmentDialog &&
+      chatData.client.name
+    ) {
+      window.openAppointmentDialog(chatData.client.name)
     } else if (window.openAppointmentDialog) {
-      window.openAppointmentDialog(); // Abrimos el diálogo sin nombre de cliente si no hay
+      window.openAppointmentDialog() // Abrimos el diálogo sin nombre de cliente si no hay
     }
   }
 
   // Función para abrir el diálogo de agendar evento
   const handleEventClick = () => {
     // Abrir directamente el diálogo de AddClientFromChats
-    setEventDialogOpen(true);
+    setEventDialogOpen(true)
   }
 
   return (
@@ -124,7 +129,13 @@ export function ConversationHeader({
         </Button>
         <div className='relative flex items-center gap-2 lg:gap-4'>
           <Avatar className='size-9 lg:size-11'>
-            {chatData.client.photo.length > 0 && <AvatarImage src={chatData.client.photo} alt={chatData.client.name} className="object-cover w-full" />}
+            {chatData.client.photo.length > 0 && (
+              <AvatarImage
+                src={chatData.client.photo}
+                alt={chatData.client.name}
+                className='object-cover w-full'
+              />
+            )}
             <AvatarFallback className='bg-background'>
               {chatData.client.name[0]}
             </AvatarFallback>
@@ -135,11 +146,11 @@ export function ConversationHeader({
                 size={14}
                 className={cn(
                   chatData.platformName.toLowerCase() === 'whatsapp' &&
-                  'text-green-500',
+                    'text-green-500',
                   chatData.platformName.toLowerCase() === 'facebook' &&
-                  'text-blue-500',
+                    'text-blue-500',
                   chatData.platformName.toLowerCase() === 'instagram' &&
-                  'text-pink-500'
+                    'text-pink-500'
                 )}
               />
             </div>
@@ -153,8 +164,8 @@ export function ConversationHeader({
 
       <div className='-mr-1 flex items-center gap-1 lg:gap-2'>
         <IconIaEnabled
-          bgColor={"bg-background"}
-          iconColor={"bg-secondary"}
+          bgColor={'bg-background'}
+          iconColor={'bg-secondary'}
           enabled={chatData.thread.enabled}
           onToggle={onToggleIA}
           tooltip={chatData.thread.enabled ? 'Desactivar IA' : 'Activar IA'}
@@ -162,12 +173,12 @@ export function ConversationHeader({
 
         {/* Componente AddClientFromChats para agendar eventos - renderiza condicionalmente */}
         {eventDialogOpen && (
-          <AddClientFromChats 
-            key="event-dialog"
+          <AddClientFromChats
+            key='event-dialog'
             open={eventDialogOpen}
             onClose={() => setEventDialogOpen(false)}
             preselectedClientId={chatData.client?.id || ''}
-            title="Agendar Cliente en Evento" /* Agregar título para evitar advertencia de accesibilidad */
+            title='Agendar Cliente en Evento' /* Agregar título para evitar advertencia de accesibilidad */
           />
         )}
 
@@ -183,14 +194,17 @@ export function ConversationHeader({
                 <IconChecklist size={22} className='stroke-muted-foreground' />
               </Button>
             </Tooltip.Trigger>
-            <Tooltip.Content side="bottom" className="bg-[#020817] text-white px-2 py-1 rounded-md text-xs">
+            <Tooltip.Content
+              side='bottom'
+              className='bg-[#020817] text-white px-2 py-1 rounded-md text-xs'
+            >
               Agendar Cita
             </Tooltip.Content>
           </Tooltip.Root>
         </Tooltip.Provider>
 
         {/* Componente MakeAppointmentDialog (oculto) */}
-        <div className="hidden">
+        <div className='hidden'>
           <MakeAppointmentDialog />
         </div>
 
@@ -206,7 +220,10 @@ export function ConversationHeader({
                 <CalendarFold size={22} className='stroke-muted-foreground' />
               </Button>
             </Tooltip.Trigger>
-            <Tooltip.Content side="bottom" className="bg-[#020817] text-white px-2 py-1 rounded-md text-xs">
+            <Tooltip.Content
+              side='bottom'
+              className='bg-[#020817] text-white px-2 py-1 rounded-md text-xs'
+            >
               Agendar a Evento
             </Tooltip.Content>
           </Tooltip.Root>
