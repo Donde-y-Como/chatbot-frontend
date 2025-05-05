@@ -6,7 +6,7 @@ import { Calendar, CalendarX, Clock, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
-import { EventBlock } from '@/features/appointments/EventBlock.tsx'
+import { AppointmentBlock } from '@/features/appointments/AppointmentBlock'
 import {
   ServiceFilter,
   ServiceFilterProps,
@@ -172,9 +172,9 @@ export function DayView({
               {isSameDay(currentTime, date) &&
                 workHours &&
                 currentTime.getHours() * 60 + currentTime.getMinutes() >=
-                  workHours.startAt &&
+                workHours.startAt &&
                 currentTime.getHours() * 60 + currentTime.getMinutes() <=
-                  workHours.endAt && (
+                workHours.endAt && (
                   <div
                     className='absolute left-0 right-0 z-10 border-t-2 border-red-500'
                     style={{ top: `${getCurrentTimePosition()}px` }}
@@ -209,7 +209,7 @@ export function DayView({
                     )
 
                     return (
-                      <EventBlock
+                      <AppointmentBlock
                         cancelAppointment={handleCancel}
                         key={appointment.id}
                         appointment={appointment}

@@ -14,7 +14,7 @@ export function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [view, setView] = useState<'day' | 'week'>('day')
   const { data: appointments } = useGetAppointments(
-    format(selectedDate, 'yyyy-MM-dd')
+    selectedDate.toISOString(),
   )
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(
     new Set()

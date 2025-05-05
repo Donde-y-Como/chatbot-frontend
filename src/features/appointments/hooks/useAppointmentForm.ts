@@ -133,7 +133,7 @@ export function useAppointmentForm(
       clientId,
       serviceIds,
       employeeIds: selectedEmployeeIds,
-      date: format(date, 'yyyy-MM-dd'),
+      date: date.toISOString(),
       timeRange,
       notes: '',
     } satisfies Partial<Appointment>
@@ -144,8 +144,8 @@ export function useAppointmentForm(
         void queryClient.invalidateQueries({
           queryKey: [
             'appointments',
-            format(date, 'yyyy-MM-dd'),
-            format(date, 'yyyy-MM-dd'),
+            date.toISOString(),
+            date.toISOString(),
           ],
         })
         toast.success('Cita agendada con éxito')
