@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import { es } from 'date-fns/locale/es'
+import { MenuIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -10,9 +13,6 @@ import { useSidebar } from '@/components/ui/sidebar.tsx'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { EmployeesSelector } from '@/features/appointments/EmployeesSelector.tsx'
 import { MakeAppointmentDialog } from '@/features/appointments/components/MakeAppointmentDialog.tsx'
-import { es } from 'date-fns/locale/es'
-import { MenuIcon } from 'lucide-react'
-import { useState } from 'react'
 import { Employee } from '../employees/types'
 
 interface SidebarProps {
@@ -56,10 +56,9 @@ export function CalendarSidebar({
 
           <ScrollArea className='h-screen pr-3'>
             <CollapsibleContent className='mb-10 h-full space-y-6 flex flex-col'>
-              <div className="w-full hidden sm:block">
+              <div className='w-full hidden sm:block'>
                 <MakeAppointmentDialog />
               </div>
-              {/*<CreateEventDialog />*/}
               <div className='relative rounded-xl border w-full grid place-items-center  hover:shadow-lg'>
                 <Calendar
                   required

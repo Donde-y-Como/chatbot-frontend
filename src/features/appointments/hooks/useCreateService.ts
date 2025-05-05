@@ -18,7 +18,7 @@ export function useCreateService() {
           },
           price: {
             amount: 0, // Default price of 0
-            currency: 'USD', // Default currency USD
+            currency: 'MXN', // Default currency USD
           },
           maxConcurrentBooks: 1, // Default to 1 concurrent booking
           minBookingLeadHours: 1, // Default to 1 hour lead time

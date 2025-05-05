@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
-import { format } from 'date-fns'
+import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
-import { useCreateClient } from '@/features/appointments/hooks/useCreateClient.ts'
+import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import {
@@ -13,110 +12,90 @@ import {
 } from '@/features/appointments/types.ts'
 import { ClientPrimitives } from '@/features/clients/types'
 
-/**
- * Hook containing the state and logic for the appointment creation form
- */
 export function useAppointmentForm(
-  defaultClientName?: string,
-  onSuccess?: () => void
+  onSuccess?: () => void,
+  appointment?: Appointment
 ) {
-  // State
   const [activeStep, setActiveStep] = useState(1)
-  const [clientId, setClientId] = useState('')
-  const [serviceIds, setServiceIds] = useState<string[]>([])
-  const [date, setDate] = useState<Date>(new Date())
-  const [timeRange, setTimeRange] = useState<MinutesTimeRange>({
-    startAt: 540, // Default to 9:00 AM (9 * 60)
-    endAt: 600, // Default to 10:00 AM (10 * 60)
-  })
-  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([])
+  const [clientId, setClientId] = useState(
+    appointment ? appointment.clientId : ''
+  )
+  const [serviceIds, setServiceIds] = useState<string[]>(
+    appointment ? appointment.serviceIds : []
+  )
+  const [date, setDate] = useState<Date>(
+    appointment ? new Date(appointment.date) : new Date()
+  )
+  const [timeRange, setTimeRange] = useState<MinutesTimeRange>(
+    appointment
+      ? appointment.timeRange
+      : {
+          startAt: 540,
+          endAt: 600,
+        }
+  )
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>(
+    appointment?.employeeIds || []
+  )
   const [loading, setLoading] = useState(false)
-
-  // Data fetching
   const { data: clients } = useGetClients()
   const { data: services } = useGetServices()
   const queryClient = useQueryClient()
-  const createClientMutation = useCreateClient()
 
-  const createNewClient = useCallback(
-    async (name: string) => {
-      if (!name.trim()) return
-
-      try {
-        const result = await createClientMutation.mutateAsync(name)
-        if (result?.id) {
-          setClientId(result.id)
-          toast.success(`Cliente ${name} creado automáticamente`)
-        }
-      } catch (error) {
-        console.error('Error al crear el cliente:', error)
-        toast.error('No se pudo crear el cliente automáticamente')
+  useEffect(() => {
+    const fetchServiceDuration = () => {
+      if (appointment) {
+        setTimeRange(appointment.timeRange)
+        return
       }
-    },
-    [createClientMutation]
-  )
 
-  // Update active step based on selections
+      if (services && serviceIds.length > 0) {
+        const service = services.find((s) => s.id === serviceIds.at(0))
+
+        if (service) {
+          const durationInMinutes =
+            service.duration.value *
+            (service.duration.unit === 'minutes' ? 1 : 60)
+
+          setTimeRange({
+            startAt: 540,
+            endAt: 540 + durationInMinutes,
+          })
+          return
+        }
+      }
+
+      setTimeRange({
+        startAt: 540,
+        endAt: 600,
+      })
+    }
+
+    fetchServiceDuration()
+  }, [services, serviceIds, appointment])
+
   useEffect(() => {
     if (!clientId || serviceIds.length === 0) {
       setActiveStep(1)
-    } else {
-      setActiveStep(2)
     }
   }, [clientId, serviceIds])
 
-  // Handle default client name from props
-  useEffect(() => {
-    if (defaultClientName && clients) {
-      // Find if client exists
-      const existingClient = clients.find(
-        (client) =>
-          client.name.toLowerCase() === defaultClientName.toLowerCase()
-      )
-
-      if (existingClient) {
-        // If exists, select it
-        setClientId(existingClient.id)
-      } else {
-        // If not, create automatically
-        createNewClient(defaultClientName)
-      }
-    }
-  }, [defaultClientName, clients, createNewClient])
-
-  // Setup global window function for opening the dialog from external scripts
-  useEffect(() => {
-    window.openAppointmentDialog = (clientName?: string) => {
-      if (clientName) {
-        // Find if client exists
-        const existingClient = clients?.find(
-          (client) => client.name.toLowerCase() === clientName.toLowerCase()
-        )
-
-        if (existingClient) {
-          // If exists, select it
-          setClientId(existingClient.id)
-        } else {
-          // If not, create automatically
-          createNewClient(clientName)
-        }
-      }
-    }
-
-    return () => {
-      delete window.openAppointmentDialog
-    }
-  }, [clients, createNewClient])
-
-  // Reset form function
   const resetForm = () => {
-    setClientId('')
-    setServiceIds([])
-    setTimeRange({
-      startAt: 540,
-      endAt: 600,
-    })
-    setSelectedEmployeeIds([])
+    if (appointment) {
+      setClientId(appointment.clientId)
+      setServiceIds(appointment.serviceIds)
+      setTimeRange(appointment.timeRange)
+      setSelectedEmployeeIds(appointment.employeeIds)
+    } else {
+      setClientId('')
+      setServiceIds([])
+      setTimeRange({
+        startAt: 540,
+        endAt: 600,
+      })
+      setSelectedEmployeeIds([])
+    }
+
     setActiveStep(1)
   }
 
@@ -133,27 +112,31 @@ export function useAppointmentForm(
       clientId,
       serviceIds,
       employeeIds: selectedEmployeeIds,
-      date: format(date, 'yyyy-MM-dd'),
+      date: date.toISOString(),
       timeRange,
-      notes: '',
+      notes: appointment ? appointment.notes : '',
     } satisfies Partial<Appointment>
 
     try {
-      const result = await appointmentService.makeAppointment(appointmentData)
+      const result = appointment
+        ? await appointmentService.editAppointment(
+            appointment.id,
+            appointmentData
+          )
+        : await appointmentService.makeAppointment(appointmentData)
+
       if (result.id) {
-        void queryClient.invalidateQueries({
-          queryKey: [
-            'appointments',
-            format(date, 'yyyy-MM-dd'),
-            format(date, 'yyyy-MM-dd'),
-          ],
-        })
-        toast.success('Cita agendada con éxito')
+        toast.success(`Cita ${appointment ? 'editada' : 'agendada'} con éxito`)
         resetForm()
         setLoading(false)
+
+        await queryClient.invalidateQueries({
+          queryKey: [UseGetAppointmentsQueryKey],
+        })
+
         if (onSuccess) onSuccess()
       } else {
-        toast.error('Error al agendar la cita')
+        toast.error(`Error al ${appointment ? 'editar' : 'agendar'} la cita`)
       }
     } catch (error) {
       toast.error('Error al conectar con el servidor')
@@ -162,18 +145,14 @@ export function useAppointmentForm(
     }
   }
 
-  // Get selected client and services objects
   const selectedClient: ClientPrimitives | undefined = clients?.find(
     (client) => client.id === clientId
   )
   const selectedServices =
     services?.filter((service) => serviceIds.includes(service.id)) || []
 
-  // Get employees for selected services - this would need to be updated in a real implementation
-  // For now, we'll set a placeholder until the backend is updated
   const availableEmployees: EmployeeAvailable[] = []
 
-  // Toggle service selection
   const toggleServiceSelection = (serviceId: string) => {
     setServiceIds((prev) =>
       prev.includes(serviceId)
@@ -182,7 +161,6 @@ export function useAppointmentForm(
     )
   }
 
-  // Toggle employee selection
   const toggleEmployeeSelection = (employeeId: string) => {
     setSelectedEmployeeIds((prev) =>
       prev.includes(employeeId)
@@ -191,14 +169,11 @@ export function useAppointmentForm(
     )
   }
 
-  // Function to determine if fields have been filled
   const hasFilledFields = () => {
     return clientId !== '' || serviceIds.length > 0
   }
 
-  // Return everything needed for the form
   return {
-    // State
     activeStep,
     clientId,
     serviceIds,
@@ -207,14 +182,12 @@ export function useAppointmentForm(
     selectedEmployeeIds,
     loading,
 
-    // Data
     clients,
     services,
     selectedClient,
     selectedServices,
     availableEmployees,
 
-    // Actions
     setActiveStep,
     setClientId,
     setServiceIds,

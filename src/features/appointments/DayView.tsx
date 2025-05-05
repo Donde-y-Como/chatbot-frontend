@@ -6,13 +6,14 @@ import { Calendar, CalendarX, Clock, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
-import { EventBlock } from '@/features/appointments/EventBlock.tsx'
+import { AppointmentBlock } from '@/features/appointments/AppointmentBlock'
 import {
   ServiceFilter,
   ServiceFilterProps,
 } from '@/features/appointments/ServiceFilter.tsx'
 import { TimeSlots } from '@/features/appointments/TimeSlots.tsx'
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
+import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
@@ -69,11 +70,7 @@ export function DayView({
     try {
       await appointmentService.cancelAppointment(id)
       await queryClient.invalidateQueries({
-        queryKey: [
-          'appointments',
-          format(date, 'yyyy-MM-dd'),
-          format(date, 'yyyy-MM-dd'),
-        ],
+        queryKey: [UseGetAppointmentsQueryKey, date.toISOString()],
       })
       toast.success('Cita cancelada exitosamente')
     } catch (e) {
@@ -209,7 +206,7 @@ export function DayView({
                     )
 
                     return (
-                      <EventBlock
+                      <AppointmentBlock
                         cancelAppointment={handleCancel}
                         key={appointment.id}
                         appointment={appointment}
