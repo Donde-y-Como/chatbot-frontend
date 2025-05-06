@@ -8,7 +8,6 @@ import { useGetUser } from '@/components/layout/hooks/useGetUser.ts'
 import { ChatBarHeader } from '@/features/chats/ChatBarHeader.tsx'
 import { ChatListItem } from '@/features/chats/ChatListItem.tsx'
 import { ChatListItemSkeleton } from '@/features/chats/ChatListItemSkeleton.tsx'
-import { Chat } from '@/features/chats/ChatTypes'
 import { useFilteredChats } from '@/features/chats/hooks/useFilteredChats.ts'
 import { useGetTags } from '../clients/hooks/useGetTags'
 import { MessagesFound } from './MessagesFound'
@@ -76,31 +75,19 @@ export function ChatBarUnlimited({
     return () => observer.disconnect()
   }, [handleIntersection])
 
-  const handleSelectChat = useCallback(
-    (chatId: string, messageId?: string) => {
-      setSelectedChatId(chatId)
-      setMobileSelectedChatId(chatId)
+  const handleSelectChat = (chatId: string, messageId?: string) => {
+    setSelectedChatId(chatId)
+    setMobileSelectedChatId(chatId)
 
-      queryClient.setQueryData<Chat[]>(['chats'], (cachedChats) => {
-        if (!cachedChats) return cachedChats
-        return cachedChats.map((chat) => ({
-          ...chat,
-          newClientMessagesCount:
-            chat.id === chatId ? 0 : chat.newClientMessagesCount,
-        }))
-      })
-
-      navigate({
-        search: (prev: SearchChatParams) => ({
-          ...prev,
-          chatId,
-          highlightMessageId: messageId || undefined,
-        }),
-        replace: true,
-      })
-    },
-    [setSelectedChatId, setMobileSelectedChatId, queryClient, navigate]
-  )
+    navigate({
+      search: (prev: SearchChatParams) => ({
+        ...prev,
+        chatId,
+        highlightMessageId: messageId || undefined,
+      }),
+      replace: true,
+    })
+  }
 
   const onToggleAllAI = useCallback(
     (enabled: boolean) => {

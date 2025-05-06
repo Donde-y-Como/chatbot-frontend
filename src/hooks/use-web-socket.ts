@@ -24,35 +24,6 @@ socket.on(
       playNotification()
     }
 
-    const chats = queryClient.getQueryData(['chats']) as Chat[] | undefined
-    const chat = chats?.find((chat) => chat.id === data.conversationId)
-
-    if (chat === undefined) {
-      await queryClient.invalidateQueries({
-        queryKey: ['chats'],
-      })
-      return
-    }
-
-    queryClient.setQueryData<Chat[]>(['chats'], (cachedChats) => {
-      if (cachedChats === undefined) return cachedChats
-      return [...cachedChats]
-        .map((chat) => {
-          if (chat.id === data.conversationId) {
-            return {
-              ...chat,
-              newClientMessagesCount:
-                data.message.role === 'user'
-                  ? chat.newClientMessagesCount + 1
-                  : chat.newClientMessagesCount,
-              lastMessage: makeLastMessageContent(data.message),
-            }
-          }
-          return chat
-        })
-        .sort(sortByLastMessageTimestamp)
-    })
-
     queryClient.setQueryData<ChatMessages>(
       ['chat', data.conversationId],
       (cachedChat) => {
@@ -63,6 +34,10 @@ socket.on(
         }
       }
     )
+
+    await queryClient.invalidateQueries({
+      queryKey: ['chats'],
+    })
   }
 )
 
