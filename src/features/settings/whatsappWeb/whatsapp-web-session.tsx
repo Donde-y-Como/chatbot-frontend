@@ -57,6 +57,7 @@ export function WhatsappWebSession() {
       scanning_qr: 'Esperando escaneo QR',
       connected: 'Conectado',
       disconnected: 'Desconectado',
+      stopped: 'Detenida desde el dispositivo',
       error: 'Error en la sesión',
     }
     return estados[status] || 'Estado desconocido'
@@ -69,6 +70,7 @@ export function WhatsappWebSession() {
       scanning_qr: 'bg-yellow-100 text-yellow-700',
       connected: 'bg-green-100 text-green-700',
       disconnected: 'bg-gray-100 text-gray-700',
+      stopped: 'bg-gray-100 text-gray-700',
       error: 'bg-red-100 text-red-700',
     }
     return colores[status] || 'bg-gray-100 text-gray-700'
@@ -85,6 +87,7 @@ export function WhatsappWebSession() {
       case 'connected':
         return <Check className='w-5 h-5' />
       case 'disconnected':
+      case 'stopped':
         return <WifiOff className='w-5 h-5' />
       case 'error':
         return <AlertCircle className='w-5 h-5' />
@@ -181,7 +184,7 @@ export function WhatsappWebSession() {
 
       <div className='px-6 py-4 bg-muted flex justify-end rounded-b-lg'>
         <Button onClick={removeSession} variant='destructive' size='sm'>
-          Desconectar
+          Cerrar sesion
         </Button>
       </div>
     </Card>
