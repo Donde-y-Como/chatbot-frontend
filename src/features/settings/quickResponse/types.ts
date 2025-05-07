@@ -17,12 +17,10 @@ export const quickResponseSchema = z.object({
   title: z
     .string()
     .min(1, 'El atajo es requerido')
-    .startsWith('/', 'El atajo debe comenzar con /')
-    .max(20, 'El atajo debe tener menos de 20 caracteres'),
+    .startsWith('/', 'El atajo debe comenzar con /'),
   content: z
     .string()
-    .min(1, 'El mensaje es requerido')
-    .max(500, 'El mensaje debe tener menos de 500 caracteres'),
+    .min(1, 'El mensaje es requerido'),
   medias: z
     .array(
       z.object({

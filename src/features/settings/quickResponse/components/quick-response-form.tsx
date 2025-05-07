@@ -181,14 +181,14 @@ export function QuickResponseForm({
 
         <div className='my-2'>
           <FileUpload
-            maxFiles={3}
+            maxFiles={20}
             accept={{
               'image/*': [],
               'video/*': [],
               'application/pdf': ['.pdf'],
               'audio/*': [],
             }}
-            maxSize={100 * 1024 * 1024}
+            maxSize={1000 * 1024 * 1024}
             value={medias}
             onChange={(files: File[]) => setMedias(files)}
           />
