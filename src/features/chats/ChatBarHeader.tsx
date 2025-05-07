@@ -56,9 +56,7 @@ export function ChatBarHeader({
       return response.data
     },
     onSuccess: async () => {
-      setTimeout(async () => {
-        await queryClient.invalidateQueries({ queryKey: ['chats'] })
-      }, 1000)
+      await queryClient.invalidateQueries({ queryKey: ['chats'] })
     },
   })
 

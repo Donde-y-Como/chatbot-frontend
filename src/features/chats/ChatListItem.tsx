@@ -45,7 +45,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
     async mutationFn(data: { clientId: string; profileName: string }) {
       emit('setProfileName', data)
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: async (_data, variables) => {
       queryClient.setQueryData(
         ['chat', chat.id],
         (cachedConversation: ChatMessages) => {
@@ -61,23 +61,8 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
         }
       )
 
-      queryClient.setQueryData<Chat[]>(['chats'], (oldChats) => {
-        if (oldChats === undefined) return []
-
-        return [...oldChats]
-          .map((cachedChat) => {
-            if (cachedChat.id === chat.id && cachedChat.client) {
-              return {
-                ...cachedChat,
-                client: {
-                  ...cachedChat.client,
-                  name: variables.profileName,
-                },
-              }
-            }
-            return cachedChat
-          })
-          .sort(sortByLastMessageTimestamp)
+      await queryClient.invalidateQueries({
+        queryKey: ['chats'],
       })
     },
   })
@@ -160,7 +145,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
 
   const handleMarkAsUnread = () => {
     markAsUnread(chat.id)
-    chat.newClientMessagesCount = 1;
+    chat.newClientMessagesCount = 1
   }
 
   const [isAddTagsModalOpen, setIsAddTagsModalOpen] = useState(false)
@@ -182,15 +167,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
     [chat.client]
   )
 
-  const handleOnClick = () => {
-    queryClient.setQueryData<Chat[]>(['chats'], (cachedChats) => {
-      if (!cachedChats) return cachedChats
-      return cachedChats.map((cachedChat) => ({
-        ...cachedChat,
-        newClientMessagesCount:
-          cachedChat.id === chat.id ? 0 : cachedChat.newClientMessagesCount,
-      }))
-    })
+  const handleOnClick = async () => {
 
     queryClient.setQueryData<ChatMessages>(['chat', chat.id], (cachedChat) => {
       if (!cachedChat) return cachedChat
@@ -201,7 +178,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
           cachedChat.id === chat.id ? 0 : cachedChat.newClientMessagesCount,
       }
     })
-
+    
     onClick()
   }
 

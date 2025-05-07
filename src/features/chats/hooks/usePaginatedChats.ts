@@ -1,31 +1,16 @@
 import { useCallback, useMemo } from 'react'
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query'
-import { useWebSocket } from '@/hooks/use-web-socket.ts'
-import { UserQueryKey } from '@/components/layout/hooks/useGetUser.ts'
-import { UserData } from '@/features/auth/types.ts'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { chatService } from '@/features/chats/ChatService.ts'
-import { ChatParams } from '@/features/chats/ChatTypes.ts'
 
-interface UseChatsOptions extends ChatParams {
-  initialPerPage?: number
-}
-
-export function usePaginatedChats(options: UseChatsOptions = {}) {
-  const { initialPerPage } = options
-  const queryClient = useQueryClient()
-  const { emit } = useWebSocket()
-  const queryKey = ['chats', initialPerPage]
+export function usePaginatedChats() {
+  const queryKey = ['chats']
 
   const {
     data: infiniteData,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
+    isPending,
     refetch,
     isError,
     error,
@@ -34,7 +19,6 @@ export function usePaginatedChats(options: UseChatsOptions = {}) {
     queryFn: async ({ pageParam = 1 }) => {
       return await chatService.getChatsPaginated({
         pageNumber: pageParam,
-        perPage: initialPerPage,
       })
     },
     initialPageParam: 1,
@@ -65,36 +49,11 @@ export function usePaginatedChats(options: UseChatsOptions = {}) {
     await refetch()
   }, [refetch])
 
-  const toggleAllIaMutation = useMutation({
-    mutationKey: ['all-ia-toggle'],
-    async mutationFn(data: { enabled: boolean; userId: string }) {
-      emit(
-        data.enabled ? 'enableAllAssistants' : 'disableAllAssistants',
-        data.userId
-      )
-
-      return { success: true, enabled: data.enabled }
-    },
-    onSuccess: async (_data, { enabled }) => {
-      queryClient.setQueriesData(
-        { queryKey: UserQueryKey },
-        (cachedUser: UserData | undefined) => {
-          if (!cachedUser) return cachedUser
-          return {
-            ...cachedUser,
-            assistantConfig: { ...cachedUser.assistantConfig, enabled },
-          }
-        }
-      )
-    },
-  })
-
   return {
     chats,
-    isChatsLoading: isLoading,
+    isChatsLoading: isPending,
     isError,
     error,
-    toggleAllIaMutation,
     hasNextPage,
     isFetchingNextPage,
     loadNextPage,

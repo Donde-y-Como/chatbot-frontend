@@ -15,7 +15,7 @@ import { useGetWhatsAppWebSession } from '@/features/settings/whatsappWeb/useGet
 
 interface ChatContentProps {
   isLoading: boolean
-  chatData?: ChatMessages | undefined | null
+  chatData: ChatMessages | undefined
   selectedChatId: string
   mobileSelectedChatId: string | null
   isMobileVisible: boolean
@@ -81,11 +81,11 @@ export function ChatContent({
       )}
 
       <div className='flex flex-1 flex-col gap-2 rounded-md px-4 pb-4 pt-0'>
-        {isLoading ? (
+        {isLoading || !chatData ? (
           <ChatConversationSkeleton />
         ) : (
           <ChatConversation
-            messages={chatData?.messages}
+            messages={chatData.messages}
             mobileSelectedChatId={mobileSelectedChatId}
           />
         )}

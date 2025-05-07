@@ -1,5 +1,4 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { SearchChatParams } from '@/routes/_authenticated/chats'
 import { Loader2 } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -9,6 +8,7 @@ import { ChatBarHeader } from '@/features/chats/ChatBarHeader.tsx'
 import { ChatListItem } from '@/features/chats/ChatListItem.tsx'
 import { ChatListItemSkeleton } from '@/features/chats/ChatListItemSkeleton.tsx'
 import { useFilteredChats } from '@/features/chats/hooks/useFilteredChats.ts'
+import { useToggleAllAIMutation } from '@/features/chats/hooks/useToggleAllAIMutation.ts'
 import { useGetTags } from '../clients/hooks/useGetTags'
 import { MessagesFound } from './MessagesFound'
 import { usePaginatedChats } from './hooks/usePaginatedChats'
@@ -31,23 +31,20 @@ export function ChatBarUnlimited({
 }: ChatBarProps) {
   const [search, setSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
-  const queryClient = useQueryClient()
   const { data: user } = useGetUser()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const loadingRef = useRef<HTMLDivElement>(null)
+  const toggleAllIaMutation = useToggleAllAIMutation()
 
   const {
     chats,
     isChatsLoading,
-    toggleAllIaMutation,
     hasNextPage,
     isFetchingNextPage,
     loadNextPage,
     refreshChats,
     isError,
-  } = usePaginatedChats({
-    initialPerPage: 50,
-  })
+  } = usePaginatedChats()
 
   const { data: tags } = useGetTags()
   const filteredChatList = useFilteredChats(chats, search, activeFilter, tags)
@@ -96,8 +93,8 @@ export function ChatBarUnlimited({
     [user, toggleAllIaMutation]
   )
 
-  const handleRefresh = useCallback(() => {
-    void refreshChats()
+  const handleRefresh = useCallback(async () => {
+    await refreshChats()
   }, [refreshChats])
 
   return (
