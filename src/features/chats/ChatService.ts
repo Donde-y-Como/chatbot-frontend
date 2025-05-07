@@ -8,7 +8,7 @@ import {
 
 export const chatService = {
   getChatsPaginated: async (params?: ChatParams): Promise<ChatResponse> => {
-    const newParams = { ...params, perPage: 5 }
+    const newParams = { ...params, perPage: 100 }
     const response = await api.get<ChatResponse>('/chats', {
       params: newParams,
     })
