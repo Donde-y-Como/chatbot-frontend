@@ -1,17 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
+  QuickResponse,
+  QuickResponseFormValues,
+} from '@/features/settings/quickResponse/types.ts'
+import {
   getQuickResponses,
   createQuickResponse,
   updateQuickResponse,
   deleteQuickResponse,
 } from '../quickResponseService'
-import { QuickResponseFormValues } from '../components/quick-response-form'
 
-// Query key
 const QUICK_RESPONSES_KEY = ['quickResponses'] as const
 
-// Hook to fetch all quick responses
 export const useGetQuickResponses = () => {
   return useQuery({
     queryKey: QUICK_RESPONSES_KEY,
@@ -19,69 +20,63 @@ export const useGetQuickResponses = () => {
   })
 }
 
-// Hook to create a new quick response
 export const useCreateQuickResponse = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (data: QuickResponseFormValues) => createQuickResponse(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUICK_RESPONSES_KEY })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: QUICK_RESPONSES_KEY })
       toast.success('Respuesta rápida creada', {
         description: 'La respuesta rápida se ha creado exitosamente',
       })
     },
-    onError: (error) => {
+    onError: () => {
       toast.error('Error', {
         description:
           'No se pudo crear la respuesta rápida. Intente nuevamente.',
       })
-      console.error('Error creating quick response:', error)
     },
   })
 }
 
-// Hook to update an existing quick response
 export const useUpdateQuickResponse = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: QuickResponseFormValues }) =>
-      updateQuickResponse(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUICK_RESPONSES_KEY })
+      updateQuickResponse(id, data as Partial<QuickResponse>),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: QUICK_RESPONSES_KEY })
       toast.success('Respuesta rápida actualizada', {
         description: 'La respuesta rápida se ha actualizado exitosamente',
       })
     },
-    onError: (error) => {
+    onError: () => {
       toast.error('Error', {
         description:
           'No se pudo actualizar la respuesta rápida. Intente nuevamente.',
       })
-      console.error('Error updating quick response:', error)
     },
   })
 }
 
-// Hook to delete a quick response
 export const useDeleteQuickResponse = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (id: string) => deleteQuickResponse(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUICK_RESPONSES_KEY })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: QUICK_RESPONSES_KEY })
       toast.success('Respuesta rápida eliminada', {
         description: 'La respuesta rápida se ha eliminado exitosamente',
       })
     },
-    onError: (error) => {
+    onError: () => {
       toast.error('Error', {
         description:
           'No se pudo eliminar la respuesta rápida. Intente nuevamente.',
       })
-      console.error('Error deleting quick response:', error)
     },
   })
 }

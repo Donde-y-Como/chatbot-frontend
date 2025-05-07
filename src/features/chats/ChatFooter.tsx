@@ -7,6 +7,7 @@ import {
   memo,
 } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { IconSend } from '@tabler/icons-react'
 import { uid } from 'uid'
 import { sortByLastMessageTimestamp } from '@/lib/utils.ts'
@@ -22,22 +23,18 @@ import { useQuickResponsesForChat } from './hooks/useQuickResponsesForChat'
 const ChatFooter = memo(
   ({
     isWhatsAppChat,
+    isWhatsAppWebChat,
     selectedChatId,
     canSendMessage,
   }: {
     isWhatsAppChat: boolean
+    isWhatsAppWebChat: boolean
     selectedChatId: string
     canSendMessage: boolean
   }) => {
     const queryClient = useQueryClient()
-    // Get chat data to determine the platform type
-
     const [newMessage, setNewMessage] = useState('')
     const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-    // We handle expired chats with a dedicated template selector component
-
-    // Use the custom hook for quick responses
     const {
       isDropdownOpen,
       searchTerm,
@@ -49,12 +46,11 @@ const ChatFooter = memo(
       handleKeyNavigation,
       getSelectedResponse,
       setSelectedResponseIndex,
-      ensureItemVisible,
     } = useQuickResponsesForChat()
 
     const adjustTextareaHeight = useCallback((element: HTMLTextAreaElement) => {
       element.style.height = '0'
-      element.style.height = `${Math.min(element.scrollHeight, 128)}px` // 128px is equivalent to max-h-32
+      element.style.height = `${Math.min(element.scrollHeight, 128)}px`
     }, [])
 
     useEffect(() => {
@@ -63,12 +59,12 @@ const ChatFooter = memo(
       }
     }, [adjustTextareaHeight])
 
-    // Reset height when message is sent
     useEffect(() => {
       if (newMessage === '' && textareaRef.current) {
-        textareaRef.current.style.height = '32px' // reset to h-8
+        textareaRef.current.style.height = '32px'
       }
     }, [newMessage])
+
     const { sendMessage: sendToWebSocket } = useWebSocket()
     const sendMessageMutation = useMutation({
       mutationKey: ['send-message'],
@@ -151,20 +147,16 @@ const ChatFooter = memo(
       [selectedChatId, sendMessageMutation]
     )
 
-    // Handle input change with quick response functionality
     const handleInputChange = useCallback(
       (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = e.target.value
         setNewMessage(value)
         adjustTextareaHeight(e.target)
-
-        // Process input for quick responses
         processInput(value)
       },
       [adjustTextareaHeight, processInput]
     )
 
-    // Handle selection of a quick response
     const handleSelectQuickResponse = useCallback(
       (message: string) => {
         setNewMessage(message)
@@ -178,15 +170,11 @@ const ChatFooter = memo(
       [closeDropdown, adjustTextareaHeight]
     )
 
-    // Handle keyboard navigation for quick responses
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        // If dropdown is open, handle navigation
         if (isDropdownOpen) {
-          // Handle special keys for navigation
           const wasHandled = handleKeyNavigation(e)
 
-          // If Enter was pressed and there are results, select the current item
           if (
             e.key === 'Enter' &&
             !e.shiftKey &&
@@ -196,28 +184,22 @@ const ChatFooter = memo(
             const selectedResponse = getSelectedResponse()
 
             if (selectedResponse) {
-              // If an item is already selected, use it
               handleSelectQuickResponse(selectedResponse.content)
             } else if (filteredResponses.length > 0 && selectedIndex === null) {
-              // If no item is selected yet but we have responses, use the first one
-              // This makes the UX more intuitive - pressing Enter without arrow keys selects the first item
               handleSelectQuickResponse(filteredResponses[0].content)
             }
             return
           }
 
-          // If Escape was pressed, close the dropdown
           if (e.key === 'Escape') {
             e.preventDefault()
             closeDropdown()
             return
           }
 
-          // If the key was handled by navigation, don't proceed
           if (wasHandled) return
         }
 
-        // Normal handling for Enter to send message
         if (e.key === 'Enter' && !e.shiftKey && !isDropdownOpen) {
           e.preventDefault()
           handleSendMessage(e)
@@ -235,7 +217,6 @@ const ChatFooter = memo(
       ]
     )
 
-    // Handle emoji selection with memoized callback
     const handleEmojiSelect = useCallback(
       (emoji) => {
         setNewMessage((prev) => prev + emoji.emoji)
@@ -246,8 +227,6 @@ const ChatFooter = memo(
       },
       [adjustTextareaHeight]
     )
-
-    // All chat messages are shown in the chat area, including the expiration message
 
     return (
       <form
@@ -273,7 +252,6 @@ const ChatFooter = memo(
                   onChange={handleInputChange}
                 />
 
-                {/* Quick Response Dropdown */}
                 <QuickResponseDropdown
                   isOpen={isDropdownOpen}
                   onClose={closeDropdown}
@@ -300,12 +278,21 @@ const ChatFooter = memo(
             </>
           ) : (
             <div className='w-full'>
-              {/* Only show ExpiredChatTemplates for WhatsApp chats, not WhatsApp Web or other platforms */}
               {isWhatsAppChat ? (
                 <ExpiredChatTemplates selectedChatId={selectedChatId} />
+              ) : isWhatsAppWebChat ? (
+                <div className='text-sm opacity-60 italic p-2 flex items-center gap-2'>
+                  <p>Conecta tu whatsapp web para enviar mensajes</p>
+                  <Link
+                    to='/settings/whatsapp'
+                    className='text-sm font-medium underline not-italic'
+                  >
+                    Conectar
+                  </Link>
+                </div>
               ) : (
                 <p className='text-sm opacity-60 italic p-2'>
-                  Esta conversación ha expirado.
+                  Esta conversación debe ser iniciada por el cliente.
                 </p>
               )}
             </div>

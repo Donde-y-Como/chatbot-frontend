@@ -19,7 +19,7 @@ export function useChatMutations() {
           if (cachedConversation === undefined) return cachedConversation
           return {
             ...cachedConversation,
-            newClientMessagesCount: cachedConversation.newClientMessagesCount + 1,
+            newClientMessagesCount: 1,
           }
         }
       )
@@ -31,7 +31,7 @@ export function useChatMutations() {
             if (cachedChat.id === variables.chatId) {
               return {
                 ...cachedChat,
-                newClientMessagesCount: cachedChat.newClientMessagesCount + 1,
+                newClientMessagesCount: 1,
               }
             }
             return cachedChat

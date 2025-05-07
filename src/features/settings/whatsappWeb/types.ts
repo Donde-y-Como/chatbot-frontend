@@ -16,6 +16,7 @@ export type SessionStatus =
   | 'connected'
   | 'disconnected'
   | 'error'
+  | 'stopped'
 
 export interface SessionData {
   id: string

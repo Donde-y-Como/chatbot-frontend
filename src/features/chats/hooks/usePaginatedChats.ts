@@ -15,10 +15,10 @@ interface UseChatsOptions extends ChatParams {
 }
 
 export function usePaginatedChats(options: UseChatsOptions = {}) {
-  const { initialPerPage, platformName, clientName } = options
+  const { initialPerPage } = options
   const queryClient = useQueryClient()
   const { emit } = useWebSocket()
-  const queryKey = ['chats', { platformName, clientName }, initialPerPage]
+  const queryKey = ['chats', initialPerPage]
 
   const {
     data: infiniteData,
@@ -35,8 +35,6 @@ export function usePaginatedChats(options: UseChatsOptions = {}) {
       return await chatService.getChatsPaginated({
         pageNumber: pageParam,
         perPage: initialPerPage,
-        platformName,
-        clientName,
       })
     },
     initialPageParam: 1,

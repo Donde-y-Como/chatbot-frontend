@@ -160,6 +160,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
 
   const handleMarkAsUnread = () => {
     markAsUnread(chat.id)
+    chat.newClientMessagesCount = 1;
   }
 
   const [isAddTagsModalOpen, setIsAddTagsModalOpen] = useState(false)
@@ -181,13 +182,36 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
     [chat.client]
   )
 
+  const handleOnClick = () => {
+    queryClient.setQueryData<Chat[]>(['chats'], (cachedChats) => {
+      if (!cachedChats) return cachedChats
+      return cachedChats.map((cachedChat) => ({
+        ...cachedChat,
+        newClientMessagesCount:
+          cachedChat.id === chat.id ? 0 : cachedChat.newClientMessagesCount,
+      }))
+    })
+
+    queryClient.setQueryData<ChatMessages>(['chat', chat.id], (cachedChat) => {
+      if (!cachedChat) return cachedChat
+
+      return {
+        ...cachedChat,
+        newClientMessagesCount:
+          cachedChat.id === chat.id ? 0 : cachedChat.newClientMessagesCount,
+      }
+    })
+
+    onClick()
+  }
+
   return (
     <div
       className={cn(
         'flex w-full rounded-md px-2 py-2 text-left text-sm hover:bg-secondary/75 cursor-pointer',
         isSelected && 'sm:bg-muted'
       )}
-      onClick={onClick}
+      onClick={handleOnClick}
     >
       <div className='flex gap-2 w-full'>
         <div className='relative flex-shrink-0'>

@@ -53,7 +53,7 @@ export function PlatformChatButton({ clientId, platformName, profileName, size =
       }
       
       // Si hay múltiples, mostrar el diálogo
-      if (filteredChats.length > 1) {
+      if (filteredChats.length >= 1) {
         setDialogOpen(true);
       } else {
         toast.info(
