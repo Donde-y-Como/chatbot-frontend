@@ -1,24 +1,28 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { appointmentService } from '../appointmentService'
-import { EmployeeAvailable, MinutesTimeRange, Service } from '../types'
+import { EmployeeAvailable, Service } from '../types'
 
 export function useCheckAvailability(
   selectedServices: Service[],
-  date: Date
+  date: Date,
+  activeStep: number
 ) {
   const [availableEmployees, setAvailableEmployees] = useState<
     EmployeeAvailable[]
   >([])
 
   useEffect(() => {
-    if (selectedServices.length === 0) {
+    if (selectedServices.length === 0 || activeStep != 3) {
       return
     }
 
     const checkAvailability = async () => {
       const uniqueEmployeesMap = new Map<string, EmployeeAvailable>()
+      const services = [...selectedServices]
+      for (const service of services) {
 
-      for (const service of selectedServices) {
+        console.log(service)
         try {
           const result = await appointmentService.checkAvailability(
             service.id,
@@ -33,18 +37,18 @@ export function useCheckAvailability(
             })
           })
         } catch (error) {
-          console.error(
-            `Error fetching availability for service ${service.id}:`,
-            error
+          toast.warning(
+            'No se encontraron empleados. Intenta mas tarde o continua sin empleado por el momento'
           )
+          return
         }
       }
 
       setAvailableEmployees(Array.from(uniqueEmployeesMap.values()))
     }
 
-    checkAvailability()
-  }, [selectedServices, date])
+    void checkAvailability()
+  }, [selectedServices, date, activeStep])
 
   return { availableEmployees }
 }

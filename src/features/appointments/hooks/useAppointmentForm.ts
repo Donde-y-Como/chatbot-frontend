@@ -8,7 +8,7 @@ import {
 } from '@/features/appointments/types.ts'
 import { ClientPrimitives } from '@/features/clients/types'
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useCheckAvailability } from './useCheckAvailability'
 
@@ -149,9 +149,9 @@ export function useAppointmentForm(
     (client) => client.id === clientId
   )
   const selectedServices =
-    services?.filter((service) => serviceIds.includes(service.id)) || []
+    useMemo(()=>services?.filter((service) => serviceIds.includes(service.id)) || []  , [serviceIds, services])
 
-  const { availableEmployees } = useCheckAvailability(selectedServices, date)
+  const { availableEmployees } = useCheckAvailability(selectedServices, date, activeStep)
 
   const toggleServiceSelection = (serviceId: string) => {
     setServiceIds((prev) =>
