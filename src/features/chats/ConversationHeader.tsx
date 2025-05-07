@@ -20,6 +20,7 @@ import { MakeAppointmentDialog } from '@/features/appointments/components/MakeAp
 import { ChatMessages } from '@/features/chats/ChatTypes.ts'
 import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
 import { AddClientFromChats } from '@/features/events/addClientFromChats.tsx'
+import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
 
 // Declarar la interfaz Window para acceder a openAppointmentDialog
 declare global {
@@ -73,6 +74,7 @@ export function ConversationHeader({
   }
 
   const PlatformIcon = {
+    whatsappweb: WhatsAppBusinessIcon,
     whatsapp: IconBrandWhatsapp,
     facebook: IconBrandFacebook,
     instagram: IconBrandInstagram,
@@ -143,8 +145,10 @@ export function ConversationHeader({
           {PlatformIcon && (
             <div className='absolute -bottom-0.5 -right-0.5 rounded-full bg-white p-0.5 shadow-md'>
               <PlatformIcon
-                size={14}
                 className={cn(
+                  'w-3.5 h-3.5',
+                  chatData.platformName.toLowerCase() === 'whatsappweb' &&
+                  'text-green-700',
                   chatData.platformName.toLowerCase() === 'whatsapp' &&
                     'text-green-500',
                   chatData.platformName.toLowerCase() === 'facebook' &&

@@ -29,7 +29,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           <div
             onClick={() => setShowTime(!showTime)}
             className={cn(
-              'my-1 px-4 py-2 rounded-2xl cursor-pointer break-words overflow-wrap-anywhere hyphens-auto max-w-full overflow-hidden',
+              'my-1 px-4 py-2 rounded-2xl cursor-pointer break-words overflow-wrap-anywhere hyphens-auto max-w-[25vw] overflow-hidden',
               isHighlighted && 'ring-2 ring-yellow-400',
               isUser ? 'bg-gray-200 text-gray-900' : 'bg-blue-500 text-white'
             )}

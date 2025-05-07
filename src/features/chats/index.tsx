@@ -20,15 +20,15 @@ export default function Chats() {
 
   // Fetch all chats
   const { data: chats = [] } = useQuery({
-    queryKey: ['chats'],
+    queryKey: ['chats-no-paginated'],
     queryFn: () => chatService.getChats(),
   })
 
   // Fetch messages for selected chat
-  const { data: chatMessages, isLoading: isMessagesLoading } = useQuery({
+  const { data: chatMessages, isPending: isMessagesLoading } = useQuery({
     queryKey: ['chat', selectedChatId],
     queryFn: () => {
-      if (!selectedChatId) return null
+      if (!selectedChatId) return undefined;
       return chatService.getChatById(selectedChatId)
     },
     enabled: !!selectedChatId,
@@ -57,7 +57,6 @@ export default function Chats() {
 
   // Determine which component to show based on selection state and device type
   const showEmptyState = selectedChatId === null && !isMobile
-  const showChatContent = !showEmptyState
 
   return (
     <Main fixed>

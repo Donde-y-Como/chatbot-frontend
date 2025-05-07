@@ -1,19 +1,27 @@
 import {
   FormEvent,
+  memo,
+  useCallback,
   useEffect,
   useRef,
   useState,
-  useCallback,
-  memo,
 } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  InfiniteData,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { IconSend } from '@tabler/icons-react'
 import { uid } from 'uid'
 import { sortByLastMessageTimestamp } from '@/lib/utils.ts'
 import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { Button } from '@/components/ui/button.tsx'
-import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
+import {
+  ChatMessages,
+  ChatResponse,
+  Message,
+} from '@/features/chats/ChatTypes.ts'
 import { MediaUpload } from '@/features/chats/MediaUpload.tsx'
 import { EmojiPickerButton } from '@/features/chats/components/EmojiPickerButton'
 import { QuickResponseDropdown } from './ChatConversation.tsx'
@@ -71,7 +79,7 @@ const ChatFooter = memo(
       async mutationFn(data: { conversationId: string; message: Message }) {
         sendToWebSocket(data)
       },
-      onSuccess: (_data, variables) => {
+      onSuccess: async (_data, variables) => {
         queryClient.setQueryData<ChatMessages>(
           ['chat', selectedChatId],
           (oldChats) => {
@@ -83,21 +91,37 @@ const ChatFooter = memo(
           }
         )
 
-        queryClient.setQueryData<Chat[]>(['chats'], (oldChats) => {
-          if (oldChats === undefined) return oldChats
+        queryClient.setQueryData<InfiniteData<ChatResponse>>(
+          ['chats'],
+          (cachedData) => {
+            if (!cachedData) return cachedData
 
-          return [...oldChats]
-            .map((chat) => {
-              if (chat.id === variables.conversationId) {
-                return {
-                  ...chat,
-                  lastMessage: variables.message,
+            const modifiedPages = cachedData.pages.map((page) => {
+              const modifiedConversations = page.conversations.map((chat) => {
+                if (chat.id === selectedChatId) {
+                  return {
+                    ...chat,
+                    lastMessage: variables.message,
+                    newClientMessagesCount: 0,
+                  }
                 }
+                return chat
+              })
+
+              return {
+                ...page,
+                conversations: modifiedConversations.sort(
+                  sortByLastMessageTimestamp
+                ),
               }
-              return chat
             })
-            .sort(sortByLastMessageTimestamp)
-        })
+
+            return {
+              ...cachedData,
+              pages: modifiedPages,
+            }
+          }
+        )
       },
     })
 
