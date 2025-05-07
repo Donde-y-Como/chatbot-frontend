@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
 import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import {
   Appointment,
-  EmployeeAvailable,
-  MinutesTimeRange,
+  MinutesTimeRange
 } from '@/features/appointments/types.ts'
 import { ClientPrimitives } from '@/features/clients/types'
+import { useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { useCheckAvailability } from './useCheckAvailability'
 
 export function useAppointmentForm(
   onSuccess?: () => void,
@@ -30,9 +30,9 @@ export function useAppointmentForm(
     appointment
       ? appointment.timeRange
       : {
-          startAt: 540,
-          endAt: 600,
-        }
+        startAt: 540,
+        endAt: 600,
+      }
   )
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>(
     appointment?.employeeIds || []
@@ -120,9 +120,9 @@ export function useAppointmentForm(
     try {
       const result = appointment
         ? await appointmentService.editAppointment(
-            appointment.id,
-            appointmentData
-          )
+          appointment.id,
+          appointmentData
+        )
         : await appointmentService.makeAppointment(appointmentData)
 
       if (result.id) {
@@ -151,7 +151,7 @@ export function useAppointmentForm(
   const selectedServices =
     services?.filter((service) => serviceIds.includes(service.id)) || []
 
-  const availableEmployees: EmployeeAvailable[] = []
+  const { availableEmployees } = useCheckAvailability(selectedServices, date)
 
   const toggleServiceSelection = (serviceId: string) => {
     setServiceIds((prev) =>

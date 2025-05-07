@@ -10,7 +10,7 @@ import {
 import { es } from 'date-fns/locale/es'
 import { Check, MoreVertical } from 'lucide-react'
 import { toast } from 'sonner'
-import { cn, sortByLastMessageTimestamp } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -168,7 +168,6 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   )
 
   const handleOnClick = async () => {
-
     queryClient.setQueryData<ChatMessages>(['chat', chat.id], (cachedChat) => {
       if (!cachedChat) return cachedChat
 
@@ -178,7 +177,8 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
           cachedChat.id === chat.id ? 0 : cachedChat.newClientMessagesCount,
       }
     })
-    
+
+    // TODO: update 'chats' query data too
     onClick()
   }
 

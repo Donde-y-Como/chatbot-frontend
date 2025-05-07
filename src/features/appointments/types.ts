@@ -77,3 +77,15 @@ export const appointment = z.object({
 })
 
 export type Appointment = z.infer<typeof appointment>
+
+
+export type AvailabilityResult = {
+  availableSlots: {
+    slot: MinutesTimeRange,
+    employees: EmployeeAvailable[]
+  }[],
+  bookedSlots: {
+    slot: MinutesTimeRange,
+    employees: EmployeeAvailable[]
+  }[]
+}

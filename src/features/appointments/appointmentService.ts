@@ -2,6 +2,7 @@ import { api } from '@/api/axiosInstance'
 import {
   Appointment,
   AppointmentCreated,
+  AvailabilityResult,
   Schedule,
   Service,
 } from '@/features/appointments/types.ts'
@@ -49,14 +50,17 @@ export const appointmentService = {
     return response.data
   },
 
-  // Note: This method would need to be updated once the backend supports it
-  getAvailableEmployees: async (date: string, serviceIds: string[]) => {
-    const response = await api.get('/employees/available', {
+  checkAvailability: async (
+    serviceId: string,
+    date: Date
+  ) => {
+    const response = await api.get<AvailabilityResult>(
+      `/appointments/availability`, {
       params: {
-        date,
-        serviceIds: serviceIds.join(','),
-      },
+        serviceId, date: date.toISOString()
+      }
     })
+
     return response.data
-  },
+  }
 }
