@@ -30,7 +30,17 @@ export function usePaginatedChats() {
 
   const chats = useMemo(() => {
     if (!infiniteData?.pages) return []
-    return infiniteData.pages.flatMap((page) => page.conversations)
+    
+    // Usar un Map para evitar duplicados por ID
+    const uniqueChatsMap = new Map();
+    
+    infiniteData.pages.forEach(page => {
+      page.conversations.forEach(chat => {
+        uniqueChatsMap.set(chat.id, chat);
+      });
+    });
+    
+    return Array.from(uniqueChatsMap.values());
   }, [infiniteData])
 
   const meta = useMemo(() => {
