@@ -78,7 +78,7 @@ export function useAppointmentForm(
     }
 
     fetchServiceDuration()
-  }, [activeStep, services, serviceIds, appointment, date])
+  }, [services, serviceIds, appointment, date])
 
   useEffect(() => {
     if (!clientId || serviceIds.length === 0) {

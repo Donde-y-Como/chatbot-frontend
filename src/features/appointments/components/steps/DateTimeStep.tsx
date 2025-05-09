@@ -22,8 +22,7 @@ interface DateTimeStepProps {
 
 /**
  * Step 2: Date and time selection component
- * Allows manual input of time range in 24-hour format (e.g., "20:00")
- * Time values are converted to minutes for internal state management
+ * Now allows manual input of time range
  */
 export function DateTimeStep({
   date,
@@ -34,17 +33,15 @@ export function DateTimeStep({
   onBack,
   onCancel,
 }: DateTimeStepProps) {
-  // Convert minutes to 24-hour format (HH:MM)
+  // Convert minutes to HH:MM format for input
   const minutesToTime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60)
     const mins = minutes % 60
-    // Ensures hours are formatted in 24-hour format (00-23)
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
   }
 
-  // Convert 24-hour format (HH:MM) to minutes
+  // Convert HH:MM format to minutes for state
   const timeToMinutes = (time: string): number => {
-    // Supports parsing of 24-hour format time inputs (e.g., "20:00")
     const [hours, minutes] = time.split(':').map(Number)
     return hours * 60 + minutes
   }
@@ -74,7 +71,7 @@ export function DateTimeStep({
   }
 
   return (
-    <div className='space-y-4 h-[22rem]'>
+    <div className='space-y-4'>
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         <div>
           <label className='text-sm font-medium mb-2 block'>Fecha</label>
@@ -101,8 +98,6 @@ export function DateTimeStep({
                   type='time'
                   value={minutesToTime(timeRange.startAt)}
                   onChange={handleStartTimeChange}
-                  // Explicitly set to 24hr format
-                  inputMode="numeric"
                 />
               </div>
               <div className='space-y-2'>
@@ -112,8 +107,6 @@ export function DateTimeStep({
                   type='time'
                   value={minutesToTime(timeRange.endAt)}
                   onChange={handleEndTimeChange}
-                  // Explicitly set to 24hr format
-                  inputMode='numeric'
                 />
               </div>
             </div>
