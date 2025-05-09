@@ -81,6 +81,29 @@ export function useAppointmentForm(
   }, [services, serviceIds, appointment, date])
 
   useEffect(() => {
+    let endAt = timeRange.startAt
+
+    if (services && serviceIds.length > 0) {
+      for (const serviceId of serviceIds) {
+        const service = services.find((service) => service.id === serviceId)
+
+        if (!service) continue
+
+        const durationInMinutes =
+          service.duration.value *
+          (service.duration.unit === 'minutes' ? 1 : 60)
+
+        endAt += durationInMinutes
+      }
+
+      setTimeRange((prev) => ({
+        ...prev,
+        endAt,
+      }))
+    }
+  }, [timeRange.startAt, services, serviceIds])
+
+  useEffect(() => {
     if (!clientId || serviceIds.length === 0) {
       setActiveStep(1)
     }
