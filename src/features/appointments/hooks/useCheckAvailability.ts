@@ -22,7 +22,6 @@ export function useCheckAvailability(
       const services = [...selectedServices]
       for (const service of services) {
 
-        console.log(service)
         try {
           const result = await appointmentService.checkAvailability(
             service.id,
