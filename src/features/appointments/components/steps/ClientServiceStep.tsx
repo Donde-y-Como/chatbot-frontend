@@ -25,8 +25,8 @@ export function ClientServiceStep({
   onCancel
 }: ClientServiceStepProps) {
   return (
-    <div className="space-y-4 h-[22rem] flex flex-col">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+    <div className="space-y-4 flex flex-col">
+      <div className="flex flex-col gap-4 flex-1">
         <div>
           <label className="text-sm font-medium mb-1 block">Cliente</label>
           <CreateOrSelectClient value={clientId} onChange={onClientChange} />

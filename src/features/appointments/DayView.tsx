@@ -28,7 +28,7 @@ export function DayView({
   appointments: Appointment[]
   date: Date
 }) {
-  const { data: workHours, isLoading: isWorkHoursLoading } =
+  const { workHours, isLoading: isWorkHoursLoading } =
     useGetWorkSchedule(date)
   const { data: allEmployees = [], isLoading: isEmployeesLoading } =
     useGetEmployees()

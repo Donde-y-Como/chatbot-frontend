@@ -18,7 +18,7 @@ export function useGetWorkSchedule(date: Date) {
 
   return {
     ...queryResult,
-    data: workHours,
+    workHours,
   };
 }
 
