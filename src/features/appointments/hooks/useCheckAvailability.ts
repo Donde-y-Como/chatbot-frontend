@@ -14,6 +14,7 @@ export function useCheckAvailability(
 
   useEffect(() => {
     if (selectedServices.length === 0 || activeStep != 3) {
+      setAvailableEmployees([])
       return
     }
 
