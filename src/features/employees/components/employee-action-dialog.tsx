@@ -52,6 +52,7 @@ export function EmployeeActionDialog({ currentEmployee, open, onOpenChange }: Em
       form.reset()
       setPhotos([])
       onOpenChange(false)
+      setSelectedTab("user")
     },
     onError: () => {
       toast.error('Error al guardar empleado')
@@ -251,6 +252,7 @@ export function EmployeeActionDialog({ currentEmployee, open, onOpenChange }: Em
                             form.reset();
                             setPhotos([]);
                             onOpenChange(false);
+                            setSelectedTab("user")
                           }}
                           disabled={isSubmitting || isUploading}
                         >

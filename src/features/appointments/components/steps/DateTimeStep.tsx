@@ -56,7 +56,7 @@ export function DateTimeStep({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 h-[22rem]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="text-sm font-medium mb-2 block">Fecha</label>

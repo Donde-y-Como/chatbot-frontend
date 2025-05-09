@@ -1,11 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ClientPrimitives } from '@/features/clients/types'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import { CalendarIcon, Scissors, User } from 'lucide-react'
-import { ClientPrimitives } from '@/features/clients/types'
-import { Service, MinutesTimeRange, EmployeeAvailable } from '../../types'
+import { useGetEmployees } from '../../hooks/useGetEmployees'
+import { MinutesTimeRange, Service } from '../../types'
 import { formatSlotHour } from '../../utils/formatters'
 
 interface ConfirmationStepProps {
@@ -14,7 +15,6 @@ interface ConfirmationStepProps {
   selectedClient: ClientPrimitives | undefined
   selectedServices: Service[] | undefined
   selectedEmployeeIds: string[]
-  availableEmployees: EmployeeAvailable[]
   loading: boolean
   onSubmit: () => void
   onBack: () => void
@@ -30,26 +30,23 @@ export function ConfirmationStep({
   selectedClient,
   selectedServices = [],
   selectedEmployeeIds,
-  availableEmployees,
   loading,
   onSubmit,
   onBack,
   onCancel
 }: ConfirmationStepProps) {
-  // Format time range for display
   const formattedTimeRange = `${formatSlotHour(timeRange.startAt)} - ${formatSlotHour(timeRange.endAt)}`;
-
-  // Get selected employees
-  const selectedEmployees = availableEmployees.filter(emp => selectedEmployeeIds.includes(emp.id));
+  const { data: employees } = useGetEmployees()
+  const selectedEmployees = employees ? employees.filter(emp => selectedEmployeeIds.includes(emp.id)) : [];
 
   return (
-    <div className="space-y-4">
-      <Card>
+    <div className="space-y-4 ">
+      <Card className='max-h-[40vh] overflow-auto'>
         <CardHeader className="pb-2">
           <CardTitle>Resumen de la Cita</CardTitle>
           <CardDescription>Verifica los detalles de tu cita</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 ">
           <div className="flex items-center gap-2">
             <User className="h-5 w-5 text-primary" />
             <div>
@@ -57,7 +54,7 @@ export function ConfirmationStep({
               <div className="flex items-center gap-2">
                 {selectedClient && (
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={selectedClient.photo} alt={selectedClient.name} className='object-cover'/>
+                    <AvatarImage src={selectedClient.photo} alt={selectedClient.name} className='object-cover' />
                     <AvatarFallback>{selectedClient.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                 )}
@@ -65,7 +62,7 @@ export function ConfirmationStep({
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-start gap-2">
             <Scissors className="h-5 w-5 text-primary mt-1" />
             <div>
@@ -77,7 +74,7 @@ export function ConfirmationStep({
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <CalendarIcon className="h-5 w-5 text-primary" />
             <div>
@@ -87,7 +84,7 @@ export function ConfirmationStep({
               </p>
             </div>
           </div>
-          
+
           <div>
             <div className="flex items-center gap-2 mb-1">
               <User className="h-5 w-5 text-primary" />
@@ -95,8 +92,8 @@ export function ConfirmationStep({
                 {selectedEmployees.length > 0 ? 'Empleados seleccionados' : 'Sin empleados específicos'}
               </p>
             </div>
-            
-            {selectedEmployees.length > 0 ? (
+
+            {selectedEmployees.length > 0 && (
               <div className="ml-7 space-y-2">
                 {selectedEmployees.map(employee => (
                   <div key={employee.id} className="flex items-center gap-2">
@@ -108,10 +105,6 @@ export function ConfirmationStep({
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="ml-7 text-sm italic text-muted-foreground">
-                Se asignará cualquier empleado disponible
-              </p>
             )}
           </div>
         </CardContent>
@@ -126,7 +119,7 @@ export function ConfirmationStep({
             Atrás
           </Button>
         </div>
-        <Button 
+        <Button
           onClick={onSubmit}
           disabled={loading}
           className="bg-primary hover:bg-primary/90"

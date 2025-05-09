@@ -151,7 +151,7 @@ export function useAppointmentForm(
   const selectedServices =
     useMemo(()=>services?.filter((service) => serviceIds.includes(service.id)) || []  , [serviceIds, services])
 
-  const { availableEmployees } = useCheckAvailability(selectedServices, date, activeStep)
+  const { availableEmployees,  loading: loadingEmployees} = useCheckAvailability(selectedServices, date, activeStep)
 
   const toggleServiceSelection = (serviceId: string) => {
     setServiceIds((prev) =>
@@ -181,13 +181,15 @@ export function useAppointmentForm(
     timeRange,
     selectedEmployeeIds,
     loading,
+    setSelectedEmployeeIds,
 
     clients,
     services,
     selectedClient,
     selectedServices,
     availableEmployees,
-
+    loadingEmployees,
+    
     setActiveStep,
     setClientId,
     setServiceIds,

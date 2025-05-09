@@ -25,8 +25,8 @@ export function ClientServiceStep({
   onCancel
 }: ClientServiceStepProps) {
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-4 h-[22rem] flex flex-col">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
         <div>
           <label className="text-sm font-medium mb-1 block">Cliente</label>
           <CreateOrSelectClient value={clientId} onChange={onClientChange} />
@@ -42,7 +42,7 @@ export function ClientServiceStep({
         </div>
       </div>
 
-      <div className="flex justify-between gap-4 mt-4">
+      <div className="flex justify-between gap-4">
         <Button variant="outline" onClick={onCancel}>
           Cancelar
         </Button>

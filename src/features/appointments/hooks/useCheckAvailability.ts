@@ -11,14 +11,17 @@ export function useCheckAvailability(
   const [availableEmployees, setAvailableEmployees] = useState<
     EmployeeAvailable[]
   >([])
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (selectedServices.length === 0 || activeStep != 3) {
       setAvailableEmployees([])
+      setLoading(false)
       return
     }
 
     const checkAvailability = async () => {
+      setLoading(true)
       const uniqueEmployeesMap = new Map<string, EmployeeAvailable>()
       const services = [...selectedServices]
       for (const service of services) {
@@ -45,10 +48,11 @@ export function useCheckAvailability(
       }
 
       setAvailableEmployees(Array.from(uniqueEmployeesMap.values()))
+      setLoading(false)
     }
 
     void checkAvailability()
   }, [selectedServices, date, activeStep])
 
-  return { availableEmployees }
+  return { availableEmployees, loading }
 }
