@@ -1,15 +1,12 @@
+import { useEffect, useMemo, useState } from 'react'
+import { getHours, getMinutes } from 'date-fns'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
 import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
-import {
-  Appointment,
-  MinutesTimeRange
-} from '@/features/appointments/types.ts'
-import { ClientPrimitives } from '@/features/clients/types'
-import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
-import { toast } from 'sonner'
+import { Appointment, MinutesTimeRange } from '@/features/appointments/types.ts'
 import { useCheckAvailability } from './useCheckAvailability'
 
 export function useAppointmentForm(
@@ -30,10 +27,11 @@ export function useAppointmentForm(
     appointment
       ? appointment.timeRange
       : {
-        startAt: 540,
-        endAt: 600,
-      }
+          startAt: getMinutes(date),
+          endAt: getMinutes(date) + 60,
+        }
   )
+
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>(
     appointment?.employeeIds || []
   )
@@ -49,30 +47,38 @@ export function useAppointmentForm(
         return
       }
 
-      if (services && serviceIds.length > 0) {
-        const service = services.find((s) => s.id === serviceIds.at(0))
+      const startAt = getMinutes(date) + getHours(date) * 60
+      let endAt = startAt
 
-        if (service) {
+      if (services && serviceIds.length > 0) {
+        for (const serviceId of serviceIds) {
+          const service = services.find((service) => service.id === serviceId)
+
+          if (!service) continue
+
           const durationInMinutes =
             service.duration.value *
             (service.duration.unit === 'minutes' ? 1 : 60)
 
-          setTimeRange({
-            startAt: 540,
-            endAt: 540 + durationInMinutes,
-          })
-          return
+          endAt += durationInMinutes
         }
+
+        setTimeRange({
+          startAt,
+          endAt,
+        })
+
+        return
       }
 
       setTimeRange({
-        startAt: 540,
-        endAt: 600,
+        startAt: startAt,
+        endAt: startAt + 60,
       })
     }
 
     fetchServiceDuration()
-  }, [services, serviceIds, appointment])
+  }, [activeStep, services, serviceIds, appointment, date])
 
   useEffect(() => {
     if (!clientId || serviceIds.length === 0) {
@@ -86,6 +92,7 @@ export function useAppointmentForm(
       setServiceIds(appointment.serviceIds)
       setTimeRange(appointment.timeRange)
       setSelectedEmployeeIds(appointment.employeeIds)
+      setDate(new Date(appointment.date))
     } else {
       setClientId('')
       setServiceIds([])
@@ -94,6 +101,7 @@ export function useAppointmentForm(
         endAt: 600,
       })
       setSelectedEmployeeIds([])
+      setDate(new Date())
     }
 
     setActiveStep(1)
@@ -120,9 +128,9 @@ export function useAppointmentForm(
     try {
       const result = appointment
         ? await appointmentService.editAppointment(
-          appointment.id,
-          appointmentData
-        )
+            appointment.id,
+            appointmentData
+          )
         : await appointmentService.makeAppointment(appointmentData)
 
       if (result.id) {
@@ -145,13 +153,18 @@ export function useAppointmentForm(
     }
   }
 
-  const selectedClient: ClientPrimitives | undefined = clients?.find(
-    (client) => client.id === clientId
+  const selectedClient = useMemo(
+    () => clients?.find((client) => client.id === clientId),
+    [clients, clientId]
   )
-  const selectedServices =
-    useMemo(()=>services?.filter((service) => serviceIds.includes(service.id)) || []  , [serviceIds, services])
 
-  const { availableEmployees,  loading: loadingEmployees} = useCheckAvailability(selectedServices, date, activeStep)
+  const selectedServices = useMemo(
+    () => services?.filter((service) => serviceIds.includes(service.id)) || [],
+    [serviceIds, services]
+  )
+
+  const { availableEmployees, loading: loadingEmployees } =
+    useCheckAvailability(selectedServices, date, activeStep)
 
   const toggleServiceSelection = (serviceId: string) => {
     setServiceIds((prev) =>
@@ -189,7 +202,7 @@ export function useAppointmentForm(
     selectedServices,
     availableEmployees,
     loadingEmployees,
-    
+
     setActiveStep,
     setClientId,
     setServiceIds,

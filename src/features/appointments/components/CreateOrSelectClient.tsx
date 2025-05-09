@@ -49,7 +49,7 @@ interface ClientListItemProps {
   onSelect: (clientId: string) => void
 }
 
-const ClientListItem = React  .memo(function ClientListItem({
+const ClientListItem = React.memo(function ClientListItem({
   client,
   onSelect,
 }: ClientListItemProps) {
@@ -98,7 +98,6 @@ export function CreateOrSelectClient({
   const filteredClients = useMemo(() => {
     if (!clients) return []
     if (!debouncedSearchQuery) {
-
       return clients.filter((client) => client.id !== value)
     }
     return clients.filter(
@@ -108,7 +107,6 @@ export function CreateOrSelectClient({
           .includes(debouncedSearchQuery.toLowerCase()) && client.id !== value // Don't show already selected client in dropdown
     )
   }, [clients, debouncedSearchQuery, value])
-
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
     if (
@@ -136,7 +134,6 @@ export function CreateOrSelectClient({
     },
     [onChange]
   )
-
 
   const handleCreateClient = useCallback(async () => {
     const trimmedName = newClientName.trim()
@@ -169,7 +166,7 @@ export function CreateOrSelectClient({
       if (query.length > 0) {
         setIsDropdownOpen(true)
       } else {
-        setIsDropdownOpen(false);
+        setIsDropdownOpen(false)
       }
     },
     []
@@ -236,13 +233,11 @@ export function CreateOrSelectClient({
             onFocus={handleSearchInputFocus}
             className={`pl-8 ${!value && !searchQueryInput ? 'text-muted-foreground' : ''} ${selectedClient && !searchQueryInput ? 'font-medium' : ''}`}
           />
-          {value &&
-            !searchQueryInput &&
-            selectedClient && (
-              <div className='absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground rounded-full p-0.5 flex items-center justify-center'>
-                <Check className='h-3 w-3' />
-              </div>
-            )}
+          {value && !searchQueryInput && selectedClient && (
+            <div className='absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground rounded-full p-0.5 flex items-center justify-center'>
+              <Check className='h-3 w-3' />
+            </div>
+          )}
         </div>
         {isDropdownOpen && (
           <div

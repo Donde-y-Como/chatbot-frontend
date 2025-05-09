@@ -102,7 +102,10 @@ export function MakeAppointmentDialog() {
                   timeRange={timeRange}
                   onTimeRangeChange={setTimeRange}
                   onNext={() => setActiveStep(3)}
-                  onBack={() => setActiveStep(1)}
+                  onBack={() => {
+                    setActiveStep(1)
+                    setDate(new Date())
+                  }}
                   onCancel={() => {
                     setOpen(false)
                     resetForm()

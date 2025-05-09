@@ -22,31 +22,31 @@ export function ClientServiceStep({
   onServiceIdsChange,
   onServiceToggle,
   onNext,
-  onCancel
+  onCancel,
 }: ClientServiceStepProps) {
   return (
-    <div className="space-y-4 flex flex-col">
-      <div className="flex flex-col gap-4 flex-1">
+    <div className='space-y-4 flex flex-col'>
+      <div className='flex flex-col gap-4 flex-1'>
         <div>
-          <label className="text-sm font-medium mb-1 block">Cliente</label>
+          <label className='text-sm font-medium mb-1 block'>Cliente</label>
           <CreateOrSelectClient value={clientId} onChange={onClientChange} />
         </div>
 
         <div>
-          <label className="text-sm font-medium mb-1 block">Servicios</label>
-          <CreateOrSelectMultipleServices 
-            selectedIds={serviceIds} 
+          <label className='text-sm font-medium mb-1 block'>Servicios</label>
+          <CreateOrSelectMultipleServices
+            selectedIds={serviceIds}
             onChange={onServiceIdsChange}
             onToggle={onServiceToggle}
           />
         </div>
       </div>
 
-      <div className="flex justify-between gap-4">
-        <Button variant="outline" onClick={onCancel}>
+      <div className='flex justify-between gap-4'>
+        <Button variant='outline' onClick={onCancel}>
           Cancelar
         </Button>
-        <Button 
+        <Button
           disabled={!clientId || serviceIds.length === 0}
           onClick={onNext}
         >
