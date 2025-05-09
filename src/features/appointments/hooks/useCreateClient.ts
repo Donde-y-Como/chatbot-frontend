@@ -3,10 +3,10 @@ import { ClientApiService } from '@/features/clients/ClientApiService'
 
 export function useCreateClient() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async (name: string) => {
-      const client = await ClientApiService.create({
+      return await ClientApiService.create({
         name,
         platformIdentities: [],
         tagIds: [],
@@ -16,7 +16,6 @@ export function useCreateClient() {
         email: '',
         address: '',
       })
-      return client
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['clients'] })
