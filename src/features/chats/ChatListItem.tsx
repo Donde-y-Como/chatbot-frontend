@@ -50,24 +50,45 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
       emit('setProfileName', data)
     },
     onSuccess: async (_data, variables) => {
-      queryClient.setQueryData(
+      queryClient.setQueryData<ChatMessages>(
         ['chat', chat.id],
-        (cachedConversation: ChatMessages) => {
+        (cachedConversation) => {
+          if (!cachedConversation) {
+            return cachedConversation
+          }
+
           return {
             ...cachedConversation,
-            client: cachedConversation.client
-              ? {
-                  ...cachedConversation.client,
-                  name: variables.profileName,
-                }
-              : undefined,
+            client: {
+              ...cachedConversation.client,
+              name: variables.profileName,
+            },
           }
         }
       )
 
-      await queryClient.invalidateQueries({
-        queryKey: ['chats'],
-      })
+      queryClient.setQueryData<InfiniteData<ChatResponse>>(
+        ['chats'],
+        (cachedData) => {
+          if (!cachedData) return cachedData
+
+          const updatedPages = cachedData.pages.map((page) => ({
+            ...page,
+            conversations: page.conversations.map((conv) =>
+              conv.id === chat.id
+                ? {
+                    ...conv,
+                    client: conv.client
+                      ? { ...conv.client, name: variables.profileName }
+                      : conv.client,
+                  }
+                : conv
+            ),
+          }))
+
+          return { ...cachedData, pages: updatedPages }
+        }
+      )
     },
   })
 
@@ -190,9 +211,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
         const updatedPages = cachedData.pages.map((page) => ({
           ...page,
           conversations: page.conversations.map((conv) =>
-            conv.id === chat.id
-              ? { ...conv, newClientMessagesCount: 0 }
-              : conv
+            conv.id === chat.id ? { ...conv, newClientMessagesCount: 0 } : conv
           ),
         }))
 
