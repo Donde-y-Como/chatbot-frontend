@@ -10,6 +10,7 @@ import { Appointment, MinutesTimeRange } from '@/features/appointments/types.ts'
 import { useCheckAvailability } from './useCheckAvailability'
 
 export function useAppointmentForm(
+  defaultClientName?: string,
   onSuccess?: () => void,
   appointment?: Appointment
 ) {
@@ -37,6 +38,20 @@ export function useAppointmentForm(
   )
   const [loading, setLoading] = useState(false)
   const { data: clients } = useGetClients()
+  
+  // Si se proporciona defaultClientName, buscar el cliente por nombre al cargar clientes
+  useEffect(() => {
+    if (defaultClientName && clients && clients.length > 0 && !clientId) {
+      // Buscar cliente por nombre
+      const matchingClient = clients.find(client => 
+        client.name.toLowerCase().includes(defaultClientName.toLowerCase())
+      )
+      
+      if (matchingClient) {
+        setClientId(matchingClient.id)
+      }
+    }
+  }, [clients, defaultClientName, clientId])
   const { data: services } = useGetServices()
   const queryClient = useQueryClient()
 
