@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -18,8 +18,18 @@ import {
   ConfirmationStep,
 } from './steps'
 
-export function MakeAppointmentDialog() {
-  const [open, setOpen] = useState(false)
+interface MakeAppointmentDialogProps {
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  defaultClientName?: string;
+}
+
+export function MakeAppointmentDialog({
+  defaultOpen = false,
+  onOpenChange,
+  defaultClientName
+}: MakeAppointmentDialogProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(defaultOpen)
   const {
     activeStep,
     clientId,
@@ -44,26 +54,52 @@ export function MakeAppointmentDialog() {
     resetForm,
     handleSubmit,
     hasFilledFields,
-  } = useAppointmentForm(() => {
-    setOpen(false)
+  } = useAppointmentForm(defaultClientName, () => {
+    // Usar la función de cambio externa si está disponible, o la interna si no
+    if (onOpenChange) {
+      onOpenChange(false);
+    } else {
+      setInternalOpen(false);
+    }
   })
+
+  // Determinar si se usa el control externo o interno
+  const open = onOpenChange ? defaultOpen : internalOpen;
+  const setOpen = (value: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(value);
+    } else {
+      setInternalOpen(value);
+    }
+  };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && hasFilledFields()) {
-      return
+      return;
     }
 
-    setOpen(newOpen)
-    if (!newOpen) resetForm()
-  }
+    setOpen(newOpen);
+    if (!newOpen) resetForm();
+  };
+  
+  // Actualizar el estado cuando cambia defaultOpen (control externo)
+  useEffect(() => {
+    if (onOpenChange) {
+      // Solo actualizar si hay control externo
+      setInternalOpen(defaultOpen);
+    }
+  }, [defaultOpen, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button className='w-full bg-primary hover:bg-primary/90 transition-all duration-300 appointment-dialog-trigger'>
-          Agendar Cita
-        </Button>
-      </DialogTrigger>
+      {/* Solo mostrar el trigger si no se está controlando externamente */}
+      {!onOpenChange && (
+        <DialogTrigger asChild>
+          <Button className='w-full bg-primary hover:bg-primary/90 transition-all duration-300 appointment-dialog-trigger'>
+            Agendar Cita
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className='sm:max-w-3xl  overflow-y-auto'>
         <DialogHeader>
           <DialogTitle className='text-2xl font-bold'>Agendar Cita</DialogTitle>
