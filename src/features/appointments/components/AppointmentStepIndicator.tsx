@@ -10,7 +10,7 @@ interface AppointmentStepIndicatorProps {
  */
 export function AppointmentStepIndicator({ activeStep }: AppointmentStepIndicatorProps) {
   return (
-    <div className="w-full mb-6">
+    <div className="w-full">
       <div className="flex justify-between mb-2">
         {[1, 2, 3, 4].map((step) => (
           <div 
@@ -22,7 +22,7 @@ export function AppointmentStepIndicator({ activeStep }: AppointmentStepIndicato
             )}
           >
             <div className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-white mb-1",
+              "w-8 h-8 rounded-full flex items-center justify-center text-background mb-1",
               { "bg-primary": step <= activeStep },
               { "bg-muted": step > activeStep }
             )}>

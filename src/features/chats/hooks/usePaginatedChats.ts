@@ -3,7 +3,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { chatService } from '@/features/chats/ChatService.ts'
 
 export function usePaginatedChats() {
-  const queryKey = ['chats']
+  const queryKey = ['chats'] as const
 
   const {
     data: infiniteData,

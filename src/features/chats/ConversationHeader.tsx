@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -43,6 +43,8 @@ export function ConversationHeader({
   const { emit } = useWebSocket()
   const queryClient = useQueryClient()
   const [eventDialogOpen, setEventDialogOpen] = useState(false)
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false)
+  const appointmentButtonRef = useRef<HTMLButtonElement>(null)
 
   const toggleIAMutation = useMutation({
     mutationKey: ['ia-toggle'],
@@ -100,17 +102,23 @@ export function ConversationHeader({
 
   // Función para abrir el diálogo de agendar cita
   const handleAppointmentClick = () => {
-    // Utilizamos la función global para abrir el diálogo con el nombre del cliente
-    if (
-      typeof window !== 'undefined' &&
-      window.openAppointmentDialog &&
-      chatData.client.name
-    ) {
-      window.openAppointmentDialog(chatData.client.name)
-    } else if (window.openAppointmentDialog) {
-      window.openAppointmentDialog() // Abrimos el diálogo sin nombre de cliente si no hay
-    }
+    // Abrir directamente el diálogo con el control interno
+    setAppointmentDialogOpen(true)
   }
+  
+  // Efecto para establecer la función global openAppointmentDialog
+  useEffect(() => {
+    // Definir la función global para abrir el diálogo desde cualquier parte
+    window.openAppointmentDialog = (clientName?: string) => {
+      // Si se proporciona un nombre de cliente, podríamos usarlo en futuras implementaciones
+      setAppointmentDialogOpen(true)
+    }
+    
+    // Limpiar cuando el componente se desmonte
+    return () => {
+      window.openAppointmentDialog = undefined
+    }
+  }, [])
 
   // Función para abrir el diálogo de agendar evento
   const handleEventClick = () => {
@@ -190,6 +198,7 @@ export function ConversationHeader({
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <Button
+                ref={appointmentButtonRef}
                 size='icon'
                 variant='ghost'
                 className='size-8 rounded-full sm:inline-flex lg:size-10'
@@ -207,10 +216,12 @@ export function ConversationHeader({
           </Tooltip.Root>
         </Tooltip.Provider>
 
-        {/* Componente MakeAppointmentDialog (oculto) */}
-        <div className='hidden'>
-          <MakeAppointmentDialog />
-        </div>
+        {/* MakeAppointmentDialog controlado directamente desde este componente */}
+        <MakeAppointmentDialog 
+          defaultOpen={appointmentDialogOpen}
+          onOpenChange={setAppointmentDialogOpen}
+          defaultClientName={chatData.client.name}
+        />
 
         <Tooltip.Provider>
           <Tooltip.Root>

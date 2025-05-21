@@ -49,6 +49,7 @@ export function EditAppointmentDialog({
     resetForm,
     handleSubmit,
     hasFilledFields,
+    loadingEmployees,
   } = useAppointmentForm(() => {
     setOpen(false)
   }, appointment)
@@ -115,6 +116,7 @@ export function EditAppointmentDialog({
               <EmployeeSelectionStep
                 availableEmployees={availableEmployees}
                 selectedEmployeeIds={selectedEmployeeIds}
+                loadingEmployees={loadingEmployees}
                 onEmployeeToggle={toggleEmployeeSelection}
                 onNext={() => setActiveStep(4)}
                 onBack={() => setActiveStep(2)}
@@ -133,7 +135,6 @@ export function EditAppointmentDialog({
                 selectedClient={selectedClient}
                 selectedServices={selectedServices}
                 selectedEmployeeIds={selectedEmployeeIds}
-                availableEmployees={availableEmployees}
                 loading={loading}
                 onSubmit={handleSubmit}
                 onBack={() => setActiveStep(3)}

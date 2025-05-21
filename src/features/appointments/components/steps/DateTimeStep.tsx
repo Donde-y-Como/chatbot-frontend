@@ -1,11 +1,14 @@
+import React from 'react'
+import { isToday, setMinutes } from 'date-fns'
+import { es } from 'date-fns/locale/es'
+import { Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Input } from '@/components/ui/input'
-import { formatSlotHour } from '../../utils/formatters'
-import { MinutesTimeRange } from '../../types'
-import { Clock } from 'lucide-react'
-import { es } from 'date-fns/locale/es'
 import { Label } from '@/components/ui/label'
+import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
+import { MinutesTimeRange } from '../../types'
+import { formatSlotHour } from '../../utils/formatters'
 
 interface DateTimeStepProps {
   date: Date
@@ -28,85 +31,99 @@ export function DateTimeStep({
   onTimeRangeChange,
   onNext,
   onBack,
-  onCancel
+  onCancel,
 }: DateTimeStepProps) {
   // Convert minutes to HH:MM format for input
   const minutesToTime = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
   }
 
   // Convert HH:MM format to minutes for state
   const timeToMinutes = (time: string): number => {
-    const [hours, minutes] = time.split(':').map(Number);
-    return (hours * 60) + minutes;
+    const [hours, minutes] = time.split(':').map(Number)
+    return hours * 60 + minutes
   }
 
   // Handle start time change
   const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newStartAt = timeToMinutes(e.target.value);
-    onTimeRangeChange({ ...timeRange, startAt: newStartAt });
+    const newStartAt = timeToMinutes(e.target.value)
+    onTimeRangeChange({ ...timeRange, startAt: newStartAt })
   }
 
   // Handle end time change
   const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEndAt = timeToMinutes(e.target.value);
-    onTimeRangeChange({ ...timeRange, endAt: newEndAt });
+    const newEndAt = timeToMinutes(e.target.value)
+    onTimeRangeChange({ ...timeRange, endAt: newEndAt })
+  }
+
+  const { workHours } = useGetWorkSchedule(date)
+
+  const handleDateSelect = (newDate: Date | undefined) => {
+    if (newDate && isToday(newDate)) {
+      const today = new Date()
+      onDateChange(
+        setMinutes(newDate as Date, today.getMinutes() + today.getHours() * 60)
+      )
+    }
+    onDateChange(setMinutes(newDate as Date, workHours ? workHours.startAt : 0))
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className='space-y-4'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         <div>
-          <label className="text-sm font-medium mb-2 block">Fecha</label>
-          <div className="border rounded-md p-1">
+          <label className='text-sm font-medium mb-2 block'>Fecha</label>
+          <div className='border rounded-md p-1'>
             <Calendar
               required
               locale={es}
-              mode="single"
+              mode='single'
               selected={date}
-              onSelect={(d) => onDateChange(d as Date)}
-              className="w-full"
+              onSelect={handleDateSelect}
+              className='w-full'
             />
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className='space-y-4'>
           <div>
-            <label className="text-sm font-medium mb-2 block">Horario</label>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="startTime">Hora de inicio</Label>
+            <label className='text-sm font-medium mb-2 block'>Horario</label>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='startTime'>Hora de inicio</Label>
                 <Input
-                  id="startTime"
-                  type="time"
+                  id='startTime'
+                  type='time'
                   value={minutesToTime(timeRange.startAt)}
                   onChange={handleStartTimeChange}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="endTime">Hora de fin</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='endTime'>Hora de fin</Label>
                 <Input
-                  id="endTime"
-                  type="time"
+                  id='endTime'
+                  type='time'
                   value={minutesToTime(timeRange.endAt)}
                   onChange={handleEndTimeChange}
                 />
               </div>
             </div>
           </div>
-          
-          <div className="p-4 border rounded-md bg-muted/20">
-            <h3 className="text-sm font-medium flex items-center gap-2 mb-2">
-              <Clock className="h-4 w-4" />
+
+          <div className='p-4 border rounded-md bg-muted/20'>
+            <h3 className='text-sm font-medium flex items-center gap-2 mb-2'>
+              <Clock className='h-4 w-4' />
               Resumen de horario
             </h3>
-            <p className="text-sm text-muted-foreground">
-              La cita será agendada desde las {formatSlotHour(timeRange.startAt)} hasta las {formatSlotHour(timeRange.endAt)}.
+            <p className='text-sm text-muted-foreground'>
+              La cita será agendada desde las{' '}
+              {formatSlotHour(timeRange.startAt)} hasta las{' '}
+              {formatSlotHour(timeRange.endAt)}.
             </p>
             {timeRange.endAt <= timeRange.startAt && (
-              <p className="text-sm text-destructive mt-2">
+              <p className='text-sm text-destructive mt-2'>
                 La hora de fin debe ser posterior a la hora de inicio.
               </p>
             )}
@@ -114,16 +131,16 @@ export function DateTimeStep({
         </div>
       </div>
 
-      <div className="flex justify-between gap-2 mt-4">
-        <div className="flex gap-2">
-          <Button variant="destructive" onClick={onCancel}>
+      <div className='flex justify-between gap-2 mt-4'>
+        <div className='flex gap-2'>
+          <Button variant='destructive' onClick={onCancel}>
             Cancelar
           </Button>
-          <Button variant="outline" onClick={onBack}>
+          <Button variant='outline' onClick={onBack}>
             Atrás
           </Button>
         </div>
-        <Button 
+        <Button
           disabled={timeRange.endAt <= timeRange.startAt}
           onClick={onNext}
         >

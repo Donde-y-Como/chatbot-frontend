@@ -1,10 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/axiosInstance'
+import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
 import { Service } from '@/features/appointments/types.ts'
 
 export function useCreateService() {
   const queryClient = useQueryClient()
-  
+  const { data: schedule } = useGetWorkSchedule(new Date())
+
   return useMutation({
     mutationFn: async (serviceName: string) => {
       try {
@@ -13,27 +15,25 @@ export function useCreateService() {
           name: serviceName,
           description: `Servicio personalizado creado desde citas: ${serviceName}`,
           duration: {
-            value: 30, // Default duration of 30
-            unit: 'minutes' as const, // Using 'minutes' as default
+            value: 60,
+            unit: 'minutes' as const,
           },
           price: {
-            amount: 0, // Default price of 0
-            currency: 'MXN', // Default currency USD
+            amount: 0,
+            currency: 'MXN',
           },
-          maxConcurrentBooks: 1, // Default to 1 concurrent booking
-          minBookingLeadHours: 1, // Default to 1 hour lead time
-          schedule: {
-            // Default schedule - every day from 9:00 AM to 6:00 PM
-            'monday': { startAt: 9 * 60, endAt: 18 * 60 },
-            'tuesday': { startAt: 9 * 60, endAt: 18 * 60 },
-            'wednesday': { startAt: 9 * 60, endAt: 18 * 60 },
-            'thursday': { startAt: 9 * 60, endAt: 18 * 60 },
-            'friday': { startAt: 9 * 60, endAt: 18 * 60 },
-            'saturday': { startAt: 9 * 60, endAt: 15 * 60 }, // Shorter hours on Saturday
-            'sunday': { startAt: 0, endAt: 0 } // Closed on Sunday
-          }
+          schedule: schedule
+            ? schedule.weeklyWorkDays
+            : {
+                MONDAY: { startAt: 9 * 60, endAt: 18 * 60 },
+                TUESDAY: { startAt: 9 * 60, endAt: 18 * 60 },
+                WEDNESDAY: { startAt: 9 * 60, endAt: 18 * 60 },
+                THURSDAY: { startAt: 9 * 60, endAt: 18 * 60 },
+                FRIDAY: { startAt: 9 * 60, endAt: 18 * 60 },
+                SATURDAY: { startAt: 9 * 60, endAt: 15 * 60 },
+              },
         }
-        
+
         const response = await api.post<Service>('/services', service)
         return response.data
       } catch (error) {
@@ -41,9 +41,8 @@ export function useCreateService() {
         throw error
       }
     },
-    onSuccess: () => {
-      // Invalidate to refresh the services list
-      queryClient.invalidateQueries({ queryKey: ['services'] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['services'] })
     },
   })
 }

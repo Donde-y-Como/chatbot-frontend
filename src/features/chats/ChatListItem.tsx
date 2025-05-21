@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { differenceInDays, format, formatDistanceToNowStrict } from 'date-fns'
 import { AvatarImage } from '@radix-ui/react-avatar'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  InfiniteData,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 import {
   IconBrandFacebook,
   IconBrandInstagram,
@@ -22,7 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input.tsx'
 import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
-import { Chat, ChatMessages } from '@/features/chats/ChatTypes'
+import { Chat, ChatMessages, ChatResponse } from '@/features/chats/ChatTypes'
 import { AddTagsModal } from './components/AddTagsModal'
 import { useChatMutations } from './hooks/useChatMutations'
 import { useUpdateClientTags } from './hooks/useUpdateClientTags'
@@ -46,24 +50,45 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
       emit('setProfileName', data)
     },
     onSuccess: async (_data, variables) => {
-      queryClient.setQueryData(
+      queryClient.setQueryData<ChatMessages>(
         ['chat', chat.id],
-        (cachedConversation: ChatMessages) => {
+        (cachedConversation) => {
+          if (!cachedConversation) {
+            return cachedConversation
+          }
+
           return {
             ...cachedConversation,
-            client: cachedConversation.client
-              ? {
-                  ...cachedConversation.client,
-                  name: variables.profileName,
-                }
-              : undefined,
+            client: {
+              ...cachedConversation.client,
+              name: variables.profileName,
+            },
           }
         }
       )
 
-      await queryClient.invalidateQueries({
-        queryKey: ['chats'],
-      })
+      queryClient.setQueryData<InfiniteData<ChatResponse>>(
+        ['chats'],
+        (cachedData) => {
+          if (!cachedData) return cachedData
+
+          const updatedPages = cachedData.pages.map((page) => ({
+            ...page,
+            conversations: page.conversations.map((conv) =>
+              conv.id === chat.id
+                ? {
+                    ...conv,
+                    client: conv.client
+                      ? { ...conv.client, name: variables.profileName }
+                      : conv.client,
+                  }
+                : conv
+            ),
+          }))
+
+          return { ...cachedData, pages: updatedPages }
+        }
+      )
     },
   })
 
@@ -178,7 +203,22 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
       }
     })
 
-    // TODO: update 'chats' query data too
+    queryClient.setQueryData<InfiniteData<ChatResponse>>(
+      ['chats'],
+      (cachedData) => {
+        if (!cachedData) return cachedData
+
+        const updatedPages = cachedData.pages.map((page) => ({
+          ...page,
+          conversations: page.conversations.map((conv) =>
+            conv.id === chat.id ? { ...conv, newClientMessagesCount: 0 } : conv
+          ),
+        }))
+
+        return { ...cachedData, pages: updatedPages }
+      }
+    )
+
     onClick()
   }
 

@@ -7,6 +7,7 @@ import { ChatContent } from '@/features/chats/ChatContent'
 import { chatService } from '@/features/chats/ChatService.ts'
 import EmptyChatSelectedState from '@/features/chats/EmptyChatSelectedState'
 import { ChatBarUnlimited } from './chatBarUnlimited'
+import { usePaginatedChats } from './hooks/usePaginatedChats'
 
 const route = getRouteApi('/_authenticated/chats/')
 
@@ -19,10 +20,7 @@ export default function Chats() {
   const [mobileSelectedChatId, setMobileSelectedChatId] = useState<string | null>(null)
 
   // Fetch all chats
-  const { data: chats = [] } = useQuery({
-    queryKey: ['chats-no-paginated'],
-    queryFn: () => chatService.getChats(),
-  })
+  const { chats } = usePaginatedChats()
 
   // Fetch messages for selected chat
   const { data: chatMessages, isPending: isMessagesLoading } = useQuery({
@@ -40,6 +38,7 @@ export default function Chats() {
 
     const urlChatId = searchParams.chatId
     const isValidChat = urlChatId && chats.some((chat) => chat.id === urlChatId)
+    console.log(isValidChat)
     const chatIdToUse = isValidChat ? urlChatId : null
 
     setSelectedChatId(chatIdToUse)
