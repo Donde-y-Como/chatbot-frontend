@@ -1,7 +1,9 @@
-import { useState } from 'react'
-import { Loader2, Plus } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Loader2, Plus, Search } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { useDebounce } from '@uidotdev/usehooks'
 import ContentSection from '../components/content-section'
 import { UnitList } from './components/unit-list'
 import { UnitDialog } from './components/unit-dialog'
@@ -21,6 +23,10 @@ export default function UnitsSection() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedUnit, setSelectedUnit] = useState<Unit | undefined>(undefined)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Debounce de la búsqueda
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
   const {
     data: units,
@@ -31,6 +37,22 @@ export default function UnitsSection() {
   const { mutateAsync: createUnit, isPending: isCreating } = useCreateUnit()
   const { mutateAsync: updateUnit, isPending: isUpdating } = useUpdateUnit()
   const { mutateAsync: deleteUnit, isPending: isDeleting } = useDeleteUnit()
+
+  // Filtrar unidades basándome en la búsqueda
+  const filteredUnits = useMemo(() => {
+    if (!units) return []
+    
+    if (!debouncedSearchQuery.trim()) {
+      return units
+    }
+
+    const query = debouncedSearchQuery.toLowerCase().trim()
+    
+    return units.filter(unit => 
+      unit.name.toLowerCase().includes(query) ||
+      unit.abbreviation.toLowerCase().includes(query)
+    )
+  }, [units, debouncedSearchQuery])
 
   const handleCreate = async (values: UnitFormValues) => {
     await createUnit(values)
@@ -91,13 +113,34 @@ export default function UnitsSection() {
       desc='Administra las unidades de medida utilizadas en tus productos'
     >
       <div className='space-y-6'>
-        <div className='flex justify-between items-center'>
+        <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between'>
           <h3 className='text-lg font-medium'>Tus unidades de medida</h3>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className='mr-2 h-4 w-4' />
             Agregar unidad
           </Button>
         </div>
+
+        {/* Barra de búsqueda */}
+        <div className='relative max-w-sm'>
+          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
+          <Input
+            placeholder='Buscar por nombre o abreviación...'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className='pl-10'
+          />
+        </div>
+
+        {/* Mostrar información de búsqueda */}
+        {debouncedSearchQuery && (
+          <div className='text-sm text-muted-foreground'>
+            {filteredUnits.length === 0 
+              ? `No se encontraron unidades que coincidan con "${debouncedSearchQuery}"`
+              : `Mostrando ${filteredUnits.length} de ${units?.length || 0} unidades`
+            }
+          </div>
+        )}
 
         {isLoadingUnits && (
           <div className='flex justify-center items-center py-10'>
@@ -118,7 +161,7 @@ export default function UnitsSection() {
 
         {units && (
           <UnitList
-            units={units}
+            units={filteredUnits}
             onEdit={openEditDialog}
             onDelete={openDeleteDialog}
             onView={openViewDialog}
