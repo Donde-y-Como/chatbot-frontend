@@ -41,7 +41,7 @@ export default function SettingsWhatsappWeb() {
       const session = await baileysService.getCurrentSession(platform.token)
 
       if (session === null) {
-        await baileysService.removeWhatsappWebSession(user)
+        //await baileysService.removeWhatsappWebSession(user)
         localStorage.removeItem('sessionId')
         await queryClient.invalidateQueries({ queryKey: UserQueryKey })
         setIsLoading(false)
