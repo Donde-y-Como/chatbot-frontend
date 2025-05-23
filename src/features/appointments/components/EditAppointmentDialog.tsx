@@ -50,9 +50,13 @@ export function EditAppointmentDialog({
     handleSubmit,
     hasFilledFields,
     loadingEmployees,
-  } = useAppointmentForm(() => {
-    setOpen(false)
-  }, appointment)
+  } = useAppointmentForm(
+    undefined, // defaultClientName - no necesario para editar
+    () => {
+      setOpen(false)
+    },
+    appointment
+  )
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && hasFilledFields()) {
