@@ -5,7 +5,8 @@ import {
   IconNotification,
   IconTool,
   IconUser,
-  IconMessage
+  IconMessage,
+  IconRulerMeasure
 } from '@tabler/icons-react'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx'
@@ -74,5 +75,10 @@ const sidebarNavItems = [
     title: 'Respuestas Rápidas',
     icon: <IconMessage size={18} />,
     href: '/settings/quick-responses',
+  },
+  {
+    title: 'Unidades de Medida',
+    icon: <IconRulerMeasure size={18} />,
+    href: '/settings/units',
   },
 ]
