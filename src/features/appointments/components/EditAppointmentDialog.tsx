@@ -27,6 +27,10 @@ export function EditAppointmentDialog({
 }) {
   const [open, setOpen] = useState(false)
 
+  const handleSuccess = () => {
+    setOpen(false)
+  }
+
   const {
     activeStep,
     clientId,
@@ -52,9 +56,7 @@ export function EditAppointmentDialog({
     loadingEmployees,
   } = useAppointmentForm(
     undefined, // defaultClientName - no necesario para editar
-    () => {
-      setOpen(false)
-    },
+    handleSuccess,
     appointment
   )
 
