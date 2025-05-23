@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { appointmentService } from '../appointmentService'
-import { EmployeeAvailable, Service } from '../types'
+import { EmployeeAvailable, MinutesTimeRange, Service } from '../types'
 
 export function useCheckAvailability(
   selectedServices: Service[],
   date: Date,
-  activeStep: number
+  activeStep: number,
+  timeRange: MinutesTimeRange
 ) {
   const [availableEmployees, setAvailableEmployees] = useState<
     EmployeeAvailable[]
@@ -25,7 +26,6 @@ export function useCheckAvailability(
       const uniqueEmployeesMap = new Map<string, EmployeeAvailable>()
       const services = [...selectedServices]
       for (const service of services) {
-
         try {
           const result = await appointmentService.checkAvailability(
             service.id,
@@ -33,11 +33,13 @@ export function useCheckAvailability(
           )
 
           result.availableSlots.forEach((slot) => {
-            slot.employees.forEach((employee) => {
-              if (!uniqueEmployeesMap.has(employee.id)) {
-                uniqueEmployeesMap.set(employee.id, employee)
-              }
-            })
+            if (timeRange.startAt >= slot.slot.startAt && timeRange.endAt <= slot.slot.endAt) {
+              slot.employees.forEach((employee) => {
+                if (!uniqueEmployeesMap.has(employee.id)) {
+                  uniqueEmployeesMap.set(employee.id, employee)
+                }
+              })
+            }
           })
         } catch (error) {
           toast.warning(
@@ -52,7 +54,7 @@ export function useCheckAvailability(
     }
 
     void checkAvailability()
-  }, [selectedServices, date, activeStep])
+  }, [selectedServices, date, activeStep, timeRange])
 
   return { availableEmployees, loading }
 }
