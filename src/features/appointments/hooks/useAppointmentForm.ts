@@ -44,7 +44,7 @@ export function useAppointmentForm(
     if (defaultClientName && clients && clients.length > 0 && !clientId) {
       // Buscar cliente por nombre
       const matchingClient = clients.find(client => 
-        client.name.toLowerCase().includes(defaultClientName.toLowerCase())
+        client.name && client.name.toLowerCase().includes(defaultClientName.toLowerCase())
       )
       
       if (matchingClient) {
