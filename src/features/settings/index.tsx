@@ -6,7 +6,8 @@ import {
   IconTool,
   IconUser,
   IconMessage,
-  IconRulerMeasure
+  IconRulerMeasure,
+  IconCategory
 } from '@tabler/icons-react'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx'
@@ -80,5 +81,10 @@ const sidebarNavItems = [
     title: 'Unidades de Medida',
     icon: <IconRulerMeasure size={18} />,
     href: '/settings/units',
+  },
+  {
+    title: 'Categorias',
+    icon: <IconCategory size={18} />,
+    href: '/settings/categories',
   },
 ]

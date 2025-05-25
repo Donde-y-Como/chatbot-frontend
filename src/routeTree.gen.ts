@@ -68,6 +68,9 @@ const AuthenticatedSettingsNotificationsLazyImport = createFileRoute(
 const AuthenticatedSettingsDisplayLazyImport = createFileRoute(
   '/_authenticated/settings/display',
 )()
+const AuthenticatedSettingsCategoriesLazyImport = createFileRoute(
+  '/_authenticated/settings/categories',
+)()
 const AuthenticatedSettingsAccountLazyImport = createFileRoute(
   '/_authenticated/settings/account',
 )()
@@ -281,6 +284,17 @@ const AuthenticatedSettingsDisplayLazyRoute =
     ),
   )
 
+const AuthenticatedSettingsCategoriesLazyRoute =
+  AuthenticatedSettingsCategoriesLazyImport.update({
+    id: '/categories',
+    path: '/categories',
+    getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/settings/categories.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+
 const AuthenticatedSettingsAccountLazyRoute =
   AuthenticatedSettingsAccountLazyImport.update({
     id: '/account',
@@ -416,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsAccountLazyImport
       parentRoute: typeof AuthenticatedSettingsRouteLazyImport
     }
+    '/_authenticated/settings/categories': {
+      id: '/_authenticated/settings/categories'
+      path: '/categories'
+      fullPath: '/settings/categories'
+      preLoaderRoute: typeof AuthenticatedSettingsCategoriesLazyImport
+      parentRoute: typeof AuthenticatedSettingsRouteLazyImport
+    }
     '/_authenticated/settings/display': {
       id: '/_authenticated/settings/display'
       path: '/display'
@@ -507,6 +528,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedSettingsRouteLazyRouteChildren {
   AuthenticatedSettingsAccountLazyRoute: typeof AuthenticatedSettingsAccountLazyRoute
+  AuthenticatedSettingsCategoriesLazyRoute: typeof AuthenticatedSettingsCategoriesLazyRoute
   AuthenticatedSettingsDisplayLazyRoute: typeof AuthenticatedSettingsDisplayLazyRoute
   AuthenticatedSettingsNotificationsLazyRoute: typeof AuthenticatedSettingsNotificationsLazyRoute
   AuthenticatedSettingsQuickResponsesLazyRoute: typeof AuthenticatedSettingsQuickResponsesLazyRoute
@@ -519,6 +541,8 @@ const AuthenticatedSettingsRouteLazyRouteChildren: AuthenticatedSettingsRouteLaz
   {
     AuthenticatedSettingsAccountLazyRoute:
       AuthenticatedSettingsAccountLazyRoute,
+    AuthenticatedSettingsCategoriesLazyRoute:
+      AuthenticatedSettingsCategoriesLazyRoute,
     AuthenticatedSettingsDisplayLazyRoute:
       AuthenticatedSettingsDisplayLazyRoute,
     AuthenticatedSettingsNotificationsLazyRoute:
@@ -578,6 +602,7 @@ export interface FileRoutesByFullPath {
   '/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
+  '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
@@ -606,6 +631,7 @@ export interface FileRoutesByTo {
   '/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
+  '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
@@ -637,6 +663,7 @@ export interface FileRoutesById {
   '/(auth)/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/(auth)/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
+  '/_authenticated/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsLazyRoute
   '/_authenticated/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
@@ -669,6 +696,7 @@ export interface FileRouteTypes {
     | '/link-iniciar-sesion/$token'
     | '/restablecer-contrasena/$token'
     | '/settings/account'
+    | '/settings/categories'
     | '/settings/display'
     | '/settings/notifications'
     | '/settings/quick-responses'
@@ -696,6 +724,7 @@ export interface FileRouteTypes {
     | '/link-iniciar-sesion/$token'
     | '/restablecer-contrasena/$token'
     | '/settings/account'
+    | '/settings/categories'
     | '/settings/display'
     | '/settings/notifications'
     | '/settings/quick-responses'
@@ -725,6 +754,7 @@ export interface FileRouteTypes {
     | '/(auth)/link-iniciar-sesion/$token'
     | '/(auth)/restablecer-contrasena/$token'
     | '/_authenticated/settings/account'
+    | '/_authenticated/settings/categories'
     | '/_authenticated/settings/display'
     | '/_authenticated/settings/notifications'
     | '/_authenticated/settings/quick-responses'
@@ -815,6 +845,7 @@ export const routeTree = rootRoute
       "parent": "/_authenticated",
       "children": [
         "/_authenticated/settings/account",
+        "/_authenticated/settings/categories",
         "/_authenticated/settings/display",
         "/_authenticated/settings/notifications",
         "/_authenticated/settings/quick-responses",
@@ -859,6 +890,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/settings/account": {
       "filePath": "_authenticated/settings/account.lazy.tsx",
+      "parent": "/_authenticated/settings"
+    },
+    "/_authenticated/settings/categories": {
+      "filePath": "_authenticated/settings/categories.lazy.tsx",
       "parent": "/_authenticated/settings"
     },
     "/_authenticated/settings/display": {
