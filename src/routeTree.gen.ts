@@ -59,6 +59,9 @@ const AuthenticatedSettingsWhatsappLazyImport = createFileRoute(
 const AuthenticatedSettingsUnitsLazyImport = createFileRoute(
   '/_authenticated/settings/units',
 )()
+const AuthenticatedSettingsTagsLazyImport = createFileRoute(
+  '/_authenticated/settings/tags',
+)()
 const AuthenticatedSettingsQuickResponsesLazyImport = createFileRoute(
   '/_authenticated/settings/quick-responses',
 )()
@@ -249,6 +252,15 @@ const AuthenticatedSettingsUnitsLazyRoute =
     getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
   } as any).lazy(() =>
     import('./routes/_authenticated/settings/units.lazy').then((d) => d.Route),
+  )
+
+const AuthenticatedSettingsTagsLazyRoute =
+  AuthenticatedSettingsTagsLazyImport.update({
+    id: '/tags',
+    path: '/tags',
+    getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/settings/tags.lazy').then((d) => d.Route),
   )
 
 const AuthenticatedSettingsQuickResponsesLazyRoute =
@@ -458,6 +470,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsQuickResponsesLazyImport
       parentRoute: typeof AuthenticatedSettingsRouteLazyImport
     }
+    '/_authenticated/settings/tags': {
+      id: '/_authenticated/settings/tags'
+      path: '/tags'
+      fullPath: '/settings/tags'
+      preLoaderRoute: typeof AuthenticatedSettingsTagsLazyImport
+      parentRoute: typeof AuthenticatedSettingsRouteLazyImport
+    }
     '/_authenticated/settings/units': {
       id: '/_authenticated/settings/units'
       path: '/units'
@@ -532,6 +551,7 @@ interface AuthenticatedSettingsRouteLazyRouteChildren {
   AuthenticatedSettingsDisplayLazyRoute: typeof AuthenticatedSettingsDisplayLazyRoute
   AuthenticatedSettingsNotificationsLazyRoute: typeof AuthenticatedSettingsNotificationsLazyRoute
   AuthenticatedSettingsQuickResponsesLazyRoute: typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  AuthenticatedSettingsTagsLazyRoute: typeof AuthenticatedSettingsTagsLazyRoute
   AuthenticatedSettingsUnitsLazyRoute: typeof AuthenticatedSettingsUnitsLazyRoute
   AuthenticatedSettingsWhatsappLazyRoute: typeof AuthenticatedSettingsWhatsappLazyRoute
   AuthenticatedSettingsIndexLazyRoute: typeof AuthenticatedSettingsIndexLazyRoute
@@ -549,6 +569,7 @@ const AuthenticatedSettingsRouteLazyRouteChildren: AuthenticatedSettingsRouteLaz
       AuthenticatedSettingsNotificationsLazyRoute,
     AuthenticatedSettingsQuickResponsesLazyRoute:
       AuthenticatedSettingsQuickResponsesLazyRoute,
+    AuthenticatedSettingsTagsLazyRoute: AuthenticatedSettingsTagsLazyRoute,
     AuthenticatedSettingsUnitsLazyRoute: AuthenticatedSettingsUnitsLazyRoute,
     AuthenticatedSettingsWhatsappLazyRoute:
       AuthenticatedSettingsWhatsappLazyRoute,
@@ -606,6 +627,7 @@ export interface FileRoutesByFullPath {
   '/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  '/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappLazyRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
@@ -635,6 +657,7 @@ export interface FileRoutesByTo {
   '/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  '/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappLazyRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
@@ -667,6 +690,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsLazyRoute
   '/_authenticated/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  '/_authenticated/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/_authenticated/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
   '/_authenticated/settings/whatsapp': typeof AuthenticatedSettingsWhatsappLazyRoute
   '/_authenticated/chats/': typeof AuthenticatedChatsIndexRoute
@@ -700,6 +724,7 @@ export interface FileRouteTypes {
     | '/settings/display'
     | '/settings/notifications'
     | '/settings/quick-responses'
+    | '/settings/tags'
     | '/settings/units'
     | '/settings/whatsapp'
     | '/chats'
@@ -728,6 +753,7 @@ export interface FileRouteTypes {
     | '/settings/display'
     | '/settings/notifications'
     | '/settings/quick-responses'
+    | '/settings/tags'
     | '/settings/units'
     | '/settings/whatsapp'
     | '/chats'
@@ -758,6 +784,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/display'
     | '/_authenticated/settings/notifications'
     | '/_authenticated/settings/quick-responses'
+    | '/_authenticated/settings/tags'
     | '/_authenticated/settings/units'
     | '/_authenticated/settings/whatsapp'
     | '/_authenticated/chats/'
@@ -849,6 +876,7 @@ export const routeTree = rootRoute
         "/_authenticated/settings/display",
         "/_authenticated/settings/notifications",
         "/_authenticated/settings/quick-responses",
+        "/_authenticated/settings/tags",
         "/_authenticated/settings/units",
         "/_authenticated/settings/whatsapp",
         "/_authenticated/settings/"
@@ -906,6 +934,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/settings/quick-responses": {
       "filePath": "_authenticated/settings/quick-responses.lazy.tsx",
+      "parent": "/_authenticated/settings"
+    },
+    "/_authenticated/settings/tags": {
+      "filePath": "_authenticated/settings/tags.lazy.tsx",
       "parent": "/_authenticated/settings"
     },
     "/_authenticated/settings/units": {

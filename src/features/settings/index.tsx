@@ -7,7 +7,8 @@ import {
   IconUser,
   IconMessage,
   IconRulerMeasure,
-  IconCategory
+  IconCategory,
+  IconTags
 } from '@tabler/icons-react'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx'
@@ -86,5 +87,10 @@ const sidebarNavItems = [
     title: 'Categorias',
     icon: <IconCategory size={18} />,
     href: '/settings/categories',
+  },
+  {
+    title: 'Etiquetas',
+    icon: <IconTags size={18} />,
+    href: '/settings/tags',
   },
 ]
