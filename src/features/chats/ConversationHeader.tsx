@@ -139,7 +139,7 @@ export function ConversationHeader({
               />
             )}
             <AvatarFallback className='bg-background'>
-              {chatData.client.name[0]}
+              {chatData.client.name ? chatData.client.name.at(0) : "U" }
             </AvatarFallback>
           </Avatar>
           {PlatformIcon && (
