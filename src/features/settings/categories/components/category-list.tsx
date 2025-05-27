@@ -84,7 +84,7 @@ export function CategoryList({
                     {hasSubcategories && (
                       <div className='flex items-center gap-1 mt-2 ml-8 text-xs text-muted-foreground'>
                         <ChevronRight className='h-3 w-3' />
-                        {parentCategory.subcategories.length} subcategoría(s)
+                        {parentCategory.subcategories?.length} subcategoría(s)
                       </div>
                     )}
                   </div>
@@ -134,7 +134,7 @@ export function CategoryList({
             {/* Subcategorías - Solo mostrar si está expandida */}
             {hasSubcategories && isExpanded && (
               <div className='ml-6 space-y-2 animate-in slide-in-from-top-2 duration-200'>
-                {parentCategory.subcategories.map((subcategory) => (
+                {parentCategory.subcategories?.map((subcategory) => (
                   <Card key={subcategory.id} className='hover:shadow-sm transition-shadow border-l-2 border-l-muted'>
                     <CardHeader className='pb-2'>
                       <div className='flex items-start justify-between'>
