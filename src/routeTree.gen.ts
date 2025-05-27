@@ -59,6 +59,9 @@ const AuthenticatedSettingsWhatsappLazyImport = createFileRoute(
 const AuthenticatedSettingsUnitsLazyImport = createFileRoute(
   '/_authenticated/settings/units',
 )()
+const AuthenticatedSettingsTagsLazyImport = createFileRoute(
+  '/_authenticated/settings/tags',
+)()
 const AuthenticatedSettingsQuickResponsesLazyImport = createFileRoute(
   '/_authenticated/settings/quick-responses',
 )()
@@ -67,6 +70,9 @@ const AuthenticatedSettingsNotificationsLazyImport = createFileRoute(
 )()
 const AuthenticatedSettingsDisplayLazyImport = createFileRoute(
   '/_authenticated/settings/display',
+)()
+const AuthenticatedSettingsCategoriesLazyImport = createFileRoute(
+  '/_authenticated/settings/categories',
 )()
 const AuthenticatedSettingsAccountLazyImport = createFileRoute(
   '/_authenticated/settings/account',
@@ -248,6 +254,15 @@ const AuthenticatedSettingsUnitsLazyRoute =
     import('./routes/_authenticated/settings/units.lazy').then((d) => d.Route),
   )
 
+const AuthenticatedSettingsTagsLazyRoute =
+  AuthenticatedSettingsTagsLazyImport.update({
+    id: '/tags',
+    path: '/tags',
+    getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/settings/tags.lazy').then((d) => d.Route),
+  )
+
 const AuthenticatedSettingsQuickResponsesLazyRoute =
   AuthenticatedSettingsQuickResponsesLazyImport.update({
     id: '/quick-responses',
@@ -277,6 +292,17 @@ const AuthenticatedSettingsDisplayLazyRoute =
     getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
   } as any).lazy(() =>
     import('./routes/_authenticated/settings/display.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+
+const AuthenticatedSettingsCategoriesLazyRoute =
+  AuthenticatedSettingsCategoriesLazyImport.update({
+    id: '/categories',
+    path: '/categories',
+    getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/settings/categories.lazy').then(
       (d) => d.Route,
     ),
   )
@@ -416,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsAccountLazyImport
       parentRoute: typeof AuthenticatedSettingsRouteLazyImport
     }
+    '/_authenticated/settings/categories': {
+      id: '/_authenticated/settings/categories'
+      path: '/categories'
+      fullPath: '/settings/categories'
+      preLoaderRoute: typeof AuthenticatedSettingsCategoriesLazyImport
+      parentRoute: typeof AuthenticatedSettingsRouteLazyImport
+    }
     '/_authenticated/settings/display': {
       id: '/_authenticated/settings/display'
       path: '/display'
@@ -435,6 +468,13 @@ declare module '@tanstack/react-router' {
       path: '/quick-responses'
       fullPath: '/settings/quick-responses'
       preLoaderRoute: typeof AuthenticatedSettingsQuickResponsesLazyImport
+      parentRoute: typeof AuthenticatedSettingsRouteLazyImport
+    }
+    '/_authenticated/settings/tags': {
+      id: '/_authenticated/settings/tags'
+      path: '/tags'
+      fullPath: '/settings/tags'
+      preLoaderRoute: typeof AuthenticatedSettingsTagsLazyImport
       parentRoute: typeof AuthenticatedSettingsRouteLazyImport
     }
     '/_authenticated/settings/units': {
@@ -507,9 +547,11 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedSettingsRouteLazyRouteChildren {
   AuthenticatedSettingsAccountLazyRoute: typeof AuthenticatedSettingsAccountLazyRoute
+  AuthenticatedSettingsCategoriesLazyRoute: typeof AuthenticatedSettingsCategoriesLazyRoute
   AuthenticatedSettingsDisplayLazyRoute: typeof AuthenticatedSettingsDisplayLazyRoute
   AuthenticatedSettingsNotificationsLazyRoute: typeof AuthenticatedSettingsNotificationsLazyRoute
   AuthenticatedSettingsQuickResponsesLazyRoute: typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  AuthenticatedSettingsTagsLazyRoute: typeof AuthenticatedSettingsTagsLazyRoute
   AuthenticatedSettingsUnitsLazyRoute: typeof AuthenticatedSettingsUnitsLazyRoute
   AuthenticatedSettingsWhatsappLazyRoute: typeof AuthenticatedSettingsWhatsappLazyRoute
   AuthenticatedSettingsIndexLazyRoute: typeof AuthenticatedSettingsIndexLazyRoute
@@ -519,12 +561,15 @@ const AuthenticatedSettingsRouteLazyRouteChildren: AuthenticatedSettingsRouteLaz
   {
     AuthenticatedSettingsAccountLazyRoute:
       AuthenticatedSettingsAccountLazyRoute,
+    AuthenticatedSettingsCategoriesLazyRoute:
+      AuthenticatedSettingsCategoriesLazyRoute,
     AuthenticatedSettingsDisplayLazyRoute:
       AuthenticatedSettingsDisplayLazyRoute,
     AuthenticatedSettingsNotificationsLazyRoute:
       AuthenticatedSettingsNotificationsLazyRoute,
     AuthenticatedSettingsQuickResponsesLazyRoute:
       AuthenticatedSettingsQuickResponsesLazyRoute,
+    AuthenticatedSettingsTagsLazyRoute: AuthenticatedSettingsTagsLazyRoute,
     AuthenticatedSettingsUnitsLazyRoute: AuthenticatedSettingsUnitsLazyRoute,
     AuthenticatedSettingsWhatsappLazyRoute:
       AuthenticatedSettingsWhatsappLazyRoute,
@@ -578,9 +623,11 @@ export interface FileRoutesByFullPath {
   '/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
+  '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  '/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappLazyRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
@@ -606,9 +653,11 @@ export interface FileRoutesByTo {
   '/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
+  '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  '/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappLazyRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
@@ -637,9 +686,11 @@ export interface FileRoutesById {
   '/(auth)/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/(auth)/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
+  '/_authenticated/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsLazyRoute
   '/_authenticated/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  '/_authenticated/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/_authenticated/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
   '/_authenticated/settings/whatsapp': typeof AuthenticatedSettingsWhatsappLazyRoute
   '/_authenticated/chats/': typeof AuthenticatedChatsIndexRoute
@@ -669,9 +720,11 @@ export interface FileRouteTypes {
     | '/link-iniciar-sesion/$token'
     | '/restablecer-contrasena/$token'
     | '/settings/account'
+    | '/settings/categories'
     | '/settings/display'
     | '/settings/notifications'
     | '/settings/quick-responses'
+    | '/settings/tags'
     | '/settings/units'
     | '/settings/whatsapp'
     | '/chats'
@@ -696,9 +749,11 @@ export interface FileRouteTypes {
     | '/link-iniciar-sesion/$token'
     | '/restablecer-contrasena/$token'
     | '/settings/account'
+    | '/settings/categories'
     | '/settings/display'
     | '/settings/notifications'
     | '/settings/quick-responses'
+    | '/settings/tags'
     | '/settings/units'
     | '/settings/whatsapp'
     | '/chats'
@@ -725,9 +780,11 @@ export interface FileRouteTypes {
     | '/(auth)/link-iniciar-sesion/$token'
     | '/(auth)/restablecer-contrasena/$token'
     | '/_authenticated/settings/account'
+    | '/_authenticated/settings/categories'
     | '/_authenticated/settings/display'
     | '/_authenticated/settings/notifications'
     | '/_authenticated/settings/quick-responses'
+    | '/_authenticated/settings/tags'
     | '/_authenticated/settings/units'
     | '/_authenticated/settings/whatsapp'
     | '/_authenticated/chats/'
@@ -815,9 +872,11 @@ export const routeTree = rootRoute
       "parent": "/_authenticated",
       "children": [
         "/_authenticated/settings/account",
+        "/_authenticated/settings/categories",
         "/_authenticated/settings/display",
         "/_authenticated/settings/notifications",
         "/_authenticated/settings/quick-responses",
+        "/_authenticated/settings/tags",
         "/_authenticated/settings/units",
         "/_authenticated/settings/whatsapp",
         "/_authenticated/settings/"
@@ -861,6 +920,10 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/settings/account.lazy.tsx",
       "parent": "/_authenticated/settings"
     },
+    "/_authenticated/settings/categories": {
+      "filePath": "_authenticated/settings/categories.lazy.tsx",
+      "parent": "/_authenticated/settings"
+    },
     "/_authenticated/settings/display": {
       "filePath": "_authenticated/settings/display.lazy.tsx",
       "parent": "/_authenticated/settings"
@@ -871,6 +934,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/settings/quick-responses": {
       "filePath": "_authenticated/settings/quick-responses.lazy.tsx",
+      "parent": "/_authenticated/settings"
+    },
+    "/_authenticated/settings/tags": {
+      "filePath": "_authenticated/settings/tags.lazy.tsx",
       "parent": "/_authenticated/settings"
     },
     "/_authenticated/settings/units": {

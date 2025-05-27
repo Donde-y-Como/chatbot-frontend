@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
-import { CalendarIcon, Scissors, User } from 'lucide-react'
+import { CalendarIcon, DollarSignIcon, Scissors, User } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -92,6 +92,26 @@ export function ConfirmationStep({
                     {service.name}
                   </p>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          <div className='flex items-start gap-2'>
+            <DollarSignIcon className='h-5 w-5 text-primary mt-1' />
+            <div>
+              <p className='text-sm text-muted-foreground'>Precio Total</p>
+              <div className='space-y-1 mt-1'>
+                <p className='font-medium text-lg'>
+                  {selectedServices.length > 0 
+                    ? `${selectedServices.reduce((total, service) => total + service.price.amount, 0).toFixed(2)} ${selectedServices[0]?.price.currency || ''}`
+                    : '0.00'
+                  }
+                </p>
+                {selectedServices.length > 1 && (
+                  <p className='text-xs text-muted-foreground'>
+                    ({selectedServices.length} servicios)
+                  </p>
+                )}
               </div>
             </div>
           </div>
