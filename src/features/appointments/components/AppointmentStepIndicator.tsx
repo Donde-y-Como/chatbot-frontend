@@ -12,7 +12,7 @@ export function AppointmentStepIndicator({ activeStep }: AppointmentStepIndicato
   return (
     <div className="w-full">
       <div className="flex justify-between mb-2">
-        {[1, 2, 3, 4].map((step) => (
+        {[1, 2, 3, 4, 5].map((step) => (
           <div 
             key={step} 
             className={cn(
@@ -32,11 +32,12 @@ export function AppointmentStepIndicator({ activeStep }: AppointmentStepIndicato
                 step
               )}
             </div>
-            <span className="text-xs hidden sm:block">
+            <span className="text-xs hidden sm:block text-center">
               {step === 1 && "Información"}
               {step === 2 && "Fecha y Hora"}
-              {step === 3 && "Empleados (Opcional)"}
-              {step === 4 && "Confirmación"}
+              {step === 3 && "Empleados"}
+              {step === 4 && "Estado y Pago"}
+              {step === 5 && "Confirmación"}
             </span>
           </div>
         ))}
@@ -44,7 +45,7 @@ export function AppointmentStepIndicator({ activeStep }: AppointmentStepIndicato
       <div className="w-full bg-muted rounded-full h-2 mb-4">
         <div 
           className="bg-primary h-2 rounded-full transition-all duration-500" 
-          style={{ width: `${(activeStep / 4) * 100}%` }}
+          style={{ width: `${(activeStep / 5) * 100}%` }}
         />
       </div>
     </div>

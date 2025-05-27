@@ -42,6 +42,7 @@ import { formatTime } from '@/features/appointments/utils/formatters'
 import { ClientPrimitives } from '../clients/types'
 import { Employee } from '../employees/types'
 import { ClientChatButton } from './components/client-chat-button'
+import { AppointmentStatusBadge, PaymentStatusBadge } from './components/StatusBadges'
 import type { Appointment, Service } from './types'
 
 interface AppointmentBlockProps {
@@ -197,13 +198,9 @@ export function AppointmentBlock({
         <DialogHeader className='bg-primary/5 px-6 py-4 border-b'>
           <div className='flex items-start justify-between'>
             <div>
-              <div className='flex items-center gap-2 mb-2'>
-                <Badge
-                  variant={statusBadge.variant as 'default' | 'secondary'}
-                  className='capitalize'
-                >
-                  {statusBadge.label}
-                </Badge>
+              <div className='flex items-center gap-2 mb-2 flex-wrap'>
+                <AppointmentStatusBadge status={appointment.status || 'pendiente'} />
+                <PaymentStatusBadge paymentStatus={appointment.paymentStatus || 'pendiente'} />
                 {statusBadge.timeInfo && (
                   <span className='text-xs text-muted-foreground'>
                     {statusBadge.timeInfo}
@@ -303,6 +300,14 @@ export function AppointmentBlock({
                         {totalPrice.toLocaleString('es-MX')} {currency}
                       </span>
                     </div>
+                    {appointment.deposit && (
+                      <div className='flex justify-between items-center text-sm text-muted-foreground mt-2'>
+                        <span>Abono registrado:</span>
+                        <span className='font-medium'>
+                          {appointment.deposit.amount.toLocaleString('es-MX')} {appointment.deposit.currency}
+                        </span>
+                      </div>
+                    )}
                   </>
                 )}
               </div>

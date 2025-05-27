@@ -18,6 +18,7 @@ import {
   ConfirmationStep,
   DateTimeStep,
   EmployeeSelectionStep,
+  StatusAndPaymentStep,
 } from './steps'
 
 export function EditAppointmentDialog({
@@ -42,6 +43,14 @@ export function EditAppointmentDialog({
     selectedClient,
     selectedServices,
     availableEmployees,
+
+    // Nuevos campos
+    status,
+    paymentStatus,
+    deposit,
+    setStatus,
+    setPaymentStatus,
+    setDeposit,
 
     setActiveStep,
     setClientId,
@@ -133,8 +142,26 @@ export function EditAppointmentDialog({
               />
             </TabsContent>
 
-            {/* Step 4: Confirmation */}
+            {/* Step 4: Status and Payment */}
             <TabsContent value='4'>
+              <StatusAndPaymentStep
+                status={status}
+                paymentStatus={paymentStatus}
+                deposit={deposit}
+                onStatusChange={setStatus}
+                onPaymentStatusChange={setPaymentStatus}
+                onDepositChange={setDeposit}
+                onNext={() => setActiveStep(5)}
+                onBack={() => setActiveStep(3)}
+                onCancel={() => {
+                  setOpen(false)
+                  resetForm()
+                }}
+              />
+            </TabsContent>
+
+            {/* Step 5: Confirmation */}
+            <TabsContent value='5'>
               <ConfirmationStep
                 date={date}
                 timeRange={timeRange}
@@ -143,7 +170,7 @@ export function EditAppointmentDialog({
                 selectedEmployeeIds={selectedEmployeeIds}
                 loading={loading}
                 onSubmit={handleSubmit}
-                onBack={() => setActiveStep(3)}
+                onBack={() => setActiveStep(4)}
                 onCancel={() => {
                   setOpen(false)
                   resetForm()
