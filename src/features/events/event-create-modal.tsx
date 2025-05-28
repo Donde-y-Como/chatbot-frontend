@@ -43,27 +43,35 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 interface CreateEventModelProps {
   open: boolean
   onClose: () => void
+  defaultDate?: Date
 }
 
-export function EventCreateModal({ open, onClose }: CreateEventModelProps) {
+export function EventCreateModal({ open, onClose, defaultDate }: CreateEventModelProps) {
   const [photos, setPhotos] = React.useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [formSubmitError, setFormSubmitError] = React.useState<string | null>(null)
   const { createEvent } = useEventMutations()
   const { uploadFile, validateFile, isUploading } = useUploadMedia()
-  const defaultValues = React.useMemo(() => ({
-    name: '',
-    description: '',
-    price: { amount: 0, currency: Currency.MXN },
-    capacity: { isLimited: false, maxCapacity: null },
-    duration: {
-      startAt: '',
-      endAt: '',
-    },
-    recurrence: { frequency: RecurrenceFrequency.NEVER, endCondition: null },
-    location: '',
-    photos: [],
-  }), [])
+  const defaultValues = React.useMemo(() => {
+    const startDate = defaultDate ? new Date(defaultDate) : new Date()
+    // Set default time to 9:00 AM
+    startDate.setHours(9, 0, 0, 0)
+    const endDate = addHours(startDate, 1)
+    
+    return {
+      name: '',
+      description: '',
+      price: { amount: 0, currency: Currency.MXN },
+      capacity: { isLimited: false, maxCapacity: null },
+      duration: {
+        startAt: startDate.toISOString(),
+        endAt: endDate.toISOString(),
+      },
+      recurrence: { frequency: RecurrenceFrequency.NEVER, endCondition: null },
+      location: '',
+      photos: [],
+    }
+  }, [defaultDate])
 
   const form = useForm<CreatableEvent>({
     resolver: zodResolver(creatableEventSchema),
