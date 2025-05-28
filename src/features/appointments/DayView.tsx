@@ -12,6 +12,7 @@ import {
   ServiceFilterProps,
 } from '@/features/appointments/ServiceFilter.tsx'
 import { TimeSlots } from '@/features/appointments/TimeSlots.tsx'
+import { MakeAppointmentDialog } from '@/features/appointments/components/MakeAppointmentDialog.tsx'
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
 import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
@@ -19,7 +20,7 @@ import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.t
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
 import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts'
-import type { Appointment } from './types'
+import type { Appointment, MinutesTimeRange } from './types'
 
 export function DayView({
   appointments,
@@ -39,6 +40,10 @@ export function DayView({
   const [selectedService, setSelectedService] =
     useState<ServiceFilterProps['selectedService']>('all')
   const [currentTime, setCurrentTime] = useState(date)
+  
+  // States for appointment modal
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false)
+  const [selectedTimeRange, setSelectedTimeRange] = useState<MinutesTimeRange | null>(null)
 
   const queryClient = useQueryClient()
 
@@ -76,6 +81,38 @@ export function DayView({
     } catch (e) {
       toast.error('No se pudo cancelar la cita')
     }
+  }
+
+  // Handle click on time slot to create appointment
+  const handleTimeSlotClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!workHours) return
+    
+    const rect = event.currentTarget.getBoundingClientRect()
+    const clickY = event.clientY - rect.top
+    
+    // Each hour is 64px tall
+    const pixelsPerMinute = 64 / 60
+    const clickedMinutesFromStart = Math.floor(clickY / pixelsPerMinute)
+    
+    // Round to nearest 15 minutes
+    const roundedMinutes = Math.round(clickedMinutesFromStart / 15) * 15
+    const startAtMinutes = workHours.startAt + roundedMinutes
+    
+    // Default 1 hour duration
+    const endAtMinutes = startAtMinutes + 60
+    
+    // Make sure we don't exceed work hours
+    if (startAtMinutes >= workHours.endAt || endAtMinutes > workHours.endAt) {
+      return
+    }
+    
+    const timeRange: MinutesTimeRange = {
+      startAt: startAtMinutes,
+      endAt: Math.min(endAtMinutes, workHours.endAt)
+    }
+    
+    setSelectedTimeRange(timeRange)
+    setShowAppointmentModal(true)
   }
 
   const isLoading =
@@ -152,7 +189,7 @@ export function DayView({
             </div>
 
             <div
-              className='flex-1 relative'
+              className='flex-1 relative cursor-pointer'
               style={{
                 backgroundImage: `repeating-linear-gradient(
                   to bottom,
@@ -165,6 +202,7 @@ export function DayView({
                 height: `${totalHeight}px`,
                 minHeight: `${totalHeight}px`,
               }}
+              onClick={handleTimeSlotClick}
             >
               {isSameDay(currentTime, date) &&
                 workHours &&
@@ -228,6 +266,19 @@ export function DayView({
           <ScrollBar orientation='vertical' />
         </ScrollArea>
       </div>
+      
+      {/* Appointment Creation Modal */}
+      <MakeAppointmentDialog
+        defaultOpen={showAppointmentModal}
+        onOpenChange={(open) => {
+          setShowAppointmentModal(open)
+          if (!open) {
+            setSelectedTimeRange(null)
+          }
+        }}
+        defaultDate={date}
+        defaultTimeRange={selectedTimeRange || undefined}
+      />
     </div>
   )
 }

@@ -12,7 +12,9 @@ import { useCheckAvailability } from './useCheckAvailability'
 export function useAppointmentForm(
   defaultClientName?: string,
   onSuccess?: () => void,
-  appointment?: Appointment
+  appointment?: Appointment,
+  defaultDate?: Date, // Fecha prellenada (desde calendario)
+  defaultTimeRange?: MinutesTimeRange // Hora prellenada (desde clic en hora)
 ) {
   const [activeStep, setActiveStep] = useState(1)
   const [clientId, setClientId] = useState(
@@ -22,14 +24,14 @@ export function useAppointmentForm(
     appointment ? appointment.serviceIds : []
   )
   const [date, setDate] = useState<Date>(
-    appointment ? new Date(appointment.date) : new Date()
+    appointment ? new Date(appointment.date) : (defaultDate || new Date())
   )
   const [timeRange, setTimeRange] = useState<MinutesTimeRange>(
     appointment
       ? appointment.timeRange
-      : {
-          startAt: getMinutes(date),
-          endAt: getMinutes(date) + 60,
+      : defaultTimeRange || {
+          startAt: 540, // 9:00 AM por defecto
+          endAt: 600,   // 10:00 AM por defecto
         }
   )
 
@@ -77,8 +79,14 @@ export function useAppointmentForm(
         return
       }
 
-      const startAt = getMinutes(date) + getHours(date) * 60
-      let endAt = startAt
+      // Si hay defaultTimeRange y no hay servicios seleccionados, respetarlo
+      if (defaultTimeRange && serviceIds.length === 0) {
+        setTimeRange(defaultTimeRange)
+        return
+      }
+
+      const currentStartAt = defaultTimeRange?.startAt || (getMinutes(date) + getHours(date) * 60)
+      let endAt = currentStartAt
 
       if (services && serviceIds.length > 0) {
         for (const serviceId of serviceIds) {
@@ -94,21 +102,26 @@ export function useAppointmentForm(
         }
 
         setTimeRange({
-          startAt,
+          startAt: currentStartAt,
           endAt,
         })
 
         return
       }
 
-      setTimeRange({
-        startAt: startAt,
-        endAt: startAt + 60,
-      })
+      // Si no hay servicios, usar defaultTimeRange o calcular por defecto
+      if (defaultTimeRange) {
+        setTimeRange(defaultTimeRange)
+      } else {
+        setTimeRange({
+          startAt: currentStartAt,
+          endAt: currentStartAt + 60,
+        })
+      }
     }
 
     fetchServiceDuration()
-  }, [services, serviceIds, appointment, date])
+  }, [services, serviceIds, appointment, date, defaultTimeRange])
 
   useEffect(() => {
     let endAt = timeRange.startAt
@@ -153,12 +166,17 @@ export function useAppointmentForm(
     } else {
       setClientId('')
       setServiceIds([])
-      setTimeRange({
-        startAt: 540,
-        endAt: 600,
-      })
+      // Solo usar defaultTimeRange si fue proporcionado, sino usar valores por defecto
+      if (defaultTimeRange) {
+        setTimeRange(defaultTimeRange)
+      } else {
+        setTimeRange({
+          startAt: 540, // 9:00 AM
+          endAt: 600,   // 10:00 AM
+        })
+      }
       setSelectedEmployeeIds([])
-      setDate(new Date())
+      setDate(defaultDate || new Date())
       setStatus('pendiente')
       setPaymentStatus('pendiente')
       setDeposit(null)

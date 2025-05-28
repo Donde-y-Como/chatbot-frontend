@@ -149,6 +149,7 @@ export function AppointmentBlock({
             backgroundColor:
               employees.length > 0 ? employees[0].color : '#6c757d',
           }}
+          onClick={(e) => e.stopPropagation()}
         >
           {duration > 60 ? (
             <div className='p-2 flex flex-col h-full'>

@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { BookingDeleteDialog } from '@/features/events/booking-delete-dialog.tsx'
 import { EventBookingModal } from '@/features/events/event-booking-modal.tsx'
+import { EventCreateModal } from '@/features/events/event-create-modal.tsx'
 import { EventDeleteDialog } from '@/features/events/event-delete-dialog.tsx'
 import { EventDetailsModal } from '@/features/events/event-details-modal.tsx'
 import { EventEditModal } from '@/features/events/event-edit-modal.tsx'
@@ -36,6 +37,7 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
   const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false)
   const [showBookingDeleteDialog, setShowBookingDeleteDialog] = useState<boolean>(false)
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null)
+  const [showCreateEventModal, setShowCreateEventModal] = useState<boolean>(false)
 
   const { updateEvent, bookEvent, deleteBooking, deleteEvent } = useEventMutations()
 
@@ -54,6 +56,7 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
 
   const onDateClick = (day: Date): void => {
     setSelectedDate(day)
+    setShowCreateEventModal(true)
   }
 
   // Helper to get the current month's name with proper capitalization
@@ -392,6 +395,16 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
         open={showBookingDeleteDialog}
         onClose={() => setShowBookingDeleteDialog(false)}
         onConfirm={confirmBookingDeletion}
+      />
+
+      {/* Create Event Modal - opens when clicking on a calendar day */}
+      <EventCreateModal
+        open={showCreateEventModal}
+        onClose={() => {
+          setShowCreateEventModal(false)
+          setSelectedDate(null)
+        }}
+        defaultDate={selectedDate || undefined}
       />
     </div>
   )
