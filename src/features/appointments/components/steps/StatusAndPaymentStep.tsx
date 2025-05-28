@@ -58,7 +58,7 @@ export function StatusAndPaymentStep({
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 max-h-[60vh] overflow-y-auto'>
       <div className='text-center'>
         <h2 className='text-lg font-semibold mb-2'>
           Estado y Pago (Opcional)
@@ -68,7 +68,7 @@ export function StatusAndPaymentStep({
         </p>
       </div>
 
-      <div className='grid gap-4'>
+      <div className='grid gap-4 px-1'>
         {/* Estado de la Cita */}
         <Card>
           <CardHeader className='pb-3'>
@@ -117,7 +117,7 @@ export function StatusAndPaymentStep({
             {/* Abono/Depósito */}
             <div className='space-y-2'>
               <Label>Abono/Depósito (Opcional)</Label>
-              <div className='flex gap-2'>
+              <div className='flex flex-col sm:flex-row gap-2'>
                 <Input
                   type='number'
                   placeholder='0.00'
@@ -125,12 +125,13 @@ export function StatusAndPaymentStep({
                   onChange={(e) => handleDepositAmountChange(e.target.value)}
                   step='0.01'
                   min='0'
+                  className='flex-1'
                 />
                 <Select 
                   value={deposit?.currency || 'MXN'} 
                   onValueChange={(value) => handleDepositCurrencyChange(value)}
                 >
-                  <SelectTrigger className='w-24'>
+                  <SelectTrigger className='sm:w-24 w-full'>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -152,16 +153,16 @@ export function StatusAndPaymentStep({
       </div>
 
       {/* Navigation Buttons */}
-      <div className='flex justify-between gap-4'>
+      <div className='flex flex-col sm:flex-row sm:justify-between gap-4 pt-4'>
         <div className='flex gap-2'>
-          <Button variant='outline' onClick={onCancel}>
+          <Button variant='outline' onClick={onCancel} className='flex-1 sm:flex-none'>
             Cancelar
           </Button>
-          <Button variant='secondary' onClick={onBack}>
+          <Button variant='secondary' onClick={onBack} className='flex-1 sm:flex-none'>
             Atrás
           </Button>
         </div>
-        <Button onClick={onNext}>
+        <Button onClick={onNext} className='w-full sm:w-auto'>
           Continuar
         </Button>
       </div>

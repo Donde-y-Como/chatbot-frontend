@@ -47,6 +47,9 @@ export function useAppointmentForm(
   const [deposit, setDeposit] = useState<Deposit | null>(
     appointment?.deposit || null
   )
+  const [notes, setNotes] = useState<string>(
+    appointment?.notes || ''
+  )
   
   const [loading, setLoading] = useState(false)
   const { data: clients } = useGetClients()
@@ -146,6 +149,7 @@ export function useAppointmentForm(
       setStatus(appointment.status || 'pendiente')
       setPaymentStatus(appointment.paymentStatus || 'pendiente')
       setDeposit(appointment.deposit || null)
+      setNotes(appointment.notes || '')
     } else {
       setClientId('')
       setServiceIds([])
@@ -158,6 +162,7 @@ export function useAppointmentForm(
       setStatus('pendiente')
       setPaymentStatus('pendiente')
       setDeposit(null)
+      setNotes('')
     }
 
     setActiveStep(1)
@@ -178,7 +183,7 @@ export function useAppointmentForm(
       employeeIds: selectedEmployeeIds,
       date: date.toISOString(),
       timeRange,
-      notes: appointment ? appointment.notes : '',
+      notes,
       // Nuevos campos
       status,
       paymentStatus,
@@ -260,9 +265,11 @@ export function useAppointmentForm(
     status,
     paymentStatus,
     deposit,
+    notes,
     setStatus,
     setPaymentStatus,
     setDeposit,
+    setNotes,
 
     clients,
     services,
