@@ -15,6 +15,8 @@ import {
   ClientServiceStep,
   DateTimeStep,
   EmployeeSelectionStep,
+  NotesStep,
+  StatusAndPaymentStep,
   ConfirmationStep,
 } from './steps'
 
@@ -43,6 +45,16 @@ export function MakeAppointmentDialog({
     availableEmployees,
     loadingEmployees,
     setSelectedEmployeeIds,
+
+    // Nuevos campos
+    status,
+    paymentStatus,
+    deposit,
+    notes,
+    setStatus,
+    setPaymentStatus,
+    setDeposit,
+    setNotes,
 
     setActiveStep,
     setClientId,
@@ -165,8 +177,40 @@ export function MakeAppointmentDialog({
                 />
               </TabsContent>
 
-              {/* Step 4: Confirmation */}
+              {/* Step 4: Notes (Optional) */}
               <TabsContent value='4' className='flex flex-col h-full'>
+                <NotesStep
+                  notes={notes}
+                  onNotesChange={setNotes}
+                  onNext={() => setActiveStep(5)}
+                  onBack={() => setActiveStep(3)}
+                  onCancel={() => {
+                    setOpen(false)
+                    resetForm()
+                  }}
+                />
+              </TabsContent>
+
+              {/* Step 5: Status and Payment (Optional) */}
+              <TabsContent value='5' className='flex flex-col h-full'>
+                <StatusAndPaymentStep
+                  status={status}
+                  paymentStatus={paymentStatus}
+                  deposit={deposit}
+                  onStatusChange={setStatus}
+                  onPaymentStatusChange={setPaymentStatus}
+                  onDepositChange={setDeposit}
+                  onNext={() => setActiveStep(6)}
+                  onBack={() => setActiveStep(4)}
+                  onCancel={() => {
+                    setOpen(false)
+                    resetForm()
+                  }}
+                />
+              </TabsContent>
+
+              {/* Step 6: Confirmation */}
+              <TabsContent value='6' className='flex flex-col h-full'>
                 <ConfirmationStep
                   date={date}
                   timeRange={timeRange}
@@ -175,7 +219,7 @@ export function MakeAppointmentDialog({
                   selectedEmployeeIds={selectedEmployeeIds}
                   loading={loading}
                   onSubmit={handleSubmit}
-                  onBack={() => setActiveStep(3)}
+                  onBack={() => setActiveStep(5)}
                   onCancel={() => {
                     setOpen(false)
                     resetForm()

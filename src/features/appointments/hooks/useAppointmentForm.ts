@@ -6,7 +6,7 @@ import { appointmentService } from '@/features/appointments/appointmentService.t
 import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
-import { Appointment, MinutesTimeRange } from '@/features/appointments/types.ts'
+import { Appointment, MinutesTimeRange, AppointmentStatus, PaymentStatus, Deposit } from '@/features/appointments/types.ts'
 import { useCheckAvailability } from './useCheckAvailability'
 
 export function useAppointmentForm(
@@ -36,6 +36,21 @@ export function useAppointmentForm(
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>(
     appointment?.employeeIds || []
   )
+  
+  // Nuevos estados para estados y pago
+  const [status, setStatus] = useState<AppointmentStatus>(
+    appointment?.status || 'pendiente'
+  )
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(
+    appointment?.paymentStatus || 'pendiente'
+  )
+  const [deposit, setDeposit] = useState<Deposit | null>(
+    appointment?.deposit || null
+  )
+  const [notes, setNotes] = useState<string>(
+    appointment?.notes || ''
+  )
+  
   const [loading, setLoading] = useState(false)
   const { data: clients } = useGetClients()
   
@@ -131,6 +146,10 @@ export function useAppointmentForm(
       setTimeRange(appointment.timeRange)
       setSelectedEmployeeIds(appointment.employeeIds)
       setDate(new Date(appointment.date))
+      setStatus(appointment.status || 'pendiente')
+      setPaymentStatus(appointment.paymentStatus || 'pendiente')
+      setDeposit(appointment.deposit || null)
+      setNotes(appointment.notes || '')
     } else {
       setClientId('')
       setServiceIds([])
@@ -140,6 +159,10 @@ export function useAppointmentForm(
       })
       setSelectedEmployeeIds([])
       setDate(new Date())
+      setStatus('pendiente')
+      setPaymentStatus('pendiente')
+      setDeposit(null)
+      setNotes('')
     }
 
     setActiveStep(1)
@@ -160,7 +183,11 @@ export function useAppointmentForm(
       employeeIds: selectedEmployeeIds,
       date: date.toISOString(),
       timeRange,
-      notes: appointment ? appointment.notes : '',
+      notes,
+      // Nuevos campos
+      status,
+      paymentStatus,
+      deposit,
     } satisfies Partial<Appointment>
 
     try {
@@ -233,6 +260,16 @@ export function useAppointmentForm(
     selectedEmployeeIds,
     loading,
     setSelectedEmployeeIds,
+
+    // Nuevos campos
+    status,
+    paymentStatus,
+    deposit,
+    notes,
+    setStatus,
+    setPaymentStatus,
+    setDeposit,
+    setNotes,
 
     clients,
     services,

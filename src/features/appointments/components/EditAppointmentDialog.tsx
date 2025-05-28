@@ -18,6 +18,8 @@ import {
   ConfirmationStep,
   DateTimeStep,
   EmployeeSelectionStep,
+  NotesStep,
+  StatusAndPaymentStep,
 } from './steps'
 
 export function EditAppointmentDialog({
@@ -42,6 +44,16 @@ export function EditAppointmentDialog({
     selectedClient,
     selectedServices,
     availableEmployees,
+
+    // Nuevos campos
+    status,
+    paymentStatus,
+    deposit,
+    notes,
+    setStatus,
+    setPaymentStatus,
+    setDeposit,
+    setNotes,
 
     setActiveStep,
     setClientId,
@@ -133,8 +145,40 @@ export function EditAppointmentDialog({
               />
             </TabsContent>
 
-            {/* Step 4: Confirmation */}
+            {/* Step 4: Notes (Optional) */}
             <TabsContent value='4'>
+              <NotesStep
+                notes={notes}
+                onNotesChange={setNotes}
+                onNext={() => setActiveStep(5)}
+                onBack={() => setActiveStep(3)}
+                onCancel={() => {
+                  setOpen(false)
+                  resetForm()
+                }}
+              />
+            </TabsContent>
+
+            {/* Step 5: Status and Payment */}
+            <TabsContent value='5'>
+              <StatusAndPaymentStep
+                status={status}
+                paymentStatus={paymentStatus}
+                deposit={deposit}
+                onStatusChange={setStatus}
+                onPaymentStatusChange={setPaymentStatus}
+                onDepositChange={setDeposit}
+                onNext={() => setActiveStep(6)}
+                onBack={() => setActiveStep(4)}
+                onCancel={() => {
+                  setOpen(false)
+                  resetForm()
+                }}
+              />
+            </TabsContent>
+
+            {/* Step 6: Confirmation */}
+            <TabsContent value='6'>
               <ConfirmationStep
                 date={date}
                 timeRange={timeRange}
@@ -143,7 +187,7 @@ export function EditAppointmentDialog({
                 selectedEmployeeIds={selectedEmployeeIds}
                 loading={loading}
                 onSubmit={handleSubmit}
-                onBack={() => setActiveStep(3)}
+                onBack={() => setActiveStep(5)}
                 onCancel={() => {
                   setOpen(false)
                   resetForm()

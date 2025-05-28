@@ -38,10 +38,12 @@ import {
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { EditAppointmentDialog } from '@/features/appointments/components/EditAppointmentDialog.tsx'
+import { QuickEditStatusDialog } from '@/features/appointments/components/QuickEditStatusDialog.tsx'
 import { formatTime } from '@/features/appointments/utils/formatters'
 import { ClientPrimitives } from '../clients/types'
 import { Employee } from '../employees/types'
 import { ClientChatButton } from './components/client-chat-button'
+import { AppointmentStatusBadge, PaymentStatusBadge } from './components/StatusBadges'
 import type { Appointment, Service } from './types'
 
 interface AppointmentBlockProps {
@@ -193,17 +195,13 @@ export function AppointmentBlock({
         </div>
       </DialogTrigger>
 
-      <DialogContent className='p-0 overflow-hidden bg-background rounded-lg shadow-lg'>
+      <DialogContent className='p-0 overflow-hidden bg-background rounded-lg shadow-lg max-w-4xl max-h-[85vh]'>
         <DialogHeader className='bg-primary/5 px-6 py-4 border-b'>
-          <div className='flex items-start justify-between'>
+          <div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4'>
             <div>
-              <div className='flex items-center gap-2 mb-2'>
-                <Badge
-                  variant={statusBadge.variant as 'default' | 'secondary'}
-                  className='capitalize'
-                >
-                  {statusBadge.label}
-                </Badge>
+              <div className='flex items-center gap-2 mb-2 flex-wrap'>
+                <AppointmentStatusBadge status={appointment.status || 'pendiente'} />
+                <PaymentStatusBadge paymentStatus={appointment.paymentStatus || 'pendiente'} />
                 {statusBadge.timeInfo && (
                   <span className='text-xs text-muted-foreground'>
                     {statusBadge.timeInfo}
@@ -236,7 +234,8 @@ export function AppointmentBlock({
               </div>
             </div>
 
-            <div className='flex gap-2'>
+            <div className='flex flex-wrap gap-2'>
+              <QuickEditStatusDialog appointment={appointment} />
               <EditAppointmentDialog appointment={appointment} />
             </div>
           </div>
@@ -256,7 +255,7 @@ export function AppointmentBlock({
           </DialogDescription>
         </DialogHeader>
 
-        <div className='max-h-[500px] overflow-y-auto p-6'>
+        <div className='max-h-[calc(85vh-12rem)] overflow-y-auto p-6'>
           <div className='space-y-6'>
             {/* Services Section */}
             <div>
@@ -303,6 +302,14 @@ export function AppointmentBlock({
                         {totalPrice.toLocaleString('es-MX')} {currency}
                       </span>
                     </div>
+                    {appointment.deposit && (
+                      <div className='flex justify-between items-center text-sm text-muted-foreground mt-2'>
+                        <span>Abono registrado:</span>
+                        <span className='font-medium'>
+                          {appointment.deposit.amount.toLocaleString('es-MX')} {appointment.deposit.currency}
+                        </span>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -320,7 +327,7 @@ export function AppointmentBlock({
               </h3>
 
               {employees.length > 0 ? (
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                   {employees.map((employee) => (
                     <div
                       key={employee.id}
@@ -373,7 +380,7 @@ export function AppointmentBlock({
                 Información del Cliente
               </h3>
               <div className='rounded-lg border border-border/50 overflow-hidden'>
-                <div className='p-4 bg-primary/5 flex items-center'>
+                <div className='p-4 bg-primary/5 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4'>
                   <Avatar className='h-14 w-14 border-2 border-background'>
                     <AvatarImage
                       src={client.photo}
@@ -384,7 +391,7 @@ export function AppointmentBlock({
                       {client.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className='ml-4'>
+                  <div className='flex-1'>
                     <h3 className='text-base font-medium'>{client.name}</h3>
                     {client.platformIdentities &&
                       client.platformIdentities.length > 0 && (
@@ -401,7 +408,7 @@ export function AppointmentBlock({
                         </div>
                       )}
                   </div>
-                  <div className='ml-auto'>
+                  <div className='sm:ml-auto'>
                     <ClientChatButton clientId={client.id} />
                   </div>
                 </div>
@@ -453,7 +460,7 @@ export function AppointmentBlock({
                 <Calendar className='h-4 w-4 mr-2 text-primary' />
                 Detalles de Fecha y Hora
               </h3>
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+              <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
                 <div className='p-4 rounded-lg border border-border/50 bg-primary/5'>
                   <div className='flex items-center mb-2'>
                     <Calendar className='h-5 w-5 mr-2 text-primary' />
@@ -486,7 +493,7 @@ export function AppointmentBlock({
           </div>
         </div>
 
-        <DialogFooter className='px-6 py-4 border-t flex flex-row justify-end gap-3'>
+        <DialogFooter className='px-6 py-4 border-t flex flex-col sm:flex-row justify-end gap-3'>
           <DialogClose asChild>
             <Button variant='secondary'>Cerrar</Button>
           </DialogClose>
