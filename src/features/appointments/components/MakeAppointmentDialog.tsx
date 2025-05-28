@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { useAppointmentForm } from '../hooks/useAppointmentForm'
+import { MinutesTimeRange } from '../types'
 import { AppointmentStepIndicator } from './AppointmentStepIndicator'
 import {
   ClientServiceStep,
@@ -24,12 +25,16 @@ interface MakeAppointmentDialogProps {
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   defaultClientName?: string;
+  defaultDate?: Date; // Para pre-llenar fecha cuando se hace clic en calendario
+  defaultTimeRange?: MinutesTimeRange; // Para pre-llenar hora cuando se hace clic en hora específica
 }
 
 export function MakeAppointmentDialog({
   defaultOpen = false,
   onOpenChange,
-  defaultClientName
+  defaultClientName,
+  defaultDate,
+  defaultTimeRange
 }: MakeAppointmentDialogProps = {}) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
   const {
@@ -73,7 +78,7 @@ export function MakeAppointmentDialog({
     } else {
       setInternalOpen(false);
     }
-  })
+  }, undefined, defaultDate, defaultTimeRange)
 
   // Determinar si se usa el control externo o interno
   const open = onOpenChange ? defaultOpen : internalOpen;
