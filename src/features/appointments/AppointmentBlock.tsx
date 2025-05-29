@@ -1,3 +1,4 @@
+import React from 'react'
 import { format, formatDistanceToNow, isBefore, setMinutes } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import {
@@ -136,6 +137,11 @@ export function AppointmentBlock({
 
   const statusBadge = getStatusBadge()
 
+  // Handler para prevenir propagación en el diálogo de detalles
+  const handleDetailsDialogClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -196,8 +202,8 @@ export function AppointmentBlock({
         </div>
       </DialogTrigger>
 
-      <DialogContent className='p-0 overflow-hidden bg-background rounded-lg shadow-lg max-w-4xl max-h-[85vh]'>
-        <DialogHeader className='bg-primary/5 px-6 py-4 border-b'>
+      <DialogContent className='p-0 overflow-hidden bg-background rounded-lg shadow-lg max-w-4xl max-h-[85vh]' onClick={handleDetailsDialogClick}>
+        <DialogHeader className='bg-primary/5 px-6 py-4 border-b' onClick={handleDetailsDialogClick}>
           <div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4'>
             <div>
               <div className='flex items-center gap-2 mb-2 flex-wrap'>
@@ -256,7 +262,7 @@ export function AppointmentBlock({
           </DialogDescription>
         </DialogHeader>
 
-        <div className='max-h-[calc(85vh-12rem)] overflow-y-auto p-6'>
+        <div className='max-h-[calc(85vh-12rem)] overflow-y-auto p-6' onClick={handleDetailsDialogClick}>
           <div className='space-y-6'>
             {/* Services Section */}
             <div>
@@ -494,7 +500,7 @@ export function AppointmentBlock({
           </div>
         </div>
 
-        <DialogFooter className='px-6 py-4 border-t flex flex-col sm:flex-row justify-end gap-3'>
+        <DialogFooter className='px-6 py-4 border-t flex flex-col sm:flex-row justify-end gap-3' onClick={handleDetailsDialogClick}>
           <DialogClose asChild>
             <Button variant='secondary'>Cerrar</Button>
           </DialogClose>
@@ -502,12 +508,12 @@ export function AppointmentBlock({
           {isUpcoming && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant='destructive'>
+                <Button variant='destructive' onClick={handleDetailsDialogClick}>
                   <Trash2 className='h-4 w-4 mr-2' />
                   Cancelar Cita
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent onClick={handleDetailsDialogClick}>
                 <AlertDialogHeader>
                   <AlertDialogTitle>
                     ¿Estás seguro de cancelar esta cita?

@@ -1,3 +1,4 @@
+import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -9,7 +10,7 @@ interface NotesStepProps {
   onNotesChange: (notes: string) => void
   onNext: () => void
   onBack: () => void
-  onCancel: () => void
+  onCancel: (e?: React.MouseEvent) => void
 }
 
 export function NotesStep({

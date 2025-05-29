@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -95,15 +95,41 @@ export function QuickEditStatusDialog({ appointment }: QuickEditStatusDialogProp
     setDeposit(appointment.deposit || null)
   }
 
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevenir que se abra el diálogo padre
+    setOpen(true)
+  }
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (newOpen) {
+      // Si se intenta abrir mediante el trigger, no hacer nada
+      // porque ya manejamos esto en handleButtonClick
+      return
+    }
+    setOpen(newOpen)
+  }
+
+  const handleCancel = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+    }
+    handleReset()
+    setOpen(false)
+  }
+
+  const handleDialogClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevenir que clicks dentro del dialog se propaguen
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button size='sm' variant='outline' className='h-8 px-2'>
+        <Button size='sm' variant='outline' className='h-8 px-2' onClick={handleButtonClick}>
           <Zap className='h-3 w-3 mr-1' />
           Edición Rápida
         </Button>
       </DialogTrigger>
-      <DialogContent className='sm:max-w-md'>
+      <DialogContent className='sm:max-w-md' onClick={handleDialogClick}>
         <DialogHeader>
           <DialogTitle className='text-lg font-semibold'>Edición Rápida</DialogTitle>
           <DialogDescription>
@@ -204,6 +230,9 @@ export function QuickEditStatusDialog({ appointment }: QuickEditStatusDialogProp
         </div>
 
         <DialogFooter className='flex gap-2'>
+          <Button variant='outline' onClick={handleCancel} disabled={loading}>
+            Cancelar
+          </Button>
           <Button variant='outline' onClick={handleReset} disabled={loading}>
             Restablecer
           </Button>

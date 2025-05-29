@@ -1,3 +1,4 @@
+import React from 'react'
 import { Button } from '@/components/ui/button'
 import { CreateOrSelectClient } from '../CreateOrSelectClient'
 import { CreateOrSelectMultipleServices } from '../CreateOrSelectMultipleServices'
@@ -9,7 +10,7 @@ interface ClientServiceStepProps {
   onServiceIdsChange: (ids: string[]) => void
   onServiceToggle: (id: string) => void
   onNext: () => void
-  onCancel: () => void
+  onCancel: (e?: React.MouseEvent) => void
 }
 
 /**

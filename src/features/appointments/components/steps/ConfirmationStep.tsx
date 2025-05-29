@@ -1,3 +1,4 @@
+import React from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import { CalendarIcon, DollarSignIcon, Scissors, User } from 'lucide-react'
@@ -29,7 +30,7 @@ interface ConfirmationStepProps {
   loading: boolean
   onSubmit: () => void
   onBack: () => void
-  onCancel: () => void
+  onCancel: (e?: React.MouseEvent) => void
 }
 
 /**
