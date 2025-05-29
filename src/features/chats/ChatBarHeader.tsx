@@ -1,14 +1,3 @@
-import React, { useMemo, useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconBrandWhatsapp,
-  IconRefresh,
-  IconSearch,
-} from '@tabler/icons-react'
-import { CheckCheckIcon, TagIcon } from 'lucide-react'
-import { toast } from 'sonner'
 import { api } from '@/api/axiosInstance.ts'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,7 +10,18 @@ import {
   StartConversation,
 } from '@/features/chats/StartConversation.tsx'
 import { useGetTemplates } from '@/features/clients/hooks/useGetTemplates.ts'
-import { useGetWhatsAppWebSession } from '@/features/settings/whatsappWeb/useGetWhatsAppWebSession.ts'
+import { useWhatsApp } from '@/features/settings/whatsappWeb/useWhatsApp'
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconBrandWhatsapp,
+  IconRefresh,
+  IconSearch,
+} from '@tabler/icons-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { CheckCheckIcon, TagIcon } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { useGetTags } from '../clients/hooks/useGetTags'
 import { AddTagButton } from './AddTagButton'
 
@@ -132,12 +132,7 @@ export function ChatBarHeader({
       toast.success('Chats actualizados')
     }
   }
-  const { data: whatsAppWebData } = useGetWhatsAppWebSession()
-
-  const isWhatsAppWebConnected = useMemo(
-    () => whatsAppWebData && whatsAppWebData.data.status === 'connected',
-    [whatsAppWebData]
-  )
+  const { isConnected: isWhatsAppWebConnected } = useWhatsApp()
 
   return (
     <div className='sticky top-0 z-10 bg-background pb-3 w-full shadow-sm sm:pt-2'>

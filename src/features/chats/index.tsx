@@ -38,7 +38,6 @@ export default function Chats() {
 
     const urlChatId = searchParams.chatId
     const isValidChat = urlChatId && chats.some((chat) => chat.id === urlChatId)
-    console.log(isValidChat)
     const chatIdToUse = isValidChat ? urlChatId : null
 
     setSelectedChatId(chatIdToUse)

@@ -1,19 +1,16 @@
-import { useState } from 'react'
-import { AxiosError } from 'axios'
+import { ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
+import { playNotification } from '@/lib/audio.ts'
+import { routeTree } from '@/routeTree.gen.ts'
+import { useAuthStore } from '@/stores/authStore.ts'
+import { handleServerError } from '@/utils/handle-server-error.ts'
 import { QueryCache, QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
-import { routeTree } from '@/routeTree.gen.ts'
+import { AxiosError } from 'axios'
+import { useState } from 'react'
 import { io } from 'socket.io-client'
 import { toast } from 'sonner'
-import { useAuthStore } from '@/stores/authStore.ts'
-import { playNotification } from '@/lib/audio.ts'
-import { sortByLastMessageTimestamp } from '@/lib/utils.ts'
-import { handleServerError } from '@/utils/handle-server-error.ts'
-import { Chat, ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
-import { makeLastMessageContent } from '@/features/chats/hooks/makeLastMessageContent.ts'
-import { CreateSessionResponse } from '@/features/settings/whatsappWeb/types.ts'
-import { WhatsAppWebSessionQueryKey } from '@/features/settings/whatsappWeb/useGetWhatsAppWebSession.ts'
 import { UserQueryKey } from '../components/layout/hooks/useGetUser'
+import { WHATSAPP_QUERY_KEY, WhatsAppData } from '../features/settings/whatsappWeb/useWhatsAppData'
 
 export const socket = io(import.meta.env.VITE_WS_URL || 'http://localhost:3000')
 
@@ -60,38 +57,19 @@ socket.on('creditsUpdated', async () => {
 })
 
 socket.on('qrStatus', (data) => {
-  queryClient.setQueryData(
-    WhatsAppWebSessionQueryKey,
-    (cachedSession: CreateSessionResponse | undefined) => {
-      if (cachedSession === undefined) return cachedSession
-
-      return {
-        ...cachedSession,
-        data: {
-          ...cachedSession.data,
-          qr: data.data.qr,
-        },
-      }
-    }
-  )
+  queryClient.setQueryData(WHATSAPP_QUERY_KEY, (whatsAppData: WhatsAppData) => {
+    if (!whatsAppData) return whatsAppData;
+    return { ...whatsAppData, qr: data }
+  })
 })
 
-socket.on('whatsappWebSessionUpdate', (data) => {
-  queryClient.setQueryData(
-    WhatsAppWebSessionQueryKey,
-    (cachedSession: CreateSessionResponse | undefined) => {
-      if (cachedSession === undefined) return cachedSession
-
-      return {
-        ...cachedSession,
-        data: {
-          ...cachedSession.data,
-          status: data.data.status,
-        },
-      }
-    }
-  )
+socket.on('ready', () => {
+  toast.success('WhatsApp listo para recibir mensajes')
+  queryClient.invalidateQueries({
+    queryKey: WHATSAPP_QUERY_KEY,
+  })
 })
+
 
 export const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false)

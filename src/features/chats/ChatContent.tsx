@@ -11,7 +11,7 @@ import {
   ConversationHeader,
   ConversationHeaderSkeleton,
 } from '@/features/chats/ConversationHeader.tsx'
-import { useGetWhatsAppWebSession } from '@/features/settings/whatsappWeb/useGetWhatsAppWebSession.ts'
+import { useWhatsApp } from '@/features/settings/whatsappWeb/useWhatsApp'
 
 interface ChatContentProps {
   isLoading: boolean
@@ -30,13 +30,13 @@ export function ChatContent({
   isMobileVisible,
   onBackClick,
 }: ChatContentProps) {
-  const { data: whatsappData } = useGetWhatsAppWebSession()
+  const { whatsappData } = useWhatsApp()
 
   const canSendMessages = useMemo(() => {
     if (!chatData) return false
 
     if (chatData.platformName === 'whatsappWeb') {
-      return whatsappData?.data.status === 'connected'
+      return whatsappData?.instanceStatus === "ready" || whatsappData?.instanceStatus === "authenticated"
     }
 
     const userMessages = chatData.messages.filter(
@@ -49,7 +49,7 @@ export function ChatContent({
     const lastTimestamp = lastUserMessage.timestamp
 
     return differenceInHours(Date.now(), lastTimestamp) < 24
-  }, [chatData, whatsappData?.data.status])
+  }, [chatData, whatsappData?.instanceStatus])
 
   const isWhatsAppChat = useMemo(() => {
     if (!chatData) return false

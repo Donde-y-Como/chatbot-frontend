@@ -1,9 +1,18 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { Chat } from '@/features/chats/ChatTypes.ts'
+import { UserData } from '../features/auth/types'
+import { PlatformName } from '../features/clients/types'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+export function getInstanceId(userData: UserData): string | undefined {
+  const whatsappPlatform = userData.socialPlatforms.find(
+    (platform) => platform.platformName === PlatformName.WhatsappWeb
+  )
+  return whatsappPlatform ? whatsappPlatform.platformId : undefined
 }
 
 /**
