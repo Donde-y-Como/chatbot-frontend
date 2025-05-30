@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { ProductInfo, productInfoSchema, getDefaultProductInfo } from '@/types'
 
 export type Frequency = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never'
 
@@ -44,6 +45,7 @@ export type EventPrimitives = {
   recurrence: RecurrencePrimitives
   location: string
   photos: string[]
+  productInfo?: ProductInfo // Opcional para compatibilidad con eventos existentes
 }
 
 export type EventWithBookings = EventPrimitives & {
@@ -154,4 +156,5 @@ export const creatableEventSchema = z.object({
   recurrence: recurrenceSchema,
   location: z.string().min(1, { message: 'La ubicación es requerida' }),
   photos: z.array(z.string()),
+  productInfo: productInfoSchema,
 })

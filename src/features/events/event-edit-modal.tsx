@@ -28,6 +28,10 @@ import {
   EventPrimitives,
   Frequency,
 } from '@/features/events/types'
+import { ProductInfo, ProductStatus, getDefaultProductInfo } from '@/types'
+import { CategorySelector, TagSelector } from '@/components/product-info'
+import { useGetCategories } from '@/features/settings/categories/hooks/useCategories'
+import { useGetTags } from '@/features/settings/tags/hooks/useTags'
 
 type EditableEvent = Partial<EventPrimitives>
 
@@ -103,10 +107,11 @@ export function EventEditModal({
         <DialogDescription className="sr-only">Editar evento</DialogDescription>
 
         <Tabs defaultValue='general' className='w-full'>
-          <TabsList className='grid w-full grid-cols-3'>
+          <TabsList className='grid w-full grid-cols-4'>
             <TabsTrigger value='general'>General</TabsTrigger>
             <TabsTrigger value='capacity'>Capacidad</TabsTrigger>
             <TabsTrigger value='schedule'>Horario</TabsTrigger>
+            <TabsTrigger value='product'>Producto</TabsTrigger>
           </TabsList>
 
           <TabsContent value='general' className='space-y-4'>
@@ -425,6 +430,216 @@ export function EventEditModal({
                     )}
                   </div>
                 )}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Product Info Tab */}
+          <TabsContent value='product' className='space-y-4'>
+            <div className='grid gap-4'>
+              {/* SKU y Estado */}
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='grid gap-2'>
+                  <Label htmlFor='sku'>SKU (Código del producto)</Label>
+                  <Input
+                    id='sku'
+                    placeholder='Ej: EVT-YOGA-001'
+                    defaultValue={event.productInfo?.sku || ''}
+                    onChange={(e) => 
+                      updateField('productInfo', {
+                        ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
+                        sku: e.target.value
+                      })
+                    }
+                    className='font-mono'
+                  />
+                </div>
+
+                <div className='grid gap-2'>
+                  <Label htmlFor='status'>Estado del producto</Label>
+                  <Select
+                    defaultValue={event.productInfo?.status || ProductStatus.DRAFT}
+                    onValueChange={(value: ProductStatus) =>
+                      updateField('productInfo', {
+                        ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
+                        status: value
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ProductStatus.ACTIVE}>
+                        Activo - Disponible para venta
+                      </SelectItem>
+                      <SelectItem value={ProductStatus.DRAFT}>
+                        Borrador - En desarrollo
+                      </SelectItem>
+                      <SelectItem value={ProductStatus.INACTIVE}>
+                        Inactivo - No disponible temporalmente
+                      </SelectItem>
+                      <SelectItem value={ProductStatus.ARCHIVED}>
+                        Archivado - Fuera de catálogo
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Categorías */}
+              <div className='grid gap-2'>
+                <Label>Categorías</Label>
+                <CategorySelector
+                  selectedCategoryIds={changes.productInfo?.categoryIds || event.productInfo?.categoryIds || []}
+                  selectedSubcategoryIds={changes.productInfo?.subcategoryIds || event.productInfo?.subcategoryIds || []}
+                  onCategoryChange={(categoryIds) =>
+                    updateField('productInfo', {
+                      ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
+                      categoryIds
+                    })
+                  }
+                  onSubcategoryChange={(subcategoryIds) =>
+                    updateField('productInfo', {
+                      ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
+                      subcategoryIds
+                    })
+                  }
+                />
+              </div>
+
+              {/* Etiquetas */}
+              <div className='grid gap-2'>
+                <Label>Etiquetas</Label>
+                <TagSelector
+                  selectedTagIds={changes.productInfo?.tagIds || event.productInfo?.tagIds || []}
+                  onTagChange={(tagIds) =>
+                    updateField('productInfo', {
+                      ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
+                      tagIds
+                    })
+                  }
+                />
+              </div>
+
+              {/* Descuento e Impuestos */}
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='grid gap-2'>
+                  <Label htmlFor='discount'>Descuento (%)</Label>
+                  <Input
+                    id='discount'
+                    type='number'
+                    min='0'
+                    max='100'
+                    step='0.01'
+                    placeholder='0'
+                    defaultValue={event.productInfo?.discountPercentage || 0}
+                    onChange={(e) =>
+                      updateField('productInfo', {
+                        ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
+                        discountPercentage: Number(e.target.value) || 0
+                      })
+                    }
+                  />
+                </div>
+
+                <div className='grid gap-2'>
+                  <Label htmlFor='tax'>Impuesto (%)</Label>
+                  <Input
+                    id='tax'
+                    type='number'
+                    min='0'
+                    step='0.01'
+                    placeholder='0'
+                    defaultValue={event.productInfo?.taxPercentage || 0}
+                    onChange={(e) =>
+                      updateField('productInfo', {
+                        ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
+                        taxPercentage: Number(e.target.value) || 0
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Costo del negocio */}
+              <div className='space-y-4'>
+                <div>
+                  <Label className='text-base font-medium'>Costo del negocio</Label>
+                  <p className='text-sm text-muted-foreground'>
+                    Costo interno para calcular márgenes (diferente al precio de venta)
+                  </p>
+                </div>
+                
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='grid gap-2'>
+                    <Label htmlFor='costAmount'>Monto del costo</Label>
+                    <Input
+                      id='costAmount'
+                      type='number'
+                      min='0'
+                      step='0.01'
+                      placeholder='0.00'
+                      defaultValue={event.productInfo?.cost?.amount || 0}
+                      onChange={(e) => {
+                        const currentProductInfo = changes.productInfo || event.productInfo || getDefaultProductInfo()
+                        updateField('productInfo', {
+                          ...currentProductInfo,
+                          cost: {
+                            ...currentProductInfo.cost,
+                            amount: Number(e.target.value) || 0
+                          }
+                        })
+                      }}
+                    />
+                  </div>
+
+                  <div className='grid gap-2'>
+                    <Label htmlFor='costCurrency'>Moneda del costo</Label>
+                    <Select
+                      defaultValue={event.productInfo?.cost?.currency || 'MXN'}
+                      onValueChange={(value) => {
+                        const currentProductInfo = changes.productInfo || event.productInfo || getDefaultProductInfo()
+                        updateField('productInfo', {
+                          ...currentProductInfo,
+                          cost: {
+                            ...currentProductInfo.cost,
+                            currency: value
+                          }
+                        })
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='MXN'>MXN - Peso Mexicano</SelectItem>
+                        <SelectItem value='USD'>USD - Dólar Americano</SelectItem>
+                        <SelectItem value='EUR'>EUR - Euro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notas adicionales */}
+              <div className='grid gap-2'>
+                <Label htmlFor='notes'>Notas adicionales</Label>
+                <Textarea
+                  id='notes'
+                  placeholder='Información adicional sobre el producto, restricciones, requerimientos especiales, etc.'
+                  rows={3}
+                  defaultValue={event.productInfo?.notes || ''}
+                  onChange={(e) =>
+                    updateField('productInfo', {
+                      ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
+                      notes: e.target.value
+                    })
+                  }
+                />
+                <p className='text-sm text-muted-foreground'>
+                  Máximo 500 caracteres
+                </p>
               </div>
             </div>
           </TabsContent>
