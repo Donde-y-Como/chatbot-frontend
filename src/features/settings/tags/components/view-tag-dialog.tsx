@@ -25,10 +25,6 @@ export function ViewTagDialog({ isOpen, onClose, data }: ViewTagDialogProps) {
       <DialogContent className='sm:max-w-[500px]'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-3'>
-            <div 
-              className='w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0'
-              style={{ backgroundColor: data.color }}
-            />
             {data.name}
             <Badge variant='secondary'>Etiqueta</Badge>
           </DialogTitle>
@@ -46,21 +42,6 @@ export function ViewTagDialog({ isOpen, onClose, data }: ViewTagDialogProps) {
               </p>
             </div>
 
-            <div>
-              <span className='text-sm font-medium'>Color:</span>
-              <div className='flex items-center gap-3 mt-1'>
-                <div 
-                  className='w-8 h-8 rounded-lg border-2 border-gray-200 shadow-sm'
-                  style={{ backgroundColor: data.color }}
-                />
-                <div className='space-y-1'>
-                  <Badge variant='outline' className='font-mono text-xs'>
-                    {data.color}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
             {data.description && (
               <div>
                 <span className='text-sm font-medium'>Descripción:</span>
@@ -69,24 +50,6 @@ export function ViewTagDialog({ isOpen, onClose, data }: ViewTagDialogProps) {
                 </p>
               </div>
             )}
-          </div>
-
-          <Separator />
-
-          <div className='space-y-2'>
-            <div>
-              <span className='text-sm font-medium'>Fecha de creación:</span>
-              <p className='text-sm text-muted-foreground'>
-                {format(new Date(data.createdAt), "dd 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es })}
-              </p>
-            </div>
-
-            <div>
-              <span className='text-sm font-medium'>ID de la etiqueta:</span>
-              <p className='text-sm text-muted-foreground font-mono'>
-                {data.id}
-              </p>
-            </div>
           </div>
         </div>
       </DialogContent>

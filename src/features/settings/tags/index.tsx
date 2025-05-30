@@ -59,8 +59,7 @@ export default function TagsSection() {
     
     return tags.filter(tag => 
       tag.name.toLowerCase().includes(query) ||
-      tag.description.toLowerCase().includes(query) ||
-      tag.color.toLowerCase().includes(query)
+      tag.description.toLowerCase().includes(query)
     )
   }, [tags, debouncedSearchQuery])
 
@@ -76,12 +75,7 @@ export default function TagsSection() {
       
       if ('name' in values && values.name !== selectedTag.name) {
         updateData.name = values.name
-      }
-      
-      if ('color' in values && values.color !== selectedTag.color) {
-        updateData.color = values.color
-      }
-      
+      }      
       if ('description' in values && values.description !== selectedTag.description) {
         updateData.description = values.description
       }
@@ -104,11 +98,6 @@ export default function TagsSection() {
       setIsDeleteDialogOpen(false)
       setSelectedTag(undefined)
     }
-  }
-
-  const openCreateSimpleDialog = () => {
-    setDialogMode('create-simple')
-    setIsCreateDialogOpen(true)
   }
 
   const openCreateCompleteDialog = () => {
@@ -165,35 +154,12 @@ export default function TagsSection() {
       <div className='space-y-6'>
         <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between'>
           <h3 className='text-lg font-medium'>Tus etiquetas</h3>
-          
-          {/* Dropdown para crear etiquetas */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>
-                <Plus className='mr-2 h-4 w-4' />
-                Nueva etiqueta
-                <ChevronDown className='ml-2 h-4 w-4' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end' className='w-56'>
-              <DropdownMenuLabel>Tipo de etiqueta</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={openCreateSimpleDialog}>
-                <TagIcon className='mr-2 h-4 w-4' />
-                <div className='flex flex-col'>
-                  <span>Etiqueta rápida</span>
-                  <span className='text-xs text-muted-foreground'>Solo nombre</span>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={openCreateCompleteDialog}>
-                <TagIcon className='mr-2 h-4 w-4' />
-                <div className='flex flex-col'>
-                  <span>Etiqueta completa</span>
-                  <span className='text-xs text-muted-foreground'>Nombre, color y descripción</span>
-                </div>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                
+          <Button onClick={openCreateCompleteDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nueva etiqueta
+          </Button>
+
         </div>
 
         {/* Barra de búsqueda */}

@@ -29,13 +29,7 @@ export function TagList({ tags, onEdit, onDelete, onView }: TagListProps) {
           <CardHeader className='pb-3'>
             <div className='flex items-start justify-between'>
               <div className='flex-1'>
-                <div className='flex items-center gap-3'>
-                  {/* Color visual */}
-                  <div 
-                    className='w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0'
-                    style={{ backgroundColor: tag.color }}
-                    title={`Color: ${tag.color}`}
-                  />
+                <div className='flex items-center gap-3'>                  
                   <h3 className='font-semibold text-lg truncate'>{tag.name}</h3>
                 </div>
                 {tag.description && (
@@ -43,14 +37,6 @@ export function TagList({ tags, onEdit, onDelete, onView }: TagListProps) {
                     {tag.description}
                   </p>
                 )}
-                <div className='flex items-center gap-2 mt-2'>
-                  <Badge variant='outline' className='text-xs font-mono'>
-                    {tag.color}
-                  </Badge>
-                  <span className='text-xs text-muted-foreground'>
-                    {format(new Date(tag.createdAt), 'dd/MM/yyyy', { locale: es })}
-                  </span>
-                </div>
               </div>
             </div>
           </CardHeader>

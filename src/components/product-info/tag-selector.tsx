@@ -72,12 +72,7 @@ export function TagSelector({
                 key={tag.id} 
                 variant="secondary" 
                 className="gap-1"
-                style={{ backgroundColor: `${tag.color}20`, borderColor: tag.color }}
-              >
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: tag.color }}
-                />
+              >        
                 {tag.name}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
@@ -151,10 +146,6 @@ export function TagSelector({
                         )}
                       />
                       <div className="flex items-center flex-1 gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full border"
-                          style={{ backgroundColor: tag.color }}
-                        />
                         <div className="flex-1">
                           <div className="font-medium">{tag.name}</div>
                           {tag.description && (

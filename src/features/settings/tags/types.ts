@@ -4,9 +4,7 @@ export type Tag = {
   id: string
   businessId: string
   name: string
-  color: string
   description: string
-  createdAt: string
 }
 
 // Schema para etiqueta completa

@@ -71,17 +71,13 @@ export function TagDialog({
       form.reset({
         name: initialData.name,
         ...(isSimpleMode ? {} : {
-          color: initialData.color,
           description: initialData.description,
         }),
       })
-      if (!isSimpleMode) {
-        setSelectedColor(initialData.color)
-      }
     } else {
       form.reset(isSimpleMode 
         ? { name: '' }
-        : { name: '', color: '#22C55E', description: '' }
+        : { name: '', description: '' }
       )
       setSelectedColor('#22C55E')
     }
@@ -101,14 +97,6 @@ export function TagDialog({
     form.reset()
     setShowColorPicker(false)
     onClose()
-  }
-
-  const handleColorSelect = (colorValue: string) => {
-    setSelectedColor(colorValue)
-    if (!isSimpleMode) {
-      form.setValue('color' as keyof (TagFormValues | SimpleTagFormValues), colorValue)
-    }
-    setShowColorPicker(false)
   }
 
   const getDialogDescription = () => {
@@ -152,70 +140,6 @@ export function TagDialog({
               )}
             />
 
-            {/* Color selector - Solo para modo completo y edición */}
-            {!isSimpleMode && (
-              <FormField
-                control={form.control}
-                name='color'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Color *</FormLabel>
-                    <div className='space-y-3'>
-                      {/* Vista previa del color seleccionado */}
-                      <div className='flex items-center gap-3'>
-                        <div 
-                          className='w-10 h-10 rounded-lg border-2 border-gray-200 shadow-sm cursor-pointer'
-                          style={{ backgroundColor: selectedColor }}
-                          onClick={() => setShowColorPicker(!showColorPicker)}
-                          title='Click para cambiar color'
-                        />
-                        <FormControl>
-                          <Input
-                            {...field}
-                            value={selectedColor}
-                            onChange={(e) => {
-                              const value = e.target.value
-                              setSelectedColor(value)
-                              field.onChange(value)
-                            }}
-                            placeholder='#22C55E'
-                            className='font-mono'
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          size='sm'
-                          onClick={() => setShowColorPicker(!showColorPicker)}
-                          disabled={isSubmitting}
-                        >
-                          <Palette className='h-4 w-4' />
-                        </Button>
-                      </div>
-
-                      {/* Selector de colores predefinidos */}
-                      {showColorPicker && (
-                        <div className='grid grid-cols-8 gap-2 p-3 border rounded-lg bg-muted/30'>
-                          {PREDEFINED_COLORS.map((color) => (
-                            <button
-                              key={color.value}
-                              type='button'
-                              className='w-8 h-8 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform'
-                              style={{ backgroundColor: color.value }}
-                              onClick={() => handleColorSelect(color.value)}
-                              title={color.name}
-                              disabled={isSubmitting}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
 
             {/* Descripción - Solo para modo completo y edición */}
             {!isSimpleMode && (

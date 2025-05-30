@@ -44,15 +44,8 @@ export function DeleteTagDialog({
             </p>
 
             <div className='flex items-center gap-3 p-3 rounded-lg bg-muted/50'>
-              <div 
-                className='w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0'
-                style={{ backgroundColor: tag.color }}
-              />
               <div className='flex items-center gap-2'>
                 <span className='font-medium'>{tag.name}</span>
-                <Badge variant='outline' className='font-mono text-xs'>
-                  {tag.color}
-                </Badge>
               </div>
             </div>
 
