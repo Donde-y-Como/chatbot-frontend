@@ -140,7 +140,6 @@ export function CategoryList({
                       <div className='flex items-start justify-between'>
                         <div className='flex-1'>
                           <div className='flex items-center gap-2'>
-                            <ChevronRight className='h-4 w-4 text-muted-foreground' />
                             <h4 className='font-medium'>{subcategory.name}</h4>
                             <Badge variant='secondary' className='text-xs'>Subcategoría</Badge>
                           </div>
