@@ -71,7 +71,7 @@ export default function TagsSection() {
   const handleUpdate = async (values: TagFormValues | SimpleTagFormValues) => {
     if (selectedTag) {
       // Solo enviar los campos que han cambiado
-      const updateData: { name?: string; color?: string; description?: string } = {}
+      const updateData: { name?: string; description?: string } = {}
       
       if ('name' in values && values.name !== selectedTag.name) {
         updateData.name = values.name
@@ -166,7 +166,7 @@ export default function TagsSection() {
         <div className='relative max-w-sm'>
           <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
           <Input
-            placeholder='Buscar por nombre, descripción o color...'
+            placeholder='Buscar por nombre o descripción'
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className='pl-10'

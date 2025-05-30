@@ -27,8 +27,7 @@ import {
   simpleTagSchema, 
   TagFormValues, 
   SimpleTagFormValues, 
-  TagDialogMode,
-  PREDEFINED_COLORS 
+  TagDialogMode
 } from '../types'
 
 interface TagDialogProps {
@@ -52,9 +51,6 @@ export function TagDialog({
   submitLabel,
   mode,
 }: TagDialogProps) {
-  const [selectedColor, setSelectedColor] = useState('#22C55E')
-  const [showColorPicker, setShowColorPicker] = useState(false)
-
   const isSimpleMode = mode === 'create-simple'
   const schema = isSimpleMode ? simpleTagSchema : tagSchema
 
@@ -62,7 +58,7 @@ export function TagDialog({
     resolver: zodResolver(schema),
     defaultValues: isSimpleMode 
       ? { name: '' }
-      : { name: '', color: '#22C55E', description: '' },
+      : { name: '', description: '' },
   })
 
   // Resetear el formulario cuando cambie initialData
@@ -79,7 +75,6 @@ export function TagDialog({
         ? { name: '' }
         : { name: '', description: '' }
       )
-      setSelectedColor('#22C55E')
     }
   }, [initialData, mode, isSimpleMode])
 
@@ -95,7 +90,6 @@ export function TagDialog({
 
   const handleClose = () => {
     form.reset()
-    setShowColorPicker(false)
     onClose()
   }
 
@@ -104,7 +98,7 @@ export function TagDialog({
       return 'Crea una etiqueta rápida con solo el nombre.'
     }
     if (mode === 'create-complete') {
-      return 'Crea una etiqueta completa con nombre, color y descripción.'
+      return 'Crea una etiqueta nueva'
     }
     return 'Modifica los campos de esta etiqueta.'
   }
