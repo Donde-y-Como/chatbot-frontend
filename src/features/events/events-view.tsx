@@ -62,7 +62,7 @@ export default function EventsView() {
   const { data: events, isLoading: isEventsLoading, error: eventsError } = useGetEvents()
   const [showCreate, setShowCreate] = useState<boolean>(false)
   const [viewMode, setViewMode] = useState<string>('calendar')
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('upcoming')
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null })
@@ -190,7 +190,7 @@ export default function EventsView() {
 
   const resetFilters = (): void => {
     setSearchQuery('')
-    setFilterStatus('upcoming')
+    setFilterStatus('all')
     setDateRange({ from: null, to: null })
     setSortBy('date-asc')
     setCurrentPage(1)
@@ -388,7 +388,7 @@ export default function EventsView() {
           </div>
 
           {/* Active filters display */}
-          {(searchQuery || filterStatus !== 'upcoming' || dateRange.from || dateRange.to || sortBy !== 'date-asc') && (
+          {(searchQuery || filterStatus !== 'all' || dateRange.from || dateRange.to || sortBy !== 'date-asc') && (
             <div className="mt-3 flex flex-wrap gap-2">
               {searchQuery && (
                 <Badge variant="secondary" className="flex items-center gap-1">
@@ -400,16 +400,16 @@ export default function EventsView() {
                 </Badge>
               )}
 
-              {filterStatus !== 'upcoming' && (
+              {filterStatus !== 'all' && (
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <span>Estado: {
                     filterStatus === 'today' ? 'Hoy' :
                       filterStatus === 'past' ? 'Pasados' :
-                        filterStatus === 'all' ? 'Todos' : 'Próximos'
+                        filterStatus === 'upcoming' ? 'Próximos' : 'Todos'
                   }</span>
                   <X
                     className="h-3 w-3 cursor-pointer"
-                    onClick={() => setFilterStatus('upcoming')}
+                    onClick={() => setFilterStatus('all')}
                   />
                 </Badge>
               )}
