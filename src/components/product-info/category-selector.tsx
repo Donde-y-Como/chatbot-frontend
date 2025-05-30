@@ -41,15 +41,17 @@ export function CategorySelector({
   const { data: categories = [], isLoading: loading } = useGetCategories()
   const createCategoryMutation = useCreateCategory()
 
-  // Filtrar categorías y subcategorías
-  const parentCategories = categories.filter(cat => !cat.parentCategoryId)
-  const allSubcategories = categories.filter(cat => cat.parentCategoryId)
+  // Las categorías ya vienen con subcategorías anidadas
+  const parentCategories = categories
+
+  // Obtener todas las subcategorías para la lógica de selección
+  const allSubcategories = parentCategories.flatMap(cat => cat.subcategories || [])
 
   // Obtener categorías y subcategorías seleccionadas
-  const selectedCategories = categories.filter(cat => 
+  const selectedCategories = parentCategories.filter(cat => 
     selectedCategoryIds.includes(cat.id)
   )
-  const selectedSubcategories = categories.filter(cat => 
+  const selectedSubcategories = allSubcategories.filter(cat => 
     selectedSubcategoryIds.includes(cat.id)
   )
 
@@ -63,9 +65,8 @@ export function CategorySelector({
     
     // Si se deselecciona una categoría, también deseleccionar sus subcategorías
     if (!newCategoryIds.includes(categoryId)) {
-      const subcategoriesOfCategory = allSubcategories
-        .filter(sub => sub.parentCategoryId === categoryId)
-        .map(sub => sub.id)
+      const category = parentCategories.find(cat => cat.id === categoryId)
+      const subcategoriesOfCategory = (category?.subcategories || []).map(sub => sub.id)
       
       const newSubcategoryIds = selectedSubcategoryIds.filter(id => 
         !subcategoriesOfCategory.includes(id)
@@ -87,8 +88,9 @@ export function CategorySelector({
     
     // Si se selecciona una subcategoría, asegurar que su categoría padre esté seleccionada
     if (newSubcategoryIds.includes(subcategoryId) && 
-        !selectedCategoryIds.includes(subcategory.parentCategoryId!)) {
-      onCategoryChange([...selectedCategoryIds, subcategory.parentCategoryId!])
+        subcategory.parentCategoryId &&
+        !selectedCategoryIds.includes(subcategory.parentCategoryId)) {
+      onCategoryChange([...selectedCategoryIds, subcategory.parentCategoryId])
     }
   }
 
@@ -98,9 +100,8 @@ export function CategorySelector({
     onCategoryChange(newCategoryIds)
     
     // También remover subcategorías de esta categoría
-    const subcategoriesOfCategory = allSubcategories
-      .filter(sub => sub.parentCategoryId === categoryId)
-      .map(sub => sub.id)
+    const category = parentCategories.find(cat => cat.id === categoryId)
+    const subcategoriesOfCategory = (category?.subcategories || []).map(sub => sub.id)
     
     const newSubcategoryIds = selectedSubcategoryIds.filter(id => 
       !subcategoriesOfCategory.includes(id)
@@ -113,12 +114,11 @@ export function CategorySelector({
     onSubcategoryChange(selectedSubcategoryIds.filter(id => id !== subcategoryId))
   }
 
-  // Filtrar categorías disponibles para mostrar
-  const getAvailableSubcategories = (parentCategoryId: string) => {
-    return allSubcategories.filter(sub => 
-      sub.parentCategoryId === parentCategoryId &&
-      (searchValue === '' || 
-       sub.name.toLowerCase().includes(searchValue.toLowerCase()))
+  // Filtrar subcategorías disponibles para mostrar
+  const getAvailableSubcategories = (category: Category) => {
+    return (category.subcategories || []).filter(sub => 
+      searchValue === '' || 
+      sub.name.toLowerCase().includes(searchValue.toLowerCase())
     )
   }
 
@@ -173,7 +173,7 @@ export function CategorySelector({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-0">
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command>
             <div className="flex items-center border-b px-3">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
@@ -204,17 +204,23 @@ export function CategorySelector({
               </CommandEmpty>
               
               {/* Categorías padre */}
-              {parentCategories
-                .filter(category => 
-                  searchValue === '' || 
+              {parentCategories.map((category) => {
+                const isSelected = selectedCategoryIds.includes(category.id)
+                const availableSubcategories = getAvailableSubcategories(category)
+                
+                // Mostrar categoría si coincide con la búsqueda O si tiene subcategorías que coinciden
+                const categoryMatches = searchValue === '' || 
                   category.name.toLowerCase().includes(searchValue.toLowerCase())
-                )
-                .map((category) => {
-                  const isSelected = selectedCategoryIds.includes(category.id)
-                  const availableSubcategories = getAvailableSubcategories(category.id)
-                  
-                  return (
-                    <CommandGroup key={category.id} heading={category.name}>
+                const hasMatchingSubcategories = availableSubcategories.length > 0
+                
+                if (!categoryMatches && !hasMatchingSubcategories) {
+                  return null
+                }
+                
+                return (
+                  <CommandGroup key={category.id} heading={category.name}>
+                    {/* Solo mostrar la categoría padre si coincide con la búsqueda */}
+                    {categoryMatches && (
                       <CommandItem
                         value={category.id}
                         onSelect={() => handleCategorySelect(category.id)}
@@ -235,38 +241,39 @@ export function CategorySelector({
                           )}
                         </div>
                       </CommandItem>
+                    )}
+                    
+                    {/* Subcategorías - con mejor indentación visual */}
+                    {availableSubcategories.map((subcategory) => {
+                      const isSubSelected = selectedSubcategoryIds.includes(subcategory.id)
                       
-                      {/* Subcategorías */}
-                      {availableSubcategories.map((subcategory) => {
-                        const isSubSelected = selectedSubcategoryIds.includes(subcategory.id)
-                        
-                        return (
-                          <CommandItem
-                            key={subcategory.id}
-                            value={subcategory.id}
-                            onSelect={() => handleSubcategorySelect(subcategory.id)}
-                            className="cursor-pointer ml-4"
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                isSubSelected ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            <div className="flex-1">
-                              <div className="font-medium">{subcategory.name}</div>
-                              {subcategory.description && (
-                                <div className="text-xs text-muted-foreground">
-                                  {subcategory.description}
-                                </div>
-                              )}
-                            </div>
-                          </CommandItem>
-                        )
-                      })}
-                    </CommandGroup>
-                  )
-                })}
+                      return (
+                        <CommandItem
+                          key={subcategory.id}
+                          value={subcategory.id}
+                          onSelect={() => handleSubcategorySelect(subcategory.id)}
+                          className="cursor-pointer ml-6 pl-6 border-l-2 border-muted"
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              isSubSelected ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{subcategory.name}</div>
+                            {subcategory.description && (
+                              <div className="text-xs text-muted-foreground">
+                                {subcategory.description}
+                              </div>
+                            )}
+                          </div>
+                        </CommandItem>
+                      )
+                    })}
+                  </CommandGroup>
+                )
+              })}
               
               {/* Botón para crear nueva categoría */}
               <CommandGroup>

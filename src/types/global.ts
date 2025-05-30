@@ -3,9 +3,7 @@ import { z } from 'zod'
 // Enum para el estado del producto
 export enum ProductStatus {
   ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  DRAFT = 'draft',
-  ARCHIVED = 'archived'
+  INACTIVE = 'inactive'
 }
 
 // Tipo para el costo del producto
@@ -63,7 +61,7 @@ export const getDefaultProductInfo = (): ProductInfo => ({
   discountPercentage: 0,
   categoryIds: [],
   subcategoryIds: [],
-  status: ProductStatus.DRAFT,
+  status: ProductStatus.ACTIVE,
   tagIds: [],
   taxPercentage: 0,
   notes: '',

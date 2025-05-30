@@ -50,6 +50,21 @@ export function EventEditModal({
   const [photos, setPhotos] = React.useState<File[]>([])
   const { uploadFile, validateFile, isUploading } = useUploadMedia()
 
+  // Resetear cambios cuando se abre el modal
+  React.useEffect(() => {
+    if (open) {
+      setChanges({})
+      setPhotos([])
+    }
+  }, [open])
+
+  // Función para manejar cancelación
+  const handleCancel = () => {
+    setChanges({})
+    setPhotos([])
+    onClose()
+  }
+
   const updateField = <K extends keyof EventPrimitives>(
     field: K,
     value: EventPrimitives[K]
@@ -92,12 +107,9 @@ export function EventEditModal({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
-      // Si está cerrando (isOpen === false), prevenimos el cierre al hacer clic afuera
       if (!isOpen) {
-        return;
+        handleCancel() // Resetear cambios al cerrar
       }
-      // Solo permitimos que se abra
-      onClose();
     }}>
       <DialogContent className='sm:max-w-[600px]'>
         <DialogHeader>
@@ -458,7 +470,7 @@ export function EventEditModal({
                 <div className='grid gap-2'>
                   <Label htmlFor='status'>Estado del producto</Label>
                   <Select
-                    defaultValue={event.productInfo?.status || ProductStatus.DRAFT}
+                    defaultValue={event.productInfo?.status || ProductStatus.ACTIVE}
                     onValueChange={(value: ProductStatus) =>
                       updateField('productInfo', {
                         ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
@@ -473,14 +485,8 @@ export function EventEditModal({
                       <SelectItem value={ProductStatus.ACTIVE}>
                         Activo - Disponible para venta
                       </SelectItem>
-                      <SelectItem value={ProductStatus.DRAFT}>
-                        Borrador - En desarrollo
-                      </SelectItem>
                       <SelectItem value={ProductStatus.INACTIVE}>
                         Inactivo - No disponible temporalmente
-                      </SelectItem>
-                      <SelectItem value={ProductStatus.ARCHIVED}>
-                        Archivado - Fuera de catálogo
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -613,9 +619,9 @@ export function EventEditModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value='MXN'>MXN - Peso Mexicano</SelectItem>
-                        <SelectItem value='USD'>USD - Dólar Americano</SelectItem>
-                        <SelectItem value='EUR'>EUR - Euro</SelectItem>
+                        <SelectItem value='MXN'>MXN</SelectItem>
+                        <SelectItem value='USD'>USD</SelectItem>
+                        <SelectItem value='EUR'>EUR</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -646,13 +652,13 @@ export function EventEditModal({
         </Tabs>
 
         <DialogFooter>
-          <Button variant='outline' onClick={onClose} disabled={isUploading}>
+          <Button variant='outline' onClick={handleCancel} disabled={isUploading}>
             Cancelar
           </Button>
           <Button
             onClick={() => {
               onSave(changes)
-              onClose()
+              handleCancel() // Resetear al guardar
             }}
             disabled={isUploading}
           >

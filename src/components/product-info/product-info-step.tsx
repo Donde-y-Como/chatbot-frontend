@@ -69,14 +69,8 @@ export function ProductInfoStep() {
                     <SelectItem value={ProductStatus.ACTIVE}>
                       Activo - Disponible para venta
                     </SelectItem>
-                    <SelectItem value={ProductStatus.DRAFT}>
-                      Borrador - En desarrollo
-                    </SelectItem>
                     <SelectItem value={ProductStatus.INACTIVE}>
                       Inactivo - No disponible temporalmente
-                    </SelectItem>
-                    <SelectItem value={ProductStatus.ARCHIVED}>
-                      Archivado - Fuera de catálogo
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -231,9 +225,9 @@ export function ProductInfoStep() {
                       <SelectValue placeholder="Seleccionar moneda" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="MXN">MXN - Peso Mexicano</SelectItem>
-                      <SelectItem value="USD">USD - Dólar Americano</SelectItem>
-                      <SelectItem value="EUR">EUR - Euro</SelectItem>
+                      <SelectItem value="MXN">MXN</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormControl>
