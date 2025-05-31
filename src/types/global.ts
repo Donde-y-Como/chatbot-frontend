@@ -23,6 +23,7 @@ export interface ProductInfo {
   taxPercentage: number // ≥0
   notes: string // Notas adicionales
   cost: ProductCost // Costo del negocio (diferente al precio de venta)
+  precioModificado: ProductCost
 }
 
 // Schema de validación para ProductCost
@@ -50,6 +51,7 @@ export const productInfoSchema = z.object({
   notes: z.string()
     .max(500, 'Las notas no pueden exceder 500 caracteres'),
   cost: productCostSchema,
+  precioModificado: productCostSchema
 })
 
 // Tipo inferido del schema
@@ -68,5 +70,9 @@ export const getDefaultProductInfo = (): ProductInfo => ({
   cost: {
     amount: 0,
     currency: 'MXN'
-  }
+  },
+  precioModificado: {
+    amount: 0,
+    currency: 'MXN'
+  },
 })
