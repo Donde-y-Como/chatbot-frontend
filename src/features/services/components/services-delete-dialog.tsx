@@ -5,9 +5,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { IconAlertTriangle } from '@tabler/icons-react'
 import { toast } from 'sonner'
 import { api } from '@/api/axiosInstance.ts'
-// import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Service } from '@/features/appointments/types.ts'
 
@@ -22,9 +19,9 @@ export function ServicesDeleteDialog({
   onOpenChange,
   currentRow,
 }: Props) {
-  const [value, setValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const queryClient = useQueryClient()
+  
   const deleteServiceMutation = useMutation({
     mutationKey: ['delete-service'],
     async mutationFn() {
@@ -36,6 +33,7 @@ export function ServicesDeleteDialog({
         'El servicio ' + currentRow.name + ' ha sido eliminado correctamente.'
       )
       onOpenChange(false)
+      setIsLoading(false)
       void queryClient.setQueryData<Service[]>(['services'], (oldServices) => {
         if (oldServices === undefined) return oldServices
         return oldServices.filter((service) => service.id !== currentRow.id)
@@ -43,11 +41,11 @@ export function ServicesDeleteDialog({
     },
     onError: () => {
       toast.error('Hubo un error al eliminar el servicio ' + currentRow.name)
+      setIsLoading(false)
     }
   })
 
   const handleDelete = () => {
-    if (value.trim() !== currentRow.name.trim()) return
     setIsLoading(true)
     deleteServiceMutation.mutate()
   }
@@ -57,7 +55,7 @@ export function ServicesDeleteDialog({
       open={open}
       onOpenChange={onOpenChange}
       handleConfirm={handleDelete}
-      disabled={value.trim() !== currentRow.name.trim() || isLoading}
+      disabled={isLoading}
       title={
         <span className='text-destructive'>
           <IconAlertTriangle
@@ -70,32 +68,14 @@ export function ServicesDeleteDialog({
       desc={
         <div className='space-y-4'>
           <p className='mb-2'>
-            Estas seguro de eliminar{' '}
+            ¿Estás seguro de eliminar el servicio{' '}
             <span className='font-bold'>{currentRow.name}</span>?
             <br />
-            Esta acción es permanente y puede afectar a sus citas creadas.
+            Esta acción es permanente y puede afectar a las citas creadas.
           </p>
-
-          <Label className='my-2'>
-            <p className="my-2">{`Escribe ${currentRow.name} para confirmar.`}</p>
-            <Input
-              value={value}
-              onChange={(e) => {
-                console.log(e.target.value === currentRow.name)
-                setValue(e.target.value)
-              }}
-            />
-          </Label>
-
-          {/*<Alert variant='destructive'>*/}
-          {/*  <AlertTitle>Aguas!</AlertTitle>*/}
-          {/*  <AlertDescription>*/}
-          {/*    Por favor sé cuidadoso al eliminar servicios, esta acción no se puede deshacer.*/}
-          {/*  </AlertDescription>*/}
-          {/*</Alert>*/}
         </div>
       }
-      confirmText='Eliminar'
+      confirmText={isLoading ? 'Eliminando...' : 'Eliminar'}
       destructive
     />
   )

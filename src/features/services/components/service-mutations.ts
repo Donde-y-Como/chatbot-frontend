@@ -2,8 +2,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { api } from '@/api/axiosInstance'
 import { MinutesTimeRange } from '../../appointments/types'
+import { ProductInfo } from '@/types'
+import { Unit } from '../../settings/units/types'
 
-// Form data shape for service creation/update
+// Form data shape for service creation/update with new fields
 export interface ServiceFormData {
   name: string
   description: string
@@ -14,14 +16,26 @@ export interface ServiceFormData {
   maxConcurrentBooks: number
   minBookingLeadHours: number
   schedule: Record<string, MinutesTimeRange>
+  // Nuevos campos
+  productInfo: ProductInfo
+  codigoBarras: number
+  unidadMedida: Unit
+  photos: string[]
 }
 
 /**
  * Transforms form data to API service format
  */
 const transformFormToApiData = (formData: ServiceFormData) => {
-  return {
-    ...formData,
+  const transformed = {
+    // Campos originales
+    name: formData.name,
+    description: formData.description,
+    maxConcurrentBooks: formData.maxConcurrentBooks,
+    minBookingLeadHours: formData.minBookingLeadHours,
+    schedule: formData.schedule,
+    
+    // Campos transformados
     price: { 
       amount: formData.priceAmount, 
       currency: formData.priceCurrency 
@@ -30,7 +44,15 @@ const transformFormToApiData = (formData: ServiceFormData) => {
       unit: formData.durationUnit, 
       value: formData.durationValue 
     },
+    
+    // Nuevos campos - pasados directamente
+    productInfo: formData.productInfo,
+    codigoBarras: formData.codigoBarras, // Ahora siempre será número
+    unidadMedida: formData.unidadMedida,
+    photos: formData.photos,
   }
+  
+  return transformed
 }
 
 /**

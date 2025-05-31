@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import { Employee } from '../employees/types'
+import { ProductInfo } from '@/types'
+import { Unit } from '../settings/units/types'
 
 export interface Service {
   id: string
@@ -17,6 +19,11 @@ export interface Service {
   maxConcurrentBooks: number
   minBookingLeadHours: number
   schedule: Record<string, MinutesTimeRange>
+  // Nuevos campos
+  productInfo: ProductInfo
+  codigoBarras: number
+  unidadMedida: Unit
+  photos: string[]
 }
 
 export interface Schedule {

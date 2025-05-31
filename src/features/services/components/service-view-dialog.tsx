@@ -11,31 +11,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { CalendarIcon, Clock, Info, Users } from 'lucide-react'
+import { CalendarIcon, Clock, Info, Users, Package, Barcode, Image } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
-
-export interface Service {
-  id: string
-  businessId: string
-  name: string
-  description: string
-  duration: {
-    value: number
-    unit: 'minutes' | 'hours'
-  }
-  price: {
-    amount: number
-    currency: string
-  }
-  maxConcurrentBooks: number
-  minBookingLeadHours: number
-  schedule: Record<string, MinutesTimeRange>
-}
-
-export interface MinutesTimeRange {
-  startAt: number
-  endAt: number
-}
+import { Service } from '@/features/appointments/types'
 
 interface Props {
   currentService?: Service
@@ -75,7 +53,7 @@ export function ServiceViewDialog({
       onOpenChange={(state) => {
         onOpenChange(state)
       }}>
-      <DialogContent className="sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto">
+      <DialogContent className="sm:max-w-lg md:max-w-xl lg:max-w-3xl mx-auto">
         <DialogHeader className="text-left">
           <DialogTitle aria-label="View Service Details">
             Detalles de Servicio
@@ -86,7 +64,7 @@ export function ServiceViewDialog({
         </DialogHeader>
 
         {/* Scrollable content area with accessibility improvements */}
-        <ScrollArea className="h-[26.25rem] md:h-[28rem] w-full pr-4 -mr-4 py-1">
+        <ScrollArea className="h-[30rem] w-full pr-4 -mr-4 py-1">
           {currentService ? (
             <div className="space-y-4">
               <Card>
@@ -94,6 +72,7 @@ export function ServiceViewDialog({
                   <div className="flex flex-col md:flex-row md:items-center justify-between">
                     <div>
                       <h3 className="text-xl font-semibold">{currentService.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">SKU: {currentService.productInfo.sku}</p>
                     </div>
                     <div className="mt-2 md:mt-0">
                       <Badge className="text-lg bg-primary/20 text-primary hover:bg-primary/30 py-1.5 px-3">
@@ -142,8 +121,100 @@ export function ServiceViewDialog({
                     <p className="text-sm text-muted-foreground">
                       Capacidad maxima de asistentes: {currentService.maxConcurrentBooks}
                     </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Horas mínimas de anticipación: {currentService.minBookingLeadHours}h
+                    </p>
                   </CardContent>
                 </Card>
+
+                {/* Product Info */}
+                <Card className="md:col-span-2">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Package className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="font-medium">Información del Producto</h3>
+                    </div>
+                    <Separator className="mb-3" />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium">Estado:</span>
+                        <Badge variant={currentService.productInfo.status === 'active' ? 'default' : 'secondary'} className="ml-2">
+                          {currentService.productInfo.status === 'active' ? 'Activo' : 'Inactivo'}
+                        </Badge>
+                      </div>
+                      <div>
+                        <span className="font-medium">Descuento:</span>
+                        <span className="ml-2 text-muted-foreground">{currentService.productInfo.discountPercentage}%</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Impuesto:</span>
+                        <span className="ml-2 text-muted-foreground">{currentService.productInfo.taxPercentage}%</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Costo:</span>
+                        <span className="ml-2 text-muted-foreground">
+                          {formatCurrency(currentService.productInfo.cost.amount, currentService.productInfo.cost.currency)}
+                        </span>
+                      </div>
+                    </div>
+                    {currentService.productInfo.notes && (
+                      <div className="mt-3">
+                        <span className="font-medium text-sm">Notas:</span>
+                        <p className="text-sm text-muted-foreground mt-1">{currentService.productInfo.notes}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Barcode and Unit */}
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Barcode className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="font-medium">Código de Barras</h3>
+                    </div>
+                    <Separator className="mb-3" />
+                    <p className="text-sm font-mono text-muted-foreground">{currentService.codigoBarras || 'N/A'}</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Package className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="font-medium">Unidad de Medida</h3>
+                    </div>
+                    <Separator className="mb-3" />
+                    <div className="text-sm">
+                      <p className="font-medium">{currentService.unidadMedida.name}</p>
+                      <p className="text-muted-foreground">({currentService.unidadMedida.abbreviation})</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Photos */}
+                {currentService.photos && currentService.photos.length > 0 && (
+                  <Card className="md:col-span-2">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Image className="h-5 w-5 text-muted-foreground" />
+                        <h3 className="font-medium">Fotos del Servicio</h3>
+                      </div>
+                      <Separator className="mb-3" />
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {currentService.photos.map((photo, index) => (
+                          <div key={index} className="aspect-square overflow-hidden rounded-md border">
+                            <img 
+                              src={photo} 
+                              alt={`Foto ${index + 1} del servicio`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Schedule Info */}
                 <Card className="md:col-span-2">
@@ -165,23 +236,6 @@ export function ServiceViewDialog({
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Payment Info */}
-                {/*<Card className="md:col-span-2">*/}
-                {/*  <CardContent className="p-4">*/}
-                {/*    <div className="flex items-center gap-2 mb-2">*/}
-                {/*      <CreditCard className="h-5 w-5 text-muted-foreground" />*/}
-                {/*      <h3 className="font-medium">Payment</h3>*/}
-                {/*    </div>*/}
-                {/*    <Separator className="mb-3" />*/}
-                {/*    <div className="flex justify-between items-center">*/}
-                {/*      <span className="text-sm font-medium">Price:</span>*/}
-                {/*      <span className="text-sm font-semibold">*/}
-                {/*        {formatCurrency(currentService.price.amount, currentService.price.currency)}*/}
-                {/*      </span>*/}
-                {/*    </div>*/}
-                {/*  </CardContent>*/}
-                {/*</Card>*/}
               </div>
             </div>
           ) : (
