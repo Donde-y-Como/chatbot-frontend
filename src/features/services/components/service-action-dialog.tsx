@@ -186,22 +186,34 @@ export function ServiceActionDialog({
     defaultValues,
   })
 
+  const {
+    reset,
+  } = form
+
   // Reset form when dialog closes or when switching between create/edit
   const handleOpenChange = useCallback((state: boolean) => {
     if (!state) {
-      form.reset()
+      reset()
       setPhotos([])
     }
     onOpenChange(state)
-  }, [form, onOpenChange])
+  }, [reset, onOpenChange])
+
+  // Reset form when modal is opened/closed - this clears previous errors
+  React.useEffect(() => {
+    if (open) {
+      reset(defaultValues)
+      setPhotos([])
+    }
+  }, [open, reset, defaultValues])
 
   // Handler for form submission success
   const handleSuccess = useCallback(() => {
-    form.reset()
+    reset()
     setPhotos([])
     handleOpenChange(false)
     setIsSubmitting(false)
-  }, [form, handleOpenChange])
+  }, [reset, handleOpenChange])
 
   // Handle image upload
   const handleImageUpload = React.useCallback(
