@@ -21,19 +21,6 @@ export const columns: ColumnDef<Service>[] = [
     enableSorting: false,
   },
   {
-    accessorKey: 'descripción',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Descripción' />
-    ),
-    cell: ({ row }) => {
-      const description = row.original.description;
-      const truncatedDescription = description.length > 25 ? `${description.substring(0, 25)}...` : description;
-      return <LongText className=''>{truncatedDescription || ''}</LongText>;
-    },
-    meta: { className: '' },
-    enableSorting: false,
-  },
-  {
     accessorKey: 'duración',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Duración' />
@@ -55,6 +42,21 @@ export const columns: ColumnDef<Service>[] = [
     ),
     cell: ({ row }) => {
       const { amount, currency } = row.original.price
+      return (
+        <span className='w-fit text-nowrap'>
+          {amount} {currency}
+        </span>
+      )
+    },
+    enableSorting: false,
+  },
+  {
+    accessorKey: 'precioModificado',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Precio Final' />
+    ),
+    cell: ({ row }) => {
+      const { amount, currency } = row.original.productInfo.precioModificado
       return (
         <span className='w-fit text-nowrap'>
           {amount} {currency}
@@ -86,6 +88,26 @@ export const columns: ColumnDef<Service>[] = [
     ),
     cell: ({ row }) => {
       return <span className='text-sm'>{row.original.minBookingLeadHours}</span>
+    },
+    enableSorting: false,
+  },
+  {
+    accessorKey: 'codigoBarras',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Código de Barras' />
+    ),
+    cell: ({ row }) => {
+      return <span className='text-sm font-mono'>{row.original.codigoBarras || 'N/A'}</span>
+    },
+    enableSorting: false,
+  },
+  {
+    accessorKey: 'sku',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='SKU' />
+    ),
+    cell: ({ row }) => {
+      return <span className='text-sm font-mono'>{row.original.productInfo.sku}</span>
     },
     enableSorting: false,
   },
