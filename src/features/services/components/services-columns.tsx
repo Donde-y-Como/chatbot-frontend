@@ -59,25 +59,35 @@ export const columns: ColumnDef<Service>[] = [
       const { amount, currency } = row.original.productInfo.precioModificado
       return (
         <span className='w-fit text-nowrap'>
-          {amount} {currency}
+          {amount.toFixed(2)} {currency}
         </span>
       )
     },
     enableSorting: false,
   },
+  // {
+  //   accessorKey: 'espacios',
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title='Espacios concurrentes' />
+  //   ),
+  //   cell: ({ row }) => {
+  //     return (
+  //       <div className='flex space-x-2'>
+  //         <Badge variant='outline' className={cn('capitalize')}>
+  //           {row.original.maxConcurrentBooks}
+  //         </Badge>
+  //       </div>
+  //     )
+  //   },
+  //   enableSorting: false,
+  // },
   {
-    accessorKey: 'espacios',
+    accessorKey: 'status',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Espacios concurrentes' />
+      <DataTableColumnHeader column={column} title='Estatus' />
     ),
     cell: ({ row }) => {
-      return (
-        <div className='flex space-x-2'>
-          <Badge variant='outline' className={cn('capitalize')}>
-            {row.original.maxConcurrentBooks}
-          </Badge>
-        </div>
-      )
+      return <span className='text-sm'>{row.original.productInfo.status === 'active' ? 'Activo' : 'Inactivo'}</span>
     },
     enableSorting: false,
   },
