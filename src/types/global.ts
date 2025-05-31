@@ -38,16 +38,30 @@ export const productInfoSchema = z.object({
     .min(1, 'El SKU es requerido')
     .max(50, 'El SKU no puede exceder 50 caracteres')
     .regex(/^[A-Za-z0-9_-]+$/, 'El SKU solo puede contener letras, números, guiones y guiones bajos'),
-  discountPercentage: z.number()
-    .min(0, 'El descuento no puede ser negativo')
-    .max(100, 'El descuento no puede ser mayor al 100%'),
+  discountPercentage: z.preprocess(
+    (val) => {
+      if (val === '' || val === null || val === undefined) return 0
+      const num = Number(val)
+      return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
+    },
+    z.number()
+      .min(0, 'El descuento no puede ser negativo')
+      .max(100, 'El descuento no puede ser mayor al 100%')
+  ),
   categoryIds: z.array(z.string())
     .min(1, 'Debe seleccionar al menos una categoría'),
   subcategoryIds: z.array(z.string()),
   status: z.nativeEnum(ProductStatus),
   tagIds: z.array(z.string()),
-  taxPercentage: z.number()
-    .min(0, 'El impuesto no puede ser negativo'),
+  taxPercentage: z.preprocess(
+    (val) => {
+      if (val === '' || val === null || val === undefined) return 0
+      const num = Number(val)
+      return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
+    },
+    z.number()
+      .min(0, 'El impuesto no puede ser negativo')
+  ),
   notes: z.string()
     .max(500, 'Las notas no pueden exceder 500 caracteres'),
   cost: productCostSchema,

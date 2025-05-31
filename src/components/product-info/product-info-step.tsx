@@ -140,15 +140,23 @@ export function ProductInfoStep() {
                   type="number"
                   min="0"
                   max="100"
-                  step="0.01"
+                  step="1"
                   placeholder="0"
                   {...field}
-                  value={field.value || ''}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                  value={field.value === 0 ? '' : field.value || ''}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    if (value === '') {
+                      field.onChange(0)
+                    } else {
+                      const num = parseInt(value, 10)
+                      field.onChange(isNaN(num) ? 0 : num)
+                    }
+                  }}
                 />
               </FormControl>
               <FormDescription>
-                Porcentaje de descuento aplicado al precio base
+                Porcentaje de descuento aplicado al precio base (solo números enteros)
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -165,15 +173,23 @@ export function ProductInfoStep() {
                 <Input
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="1"
                   placeholder="0"
                   {...field}
-                  value={field.value || ''}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                  value={field.value === 0 ? '' : field.value || ''}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    if (value === '') {
+                      field.onChange(0)
+                    } else {
+                      const num = parseInt(value, 10)
+                      field.onChange(isNaN(num) ? 0 : num)
+                    }
+                  }}
                 />
               </FormControl>
               <FormDescription>
-                Porcentaje de impuesto aplicado al precio
+                Porcentaje de impuesto aplicado al precio (solo números enteros)
               </FormDescription>
               <FormMessage />
             </FormItem>
