@@ -66,12 +66,26 @@ const formSchema = z.object({
   // Nuevos campos
   productInfo: z.object({
     sku: z.string().min(1, 'El SKU es requerido'),
-    discountPercentage: z.number().min(0, 'El descuento no puede ser negativo').max(100, 'El descuento no puede exceder 100%'),
+    discountPercentage: z.preprocess(
+      (val) => {
+        if (val === '' || val === null || val === undefined) return 0
+        const num = Number(val)
+        return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
+      },
+      z.number().min(0, 'El descuento no puede ser negativo').max(100, 'El descuento no puede exceder 100%')
+    ),
     categoryIds: z.array(z.string()).min(1, 'Debe seleccionar al menos una categoría'),
     subcategoryIds: z.array(z.string()).default([]),
     status: z.enum(['active', 'inactive']),
     tagIds: z.array(z.string()).default([]),
-    taxPercentage: z.number().min(0, 'El impuesto no puede ser negativo'),
+    taxPercentage: z.preprocess(
+      (val) => {
+        if (val === '' || val === null || val === undefined) return 0
+        const num = Number(val)
+        return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
+      },
+      z.number().min(0, 'El impuesto no puede ser negativo')
+    ),
     notes: z.string().max(500, 'Las notas no pueden exceder 500 caracteres').default(''),
     cost: z.object({
       amount: z.number().min(0, 'El costo no puede ser negativo'),
@@ -87,12 +101,12 @@ const formSchema = z.object({
     .int('El código de barras debe ser un número entero')
     .positive('El código de barras debe ser positivo'),
   unidadMedida: z.object({
-    id: z.string().min(1, 'Debe seleccionar una unidad de medida'),
+    id: z.string(),
     name: z.string(),
     abbreviation: z.string(),
     createdAt: z.string(),
     updatedAt: z.string().optional(),
-  }),
+  }).optional(),
   photos: z.array(z.string()),
 })
 
@@ -229,13 +243,21 @@ export function ServiceActionDialog({
       }
     }
 
+    // Preparar los datos para enviar al backend
+    const formData = { ...values }
+    
+    // Si no se seleccionó una unidad de medida válida, eliminar el campo del body
+    if (!formData.unidadMedida?.id || formData.unidadMedida.id === '') {
+      delete formData.unidadMedida
+    }
+
     if (isEdit && currentService) {
       updateService.mutate({
         id: currentService.id,
-        formData: values as ServiceFormData
+        formData: formData as ServiceFormData
       })
     } else {
-      createService.mutate(values as ServiceFormData)
+      createService.mutate(formData as ServiceFormData)
     }
   }
 
@@ -265,7 +287,7 @@ export function ServiceActionDialog({
       formValues.maxConcurrentBooks !== 1 ||
       formValues.minBookingLeadHours !== 0 ||
       formValues.codigoBarras !== 0 ||
-      formValues.unidadMedida.id !== '' ||
+      formValues.unidadMedida?.id !== '' ||
       photos.length > 0 ||
       productInfo?.sku !== '' ||
       productInfo?.categoryIds.length > 0 ||
@@ -521,9 +543,9 @@ export function ServiceActionDialog({
                               <Input
                                 id="priceAmount"
                                 type="number"
-                                placeholder="0.00"
+                                placeholder="0"
                                 min={0}
-                                step="0.01"
+                                step="1"
                                 {...field}
                                 value={field.value || ''}
                                 onFocus={(e) => {
