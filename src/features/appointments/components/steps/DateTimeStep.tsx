@@ -17,7 +17,7 @@ interface DateTimeStepProps {
   onTimeRangeChange: (timeRange: MinutesTimeRange) => void
   onNext: () => void
   onBack: () => void
-  onCancel: () => void
+  onCancel: (e?: React.MouseEvent) => void
 }
 
 /**

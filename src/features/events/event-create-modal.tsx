@@ -39,6 +39,8 @@ import { toast } from 'sonner'
 import { useEventMutations } from './hooks/useEventMutations'
 import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { getDefaultProductInfo } from '@/types'
+import { ProductInfoStep } from '@/components/product-info'
 
 interface CreateEventModelProps {
   open: boolean
@@ -70,6 +72,7 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
       recurrence: { frequency: RecurrenceFrequency.NEVER, endCondition: null },
       location: '',
       photos: [],
+      productInfo: getDefaultProductInfo(),
     }
   }, [defaultDate])
 
@@ -151,6 +154,24 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
           case 'recurrence':
             fieldName = parts[1] === 'frequency' ? 'Frecuencia' : 'Condición de fin';
             break;
+          case 'productInfo':
+            switch(parts[1]) {
+              case 'sku':
+                fieldName = 'SKU del producto';
+                break;
+              case 'categoryIds':
+                fieldName = 'Categorías del producto';
+                break;
+              case 'status':
+                fieldName = 'Estado del producto';
+                break;
+              case 'cost':
+                fieldName = parts[2] === 'amount' ? 'Costo del producto' : 'Moneda del costo';
+                break;
+              default:
+                fieldName = 'Información del producto';
+            }
+            break;
           default:
             fieldName = field;
         }
@@ -171,6 +192,9 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
             break;
           case 'duration':
             fieldName = 'Duración';
+            break;
+          case 'productInfo':
+            fieldName = 'Información del producto';
             break;
           default:
             fieldName = field;
@@ -237,6 +261,8 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
   // Función para verificar si se han rellenado campos
   const hasFilledFields = React.useCallback(() => {
     const formValues = form.getValues();
+    const productInfo = formValues.productInfo;
+    
     return (
       formValues.name !== '' || 
       formValues.description !== '' || 
@@ -246,7 +272,15 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
       formValues.duration.startAt !== '' ||
       formValues.duration.endAt !== '' ||
       formValues.recurrence.frequency !== RecurrenceFrequency.NEVER ||
-      photos.length > 0
+      photos.length > 0 ||
+      productInfo?.sku !== '' ||
+      productInfo?.categoryIds.length > 0 ||
+      productInfo?.subcategoryIds.length > 0 ||
+      productInfo?.tagIds.length > 0 ||
+      productInfo?.discountPercentage !== 0 ||
+      productInfo?.taxPercentage !== 0 ||
+      productInfo?.cost.amount !== 0 ||
+      productInfo?.notes !== ''
     );
   }, [form, photos]);
 
@@ -268,10 +302,11 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
             </DialogHeader>
 
             <Tabs defaultValue="general" className="w-full mt-4">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="capacity">Capacidad</TabsTrigger>
                 <TabsTrigger value="schedule">Horario</TabsTrigger>
+                <TabsTrigger value="product">Producto</TabsTrigger>
               </TabsList>
 
               {/* General Tab */}
@@ -648,6 +683,11 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
                     </>
                   )}
                 </div>
+              </TabsContent>
+
+              {/* Product Info Tab */}
+              <TabsContent value="product" className="space-y-4 pt-4">
+                <ProductInfoStep />
               </TabsContent>
             </Tabs>
 

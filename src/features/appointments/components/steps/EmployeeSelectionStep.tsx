@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { CheckCircle, Loader2, Search, User, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -15,7 +15,7 @@ interface EmployeeSelectionStepProps {
   onEmployeeToggle: (employeeId: string) => void
   onNext: () => void
   onBack: () => void
-  onCancel: () => void
+  onCancel: (e?: React.MouseEvent) => void
 }
 
 /**

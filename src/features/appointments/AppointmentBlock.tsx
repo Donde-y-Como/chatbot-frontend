@@ -1,3 +1,4 @@
+import React from 'react'
 import { format, formatDistanceToNow, isBefore, setMinutes } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import {

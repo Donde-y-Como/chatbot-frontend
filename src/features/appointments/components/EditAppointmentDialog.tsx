@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Edit } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -31,6 +31,11 @@ export function EditAppointmentDialog({
 
   const handleSuccess = () => {
     setOpen(false)
+  }
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevenir que se abra el diálogo padre
+    setOpen(true)
   }
 
   const {
@@ -77,18 +82,36 @@ export function EditAppointmentDialog({
       return
     }
 
+    if (newOpen) {
+      // Si se intenta abrir mediante el trigger, no hacer nada
+      // porque ya manejamos esto en handleButtonClick
+      return
+    }
+
     setOpen(newOpen)
+  }
+
+  const handleCancel = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+    }
+    setOpen(false)
+    resetForm()
+  }
+
+  const handleDialogClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevenir que clicks dentro del dialog se propaguen
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button size='sm' variant='outline' className='h-9'>
+        <Button size='sm' variant='outline' className='h-9' onClick={handleButtonClick}>
           <Edit className='h-4 w-4 mr-2' />
           Editar
         </Button>
       </DialogTrigger>
-      <DialogContent className='sm:max-w-3xl max-h-[90vh] overflow-auto'>
+      <DialogContent className='sm:max-w-3xl max-h-[90vh] overflow-auto' onClick={handleDialogClick}>
         <DialogHeader>
           <DialogTitle className='text-2xl font-bold'>Editar Cita</DialogTitle>
           <DialogDescription>Cambie los detalles de la cita</DialogDescription>
@@ -106,10 +129,7 @@ export function EditAppointmentDialog({
                 onServiceIdsChange={setServiceIds}
                 onServiceToggle={toggleServiceSelection}
                 onNext={() => setActiveStep(2)}
-                onCancel={() => {
-                  setOpen(false)
-                  resetForm()
-                }}
+                onCancel={handleCancel}
               />
             </TabsContent>
 
@@ -122,10 +142,7 @@ export function EditAppointmentDialog({
                 onTimeRangeChange={setTimeRange}
                 onNext={() => setActiveStep(3)}
                 onBack={() => setActiveStep(1)}
-                onCancel={() => {
-                  setOpen(false)
-                  resetForm()
-                }}
+                onCancel={handleCancel}
               />
             </TabsContent>
 
@@ -138,10 +155,7 @@ export function EditAppointmentDialog({
                 onEmployeeToggle={toggleEmployeeSelection}
                 onNext={() => setActiveStep(4)}
                 onBack={() => setActiveStep(2)}
-                onCancel={() => {
-                  setOpen(false)
-                  resetForm()
-                }}
+                onCancel={handleCancel}
               />
             </TabsContent>
 
@@ -152,10 +166,7 @@ export function EditAppointmentDialog({
                 onNotesChange={setNotes}
                 onNext={() => setActiveStep(5)}
                 onBack={() => setActiveStep(3)}
-                onCancel={() => {
-                  setOpen(false)
-                  resetForm()
-                }}
+                onCancel={handleCancel}
               />
             </TabsContent>
 
@@ -170,10 +181,7 @@ export function EditAppointmentDialog({
                 onDepositChange={setDeposit}
                 onNext={() => setActiveStep(6)}
                 onBack={() => setActiveStep(4)}
-                onCancel={() => {
-                  setOpen(false)
-                  resetForm()
-                }}
+                onCancel={handleCancel}
               />
             </TabsContent>
 
@@ -188,10 +196,7 @@ export function EditAppointmentDialog({
                 loading={loading}
                 onSubmit={handleSubmit}
                 onBack={() => setActiveStep(5)}
-                onCancel={() => {
-                  setOpen(false)
-                  resetForm()
-                }}
+                onCancel={handleCancel}
               />
             </TabsContent>
           </Tabs>

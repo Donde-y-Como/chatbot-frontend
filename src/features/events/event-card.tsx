@@ -102,7 +102,18 @@ export function EventCard({
             />
             {event.price.amount > 0 ? (
               <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold shadow-md">
-                {new Intl.NumberFormat('es-MX', { style: 'currency', currency: event.price.currency }).format(event.price.amount)}
+                {event.productInfo?.discountPercentage && event.productInfo.discountPercentage > 0 ? (
+                  <div className="flex items-center gap-1">
+                    <span className="line-through text-xs opacity-75">
+                      {new Intl.NumberFormat('es-MX', { style: 'currency', currency: event.price.currency }).format(event.price.amount)}
+                    </span>
+                    <span className="">
+                      {new Intl.NumberFormat('es-MX', { style: 'currency', currency: event.productInfo.precioModificado?.currency || event.price.currency }).format(event.productInfo.precioModificado?.amount || 0)}
+                    </span>
+                  </div>
+                ) : (
+                  new Intl.NumberFormat('es-MX', { style: 'currency', currency: event.price.currency }).format(event.price.amount)
+                )}
               </div>
             ) : (
               <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold shadow-md">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -98,6 +98,18 @@ export function MakeAppointmentDialog({
     setOpen(newOpen);
     if (!newOpen) resetForm();
   };
+
+  const handleCancel = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+    }
+    setOpen(false)
+    resetForm()
+  }
+
+  const handleDialogClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevenir que clicks dentro del dialog se propaguen
+  }
   
   // Actualizar el estado cuando cambia defaultOpen (control externo)
   useEffect(() => {
@@ -117,7 +129,7 @@ export function MakeAppointmentDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className='sm:max-w-3xl  overflow-y-auto'>
+      <DialogContent className='sm:max-w-3xl  overflow-y-auto' onClick={handleDialogClick}>
         <DialogHeader>
           <DialogTitle className='text-2xl font-bold'>Agendar Cita</DialogTitle>
           <DialogDescription>
@@ -140,10 +152,7 @@ export function MakeAppointmentDialog({
                   onServiceIdsChange={setServiceIds}
                   onServiceToggle={toggleServiceSelection}
                   onNext={() => setActiveStep(2)}
-                  onCancel={() => {
-                    setOpen(false)
-                    resetForm()
-                  }}
+                  onCancel={handleCancel}
                 />
               </TabsContent>
 
@@ -159,10 +168,7 @@ export function MakeAppointmentDialog({
                     setActiveStep(1)
                     setDate(new Date())
                   }}
-                  onCancel={() => {
-                    setOpen(false)
-                    resetForm()
-                  }}
+                  onCancel={handleCancel}
                 />
               </TabsContent>
 
@@ -175,10 +181,7 @@ export function MakeAppointmentDialog({
                   onEmployeeToggle={toggleEmployeeSelection}
                   onNext={() => setActiveStep(4)}
                   onBack={() => { setActiveStep(2); setSelectedEmployeeIds([]) }}
-                  onCancel={() => {
-                    setOpen(false)
-                    resetForm()
-                  }}
+                  onCancel={handleCancel}
                 />
               </TabsContent>
 
@@ -189,10 +192,7 @@ export function MakeAppointmentDialog({
                   onNotesChange={setNotes}
                   onNext={() => setActiveStep(5)}
                   onBack={() => setActiveStep(3)}
-                  onCancel={() => {
-                    setOpen(false)
-                    resetForm()
-                  }}
+                  onCancel={handleCancel}
                 />
               </TabsContent>
 
@@ -207,10 +207,7 @@ export function MakeAppointmentDialog({
                   onDepositChange={setDeposit}
                   onNext={() => setActiveStep(6)}
                   onBack={() => setActiveStep(4)}
-                  onCancel={() => {
-                    setOpen(false)
-                    resetForm()
-                  }}
+                  onCancel={handleCancel}
                 />
               </TabsContent>
 
@@ -225,10 +222,7 @@ export function MakeAppointmentDialog({
                   loading={loading}
                   onSubmit={handleSubmit}
                   onBack={() => setActiveStep(5)}
-                  onCancel={() => {
-                    setOpen(false)
-                    resetForm()
-                  }}
+                  onCancel={handleCancel}
                 />
               </TabsContent>
             </Tabs>

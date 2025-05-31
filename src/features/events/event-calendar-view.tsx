@@ -284,20 +284,26 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
       for (let i = 0; i < 7; i++) {
         formattedDate = format(day, 'd')
 
+        // Capture current day for the closure
+        const currentDay = day;
+
         // Encuentra eventos para este día (incluyendo eventos multiday)
         const dayEvents = events.filter(event => {
-          const startDate = parseISO(event.duration.startAt)
-          const endDate = parseISO(event.duration.endAt)
+          const eventStartDate = parseISO(event.duration.startAt)
+          const eventEndDate = parseISO(event.duration.endAt)
+          
+          // FIXED: Comparar solo fechas, no horas para evitar problemas de timezone
+          const dayOnly = new Date(currentDay.getFullYear(), currentDay.getMonth(), currentDay.getDate())
+          const startOnly = new Date(eventStartDate.getFullYear(), eventStartDate.getMonth(), eventStartDate.getDate())
+          const endOnly = new Date(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate())
           
           // Checks if the current day falls within the event's duration (inclusive)
-          return day >= startDate && day <= endDate
+          return dayOnly >= startOnly && dayOnly <= endOnly
         })
 
         const isCurrentMonth = isSameMonth(day, monthStart)
         const isToday = isSameDay(day, new Date())
         const isSelected = selectedDate && isSameDay(day, selectedDate)
-
-        const currentDay = day; // Capture current day for the closure
 
         days.push(
           <div
