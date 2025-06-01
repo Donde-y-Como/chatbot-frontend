@@ -106,7 +106,7 @@ const formSchema = z.object({
     abbreviation: z.string(),
     createdAt: z.string(),
     updatedAt: z.string().optional(),
-  }).optional(),
+  }).optional().nullable(),
   photos: z.array(z.string()),
 })
 
@@ -132,6 +132,41 @@ export function ServiceActionDialog({
 
   // Create memoized default values to prevent unnecessary re-renders
   const defaultValues = useMemo(() => {
+    const baseSchedule = {
+      MONDAY: { startAt: 480, endAt: 1020 },
+      TUESDAY: { startAt: 480, endAt: 1020 },
+      WEDNESDAY: { startAt: 480, endAt: 1020 },
+      THURSDAY: { startAt: 480, endAt: 1020 },
+      FRIDAY: { startAt: 480, endAt: 1020 },
+      SATURDAY: undefined,
+      SUNDAY: undefined,
+    }
+
+    // Función para normalizar el schedule del backend
+    const normalizeSchedule = (schedule: any) => {
+      const normalized = {
+        MONDAY: undefined,
+        TUESDAY: undefined,
+        WEDNESDAY: undefined,
+        THURSDAY: undefined,
+        FRIDAY: undefined,
+        SATURDAY: undefined,
+        SUNDAY: undefined,
+      }
+      
+      // Copiar los días que están configurados
+      if (schedule) {
+        Object.keys(schedule).forEach(day => {
+          if (schedule[day] && typeof schedule[day] === 'object' && 
+              'startAt' in schedule[day] && 'endAt' in schedule[day]) {
+            normalized[day as keyof typeof normalized] = schedule[day]
+          }
+        })
+      }
+      
+      return normalized
+    }
+
     return isEdit
       ? {
         ...currentService,
@@ -139,11 +174,11 @@ export function ServiceActionDialog({
         durationUnit: currentService.duration.unit,
         priceAmount: currentService.price.amount,
         priceCurrency: currentService.price.currency,
-        schedule: currentService.schedule,
+        schedule: normalizeSchedule(currentService.schedule),
         productInfo: currentService.productInfo,
         codigoBarras: Number(currentService.codigoBarras) || 0,
-        unidadMedida: currentService.unidadMedida,
-        photos: currentService.photos,
+        unidadMedida: currentService.unidadMedida || null,
+        photos: currentService.photos || [],
       }
       : {
         name: '',
@@ -154,13 +189,7 @@ export function ServiceActionDialog({
         priceCurrency: 'MXN',
         maxConcurrentBooks: 1,
         minBookingLeadHours: 0,
-        schedule: {
-          MONDAY: { startAt: 480, endAt: 1020 },
-          TUESDAY: { startAt: 480, endAt: 1020 },
-          WEDNESDAY: { startAt: 480, endAt: 1020 },
-          THURSDAY: { startAt: 480, endAt: 1020 },
-          FRIDAY: { startAt: 480, endAt: 1020 },
-        },
+        schedule: baseSchedule,
         productInfo: {
           ...getDefaultProductInfo(),
           sku: '',
@@ -170,13 +199,7 @@ export function ServiceActionDialog({
           notes: '',
         },
         codigoBarras: 0,
-        unidadMedida: {
-          id: '',
-          name: '',
-          abbreviation: '',
-          createdAt: '',
-          updatedAt: '',
-        },
+        unidadMedida: null,
         photos: [],
       }
   }, [currentService, isEdit])
@@ -323,7 +346,9 @@ export function ServiceActionDialog({
     }}>
       <DialogContent className="sm:max-w-4xl">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+            toast.error('Completa todos los campos por favor')
+          })}>
             <DialogHeader>
               <DialogTitle aria-label={isEdit ? 'Editar Servicio' : 'Agregar Nuevo Servicio'}>
                 {isEdit ? 'Editar Servicio' : 'Agregar Nuevo Servicio'}
