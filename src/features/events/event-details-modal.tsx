@@ -150,6 +150,7 @@ export function EventDetailsModal({
                   ) : (
                     <EventDetailBookings event={event} />
                   )}
+                  
                 </div>
               </div>
             </ScrollArea>

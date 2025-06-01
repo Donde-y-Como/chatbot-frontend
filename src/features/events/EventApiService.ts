@@ -30,7 +30,7 @@ export const EventApiService = {
     }
   },
 
-  bookEvent: async (data: { eventId: string, clientId: string, date: string, participants: number, notes: string }) => {
+  bookEvent: async (data: { eventId: string, clientId: string, date: string, participants: number, notes?: string, status?: string, amount?: number, paymentStatus?: string }) => {
     const { eventId, ...bookData } = data;
     const response = await api.post(`/events/${eventId}/book`, { ...bookData })
 
@@ -45,5 +45,13 @@ export const EventApiService = {
     if (response.status !== 200) {
       throw new Error('Error removing the booking for the event')
     }
+  },
+
+  updateBooking: async (bookingId: string, data: { date?: string, participants?: number, notes?: string, status?: string, amount?: number, paymentStatus?: string }) => {
+    const response = await api.put(`/bookings/${bookingId}`, data)
+    if (response.status !== 200) {
+      throw new Error('Error updating booking')
+    }
+    return response.data
   },
 }

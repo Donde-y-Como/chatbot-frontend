@@ -52,6 +52,9 @@ export type EventWithBookings = EventPrimitives & {
   bookings: Booking[]
 }
 
+export type BookingStatus = 'pendiente' | 'confirmada' | 'reprogramada' | 'completada' | 'cancelada' | 'no asistió'
+export type PaymentStatus = 'pendiente' | 'pagado' | 'parcial' | 'reembolsado'
+
 export type Booking = {
   id: string
   clientId: string
@@ -59,6 +62,9 @@ export type Booking = {
   date: string
   participants: number
   notes: string
+  status: BookingStatus
+  amount: number
+  paymentStatus: PaymentStatus
   createdAt: string
   updatedAt: string
 }
@@ -158,3 +164,29 @@ export const creatableEventSchema = z.object({
   photos: z.array(z.string()),
   productInfo: productInfoSchema,
 })
+
+// Booking schemas
+export const bookingStatusSchema = z.enum(['pendiente', 'confirmada', 'reprogramada', 'completada', 'cancelada', 'no asistió'])
+export const paymentStatusSchema = z.enum(['pendiente', 'pagado', 'parcial', 'reembolsado'])
+
+export const createBookingSchema = z.object({
+  clientId: z.string().min(1, { message: 'El cliente es requerido' }),
+  date: z.string().datetime({ message: 'Fecha inválida' }),
+  participants: z.number().int().min(1, { message: 'Mínimo 1 participante' }),
+  notes: z.string().optional().default(''),
+  status: bookingStatusSchema.optional().default('pendiente'),
+  amount: z.number().min(0, { message: 'El monto no puede ser negativo' }).multipleOf(0.01, { message: 'Máximo 2 decimales' }).optional().default(0),
+  paymentStatus: paymentStatusSchema.optional().default('pendiente'),
+})
+
+export const updateBookingSchema = z.object({
+  date: z.string().datetime({ message: 'Fecha inválida' }).optional(),
+  participants: z.number().int().min(1, { message: 'Mínimo 1 participante' }).optional(),
+  notes: z.string().optional(),
+  status: bookingStatusSchema.optional(),
+  amount: z.number().min(0, { message: 'El monto no puede ser negativo' }).multipleOf(0.01, { message: 'Máximo 2 decimales' }).optional(),
+  paymentStatus: paymentStatusSchema.optional(),
+})
+
+export type CreateBookingData = z.infer<typeof createBookingSchema>
+export type UpdateBookingData = z.infer<typeof updateBookingSchema>

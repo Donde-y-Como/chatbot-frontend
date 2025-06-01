@@ -19,6 +19,7 @@ import { es } from 'date-fns/locale/es'
 import { ChevronLeft, ChevronRight, Clock, MapPin, MoreHorizontal, Users } from 'lucide-react'
 import { JSX, useState } from 'react'
 import { useEventMutations } from './hooks/useEventMutations'
+import { useBookingMutations } from './hooks/useBookingMutations'
 
 interface EventCalendarViewProps {
   events: EventPrimitives[];
@@ -39,7 +40,8 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null)
   const [showCreateEventModal, setShowCreateEventModal] = useState<boolean>(false)
 
-  const { updateEvent, bookEvent, deleteBooking, deleteEvent } = useEventMutations()
+  const { updateEvent, deleteEvent } = useEventMutations()
+  const { createBooking, updateBooking, deleteBooking } = useBookingMutations()
 
   const monthStart = startOfMonth(currentDate)
   const monthEnd = endOfMonth(currentDate)
@@ -99,26 +101,38 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
     setSelectedEvent(null)
   }
 
-  const handleBookingEvent = async ({ clientId, date, participants }: {
+  const handleBookingEvent = async ({ clientId, date, participants, notes, status, amount, paymentStatus }: {
     clientId: string,
     date: Date,
-    participants: number
+    participants: number,
+    notes?: string,
+    status?: string,
+    amount?: number,
+    paymentStatus?: string
   }) => {
     if (!selectedEvent) return
-    bookEvent({
+    const bookingData = {
       eventId: selectedEvent.id,
       clientId,
-      date,
+      date: date.toISOString(),
       participants,
-      notes: ''
-    })
+      notes: notes || '',
+      status: status || 'pendiente',
+      amount: amount || 0,
+      paymentStatus: paymentStatus || 'pendiente'
+    }
+    await createBooking(bookingData)
     setShowBooking(false)
     setSelectedEvent(null)
   }
 
+  const handleUpdateBooking = async (bookingId: string, data: any) => {
+    await updateBooking({ bookingId, data })
+  }
+
   const confirmBookingDeletion = async () => {
-    if (!selectedBookingId || !selectedEvent) return
-    deleteBooking({ bookingId: selectedBookingId, eventId: selectedEvent.id })
+    if (!selectedBookingId) return
+    await deleteBooking(selectedBookingId)
     setShowBookingDeleteDialog(false)
     setSelectedBookingId(null)
   }
@@ -384,6 +398,7 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
             }}
             onSaveBooking={handleBookingEvent}
             onRemoveBooking={handleRemoveBooking}
+            onUpdateBooking={handleUpdateBooking}
           />
 
           <EventDeleteDialog
