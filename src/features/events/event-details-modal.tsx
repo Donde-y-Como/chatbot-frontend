@@ -19,6 +19,7 @@ import {
 import { EventDetailBookings } from './details/event-detail-bookings'
 import { EventDetailItem } from './details/event-detail-item'
 import { EventDetailBookingsByDate } from './details/event-details-booking-by-date'
+import { ReservationsList } from './components/reservations-list'
 import { EventDetailsSkeleton } from './details/event-details-skeleton'
 import {
   formatDateRange,
@@ -53,9 +54,9 @@ export function EventDetailsModal({
     return (
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className='w-full max-w-4xl max-h-[90vh] p-0'>
-           <div className='p-6 text-center text-muted-foreground'>
-              No se encontró información del evento.
-            </div>
+          <div className='p-6 text-center text-muted-foreground'>
+            No se encontró información del evento.
+          </div>
         </DialogContent>
       </Dialog>
     )
@@ -142,15 +143,7 @@ export function EventDetailsModal({
                 </div>
 
                 <div className='mt-8'>
-                  {occurrences.length > 1 ? (
-                    <EventDetailBookingsByDate
-                      event={event}
-                      occurrences={occurrences}
-                    />
-                  ) : (
-                    <EventDetailBookings event={event} />
-                  )}
-                  
+                  <ReservationsList event={event} />
                 </div>
               </div>
             </ScrollArea>

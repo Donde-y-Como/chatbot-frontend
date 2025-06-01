@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { EventApiService } from '../EventApiService'
 import { UpdateBookingData } from '../types'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
 // Tipo específico para los datos de creación de booking
 type CreateBookingData = {
@@ -17,29 +17,23 @@ type CreateBookingData = {
 
 export function useBookingMutations() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
 
   const updateBookingMutation = useMutation({
     mutationFn: ({ bookingId, data }: { bookingId: string; data: UpdateBookingData }) =>
       EventApiService.updateBooking(bookingId, data),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidar y refrescar las queries de eventos y reservas
-      queryClient.invalidateQueries({ queryKey: ['events'] })
-      queryClient.invalidateQueries({ queryKey: ['bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['eventWithBookings'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['events'] }),
+        queryClient.invalidateQueries({ queryKey: ['bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['event'] }), // Invalidar todas las queries que empiecen con 'event'
+      ])
       
-      toast({
-        title: "Reserva actualizada",
-        description: "La reserva se ha actualizado correctamente.",
-      })
+      toast.success("Reserva actualizada correctamente")
     },
     onError: (error) => {
       console.error('Error updating booking:', error)
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la reserva. Intenta de nuevo.",
-        variant: "destructive",
-      })
+      toast.error("No se pudo actualizar la reserva. Intenta de nuevo.")
     },
   })
 
@@ -48,47 +42,37 @@ export function useBookingMutations() {
       const { eventId, ...data } = bookingData
       return EventApiService.bookEvent({ eventId, ...data })
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidar y refrescar las queries de eventos y reservas
-      queryClient.invalidateQueries({ queryKey: ['events'] })
-      queryClient.invalidateQueries({ queryKey: ['bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['eventWithBookings'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['events'] }),
+        queryClient.invalidateQueries({ queryKey: ['bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['event'] }), // Invalidar todas las queries que empiecen con 'event'
+      ])
       
-      toast({
-        title: "Reserva creada",
-        description: "La reserva se ha creado correctamente.",
-      })
+      toast.success("Reserva creada correctamente")
     },
     onError: (error) => {
       console.error('Error creating booking:', error)
-      toast({
-        title: "Error",
-        description: "No se pudo crear la reserva. Intenta de nuevo.",
-        variant: "destructive",
-      })
+      toast.error("No se pudo crear la reserva. Intenta de nuevo.")
     },
   })
 
   const deleteBookingMutation = useMutation({
     mutationFn: (bookingId: string) => EventApiService.cancelBooking(bookingId),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidar y refrescar las queries de eventos y reservas
-      queryClient.invalidateQueries({ queryKey: ['events'] })
-      queryClient.invalidateQueries({ queryKey: ['bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['eventWithBookings'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['events'] }),
+        queryClient.invalidateQueries({ queryKey: ['bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['event'] }), // Invalidar todas las queries que empiecen con 'event'
+      ])
       
-      toast({
-        title: "Reserva eliminada",
-        description: "La reserva se ha eliminado correctamente.",
-      })
+      toast.success("Reserva eliminada correctamente")
     },
     onError: (error) => {
       console.error('Error deleting booking:', error)
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la reserva. Intenta de nuevo.",
-        variant: "destructive",
-      })
+      toast.error("No se pudo eliminar la reserva. Intenta de nuevo.")
     },
   })
 
