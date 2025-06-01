@@ -186,8 +186,14 @@ export function ServiceViewDialog({
                     </div>
                     <Separator className="mb-3" />
                     <div className="text-sm">
-                      <p className="font-medium">{currentService.unidadMedida.name}</p>
-                      <p className="text-muted-foreground">({currentService.unidadMedida.abbreviation})</p>
+                      {currentService.unidadMedida ? (
+                        <>
+                          <p className="font-medium">{currentService.unidadMedida.name}</p>
+                          <p className="text-muted-foreground">({currentService.unidadMedida.abbreviation})</p>
+                        </>
+                      ) : (
+                        <p className="text-muted-foreground">No especificada</p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
