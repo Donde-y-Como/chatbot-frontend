@@ -11,6 +11,7 @@ import { EventWithBookings } from "../types"
 import { ClientChatButton } from "../components/client-chat-button"
 import { formatDuration, intervalToDuration, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
+import { BookingStatusBadge, PaymentStatusBadge } from "../utils/booking-status"
 
 type EventDetailBookingsProps = {
   event: EventWithBookings
@@ -196,6 +197,20 @@ export function EventDetailBookings({ event }: EventDetailBookingsProps) {
                             <span className="text-muted-foreground">Participantes:</span>
                             <span className="font-medium">{booking.participants}</span>
                           </div>
+                          <div className="grid grid-cols-2 text-sm">
+                            <span className="text-muted-foreground">Estado:</span>
+                            <BookingStatusBadge status={booking.status} className="w-fit" />
+                          </div>
+                          <div className="grid grid-cols-2 text-sm">
+                            <span className="text-muted-foreground">Estado del pago:</span>
+                            <PaymentStatusBadge status={booking.paymentStatus} className="w-fit" />
+                          </div>
+                          {booking.amount > 0 && (
+                            <div className="grid grid-cols-2 text-sm">
+                              <span className="text-muted-foreground">Monto:</span>
+                              <span className="font-medium">${booking.amount.toFixed(2)}</span>
+                            </div>
+                          )}
                           <div className="grid grid-cols-2 text-sm">
                             <span className="text-muted-foreground">Creada:</span>
                             <span className="font-medium">{formatDate(booking.createdAt)}</span>

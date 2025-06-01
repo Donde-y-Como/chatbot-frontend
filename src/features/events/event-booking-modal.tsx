@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { useGetClients } from '@/features/appointments/hooks/useGetClients';
 import { useGetEventWithBookings } from '@/features/events/hooks/useGetEventWithBookings';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,25 +15,36 @@ import { Loader2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { toast } from 'sonner';
 import { ClientPrimitives } from '../clients/types';
 import { useGetEventAvailableDates } from './hooks/useGetEventAvailableDates';
-import { Booking } from './types';
+import { Booking, createBookingSchema, BookingStatus, PaymentStatus } from './types';
 import { CreateOrSelectClient } from '@/features/appointments/components/CreateOrSelectClient.tsx'
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { BookingEditModal } from './booking-edit-modal';
+import { Edit } from 'lucide-react';
+import { BookingStatusBadge, PaymentStatusBadge, BOOKING_STATUS_LABELS, PAYMENT_STATUS_LABELS } from './utils/booking-status';
 
+// Schema específico para el formulario (sin el campo date)
 const bookingFormSchema = z.object({
-  clientId: z.string().min(1, { message: 'Debes seleccionar un cliente.' }),
-  participants: z
-    .number({ invalid_type_error: 'El número de participantes es requerido.' })
-    .min(1, { message: 'Mínimo 1 participante.' }),
-});
+  clientId: z.string().min(1, { message: 'El cliente es requerido' }),
+  participants: z.number().int().min(1, { message: 'Mínimo 1 participante' }),
+  notes: z.string().optional().default(''),
+  status: z.enum(['pendiente', 'confirmada', 'reprogramada', 'completada', 'cancelada', 'no asistió']).optional().default('pendiente'),
+  amount: z.number().min(0, { message: 'El monto no puede ser negativo' }).multipleOf(0.01, { message: 'Máximo 2 decimales' }).optional().default(0),
+  paymentStatus: z.enum(['pendiente', 'pagado', 'parcial', 'reembolsado']).optional().default('pendiente'),
+})
+
 type BookingFormValues = z.infer<typeof bookingFormSchema>;
 
 interface EventBookingModalProps {
   eventId: string;
   open: boolean;
   onClose: () => void;
-  onSaveBooking: (data: { clientId: string; participants: number; date: Date }) => Promise<void>;
+  onSaveBooking: (data: { clientId: string; participants: number; date: Date; notes?: string; status?: BookingStatus; amount?: number; paymentStatus?: PaymentStatus }) => Promise<void>;
   onRemoveBooking: (bookingId: string) => Promise<void>;
+  onUpdateBooking?: (bookingId: string, data: any) => Promise<void>;
 }
 
 export function EventBookingModal({
@@ -41,6 +53,7 @@ export function EventBookingModal({
   onClose,
   onSaveBooking,
   onRemoveBooking,
+  onUpdateBooking,
 }: EventBookingModalProps) {
   const { data: event, isLoading: isEventLoading } = useGetEventWithBookings(eventId);
   const { data: clients, isLoading: isClientsLoading } = useGetClients();
@@ -61,13 +74,22 @@ export function EventBookingModal({
     handleSubmit,
     reset,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
-    defaultValues: { clientId: '', participants: 1 },
+    defaultValues: { 
+      clientId: '', 
+      participants: 1, 
+      notes: '',
+      status: 'pendiente',
+      amount: 0,
+      paymentStatus: 'pendiente'
+    },
   });
 
   const [clientId, setClientId] = useState('');
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Actualizar clientId en el formulario cuando cambia
   useEffect(() => {
@@ -79,20 +101,68 @@ export function EventBookingModal({
   // Reiniciar el formulario cuando se abre o cierra el modal
   useEffect(() => {
     if (!open) {
-      reset({ clientId: '', participants: 1 });
+      reset({ 
+        clientId: '', 
+        participants: 1, 
+        notes: '',
+        status: 'pendiente',
+        amount: 0,
+        paymentStatus: 'pendiente'
+      });
       setClientId('');
     }
   }, [open, reset, setClientId]);
 
   const onSubmit = async (data: BookingFormValues) => {
-    if (!selectedDate) return;
-    await onSaveBooking({ ...data, date: selectedDate });
-    reset();
-    setClientId(''); // Limpiamos el estado local también
+    console.log('Form submitted with data:', data);
+    console.log('Selected date:', selectedDate);
+    console.log('Form errors:', errors);
+    
+    if (!selectedDate) {
+      console.error('No date selected');
+      return;
+    }
+    
+    try {
+      const bookingData = {
+        clientId: data.clientId,
+        participants: data.participants,
+        date: selectedDate,
+        notes: data.notes || '',
+        status: data.status || 'pendiente',
+        amount: data.amount || 0,
+        paymentStatus: data.paymentStatus || 'pendiente'
+      };
+      
+      console.log('Booking data to send:', bookingData);
+      await onSaveBooking(bookingData);
+      
+      // Toast de éxito y cerrar modal
+      toast.success('Cliente agendado con éxito');
+      onClose();
+      
+      reset();
+      setClientId('');
+    } catch (error) {
+      console.error('Error saving booking:', error);
+    }
   };
 
   const handleRemoveBooking = async (booking: Booking) => {
     await onRemoveBooking(booking.id)
+  }
+
+  const handleEditBooking = (booking: Booking) => {
+    setEditingBooking(booking);
+    setIsEditModalOpen(true);
+  }
+
+  const handleUpdateBooking = async (bookingId: string, data: any) => {
+    if (onUpdateBooking) {
+      await onUpdateBooking(bookingId, data);
+    }
+    setIsEditModalOpen(false);
+    setEditingBooking(null);
   }
 
   // Filter bookings that match the selected date.
@@ -146,7 +216,10 @@ export function EventBookingModal({
           </div>
 
           {/* Add Booking Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={(e) => {
+            console.log('Form submit event triggered');
+            handleSubmit(onSubmit)(e);
+          }} className="space-y-4">
             <div className="flex flex-col gap-2">
               <label className="font-medium">Cliente</label>
               <Controller
@@ -183,13 +256,114 @@ export function EventBookingModal({
               )}
             </div>
 
-            <Button type="submit" className="w-full">
-              Agregar Reserva
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="notes">Notas</Label>
+              <Controller
+                control={control}
+                name="notes"
+                render={({ field }) => (
+                  <Textarea
+                    {...field}
+                    placeholder="Notas adicionales sobre la reserva..."
+                    className="w-full"
+                    rows={3}
+                  />
+                )}
+              />
+              {errors.notes && (
+                <p className="text-sm text-red-600">{errors.notes.message}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="status">Estado de la Reserva</Label>
+                <Controller
+                  control={control}
+                  name="status"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(BOOKING_STATUS_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.status && (
+                  <p className="text-sm text-red-600">{errors.status.message}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="paymentStatus">Estado del Pago</Label>
+                <Controller
+                  control={control}
+                  name="paymentStatus"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.paymentStatus && (
+                  <p className="text-sm text-red-600">{errors.paymentStatus.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="amount">Monto/Abono</Label>
+              <Controller
+                control={control}
+                name="amount"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full"
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                )}
+              />
+              {errors.amount && (
+                <p className="text-sm text-red-600">{errors.amount.message}</p>
+              )}
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Guardando...' : 'Agregar Reserva'}
             </Button>
           </form>
 
           {/* List Existing Bookings for Selected Date */}
-          {clients && (<BookingsList bookingsForSelectedDate={bookingsForSelectedDate} clients={clients} handleRemoveBooking={handleRemoveBooking} />)}
+          {clients && (
+            <BookingsList 
+              bookingsForSelectedDate={bookingsForSelectedDate} 
+              clients={clients} 
+              handleRemoveBooking={handleRemoveBooking}
+              handleEditBooking={handleEditBooking}
+            />
+          )}
         </div>
 
         <DialogFooter>
@@ -198,13 +372,34 @@ export function EventBookingModal({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Modal de edición de reserva */}
+      <BookingEditModal
+        booking={editingBooking}
+        open={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingBooking(null);
+        }}
+        onSaveBooking={handleUpdateBooking}
+      />
     </Dialog>
   );
 }
 
 
 
-export function BookingsList({ bookingsForSelectedDate, clients, handleRemoveBooking }: { bookingsForSelectedDate: Booking[], clients: ClientPrimitives[], handleRemoveBooking: (booking: Booking) => void }) {
+export function BookingsList({ 
+  bookingsForSelectedDate, 
+  clients, 
+  handleRemoveBooking, 
+  handleEditBooking 
+}: { 
+  bookingsForSelectedDate: Booking[], 
+  clients: ClientPrimitives[], 
+  handleRemoveBooking: (booking: Booking) => void,
+  handleEditBooking: (booking: Booking) => void 
+}) {
   return (
     <div>
       <h3 className="font-semibold mb-2">Reservas existentes</h3>
@@ -235,20 +430,40 @@ export function BookingsList({ bookingsForSelectedDate, clients, handleRemoveBoo
                             .slice(0, 2)}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium">{client?.name || 'Cliente desconocido'}</p>
                         <p className="text-sm text-muted-foreground">
                           Participantes: {booking.participants}
                         </p>
+                        <div className="flex gap-2 mt-1">
+                          <BookingStatusBadge status={booking.status} />
+                          <PaymentStatusBadge status={booking.paymentStatus} />
+                          {booking.amount > 0 && (
+                            <Badge variant="outline" className="text-xs">
+                              ${booking.amount.toFixed(2)}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveBooking(booking)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditBooking(booking)}
+                        title="Editar reserva"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveBooking(booking)}
+                        title="Eliminar reserva"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </motion.div>
                 );
               })}

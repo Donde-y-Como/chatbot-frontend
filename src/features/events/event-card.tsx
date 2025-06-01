@@ -18,6 +18,7 @@ import { useState } from 'react'
 import { BookingDeleteDialog } from './booking-delete-dialog'
 import { getRecurrenceText, generateOccurrences } from './utils/occurrence'
 import { useEventMutations } from './hooks/useEventMutations'
+import { useBookingMutations } from './hooks/useBookingMutations'
 
 export function EventCard({
   event,
@@ -33,36 +34,49 @@ export function EventCard({
   const [showBookingDeleteDialog, setShowBookingDeleteDialog] = useState(false)
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null)
 
-  const { updateEvent, bookEvent, deleteBooking, deleteEvent } = useEventMutations()
+  const { updateEvent, deleteEvent } = useEventMutations()
+  const { createBooking, updateBooking, deleteBooking } = useBookingMutations()
 
   const handleEditedEvent = (changes: Partial<EventPrimitives>) => {
     updateEvent(event.id, changes)
     setShowEdit(false)
   }
 
-  const handleBookingEvent = async ({ clientId, date, participants }: {
+  const handleBookingEvent = async ({ clientId, date, participants, notes, status, amount, paymentStatus }: {
     clientId: string,
     date: Date,
-    participants: number
+    participants: number,
+    notes?: string,
+    status?: string,
+    amount?: number,
+    paymentStatus?: string
   }) => {
-    bookEvent({
+    const bookingData = {
       eventId: event.id,
       clientId,
-      date,
+      date: date.toISOString(),
       participants,
-      notes: ''
-    })
+      notes: notes || '',
+      status: status || 'pendiente',
+      amount: amount || 0,
+      paymentStatus: paymentStatus || 'pendiente'
+    }
+    await createBooking(bookingData)
   }
 
   const confirmBookingDeletion = async () => {
     if (!selectedBookingId) return
 
     try {
-      deleteBooking({ bookingId: selectedBookingId, eventId: event.id })
+      await deleteBooking(selectedBookingId)
     } finally {
       setShowBookingDeleteDialog(false)
       setSelectedBookingId(null)
     }
+  }
+
+  const handleUpdateBooking = async (bookingId: string, data: any) => {
+    await updateBooking({ bookingId, data })
   }
 
   const handleRemoveBooking = async (bookingId: Booking["id"]) => {
@@ -262,6 +276,7 @@ export function EventCard({
         onClose={() => setShowBooking(false)}
         onSaveBooking={handleBookingEvent}
         onRemoveBooking={handleRemoveBooking}
+        onUpdateBooking={handleUpdateBooking}
       />
 
       <BookingDeleteDialog
