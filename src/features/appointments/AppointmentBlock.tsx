@@ -40,6 +40,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { EditAppointmentDialog } from '@/features/appointments/components/EditAppointmentDialog.tsx'
 import { QuickEditStatusDialog } from '@/features/appointments/components/QuickEditStatusDialog.tsx'
+import { useDialogState } from '@/features/appointments/contexts/DialogStateContext'
 import { formatTime } from '@/features/appointments/utils/formatters'
 import { ClientPrimitives } from '../clients/types'
 import { Employee } from '../employees/types'
@@ -85,6 +86,7 @@ export function AppointmentBlock({
   const widthPercent = 100 / totalColumns
 
   const appointmentDate = new Date(appointment.date)
+  const { openDialog, closeDialog } = useDialogState()
   const isUpcoming = isBefore(
     new Date(Date.now()),
     setMinutes(appointmentDate, appointment.timeRange.startAt)
@@ -138,17 +140,28 @@ export function AppointmentBlock({
   const statusBadge = getStatusBadge()
 
   return (
-    <Dialog>
+    <Dialog onOpenChange={(open) => {
+      if (open) {
+        openDialog()
+      } else {
+        closeDialog()
+      }
+    }}>
       <DialogTrigger asChild>
         <div
-          className='absolute rounded-md overflow-hidden cursor-pointer transition-all hover:opacity-90 border-2 border-background group'
+          className={cn(
+            'absolute rounded-md overflow-hidden cursor-pointer transition-all hover:opacity-90 border-2 border-background group',
+            appointment.status === 'cancelada' && 'opacity-60 border-dashed border-red-300'
+          )}
           style={{
             top: `calc(${adjustedTopOffset}px)`,
             height: `${adjustedEventHeight}px`,
             left: `calc(${leftPercent}% + 2px)`,
             width: `calc(${widthPercent}% - 4px)`,
             backgroundColor:
-              employees.length > 0 ? employees[0].color : '#6c757d',
+              appointment.status === 'cancelada' 
+                ? '#6b7280' // Gris para canceladas
+                : employees.length > 0 ? employees[0].color : '#6c757d',
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -165,6 +178,11 @@ export function AppointmentBlock({
                 </Badge>
               </div>
               <div className='text-white/90 text-xs truncate mt-1'>
+                {appointment.status === 'cancelada' && (
+                  <span className='bg-red-500/80 text-white text-xs px-1 py-0.5 rounded mr-1'>
+                    CANCELADA
+                  </span>
+                )}
                 {appointment.serviceNames
                   .map((s) => (s.length > 25 ? `${s.substring(0, 25)}...` : s))
                   .join(', ')}
@@ -178,7 +196,14 @@ export function AppointmentBlock({
             </div>
           ) : (
             <div className='p-1 flex items-center justify-between text-white text-xs font-semibold truncate h-full'>
-              <span>{client.name}</span>
+              <div className='flex items-center gap-1'>
+                <span>{client.name}</span>
+                {appointment.status === 'cancelada' && (
+                  <span className='bg-red-500/80 text-white text-xs px-1 py-0.5 rounded'>
+                    CANCELADA
+                  </span>
+                )}
+              </div>
               <span className='text-white/90'>
                 {formatTime(appointment.timeRange.startAt)} -{' '}
                 {formatTime(appointment.timeRange.endAt)}
@@ -197,8 +222,8 @@ export function AppointmentBlock({
         </div>
       </DialogTrigger>
 
-      <DialogContent className='p-0 overflow-hidden bg-background rounded-lg shadow-lg max-w-4xl max-h-[85vh]'>
-        <DialogHeader className='bg-primary/5 px-6 py-4 border-b'>
+      <DialogContent className='p-0 overflow-hidden bg-background rounded-lg shadow-lg max-w-4xl w-[95vw] sm:w-full max-h-[90vh] flex flex-col'>
+        <DialogHeader className='flex-shrink-0 bg-primary/5 px-4 sm:px-6 py-4 border-b'>
           <div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4'>
             <div>
               <div className='flex items-center gap-2 mb-2 flex-wrap'>
@@ -257,7 +282,7 @@ export function AppointmentBlock({
           </DialogDescription>
         </DialogHeader>
 
-        <div className='max-h-[calc(85vh-12rem)] overflow-y-auto p-6'>
+        <div className='flex-1 overflow-y-auto px-4 sm:px-6 py-6 min-h-0'>
           <div className='space-y-6'>
             {/* Services Section */}
             <div>
@@ -495,12 +520,12 @@ export function AppointmentBlock({
           </div>
         </div>
 
-        <DialogFooter className='px-6 py-4 border-t flex flex-col sm:flex-row justify-end gap-3'>
+        <DialogFooter className='flex-shrink-0 px-4 sm:px-6 py-4 border-t flex flex-col sm:flex-row justify-end gap-3 bg-background'>
           <DialogClose asChild>
             <Button variant='secondary'>Cerrar</Button>
           </DialogClose>
 
-          {isUpcoming && (
+          {isUpcoming && appointment.status !== 'cancelada' && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant='destructive'>
@@ -514,14 +539,14 @@ export function AppointmentBlock({
                     ¿Estás seguro de cancelar esta cita?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta acción cancelará la cita{' '}
+                    Esta acción cambiará el estado de la cita{' '}
                     <strong>#{appointment.folio}</strong> agendada para el{' '}
                     <strong>{shortFormattedDate}</strong> a las{' '}
-                    <strong>{formatTime(appointment.timeRange.startAt)}</strong>
-                    .
+                    <strong>{formatTime(appointment.timeRange.startAt)}</strong>{' '}
+                    a <strong>"Cancelada"</strong>.
                     <br />
                     <br />
-                    Esta acción no se puede deshacer.
+                    La cita se mantendrá en el historial para referencia.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

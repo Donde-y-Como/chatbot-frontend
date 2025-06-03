@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 import { appointmentService } from '../appointmentService'
 import { UseGetAppointmentsQueryKey } from '../hooks/useGetAppointments'
+import { useDialogState } from '../contexts/DialogStateContext'
 import { AppointmentStatusBadge, PaymentStatusBadge } from './StatusBadges'
 import type { Appointment, AppointmentStatus, Deposit, PaymentStatus } from '../types'
 
@@ -33,6 +34,7 @@ export function QuickEditStatusDialog({ appointment }: QuickEditStatusDialogProp
   const [loading, setLoading] = useState(false)
 
   const queryClient = useQueryClient()
+  const { openDialog, closeDialog } = useDialogState()
 
   const handleDepositAmountChange = (value: string) => {
     const amount = parseFloat(value)
@@ -75,6 +77,7 @@ export function QuickEditStatusDialog({ appointment }: QuickEditStatusDialogProp
       if (result.id) {
         toast.success('Estado actualizado con éxito')
         setOpen(false)
+        closeDialog() // Notificar que se cerró el dialog
 
         await queryClient.invalidateQueries({
           queryKey: [UseGetAppointmentsQueryKey],
@@ -96,25 +99,30 @@ export function QuickEditStatusDialog({ appointment }: QuickEditStatusDialogProp
   }
 
   const handleButtonClick = (e: React.MouseEvent) => {
-    e.stopPropagation() // Prevenir que se abra el diálogo padre
+    e.preventDefault()
+    e.stopPropagation()
+    e.nativeEvent.stopImmediatePropagation()
     setOpen(true)
+    openDialog() // Notificar que se abrió un dialog
   }
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen) {
-      // Si se intenta abrir mediante el trigger, no hacer nada
-      // porque ya manejamos esto en handleButtonClick
-      return
+    if (!newOpen) {
+      setOpen(false)
+      closeDialog() // Notificar que se cerró el dialog
     }
-    setOpen(newOpen)
+    // No permitir la apertura automática via DialogTrigger
   }
 
   const handleCancel = (e?: React.MouseEvent) => {
     if (e) {
+      e.preventDefault()
       e.stopPropagation()
+      e.nativeEvent.stopImmediatePropagation()
     }
     handleReset()
     setOpen(false)
+    closeDialog() // Notificar que se cerró el dialog
   }
 
   const handleDialogClick = (e: React.MouseEvent) => {

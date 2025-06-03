@@ -64,16 +64,6 @@ const sidebarNavItems = [
     href: '/settings/whatsapp',
   },
   {
-    title: 'Notificaciones',
-    icon: <IconNotification size={18} />,
-    href: '/settings/notifications',
-  },
-  {
-    title: 'Display',
-    icon: <IconBrowserCheck size={18} />,
-    href: '/settings/display',
-  },
-  {
     title: 'Respuestas Rápidas',
     icon: <IconMessage size={18} />,
     href: '/settings/quick-responses',

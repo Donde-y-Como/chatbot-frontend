@@ -65,12 +65,6 @@ const AuthenticatedSettingsTagsLazyImport = createFileRoute(
 const AuthenticatedSettingsQuickResponsesLazyImport = createFileRoute(
   '/_authenticated/settings/quick-responses',
 )()
-const AuthenticatedSettingsNotificationsLazyImport = createFileRoute(
-  '/_authenticated/settings/notifications',
-)()
-const AuthenticatedSettingsDisplayLazyImport = createFileRoute(
-  '/_authenticated/settings/display',
-)()
 const AuthenticatedSettingsCategoriesLazyImport = createFileRoute(
   '/_authenticated/settings/categories',
 )()
@@ -274,28 +268,6 @@ const AuthenticatedSettingsQuickResponsesLazyRoute =
     ),
   )
 
-const AuthenticatedSettingsNotificationsLazyRoute =
-  AuthenticatedSettingsNotificationsLazyImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
-  } as any).lazy(() =>
-    import('./routes/_authenticated/settings/notifications.lazy').then(
-      (d) => d.Route,
-    ),
-  )
-
-const AuthenticatedSettingsDisplayLazyRoute =
-  AuthenticatedSettingsDisplayLazyImport.update({
-    id: '/display',
-    path: '/display',
-    getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
-  } as any).lazy(() =>
-    import('./routes/_authenticated/settings/display.lazy').then(
-      (d) => d.Route,
-    ),
-  )
-
 const AuthenticatedSettingsCategoriesLazyRoute =
   AuthenticatedSettingsCategoriesLazyImport.update({
     id: '/categories',
@@ -449,20 +421,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsCategoriesLazyImport
       parentRoute: typeof AuthenticatedSettingsRouteLazyImport
     }
-    '/_authenticated/settings/display': {
-      id: '/_authenticated/settings/display'
-      path: '/display'
-      fullPath: '/settings/display'
-      preLoaderRoute: typeof AuthenticatedSettingsDisplayLazyImport
-      parentRoute: typeof AuthenticatedSettingsRouteLazyImport
-    }
-    '/_authenticated/settings/notifications': {
-      id: '/_authenticated/settings/notifications'
-      path: '/notifications'
-      fullPath: '/settings/notifications'
-      preLoaderRoute: typeof AuthenticatedSettingsNotificationsLazyImport
-      parentRoute: typeof AuthenticatedSettingsRouteLazyImport
-    }
     '/_authenticated/settings/quick-responses': {
       id: '/_authenticated/settings/quick-responses'
       path: '/quick-responses'
@@ -548,8 +506,6 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedSettingsRouteLazyRouteChildren {
   AuthenticatedSettingsAccountLazyRoute: typeof AuthenticatedSettingsAccountLazyRoute
   AuthenticatedSettingsCategoriesLazyRoute: typeof AuthenticatedSettingsCategoriesLazyRoute
-  AuthenticatedSettingsDisplayLazyRoute: typeof AuthenticatedSettingsDisplayLazyRoute
-  AuthenticatedSettingsNotificationsLazyRoute: typeof AuthenticatedSettingsNotificationsLazyRoute
   AuthenticatedSettingsQuickResponsesLazyRoute: typeof AuthenticatedSettingsQuickResponsesLazyRoute
   AuthenticatedSettingsTagsLazyRoute: typeof AuthenticatedSettingsTagsLazyRoute
   AuthenticatedSettingsUnitsLazyRoute: typeof AuthenticatedSettingsUnitsLazyRoute
@@ -563,10 +519,6 @@ const AuthenticatedSettingsRouteLazyRouteChildren: AuthenticatedSettingsRouteLaz
       AuthenticatedSettingsAccountLazyRoute,
     AuthenticatedSettingsCategoriesLazyRoute:
       AuthenticatedSettingsCategoriesLazyRoute,
-    AuthenticatedSettingsDisplayLazyRoute:
-      AuthenticatedSettingsDisplayLazyRoute,
-    AuthenticatedSettingsNotificationsLazyRoute:
-      AuthenticatedSettingsNotificationsLazyRoute,
     AuthenticatedSettingsQuickResponsesLazyRoute:
       AuthenticatedSettingsQuickResponsesLazyRoute,
     AuthenticatedSettingsTagsLazyRoute: AuthenticatedSettingsTagsLazyRoute,
@@ -624,8 +576,6 @@ export interface FileRoutesByFullPath {
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
-  '/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
-  '/settings/notifications': typeof AuthenticatedSettingsNotificationsLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
@@ -654,8 +604,6 @@ export interface FileRoutesByTo {
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
-  '/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
-  '/settings/notifications': typeof AuthenticatedSettingsNotificationsLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
@@ -687,8 +635,6 @@ export interface FileRoutesById {
   '/(auth)/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/_authenticated/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
-  '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayLazyRoute
-  '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsLazyRoute
   '/_authenticated/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
   '/_authenticated/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/_authenticated/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
@@ -721,8 +667,6 @@ export interface FileRouteTypes {
     | '/restablecer-contrasena/$token'
     | '/settings/account'
     | '/settings/categories'
-    | '/settings/display'
-    | '/settings/notifications'
     | '/settings/quick-responses'
     | '/settings/tags'
     | '/settings/units'
@@ -750,8 +694,6 @@ export interface FileRouteTypes {
     | '/restablecer-contrasena/$token'
     | '/settings/account'
     | '/settings/categories'
-    | '/settings/display'
-    | '/settings/notifications'
     | '/settings/quick-responses'
     | '/settings/tags'
     | '/settings/units'
@@ -781,8 +723,6 @@ export interface FileRouteTypes {
     | '/(auth)/restablecer-contrasena/$token'
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/categories'
-    | '/_authenticated/settings/display'
-    | '/_authenticated/settings/notifications'
     | '/_authenticated/settings/quick-responses'
     | '/_authenticated/settings/tags'
     | '/_authenticated/settings/units'
@@ -873,8 +813,6 @@ export const routeTree = rootRoute
       "children": [
         "/_authenticated/settings/account",
         "/_authenticated/settings/categories",
-        "/_authenticated/settings/display",
-        "/_authenticated/settings/notifications",
         "/_authenticated/settings/quick-responses",
         "/_authenticated/settings/tags",
         "/_authenticated/settings/units",
@@ -922,14 +860,6 @@ export const routeTree = rootRoute
     },
     "/_authenticated/settings/categories": {
       "filePath": "_authenticated/settings/categories.lazy.tsx",
-      "parent": "/_authenticated/settings"
-    },
-    "/_authenticated/settings/display": {
-      "filePath": "_authenticated/settings/display.lazy.tsx",
-      "parent": "/_authenticated/settings"
-    },
-    "/_authenticated/settings/notifications": {
-      "filePath": "_authenticated/settings/notifications.lazy.tsx",
       "parent": "/_authenticated/settings"
     },
     "/_authenticated/settings/quick-responses": {
