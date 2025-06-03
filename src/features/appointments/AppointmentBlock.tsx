@@ -40,6 +40,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { EditAppointmentDialog } from '@/features/appointments/components/EditAppointmentDialog.tsx'
 import { QuickEditStatusDialog } from '@/features/appointments/components/QuickEditStatusDialog.tsx'
+import { useDialogState } from '@/features/appointments/contexts/DialogStateContext'
 import { formatTime } from '@/features/appointments/utils/formatters'
 import { ClientPrimitives } from '../clients/types'
 import { Employee } from '../employees/types'
@@ -85,6 +86,7 @@ export function AppointmentBlock({
   const widthPercent = 100 / totalColumns
 
   const appointmentDate = new Date(appointment.date)
+  const { openDialog, closeDialog } = useDialogState()
   const isUpcoming = isBefore(
     new Date(Date.now()),
     setMinutes(appointmentDate, appointment.timeRange.startAt)
@@ -138,7 +140,13 @@ export function AppointmentBlock({
   const statusBadge = getStatusBadge()
 
   return (
-    <Dialog>
+    <Dialog onOpenChange={(open) => {
+      if (open) {
+        openDialog()
+      } else {
+        closeDialog()
+      }
+    }}>
       <DialogTrigger asChild>
         <div
           className='absolute rounded-md overflow-hidden cursor-pointer transition-all hover:opacity-90 border-2 border-background group'
