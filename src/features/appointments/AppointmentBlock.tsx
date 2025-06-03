@@ -205,8 +205,8 @@ export function AppointmentBlock({
         </div>
       </DialogTrigger>
 
-      <DialogContent className='p-0 overflow-hidden bg-background rounded-lg shadow-lg max-w-4xl max-h-[85vh]'>
-        <DialogHeader className='bg-primary/5 px-6 py-4 border-b'>
+      <DialogContent className='p-0 overflow-hidden bg-background rounded-lg shadow-lg max-w-4xl w-[95vw] sm:w-full max-h-[90vh] flex flex-col'>
+        <DialogHeader className='flex-shrink-0 bg-primary/5 px-4 sm:px-6 py-4 border-b'>
           <div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4'>
             <div>
               <div className='flex items-center gap-2 mb-2 flex-wrap'>
@@ -265,7 +265,7 @@ export function AppointmentBlock({
           </DialogDescription>
         </DialogHeader>
 
-        <div className='max-h-[calc(85vh-12rem)] overflow-y-auto p-6'>
+        <div className='flex-1 overflow-y-auto px-4 sm:px-6 py-6 min-h-0'>
           <div className='space-y-6'>
             {/* Services Section */}
             <div>
@@ -503,7 +503,7 @@ export function AppointmentBlock({
           </div>
         </div>
 
-        <DialogFooter className='px-6 py-4 border-t flex flex-col sm:flex-row justify-end gap-3'>
+        <DialogFooter className='flex-shrink-0 px-4 sm:px-6 py-4 border-t flex flex-col sm:flex-row justify-end gap-3 bg-background'>
           <DialogClose asChild>
             <Button variant='secondary'>Cerrar</Button>
           </DialogClose>
