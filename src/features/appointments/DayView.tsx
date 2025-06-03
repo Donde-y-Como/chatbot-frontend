@@ -114,7 +114,7 @@ export function DayView({
       await queryClient.invalidateQueries({
         queryKey: [UseGetAppointmentsQueryKey, date.toISOString()],
       })
-      toast.success('Cita cancelada exitosamente')
+      toast.success('Estado de la cita cambiado a cancelada')
     } catch (e) {
       toast.error('No se pudo cancelar la cita')
     }

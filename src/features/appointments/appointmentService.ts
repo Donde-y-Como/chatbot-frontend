@@ -10,7 +10,11 @@ import { ClientPrimitives } from '../clients/types'
 
 export const appointmentService = {
   cancelAppointment: async (appointmentId: string) => {
-    await api.delete(`/appointments/${appointmentId}`)
+    // En lugar de eliminar, cambiar el estado a cancelada
+    const response = await api.put(`/appointments/${appointmentId}`, {
+      status: 'cancelada'
+    })
+    return response.data
   },
 
   makeAppointment: async (appointment: Partial<Appointment>) => {
