@@ -219,6 +219,10 @@ export function MakeAppointmentDialog({
                   selectedClient={selectedClient}
                   selectedServices={selectedServices}
                   selectedEmployeeIds={selectedEmployeeIds}
+                  status={status}
+                  paymentStatus={paymentStatus}
+                  deposit={deposit}
+                  notes={notes}
                   loading={loading}
                   onSubmit={handleSubmit}
                   onBack={() => setActiveStep(5)}
