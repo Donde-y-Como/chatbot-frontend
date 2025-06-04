@@ -29,7 +29,6 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { addHours } from 'date-fns'
 import * as React from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { FileUpload } from '../../components/file-upload'
@@ -56,19 +55,14 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
   const { createEvent } = useEventMutations()
   const { uploadFile, validateFile, isUploading } = useUploadMedia()
   const defaultValues = React.useMemo(() => {
-    const startDate = defaultDate ? new Date(defaultDate) : new Date()
-    // Set default time to 9:00 AM
-    startDate.setHours(9, 0, 0, 0)
-    const endDate = addHours(startDate, 1)
-    
     return {
       name: '',
       description: '',
       price: { amount: 0, currency: Currency.MXN },
       capacity: { isLimited: false, maxCapacity: null },
       duration: {
-        startAt: startDate.toISOString(),
-        endAt: endDate.toISOString(),
+        startAt: '',
+        endAt: '',
       },
       recurrence: { frequency: RecurrenceFrequency.NEVER, endCondition: null },
       location: '',
@@ -535,7 +529,9 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
                                     controllerField.onChange(date.toISOString());
                                     const endTime = new Date(watch('duration.endAt'));
                                     if (endTime <= date) {
-                                      setValue('duration.endAt', addHours(date, 1).toISOString());
+                                      const newEndTime = new Date(date);
+                                      newEndTime.setHours(newEndTime.getHours() + 1);
+                                      setValue('duration.endAt', newEndTime.toISOString());
                                     }
                                   }}
                                 />
