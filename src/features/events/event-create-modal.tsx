@@ -52,6 +52,7 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
   const [photos, setPhotos] = React.useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [formSubmitError, setFormSubmitError] = React.useState<string | null>(null)
+  const [activeTab, setActiveTab] = React.useState('general')
   const { createEvent } = useEventMutations()
   const { uploadFile, validateFile, isUploading } = useUploadMedia()
   const defaultValues = React.useMemo(() => {
@@ -94,6 +95,7 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
     if (open) {
       reset(defaultValues)
       setPhotos([])
+      setActiveTab('general')
     }
   }, [open, reset, defaultValues])
 
@@ -284,6 +286,30 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
     );
   }, [form, photos]);
 
+  // Función para navegar a la siguiente pestaña
+  const handleNext = React.useCallback((e?: React.MouseEvent) => {
+    e?.preventDefault();
+    const tabs = ['general', 'capacity', 'schedule', 'product'];
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1]);
+    }
+  }, [activeTab]);
+
+  // Función para navegar a la pestaña anterior
+  const handlePrevious = React.useCallback((e?: React.MouseEvent) => {
+    e?.preventDefault();
+    const tabs = ['general', 'capacity', 'schedule', 'product'];
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1]);
+    }
+  }, [activeTab]);
+
+  // Verificar si es la última pestaña
+  const isLastTab = activeTab === 'product';
+  const isFirstTab = activeTab === 'general';
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       // Si está cerrando (isOpen === false) y hay campos rellenados, prevenimos el cierre
@@ -301,7 +327,7 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
               <DialogDescription>Completa los detalles para crear un nuevo evento</DialogDescription>
             </DialogHeader>
 
-            <Tabs defaultValue="general" className="w-full mt-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="capacity">Capacidad</TabsTrigger>
@@ -699,14 +725,28 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
             {/*    </AlertDescription>*/}
             {/*  </Alert>*/}
             {/*)}*/}
-            <DialogFooter className="mt-6 gap-2">
-              <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting || isUploading}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitting || isUploading}>Guardar Cambios</Button>
-            </DialogFooter>
           </form>
         </Form>
+        
+        <DialogFooter className="mt-6 gap-2">
+          {!isFirstTab && (
+            <Button variant="outline" type="button" onClick={handlePrevious} disabled={isSubmitting || isUploading}>
+              Anterior
+            </Button>
+          )}
+          <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting || isUploading}>
+            Cancelar
+          </Button>
+          {isLastTab ? (
+            <Button type="button" onClick={handleSubmit(onSubmit)} disabled={isSubmitting || isUploading}>
+              Guardar Cambios
+            </Button>
+          ) : (
+            <Button type="button" onClick={handleNext} disabled={isSubmitting || isUploading}>
+              Siguiente
+            </Button>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

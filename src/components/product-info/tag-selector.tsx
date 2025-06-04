@@ -88,6 +88,7 @@ export function TagSelector({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
+            type="button"
             variant="outline"
             role="combobox"
             aria-expanded={open}
@@ -114,6 +115,7 @@ export function TagSelector({
                     No se encontraron etiquetas
                   </p>
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => {
