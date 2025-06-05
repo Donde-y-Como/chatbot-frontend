@@ -151,16 +151,18 @@ export function QuickEditStatusDialog({ appointment }: QuickEditStatusDialogProp
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button 
-              size='sm' 
-              variant='outline' 
-              className='h-8 px-2' 
-              disabled
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Zap className='h-3 w-3 mr-1' />
-              Edición Rápida
-            </Button>
+            <span className="inline-block">
+              <Button 
+                size='sm' 
+                variant='outline' 
+                className='h-8 px-2' 
+                disabled
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Zap className='h-3 w-3 mr-1' />
+                Edición Rápida
+              </Button>
+            </span>
           </TooltipTrigger>
           <TooltipContent>
             <p>No se pueden editar citas que ya pasaron</p>

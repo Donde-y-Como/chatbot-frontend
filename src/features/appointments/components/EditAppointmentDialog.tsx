@@ -117,16 +117,18 @@ export function EditAppointmentDialog({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button 
-              size='sm' 
-              variant='outline' 
-              className='h-9' 
-              disabled
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Edit className='h-4 w-4 mr-2' />
-              Editar
-            </Button>
+            <span className="inline-block">
+              <Button 
+                size='sm' 
+                variant='outline' 
+                className='h-9' 
+                disabled
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Edit className='h-4 w-4 mr-2' />
+                Editar
+              </Button>
+            </span>
           </TooltipTrigger>
           <TooltipContent>
             <p>No se pueden editar citas que ya pasaron</p>
