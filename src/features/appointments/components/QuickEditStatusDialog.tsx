@@ -10,6 +10,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -19,6 +25,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { appointmentService } from '../appointmentService'
 import { UseGetAppointmentsQueryKey } from '../hooks/useGetAppointments'
 import { useDialogState } from '../contexts/DialogStateContext'
+import { isAppointmentPast } from '../utils/formatters'
 import { AppointmentStatusBadge, PaymentStatusBadge } from './StatusBadges'
 import type { Appointment, AppointmentStatus, Deposit, PaymentStatus } from '../types'
 
@@ -85,8 +92,16 @@ export function QuickEditStatusDialog({ appointment }: QuickEditStatusDialogProp
       } else {
         toast.error('Error al actualizar el estado')
       }
-    } catch (error) {
-      toast.error('Error al conectar con el servidor')
+    } catch (error: any) {
+      // Manejar el error específico de cita pasada
+      if (error?.status === 400 && error?.detail && error.detail.includes('cita que ya pasó')) {
+        toast.error('No se puede editar una cita que ya pasó')
+      } else if (error?.title === 'Cannot edit past appointment') {
+        toast.error('No se puede editar una cita que ya pasó')
+      } else {
+        toast.error('Error al conectar con el servidor')
+      }
+      console.error('Error in quick edit:', error)
     } finally {
       setLoading(false)
     }
@@ -127,6 +142,34 @@ export function QuickEditStatusDialog({ appointment }: QuickEditStatusDialogProp
 
   const handleDialogClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevenir que clicks dentro del dialog se propaguen
+  }
+
+  const isAppointmentExpired = isAppointmentPast(appointment.date, appointment.timeRange)
+
+  if (isAppointmentExpired) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-block">
+              <Button 
+                size='sm' 
+                variant='outline' 
+                className='h-8 px-2' 
+                disabled
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Zap className='h-3 w-3 mr-1' />
+                Edición Rápida
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>No se pueden editar citas que ya pasaron</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
   }
 
   return (

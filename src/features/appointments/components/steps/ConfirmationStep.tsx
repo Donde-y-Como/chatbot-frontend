@@ -1,8 +1,9 @@
 import React from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
-import { CalendarIcon, DollarSignIcon, Scissors, User } from 'lucide-react'
+import { CalendarIcon, DollarSignIcon, Scissors, User, CreditCard, FileText, CheckCircle } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -18,8 +19,9 @@ import {
 } from '@/components/ui/hover-card.tsx'
 import { ClientPrimitives } from '@/features/clients/types'
 import { useGetEmployees } from '../../hooks/useGetEmployees'
-import { MinutesTimeRange, Service } from '../../types'
+import { MinutesTimeRange, Service, AppointmentStatus, PaymentStatus, Deposit } from '../../types'
 import { formatSlotHour } from '../../utils/formatters'
+import { AppointmentStatusBadge, PaymentStatusBadge } from '../StatusBadges'
 
 interface ConfirmationStepProps {
   date: Date
@@ -27,6 +29,11 @@ interface ConfirmationStepProps {
   selectedClient: ClientPrimitives | undefined
   selectedServices: Service[] | undefined
   selectedEmployeeIds: string[]
+  // Nuevos campos para mostrar en el resumen
+  status: AppointmentStatus
+  paymentStatus: PaymentStatus
+  deposit: Deposit | null
+  notes: string
   loading: boolean
   onSubmit: () => void
   onBack: () => void
@@ -42,6 +49,10 @@ export function ConfirmationStep({
   selectedClient,
   selectedServices = [],
   selectedEmployeeIds,
+  status,
+  paymentStatus,
+  deposit,
+  notes,
   loading,
   onSubmit,
   onBack,
@@ -116,6 +127,49 @@ export function ConfirmationStep({
               </div>
             </div>
           </div>
+
+          {/* Sección de Abono/Depósito */}
+          {deposit && deposit.amount > 0 && (
+            <div className='flex items-start gap-2'>
+              <CreditCard className='h-5 w-5 text-primary mt-1' />
+              <div>
+                <p className='text-sm text-muted-foreground'>Abono/Depósito</p>
+                <div className='space-y-1 mt-1'>
+                  <p className='font-medium text-lg text-green-600'>
+                    {deposit.amount.toLocaleString('es-MX')} {deposit.currency}
+                  </p>
+                  <p className='text-xs text-muted-foreground'>
+                    Pagado por adelantado
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Estados */}
+          <div className='flex items-start gap-2'>
+            <CheckCircle className='h-5 w-5 text-primary mt-1' />
+            <div>
+              <p className='text-sm text-muted-foreground'>Estado de la Cita</p>
+              <div className='flex gap-2 mt-1'>
+                <AppointmentStatusBadge status={status} />
+                <PaymentStatusBadge paymentStatus={paymentStatus} />
+              </div>
+            </div>
+          </div>
+
+          {/* Notas */}
+          {notes && notes.trim() && (
+            <div className='flex items-start gap-2'>
+              <FileText className='h-5 w-5 text-primary mt-1' />
+              <div>
+                <p className='text-sm text-muted-foreground'>Notas</p>
+                <div className='mt-1 p-2 bg-muted/50 rounded-md'>
+                  <p className='text-sm'>{notes}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className='flex items-center gap-2'>
             <CalendarIcon className='h-5 w-5 text-primary' />

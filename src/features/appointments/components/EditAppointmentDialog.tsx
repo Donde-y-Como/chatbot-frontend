@@ -9,9 +9,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { Appointment } from '@/features/appointments/types.ts'
 import { useAppointmentForm } from '../hooks/useAppointmentForm'
+import { isAppointmentPast } from '../utils/formatters'
 import { AppointmentStepIndicator } from './AppointmentStepIndicator'
 import {
   ClientServiceStep,
@@ -101,6 +108,34 @@ export function EditAppointmentDialog({
 
   const handleDialogClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevenir que clicks dentro del dialog se propaguen
+  }
+
+  const isAppointmentExpired = isAppointmentPast(appointment.date, appointment.timeRange)
+
+  if (isAppointmentExpired) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-block">
+              <Button 
+                size='sm' 
+                variant='outline' 
+                className='h-9' 
+                disabled
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Edit className='h-4 w-4 mr-2' />
+                Editar
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>No se pueden editar citas que ya pasaron</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
   }
 
   return (
@@ -193,6 +228,10 @@ export function EditAppointmentDialog({
                 selectedClient={selectedClient}
                 selectedServices={selectedServices}
                 selectedEmployeeIds={selectedEmployeeIds}
+                status={status}
+                paymentStatus={paymentStatus}
+                deposit={deposit}
+                notes={notes}
                 loading={loading}
                 onSubmit={handleSubmit}
                 onBack={() => setActiveStep(5)}
