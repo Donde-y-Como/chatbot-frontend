@@ -229,8 +229,16 @@ export function useAppointmentForm(
       } else {
         toast.error(`Error al ${appointment ? 'editar' : 'agendar'} la cita`)
       }
-    } catch (error) {
-      toast.error('Error al conectar con el servidor')
+    } catch (error: any) {
+      // Manejar el error específico de cita pasada
+      if (error?.status === 400 && error?.detail && error.detail.includes('cita que ya pasó')) {
+        toast.error('No se puede editar una cita que ya pasó')
+      } else if (error?.title === 'Cannot edit past appointment') {
+        toast.error('No se puede editar una cita que ya pasó')
+      } else {
+        toast.error('Error al conectar con el servidor')
+      }
+      console.error('Error in appointment form:', error)
     } finally {
       setLoading(false)
     }
