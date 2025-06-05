@@ -1,14 +1,15 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { isToday, setMinutes } from 'date-fns'
 import { es } from 'date-fns/locale/es'
-import { Clock } from 'lucide-react'
+import { Clock, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
 import { MinutesTimeRange } from '../../types'
-import { formatSlotHour } from '../../utils/formatters'
+import { formatSlotHour, isValidAppointmentDate, getPastDateErrorMessage } from '../../utils/formatters'
 
 interface DateTimeStepProps {
   date: Date
@@ -33,6 +34,8 @@ export function DateTimeStep({
   onBack,
   onCancel,
 }: DateTimeStepProps) {
+  const [dateError, setDateError] = useState<string | null>(null)
+  
   // Convert minutes to HH:MM format for input
   const minutesToTime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60)
@@ -61,13 +64,28 @@ export function DateTimeStep({
   const { workHours } = useGetWorkSchedule(date)
 
   const handleDateSelect = (newDate: Date | undefined) => {
-    if (newDate && isToday(newDate)) {
+    if (!newDate) return
+    
+    // Validar que la fecha no sea en el pasado
+    if (!isValidAppointmentDate(newDate)) {
+      setDateError(getPastDateErrorMessage())
+      return
+    }
+    
+    setDateError(null)
+    
+    if (isToday(newDate)) {
       const today = new Date()
       onDateChange(
         setMinutes(newDate as Date, today.getMinutes() + today.getHours() * 60)
       )
+    } else {
+      onDateChange(setMinutes(newDate as Date, workHours ? workHours.startAt : 0))
     }
-    onDateChange(setMinutes(newDate as Date, workHours ? workHours.startAt : 0))
+  }
+  
+  const disablePastDates = (date: Date) => {
+    return !isValidAppointmentDate(date)
   }
 
   return (
@@ -75,6 +93,12 @@ export function DateTimeStep({
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         <div>
           <label className='text-sm font-medium mb-2 block'>Fecha</label>
+          {dateError && (
+            <Alert variant="destructive" className="mb-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{dateError}</AlertDescription>
+            </Alert>
+          )}
           <div className='border rounded-md p-1'>
             <Calendar
               required
@@ -82,6 +106,7 @@ export function DateTimeStep({
               mode='single'
               selected={date}
               onSelect={handleDateSelect}
+              disabled={disablePastDates}
               className='w-full'
             />
           </div>
@@ -141,7 +166,7 @@ export function DateTimeStep({
           </Button>
         </div>
         <Button
-          disabled={timeRange.endAt <= timeRange.startAt}
+          disabled={timeRange.endAt <= timeRange.startAt || !!dateError}
           onClick={onNext}
         >
           Continuar

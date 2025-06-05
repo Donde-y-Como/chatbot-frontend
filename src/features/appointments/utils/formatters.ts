@@ -39,3 +39,30 @@ export function isAppointmentPast(appointmentDate: string | Date, timeRange: { s
   // Comparar con la fecha/hora actual
   return appointmentDateTime < new Date()
 }
+export function isValidAppointmentDate(date: Date): boolean {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0) 
+  
+  const appointmentDate = new Date(date)
+  appointmentDate.setHours(0, 0, 0, 0) 
+  
+  return appointmentDate >= today
+}
+
+export function getPastDateErrorMessage(): string {
+  return 'No se pueden agendar citas en fechas pasadas. Por favor selecciona una fecha desde hoy en adelante.'
+}
+
+export function canChangeDateTo(currentDate: Date, newDate: Date): boolean {
+  if (!isValidAppointmentDate(newDate)) {
+    return false
+  }
+  
+  // Si la cita actual ya pasó, no se puede editar
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const current = new Date(currentDate)
+  current.setHours(0, 0, 0, 0)
+  
+  return current >= today
+}

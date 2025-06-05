@@ -7,6 +7,7 @@ import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGet
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import { Appointment, MinutesTimeRange, AppointmentStatus, PaymentStatus, Deposit } from '@/features/appointments/types.ts'
+import { isValidAppointmentDate, getPastDateErrorMessage, canChangeDateTo } from '@/features/appointments/utils/formatters'
 import { useCheckAvailability } from './useCheckAvailability'
 
 export function useAppointmentForm(
@@ -193,6 +194,17 @@ export function useAppointmentForm(
       return
     }
 
+    if (!isValidAppointmentDate(date)) {
+      toast.error(getPastDateErrorMessage())
+      return
+    }
+
+    // Si estamos editando, validar que se pueda cambiar la fecha
+    if (appointment && !canChangeDateTo(new Date(appointment.date), date)) {
+      toast.error('No se puede cambiar la cita a una fecha pasada')
+      return
+    }
+
     setLoading(true)
 
     const appointmentData = {
@@ -230,11 +242,17 @@ export function useAppointmentForm(
         toast.error(`Error al ${appointment ? 'editar' : 'agendar'} la cita`)
       }
     } catch (error: any) {
-      // Manejar el error específico de cita pasada
-      if (error?.status === 400 && error?.detail && error.detail.includes('cita que ya pasó')) {
-        toast.error('No se puede editar una cita que ya pasó')
-      } else if (error?.title === 'Cannot edit past appointment') {
-        toast.error('No se puede editar una cita que ya pasó')
+      // Manejar errores específicos de fechas pasadas
+      if (error?.status === 400) {
+        if (error?.detail && (error.detail.includes('cita que ya pasó') || error.detail.includes('fechas pasadas'))) {
+          toast.error('No se puede editar una cita que ya pasó')
+        } else if (error?.detail && error.detail.includes('fechas pasadas')) {
+          toast.error(getPastDateErrorMessage())
+        } else {
+          toast.error(`Error al ${appointment ? 'editar' : 'agendar'} la cita: ${error.detail || 'Error desconocido'}`)
+        }
+      } else if (error?.title === 'Cannot edit past appointment' || error?.title === 'Invalid appointment date') {
+        toast.error('No se puede agendar una cita en fecha pasada')
       } else {
         toast.error('Error al conectar con el servidor')
       }
