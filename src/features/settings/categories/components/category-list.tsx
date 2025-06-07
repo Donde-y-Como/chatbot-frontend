@@ -83,7 +83,6 @@ export function CategoryList({
                     </p>
                     {hasSubcategories && (
                       <div className='flex items-center gap-1 mt-2 ml-8 text-xs text-muted-foreground'>
-                        <ChevronRight className='h-3 w-3' />
                         {parentCategory.subcategories?.length} subcategoría(s)
                       </div>
                     )}
