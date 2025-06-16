@@ -9,11 +9,18 @@ import { Product, ProductStatus, Unit, Category, ProductTag } from '../types';
 import { DataTableRowActions } from './data-table-row-actions';
 
 // Función helper para formatear precios
-const formatPrice = (price: number) => {
+const formatPrice = (priceObj: { amount: number; currency: string } | number) => {
+  if (typeof priceObj === 'number') {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+    }).format(priceObj);
+  }
+  
   return new Intl.NumberFormat('es-MX', {
     style: 'currency',
-    currency: 'MXN',
-  }).format(price);
+    currency: priceObj.currency,
+  }).format(priceObj.amount);
 };
 
 // Función helper para el badge de status
@@ -27,12 +34,16 @@ const getStatusBadge = (status: ProductStatus) => {
   }
 
   const statusConfig = {
-    [ProductStatus.ACTIVE]: {
+    [ProductStatus.ACTIVO]: {
       label: 'Activo',
       className: 'bg-green-100 text-green-800 border-green-200'
     },
-    [ProductStatus.INACTIVE]: {
+    [ProductStatus.INACTIVO]: {
       label: 'Inactivo',
+      className: 'bg-red-100 text-red-800 border-red-200'
+    },
+    [ProductStatus.SIN_STOCK]: {
+      label: 'Sin Stock',
       className: 'bg-red-100 text-red-800 border-red-200'
     }
   };
@@ -116,30 +127,56 @@ export const createProductColumns = (
   },
 
   {
+    accessorKey: 'cost',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Costo" />
+    ),
+    cell: ({ row }) => {
+      const { cost } = row.original;
+      
+      return (
+        <div className="flex flex-col">
+          <span className="font-medium text-sm">
+            {formatPrice(cost)}
+          </span>
+        </div>
+      );
+    },
+    enableSorting: true,
+  },
+
+  {
     accessorKey: 'price',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Precio" />
     ),
     cell: ({ row }) => {
-      const { price, discount } = row.original;
-      const safePrice = price || 0;
+      const { price, finalPrice, discount } = row.original;
       const safeDiscount = discount || 0;
-      const finalPrice = safePrice * (1 - safeDiscount / 100);
+      
+      // Si hay finalPrice y es menor al precio original, mostrar precio tachado
+      const showDiscountedPrice = finalPrice && finalPrice.amount < price.amount;
       
       return (
         <div className="flex flex-col">
-          <span className="font-medium text-sm">
-            {formatPrice(finalPrice)}
-          </span>
-          {safeDiscount > 0 && (
-            <div className="flex items-center gap-1">
+          {showDiscountedPrice ? (
+            <>
               <span className="text-xs text-muted-foreground line-through">
-                {formatPrice(safePrice)}
+                {formatPrice(price)}
               </span>
-              <Badge variant="outline" className="text-xs h-4 px-1">
-                -{safeDiscount}%
-              </Badge>
-            </div>
+              <span className="font-medium text-sm text-green-600">
+                {formatPrice(finalPrice)}
+              </span>
+            </>
+          ) : (
+            <span className="font-medium text-sm">
+              {formatPrice(price)}
+            </span>
+          )}
+          {safeDiscount > 0 && (
+            <Badge variant="outline" className="text-xs h-4 px-1 w-fit">
+              -{safeDiscount}%
+            </Badge>
           )}
         </div>
       );
@@ -255,45 +292,6 @@ export const createProductColumns = (
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
-  },
-
-  {
-    accessorKey: 'cost',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Costo" />
-    ),
-    cell: ({ row }) => {
-      const { cost, price } = row.original;
-      const safeCost = cost || 0;
-      const safePrice = price || 0;
-      const margin = safePrice > 0 ? ((safePrice - safeCost) / safePrice) * 100 : 0;
-      
-      return (
-        <div className="flex flex-col">
-          <span className="text-sm">{formatPrice(safeCost)}</span>
-          <span className={cn(
-            "text-xs",
-            margin > 30 ? "text-green-600" : margin > 10 ? "text-yellow-600" : "text-red-600"
-          )}>
-            Margen: {margin.toFixed(1)}%
-          </span>
-        </div>
-      );
-    },
-    enableSorting: true,
-  },
-
-  {
-    accessorKey: 'createdAt',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Creado" />
-    ),
-    cell: ({ row }) => (
-      <Badge variant="outline" className="text-xs">
-        {format(parseISO(row.original.createdAt), 'dd/MM/y', { locale: es })}
-      </Badge>
-    ),
-    enableSorting: true,
   },
 
   {

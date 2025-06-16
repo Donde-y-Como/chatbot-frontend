@@ -13,7 +13,7 @@ import { ProductPrimaryButtons } from './components/product-primary-buttons';
 import { ProductFiltersComponent } from './components/product-filters';
 import { ProductDialogs } from './components/product-dialogs';
 import { createProductColumns } from './components/products-columns';
-import { calculateProductStats, formatCurrency } from './utils/productUtils';
+import { calculateProductStats } from './utils/productUtils';
 import { Product, ProductFilters } from './types';
 import { useState } from 'react';
 
@@ -62,7 +62,7 @@ function ProductsContent() {
         </div>
 
         {/* Estadísticas */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <div className="grid gap-4 md:grid-cols-2 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de productos</CardTitle>
@@ -85,19 +85,6 @@ function ProductsContent() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Valor del inventario</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats.totalValue)}</div>
-              <p className="text-xs text-muted-foreground">
-                Promedio: {formatCurrency(stats.averagePrice)}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Alertas de stock</CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -109,36 +96,6 @@ function ProductsContent() {
                   <>
                     <span>•</span>
                     <span className="text-yellow-600">{stats.lowStock} stock bajo</span>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Margen promedio</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.averageMargin.toFixed(1)}%
-              </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                {stats.averageMargin >= 30 ? (
-                  <>
-                    <TrendingUp className="h-3 w-3 text-green-500" />
-                    <span className="text-green-500">Excelente</span>
-                  </>
-                ) : stats.averageMargin >= 15 ? (
-                  <>
-                    <TrendingUp className="h-3 w-3 text-yellow-500" />
-                    <span className="text-yellow-500">Bueno</span>
-                  </>
-                ) : (
-                  <>
-                    <TrendingDown className="h-3 w-3 text-red-500" />
-                    <span className="text-red-500">Bajo</span>
                   </>
                 )}
               </div>
@@ -159,7 +116,11 @@ function ProductsContent() {
           {products.length > 0 && unitsData && categoriesData && tagsData ? (
             <CustomTable<Product> 
               data={products} 
-              columns={columns} 
+              columns={columns}
+              showSearch={true}
+              searchColumn="name"
+              searchPlaceholder="Buscar por nombre o SKU..."
+              enableGlobalFilter={true}
             />
           ) : (
             <Card>

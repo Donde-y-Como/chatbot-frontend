@@ -1,13 +1,11 @@
 import { Row } from '@tanstack/react-table';
-import { Copy, Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Product } from '../types';
@@ -20,16 +18,6 @@ interface DataTableRowActionsProps {
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const product = row.original;
   const { openViewDialog, openEditDialog, openDeleteDialog } = useProductActions();
-
-  const handleCopySku = () => {
-    navigator.clipboard.writeText(product.sku);
-    toast.success('SKU copiado al portapapeles');
-  };
-
-  const handleCopyId = () => {
-    navigator.clipboard.writeText(product.id);
-    toast.success('ID copiado al portapapeles');
-  };
 
   return (
     <DropdownMenu>
@@ -52,23 +40,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           Editar
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleCopySku}>
-          <Copy className="mr-2 h-4 w-4" />
-          Copiar SKU
-          <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleCopyId}>
-          <Copy className="mr-2 h-4 w-4" />
-          Copiar ID
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuItem 
           onClick={() => openDeleteDialog(product)}
           className="text-red-600 focus:text-red-600"
         >
           <Trash2 className="mr-2 h-4 w-4" />
           Eliminar
-          <DropdownMenuShortcut>⌫</DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

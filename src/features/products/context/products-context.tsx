@@ -6,12 +6,14 @@ interface ProductContextState {
   selectedProduct: Product | null;
   dialogMode: ProductDialogMode | null;
   isDialogOpen: boolean;
+  createMode: 'quick' | 'complete' | null;
 }
 
 interface ProductContextActions {
   setSelectedProduct: (product: Product | null) => void;
   setDialogMode: (mode: ProductDialogMode | null) => void;
   setIsDialogOpen: (isOpen: boolean) => void;
+  setCreateMode: (mode: 'quick' | 'complete' | null) => void;
 }
 
 type ProductContext = ProductContextState & ProductContextActions;
@@ -21,6 +23,7 @@ const initialState: ProductContextState = {
   selectedProduct: null,
   dialogMode: null,
   isDialogOpen: false,
+  createMode: null,
 };
 
 // Crear el contexto
@@ -35,14 +38,17 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [dialogMode, setDialogMode] = useState<ProductDialogMode | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [createMode, setCreateMode] = useState<'quick' | 'complete' | null>(null);
 
   const contextValue: ProductContext = {
     selectedProduct,
     dialogMode,
     isDialogOpen,
+    createMode,
     setSelectedProduct,
     setDialogMode,
     setIsDialogOpen,
+    setCreateMode,
   };
 
   return (
@@ -65,27 +71,31 @@ export const useProductContext = (): ProductContext => {
 export const useProductActions = () => {
   const context = useProductContext();
   
-  const openCreateDialog = () => {
+  const openCreateDialog = (mode: 'quick' | 'complete' = 'complete') => {
     context.setSelectedProduct(null);
     context.setDialogMode('create');
+    context.setCreateMode(mode);
     context.setIsDialogOpen(true);
   };
 
   const openEditDialog = (product: Product) => {
     context.setSelectedProduct(product);
     context.setDialogMode('edit');
+    context.setCreateMode(null);
     context.setIsDialogOpen(true);
   };
 
   const openViewDialog = (product: Product) => {
     context.setSelectedProduct(product);
     context.setDialogMode('view');
+    context.setCreateMode(null);
     context.setIsDialogOpen(true);
   };
 
   const openDeleteDialog = (product: Product) => {
     context.setSelectedProduct(product);
     context.setDialogMode('delete');
+    context.setCreateMode(null);
     context.setIsDialogOpen(true);
   };
 
@@ -93,6 +103,7 @@ export const useProductActions = () => {
     context.setIsDialogOpen(false);
     context.setDialogMode(null);
     context.setSelectedProduct(null);
+    context.setCreateMode(null);
   };
 
   return {

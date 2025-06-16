@@ -79,7 +79,7 @@ export function ProductDeleteDialog() {
                   <p className="text-xs text-muted-foreground">SKU: {selectedProduct.sku}</p>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {formatCurrency(selectedProduct.price)}
+                      {formatCurrency(selectedProduct.price.amount)}
                     </Badge>
                     {unit && (
                       <Badge variant="outline" className="text-xs">

@@ -1,5 +1,3 @@
-import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale/es';
 import { 
   Package, 
   DollarSign, 
@@ -9,7 +7,8 @@ import {
   Calendar,
   Pencil,
   AlertTriangle,
-  ImageIcon
+  ImageIcon,
+  FileText
 } from 'lucide-react';
 import {
   Dialog,
@@ -20,7 +19,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useProductContext, useProductActions } from '../context/products-context';
 import { useGetUnits, useGetCategories, useGetProductTags } from '../hooks/useGetAuxiliaryData';
@@ -45,24 +43,37 @@ export function ProductViewDialog() {
   }
 
   const unit = units.find(u => u.id === selectedProduct.unitId);
-  const productCategories = categories.filter(c => selectedProduct.categoryIds.includes(c.id));
-  const productTags = tags.filter(t => selectedProduct.tagIds.includes(t.id));
+  const productCategories = categories.filter(c => selectedProduct.categoryIds?.includes(c.id));
+  const productTags = tags.filter(t => selectedProduct.tagIds?.includes(t.id));
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (priceObj: { amount: number; currency: string } | number) => {
+    if (typeof priceObj === 'number') {
+      return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+      }).format(priceObj);
+    }
+    
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'MXN',
-    }).format(amount);
+      currency: priceObj.currency,
+    }).format(priceObj.amount);
   };
 
-  const finalPrice = selectedProduct.price * (1 - selectedProduct.discount / 100);
-  const priceWithTaxes = finalPrice * (1 + selectedProduct.taxes / 100);
-  const margin = selectedProduct.price > 0 ? ((selectedProduct.price - selectedProduct.cost) / selectedProduct.price) * 100 : 0;
-  const profit = selectedProduct.price - selectedProduct.cost;
+  const finalPrice = selectedProduct.finalPrice || {
+    amount: selectedProduct.price.amount * (1 - (selectedProduct.discount || 0) / 100),
+    currency: selectedProduct.price.currency
+  };
+  const priceWithTaxes = finalPrice.amount * (1 + (selectedProduct.taxes || 0) / 100);
+  const margin = selectedProduct.price.amount > 0 ? ((selectedProduct.price.amount - selectedProduct.cost.amount) / selectedProduct.price.amount) * 100 : 0;
+  const profit = selectedProduct.price.amount - selectedProduct.cost.amount;
 
   const getStatusBadge = () => {
-    if (selectedProduct.status === ProductStatus.ACTIVE) {
+    if (selectedProduct.status === ProductStatus.ACTIVO) {
       return <Badge className="bg-green-100 text-green-800 border-green-200">Activo</Badge>;
+    }
+    if (selectedProduct.status === ProductStatus.SIN_STOCK) {
+      return <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">Sin Stock</Badge>;
     }
     return <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">Inactivo</Badge>;
   };
@@ -86,7 +97,7 @@ export function ProductViewDialog() {
 
   return (
     <Dialog open={isDialogOpen && dialogMode === 'view'} onOpenChange={closeDialog}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 py-4 border-b">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
@@ -100,7 +111,7 @@ export function ProductViewDialog() {
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6 py-4">
+        <ScrollArea className="flex-1 px-6 py-4 overflow-auto">
           <div className="space-y-6">
             {/* Información principal */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -113,7 +124,7 @@ export function ProductViewDialog() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {selectedProduct.photos.length > 0 ? (
+                  {selectedProduct.photos && selectedProduct.photos.length > 0 ? (
                     <div className="space-y-3">
                       {/* Imagen principal */}
                       <div className="aspect-square w-full overflow-hidden rounded-lg border">
@@ -125,7 +136,7 @@ export function ProductViewDialog() {
                       </div>
                       
                       {/* Galería de miniaturas */}
-                      {selectedProduct.photos.length > 1 && (
+                      {selectedProduct.photos && selectedProduct.photos.length > 1 && (
                         <div className="flex gap-2 overflow-x-auto">
                           {selectedProduct.photos.slice(1).map((photo, index) => (
                             <div key={index} className="flex-shrink-0">
@@ -226,7 +237,7 @@ export function ProductViewDialog() {
                     <p className="text-lg font-semibold text-green-600">{formatCurrency(finalPrice)}</p>
                     {selectedProduct.taxes > 0 && (
                       <p className="text-xs text-muted-foreground">
-                        +{selectedProduct.taxes}% IVA: {formatCurrency(priceWithTaxes)}
+                        +{selectedProduct.taxes}% IVA: {formatCurrency({ amount: priceWithTaxes, currency: finalPrice.currency })}
                       </p>
                     )}
                   </div>
@@ -239,7 +250,7 @@ export function ProductViewDialog() {
                       {margin.toFixed(1)}%
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Ganancia: {formatCurrency(profit)}
+                      Ganancia: {formatCurrency({ amount: profit, currency: selectedProduct.price.currency })}
                     </p>
                   </div>
                 </div>
@@ -280,89 +291,80 @@ export function ProductViewDialog() {
             </Card>
 
             {/* Categorización */}
-            {(productCategories.length > 0 || productTags.length > 0) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <FolderOpen className="h-4 w-4" />
-                    Categorización
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {productCategories.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Categorías</p>
-                      <div className="flex flex-wrap gap-2">
-                        {productCategories.map((category) => (
-                          <Badge key={category.id} variant="outline">
-                            {category.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {productTags.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Etiquetas</p>
-                      <div className="flex flex-wrap gap-2">
-                        {productTags.map((tag) => (
-                          <Badge 
-                            key={tag.id} 
-                            variant="secondary"
-                            style={{
-                              backgroundColor: tag.color ? `${tag.color}20` : undefined,
-                              borderColor: tag.color || undefined,
-                              color: tag.color || undefined,
-                            }}
-                          >
-                            {tag.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Notas */}
-            {selectedProduct.notes && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Notas internas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm whitespace-pre-wrap">{selectedProduct.notes}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Información de fechas */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Calendar className="h-4 w-4" />
-                  Información de fechas
+                  <FolderOpen className="h-4 w-4" />
+                  Categorización
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Fecha de creación</p>
-                    <p className="text-sm">
-                      {format(parseISO(selectedProduct.createdAt), 'dd/MM/yyyy HH:mm', { locale: es })}
-                    </p>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Categorías</p>
+                  <div className="flex flex-wrap gap-2">
+                    {productCategories.length > 0 ? (
+                      productCategories.map((category) => (
+                        <Badge key={category.id} variant="outline">
+                          {category.name}
+                        </Badge>
+                      ))
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <FolderOpen className="h-4 w-4" />
+                        <span>Sin categorías asignadas</span>
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Última actualización</p>
-                    <p className="text-sm">
-                      {format(parseISO(selectedProduct.updatedAt), 'dd/MM/yyyy HH:mm', { locale: es })}
-                    </p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Etiquetas</p>
+                  <div className="flex flex-wrap gap-2">
+                    {productTags.length > 0 ? (
+                      productTags.map((tag) => (
+                        <Badge 
+                          key={tag.id} 
+                          variant="secondary"
+                          style={{
+                            backgroundColor: tag.color ? `${tag.color}20` : undefined,
+                            borderColor: tag.color || undefined,
+                            color: tag.color || undefined,
+                          }}
+                        >
+                          {tag.name}
+                        </Badge>
+                      ))
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Tags className="h-4 w-4" />
+                        <span>Sin etiquetas asignadas</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Notas */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <FileText className="h-4 w-4" />
+                  Notas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {selectedProduct.notes && selectedProduct.notes.trim() ? (
+                  <p className="text-sm whitespace-pre-wrap">{selectedProduct.notes}</p>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <FileText className="h-4 w-4" />
+                    <span>Sin notas</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
           </div>
         </ScrollArea>
 

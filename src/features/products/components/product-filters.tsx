@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Check, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -38,8 +37,9 @@ export function ProductFiltersComponent({
   const { data: categories = [] } = useGetCategories();
   const { data: tags = [] } = useGetProductTags();
 
-  // Contar filtros activos
-  const activeFiltersCount = Object.values(localFilters).filter(value => {
+  // Contar filtros activos (excluyendo search)
+  const activeFiltersCount = Object.entries(localFilters).filter(([key, value]) => {
+    if (key === 'search') return false; // Excluir search del conteo
     if (Array.isArray(value)) return value.length > 0;
     return Boolean(value);
   }).length;
@@ -74,31 +74,8 @@ export function ProductFiltersComponent({
     });
   };
 
-  const handleSearchChange = (value: string) => {
-    const newFilters = { ...localFilters };
-    if (value) {
-      newFilters.search = value;
-    } else {
-      delete newFilters.search;
-    }
-    setLocalFilters(newFilters);
-    
-    // Aplicar búsqueda inmediatamente
-    onFiltersChange?.(newFilters);
-  };
-
   return (
     <div className="flex flex-col sm:flex-row gap-2 w-full">
-      {/* Buscador */}
-      <div className="flex-1">
-        <Input
-          placeholder="Buscar productos por nombre, SKU..."
-          value={localFilters.search || ''}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className="max-w-sm"
-        />
-      </div>
-
       {/* Filtros avanzados */}
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
@@ -134,11 +111,11 @@ export function ProductFiltersComponent({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Estado</Label>
               <Select
-                value={localFilters.status || ''}
+                value={localFilters.status || "ALL"}
                 onValueChange={(value) => {
                   setLocalFilters({
                     ...localFilters,
-                    status: value ? (value as ProductStatus) : undefined
+                    status: value && value !== "" && value !== "ALL" ? (value as ProductStatus) : undefined
                   });
                 }}
               >
@@ -146,9 +123,10 @@ export function ProductFiltersComponent({
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
-                  <SelectItem value={ProductStatus.ACTIVE}>Activo</SelectItem>
-                  <SelectItem value={ProductStatus.INACTIVE}>Inactivo</SelectItem>
+                  <SelectItem value="ALL">Todos</SelectItem>
+                  <SelectItem value={ProductStatus.ACTIVO}>Activo</SelectItem>
+                  <SelectItem value={ProductStatus.INACTIVO}>Inactivo</SelectItem>
+                  <SelectItem value={ProductStatus.SIN_STOCK}>Sin Stock</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -255,7 +233,7 @@ export function ProductFiltersComponent({
         <div className="flex flex-wrap gap-1 items-center">
           {localFilters.status && (
             <Badge variant="secondary" className="text-xs">
-              Estado: {localFilters.status === ProductStatus.ACTIVE ? 'Activo' : 'Inactivo'}
+              Estado: {localFilters.status === ProductStatus.ACTIVO ? 'Activo' : localFilters.status === ProductStatus.INACTIVO ? 'Inactivo' : 'Sin Stock'}
               <Button
                 variant="ghost"
                 size="sm"

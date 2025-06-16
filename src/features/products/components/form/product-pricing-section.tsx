@@ -18,16 +18,16 @@ interface ProductPricingSectionProps {
 
 export function ProductPricingSection({ control }: ProductPricingSectionProps) {
   // Observar los valores para calcular métricas en tiempo real
-  const price = useWatch({ control, name: 'price' }) || 0;
-  const cost = useWatch({ control, name: 'cost' }) || 0;
+  const price = useWatch({ control, name: 'price' }) || { amount: 0, currency: 'MXN' };
+  const cost = useWatch({ control, name: 'cost' }) || { amount: 0, currency: 'MXN' };
   const discount = useWatch({ control, name: 'discount' }) || 0;
   const taxes = useWatch({ control, name: 'taxes' }) || 0;
 
   // Cálculos
-  const finalPrice = price * (1 - discount / 100);
+  const finalPrice = price.amount * (1 - discount / 100);
   const priceWithTaxes = finalPrice * (1 + taxes / 100);
-  const margin = price > 0 ? ((price - cost) / price) * 100 : 0;
-  const profit = price - cost;
+  const margin = price.amount > 0 ? ((price.amount - cost.amount) / price.amount) * 100 : 0;
+  const profit = price.amount - cost.amount;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -66,10 +66,13 @@ export function ProductPricingSection({ control }: ProductPricingSectionProps) {
                   <Input 
                     type="number" 
                     min="0" 
-                    step="0.01"
+                    step="1"
                     placeholder="0.00"
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    value={field.value?.amount || ''}
+                    onChange={(e) => field.onChange({
+                      amount: parseFloat(e.target.value) || 0,
+                      currency: field.value?.currency || 'MXN'
+                    })}
                   />
                 </FormControl>
                 <p className="text-sm text-muted-foreground">
@@ -91,10 +94,13 @@ export function ProductPricingSection({ control }: ProductPricingSectionProps) {
                   <Input 
                     type="number" 
                     min="0" 
-                    step="0.01"
+                    step="1"
                     placeholder="0.00"
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    value={field.value?.amount || ''}
+                    onChange={(e) => field.onChange({
+                      amount: parseFloat(e.target.value) || 0,
+                      currency: field.value?.currency || 'MXN'
+                    })}
                   />
                 </FormControl>
                 <p className="text-sm text-muted-foreground">
@@ -117,9 +123,9 @@ export function ProductPricingSection({ control }: ProductPricingSectionProps) {
                     type="number" 
                     min="0" 
                     max="100"
-                    step="0.1"
+                    step="1"
                     placeholder="0"
-                    {...field}
+                    value={field.value || ''}
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -143,9 +149,9 @@ export function ProductPricingSection({ control }: ProductPricingSectionProps) {
                     type="number" 
                     min="0" 
                     max="100"
-                    step="0.1"
+                    step="1"
                     placeholder="16"
-                    {...field}
+                    value={field.value || ''}
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -159,7 +165,7 @@ export function ProductPricingSection({ control }: ProductPricingSectionProps) {
         </div>
 
         {/* Resumen de cálculos */}
-        {(price > 0 || cost > 0) && (
+        {(price.amount > 0 || cost.amount > 0) && (
           <div className="border rounded-lg p-4 bg-muted/20">
             <h4 className="font-medium mb-3 flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
@@ -172,7 +178,7 @@ export function ProductPricingSection({ control }: ProductPricingSectionProps) {
                 <p className="font-semibold">{formatCurrency(finalPrice)}</p>
                 {discount > 0 && (
                   <p className="text-xs text-muted-foreground line-through">
-                    {formatCurrency(price)}
+                    {formatCurrency(price.amount)}
                   </p>
                 )}
               </div>
@@ -204,7 +210,7 @@ export function ProductPricingSection({ control }: ProductPricingSectionProps) {
 
             {/* Alertas de precios */}
             <div className="mt-3 space-y-2">
-              {cost >= price && price > 0 && (
+              {cost.amount >= price.amount && price.amount > 0 && (
                 <div className="flex items-center gap-2 text-red-600 text-sm">
                   <div className="w-2 h-2 bg-red-600 rounded-full"></div>
                   El costo es mayor o igual al precio de venta. Verifica los valores.

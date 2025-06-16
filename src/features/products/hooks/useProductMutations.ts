@@ -49,24 +49,3 @@ export const useDeleteProduct = () => {
     },
   });
 };
-
-export const useExportProducts = () => {
-  return useMutation({
-    mutationFn: ProductApiService.exportProducts,
-    onSuccess: (blob) => {
-      // Crear URL para descargar el archivo
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `productos_${new Date().toISOString().split('T')[0]}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast.success('Productos exportados exitosamente');
-    },
-    onError: (error: Error) => {
-      toast.error(`Error al exportar productos: ${error.message}`);
-    },
-  });
-};

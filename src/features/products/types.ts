@@ -1,8 +1,14 @@
 import { z } from "zod";
 
 export enum ProductStatus {
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
+  ACTIVO = "ACTIVO",
+  INACTIVO = "INACTIVO",
+  SIN_STOCK = "SIN_STOCK",
+}
+
+export type PriceObject = {
+  amount: number;
+  currency: string;
 }
 
 export type ProductPhoto = {
@@ -10,21 +16,24 @@ export type ProductPhoto = {
   alt?: string;
 }
 
-const priceSchema = z.number().min(0, { message: "El precio debe ser mayor a 0" });
+const priceObjectSchema = z.object({
+  amount: z.number().min(0, { message: "El monto debe ser mayor a 0" }),
+  currency: z.string().default("MXN"),
+});
 
 // Schemas de validación
 export const createProductSchema = z.object({
   // Campos obligatorios
   sku: z.string().min(1, { message: "SKU es obligatorio" }),
   name: z.string().min(1, { message: "El nombre del producto es obligatorio" }),
-  price: priceSchema,
+  price: priceObjectSchema,
   discount: z.number().min(0).max(100, { message: "El descuento debe estar entre 0 y 100" }).default(0),
   stock: z.number().int().min(0, { message: "El stock debe ser un número entero no negativo" }),
   unitId: z.string().min(1, { message: "La unidad es obligatoria" }),
-  status: z.nativeEnum(ProductStatus).default(ProductStatus.ACTIVE),
+  status: z.nativeEnum(ProductStatus).default(ProductStatus.ACTIVO),
   minimumInventory: z.number().int().min(0, { message: "El inventario mínimo debe ser un número entero no negativo" }),
   taxes: z.number().min(0).max(100, { message: "Los impuestos deben estar entre 0 y 100" }).default(0),
-  cost: priceSchema,
+  cost: priceObjectSchema,
   
   // Campos opcionales
   description: z.string().default(""),
@@ -50,14 +59,15 @@ export type ProductPrimitives = {
   sku: string;
   name: string;
   description: string;
-  price: number;
+  price: PriceObject;
+  finalPrice?: PriceObject;
   discount: number;
   stock: number;
   unitId: string;
   status: ProductStatus;
   minimumInventory: number;
   taxes: number;
-  cost: number;
+  cost: PriceObject;
   barcode?: string | null;
   categoryIds: string[];
   subcategoryIds: string[];

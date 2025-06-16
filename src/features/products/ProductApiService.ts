@@ -116,37 +116,4 @@ export const ProductApiService = {
     }
     return response.data.products || response.data;
   },
-
-  // Exportaciones
-  exportProducts: async (filters?: ProductFilters): Promise<Blob> => {
-    const params = new URLSearchParams();
-    
-    if (filters?.categoryIds?.length) {
-      params.set('categoryIds', filters.categoryIds.join(','));
-    }
-    if (filters?.subcategoryIds?.length) {
-      params.set('subcategoryIds', filters.subcategoryIds.join(','));
-    }
-    if (filters?.tagIds?.length) {
-      params.set('tagIds', filters.tagIds.join(','));
-    }
-    if (filters?.unitIds?.length) {
-      params.set('unitIds', filters.unitIds.join(','));
-    }
-    if (filters?.status) {
-      params.set('status', filters.status);
-    }
-
-    const queryString = params.toString();
-    const url = queryString ? `/products/item/export?${queryString}` : '/products/item/export';
-    
-    const response = await api.get(url, {
-      responseType: 'blob'
-    });
-    
-    if (response.status !== 200) {
-      throw new Error('Error exportando productos');
-    }
-    return response.data;
-  }
 };

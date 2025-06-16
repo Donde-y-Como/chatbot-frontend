@@ -19,19 +19,20 @@ import { ProductBasicSection } from './form/product-basic-section';
 import { ProductPricingSection } from './form/product-pricing-section';
 import { ProductCategorizationSection } from './form/product-categorization-section';
 import { ProductImagesSection } from './form/product-images-section';
+import { ProductQuickForm } from './form/product-quick-form';
 
 const defaultValues: CreateProductForm = {
   sku: '',
   name: '',
   description: '',
-  price: 0,
+  price: { amount: 0, currency: 'MXN' },
   discount: 0,
   stock: 0,
   unitId: '',
-  status: ProductStatus.ACTIVE,
-  minimumInventory: 5,
-  taxes: 16,
-  cost: 0,
+  status: ProductStatus.ACTIVO,
+  minimumInventory: 0,
+  taxes: 0,
+  cost: { amount: 0, currency: 'MXN' },
   barcode: undefined,
   categoryIds: [],
   subcategoryIds: [],
@@ -44,7 +45,8 @@ export function ProductActionDialog() {
   const { 
     isDialogOpen, 
     dialogMode, 
-    selectedProduct
+    selectedProduct,
+    createMode
   } = useProductContext();
   const { closeDialog } = useProductActions();
   
@@ -90,10 +92,23 @@ export function ProductActionDialog() {
         });
       } else {
         // Modo crear: resetear a valores por defecto
-        form.reset(defaultValues);
+        const quickDefaults = {
+          ...defaultValues,
+          // En modo rápido, agregar algunos valores por defecto más inteligentes
+          ...(createMode === 'quick' && {
+            description: '',
+            barcode: undefined,
+            categoryIds: [],
+            subcategoryIds: [],
+            photos: [],
+            tagIds: [],
+            notes: '',
+          })
+        };
+        form.reset(quickDefaults);
       }
     }
-  }, [isDialogOpen, selectedProduct, dialogMode, form]);
+  }, [isDialogOpen, selectedProduct, dialogMode, createMode]);
 
   const onSubmit = async (data: CreateProductForm) => {
     try {
@@ -119,7 +134,7 @@ export function ProductActionDialog() {
   const getDialogTitle = () => {
     switch (dialogMode) {
       case 'create':
-        return 'Crear nuevo producto';
+        return createMode === 'quick' ? 'Crear producto rápido' : 'Crear nuevo producto';
       case 'edit':
         return `Editar producto: ${selectedProduct?.name || ''}`;
       case 'view':
@@ -134,11 +149,16 @@ export function ProductActionDialog() {
       return (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          {dialogMode === 'create' ? 'Creando...' : 'Guardando...'}
+          {dialogMode === 'create' ? 
+            (createMode === 'quick' ? 'Creando rápido...' : 'Creando...') : 
+            'Guardando...'
+          }
         </>
       );
     }
-    return dialogMode === 'create' ? 'Crear producto' : 'Guardar cambios';
+    return dialogMode === 'create' ? 
+      (createMode === 'quick' ? 'Crear rápido' : 'Crear producto') : 
+      'Guardar cambios';
   };
 
   // Solo mostrar si hay diálogos de crear o editar
@@ -148,38 +168,49 @@ export function ProductActionDialog() {
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-        <DialogHeader className="px-6 py-4 border-b">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="flex-shrink-0 px-6 py-4 border-b">
           <DialogTitle>{getDialogTitle()}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
-            <ScrollArea className="flex-1 px-6">
-              <div className="space-y-6 py-4">
-                {/* Información básica */}
-                <ProductBasicSection 
-                  control={form.control} 
-                  units={units}
-                />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <div className="space-y-6">
+                {dialogMode === 'create' && createMode === 'quick' ? (
+                  /* Formulario rápido */
+                  <ProductQuickForm 
+                    control={form.control} 
+                    units={units}
+                  />
+                ) : (
+                  /* Formulario completo */
+                  <>
+                    {/* Información básica */}
+                    <ProductBasicSection 
+                      control={form.control} 
+                      units={units}
+                    />
 
-                {/* Precios y costos */}
-                <ProductPricingSection control={form.control} />
+                    {/* Precios y costos */}
+                    <ProductPricingSection control={form.control} />
 
-                {/* Imágenes */}
-                <ProductImagesSection control={form.control} />
+                    {/* Imágenes */}
+                    <ProductImagesSection control={form.control} />
 
-                {/* Categorización */}
-                <ProductCategorizationSection 
-                  control={form.control}
-                  categories={categories}
-                  tags={tags}
-                />
+                    {/* Categorización */}
+                    <ProductCategorizationSection 
+                      control={form.control}
+                      categories={categories}
+                      tags={tags}
+                    />
+                  </>
+                )}
               </div>
-            </ScrollArea>
+            </div>
 
-            {/* Botones de acción */}
-            <div className="flex justify-end gap-3 px-6 py-4 border-t bg-muted/20">
+            {/* Botones de acción - Footer fijo */}
+            <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t bg-muted/20 shadow-lg">
               <Button
                 type="button"
                 variant="outline"

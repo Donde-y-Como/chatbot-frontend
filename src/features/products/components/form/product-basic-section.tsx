@@ -146,8 +146,9 @@ export function ProductBasicSection({ control, units }: ProductBasicSectionProps
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value={ProductStatus.ACTIVE}>Activo</SelectItem>
-                    <SelectItem value={ProductStatus.INACTIVE}>Inactivo</SelectItem>
+                    <SelectItem value={ProductStatus.ACTIVO}>Activo</SelectItem>
+                    <SelectItem value={ProductStatus.INACTIVO}>Inactivo</SelectItem>
+                    <SelectItem value={ProductStatus.SIN_STOCK}>Sin Stock</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -166,8 +167,9 @@ export function ProductBasicSection({ control, units }: ProductBasicSectionProps
                   <Input 
                     type="number" 
                     min="0" 
+                    step="1"
                     placeholder="0"
-                    {...field}
+                    value={field.value || ''}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -188,8 +190,9 @@ export function ProductBasicSection({ control, units }: ProductBasicSectionProps
                 <Input 
                   type="number" 
                   min="0" 
+                  step="1"
                   placeholder="5"
-                  {...field}
+                  value={field.value || ''}
                   onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                 />
               </FormControl>

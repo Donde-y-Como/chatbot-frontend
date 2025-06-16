@@ -1,11 +1,18 @@
-import { Product, ProductStatus } from '../types';
+import { Product, ProductStatus, PriceObject } from '../types';
 
 // Formatear moneda
-export const formatCurrency = (amount: number, currency = 'MXN', locale = 'es-MX') => {
+export const formatCurrency = (priceObj: PriceObject | number, currency = 'MXN', locale = 'es-MX') => {
+  if (typeof priceObj === 'number') {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+    }).format(priceObj);
+  }
+  
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency,
-  }).format(amount);
+    currency: priceObj.currency,
+  }).format(priceObj.amount);
 };
 
 // Formatear porcentaje
@@ -14,24 +21,33 @@ export const formatPercentage = (value: number, decimals = 1) => {
 };
 
 // Calcular precio final con descuento
-export const calculateFinalPrice = (price: number = 0, discount: number = 0) => {
-  return price * (1 - discount / 100);
+export const calculateFinalPrice = (priceObj: PriceObject, discount: number = 0) => {
+  return {
+    amount: priceObj.amount * (1 - discount / 100),
+    currency: priceObj.currency
+  };
 };
 
 // Calcular precio con impuestos
-export const calculatePriceWithTaxes = (price: number = 0, taxes: number = 0) => {
-  return price * (1 + taxes / 100);
+export const calculatePriceWithTaxes = (priceObj: PriceObject, taxes: number = 0) => {
+  return {
+    amount: priceObj.amount * (1 + taxes / 100),
+    currency: priceObj.currency
+  };
 };
 
 // Calcular margen de ganancia
-export const calculateMargin = (price: number = 0, cost: number = 0) => {
-  if (price <= 0) return 0;
-  return ((price - cost) / price) * 100;
+export const calculateMargin = (priceObj: PriceObject, costObj: PriceObject) => {
+  if (priceObj.amount <= 0) return 0;
+  return ((priceObj.amount - costObj.amount) / priceObj.amount) * 100;
 };
 
 // Calcular ganancia absoluta
-export const calculateProfit = (price: number = 0, cost: number = 0) => {
-  return price - cost;
+export const calculateProfit = (priceObj: PriceObject, costObj: PriceObject) => {
+  return {
+    amount: priceObj.amount - costObj.amount,
+    currency: priceObj.currency
+  };
 };
 
 // Determinar el estado del stock
@@ -224,7 +240,7 @@ export const sortProducts = (
         comparison = a.sku.localeCompare(b.sku);
         break;
       case 'price':
-        comparison = a.price - b.price;
+        comparison = a.price.amount - b.price.amount;
         break;
       case 'stock':
         comparison = a.stock - b.stock;
@@ -291,7 +307,7 @@ export const calculateProductStats = (products: Product[]) => {
     (acc, product) => {
       acc.total++;
       
-      if (product.status === ProductStatus.ACTIVE) {
+      if (product.status === ProductStatus.ACTIVO) {
         acc.active++;
       } else {
         acc.inactive++;
@@ -306,16 +322,19 @@ export const calculateProductStats = (products: Product[]) => {
         acc.lowStock++;
       }
       
-      const price = product.price || 0;
-      const discount = product.discount || 0;
-      const cost = product.cost || 0;
+      // Calcular valores financieros
+      const priceAmount = product.price?.amount || 0;
+      const costAmount = product.cost?.amount || 0;
       
-      const finalPrice = calculateFinalPrice(price, discount);
-      acc.totalValue += finalPrice * stock;
-      acc.totalPrice += finalPrice;
+      acc.totalValue += (priceAmount * stock);
+      acc.totalPriceSum += priceAmount;
       
-      const margin = calculateMargin(price, cost);
-      acc.totalMargin += margin;
+      // Calcular margen solo si el precio es mayor a 0
+      if (priceAmount > 0) {
+        const margin = ((priceAmount - costAmount) / priceAmount) * 100;
+        acc.totalMargin += margin;
+        acc.productsWithPrice++;
+      }
       
       return acc;
     },
@@ -326,8 +345,9 @@ export const calculateProductStats = (products: Product[]) => {
       outOfStock: 0,
       lowStock: 0,
       totalValue: 0,
-      totalPrice: 0,
+      totalPriceSum: 0,
       totalMargin: 0,
+      productsWithPrice: 0,
     }
   );
 
@@ -338,7 +358,7 @@ export const calculateProductStats = (products: Product[]) => {
     outOfStock: stats.outOfStock,
     lowStock: stats.lowStock,
     totalValue: stats.totalValue,
-    averagePrice: stats.totalPrice / stats.total,
-    averageMargin: stats.totalMargin / stats.total,
+    averagePrice: stats.total > 0 ? stats.totalPriceSum / stats.total : 0,
+    averageMargin: stats.productsWithPrice > 0 ? stats.totalMargin / stats.productsWithPrice : 0,
   };
 };
