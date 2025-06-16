@@ -1,4 +1,5 @@
 import { AlertTriangle, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -32,12 +33,31 @@ export function ProductDeleteDialog() {
   const hasLowStock = selectedProduct.stock <= selectedProduct.minimumInventory;
 
   const handleDelete = async () => {
-    try {
-      await deleteMutation.mutateAsync(selectedProduct.id);
-      closeDialog();
-    } catch (error) {
-      console.error('Error deleting product:', error);
-    }
+    const deleteOperation = deleteMutation.mutateAsync(selectedProduct.id);
+    
+    toast.promise(deleteOperation, {
+      loading: `Eliminando ${selectedProduct.name}...`,
+      success: (result) => {
+        closeDialog();
+        return `¡${selectedProduct.name} eliminado del inventario!`;
+      },
+      error: (error: any) => {
+        console.error('Error deleting product:', error);
+        
+        // Error específico si el producto está siendo usado
+        if (error?.response?.status === 400) {
+          return 'No se puede eliminar. El producto puede estar siendo usado en ventas.';
+        }
+        
+        // Error del servidor
+        if (error?.response?.status >= 500) {
+          return 'Error del servidor. Intenta nuevamente más tarde.';
+        }
+        
+        // Error genérico
+        return 'Error al eliminar. Verifica tu conexión.';
+      }
+    });
   };
 
   const formatCurrency = (amount: number) => {
@@ -117,17 +137,6 @@ export function ProductDeleteDialog() {
                   </div>
                 </div>
               )}
-
-              <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-200 rounded-md">
-                <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm">
-                  <p className="font-medium text-red-800">Eliminación permanente</p>
-                  <p className="text-red-700">
-                    Una vez eliminado, no podrás recuperar la información de este producto,
-                    incluyendo su historial, imágenes y configuraciones.
-                  </p>
-                </div>
-              </div>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>

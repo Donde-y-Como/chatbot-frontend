@@ -42,7 +42,6 @@ export const useDeleteProduct = () => {
     mutationFn: (productId: string) => ProductApiService.deleteProduct(productId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Producto eliminado exitosamente');
     },
     onError: (error: Error) => {
       toast.error(`Error al eliminar producto: ${error.message}`);

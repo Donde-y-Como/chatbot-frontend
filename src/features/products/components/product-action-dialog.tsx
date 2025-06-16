@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -111,19 +112,57 @@ export function ProductActionDialog() {
   }, [isDialogOpen, selectedProduct, dialogMode, createMode]);
 
   const onSubmit = async (data: CreateProductForm) => {
-    try {
-      if (dialogMode === 'create') {
-        await createMutation.mutateAsync(data);
-      } else if (dialogMode === 'edit' && selectedProduct) {
-        await updateMutation.mutateAsync({
-          productId: selectedProduct.id,
+    const operation = dialogMode === 'create' 
+      ? createMutation.mutateAsync(data)
+      : updateMutation.mutateAsync({
+          productId: selectedProduct!.id,
           changes: data,
         });
+
+    toast.promise(operation, {
+      loading: createMode === 'quick' 
+        ? 'Creando producto rápido...' 
+        : dialogMode === 'create' 
+          ? 'Creando producto...' 
+          : 'Guardando cambios...',
+      success: (result) => {
+        closeDialog();
+        return createMode === 'quick' 
+          ? `¡Producto rápido creado! ${data.name} agregado al inventario` 
+          : dialogMode === 'create'
+            ? `¡Producto creado! ${data.name} agregado al inventario`
+            : `¡Cambios guardados! ${data.name} actualizado correctamente`;
+      },
+      error: (error: any) => {
+        console.error('Error saving product:', error);
+        
+        // Manejar error específico de SKU duplicado
+        if (error?.response?.status === 400 && error?.response?.data?.title === 'SKU already exists') {
+          // Enfocar el campo SKU para que el usuario lo pueda cambiar
+          setTimeout(() => {
+            form.setFocus('sku');
+            form.setError('sku', {
+              type: 'manual',
+              message: 'Este SKU ya está en uso'
+            });
+          }, 100);
+          return 'SKU ya existe. Ya existe un producto con este SKU.';
+        }
+        
+        // Manejar otros errores de validación del servidor
+        if (error?.response?.status === 400) {
+          return 'Error de validación. Revisa los datos ingresados.';
+        }
+        
+        // Error genérico del servidor
+        if (error?.response?.status >= 500) {
+          return 'Error del servidor. Intenta nuevamente más tarde.';
+        }
+        
+        // Error de conexión u otros
+        return 'Error inesperado. Verifica tu conexión.';
       }
-      closeDialog();
-    } catch (error) {
-      console.error('Error saving product:', error);
-    }
+    });
   };
 
   const handleClose = () => {
@@ -174,7 +213,40 @@ export function ProductActionDialog() {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+          <form 
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              // Esta función se ejecuta cuando hay errores de validación
+              const errorFields = Object.keys(errors);
+              const fieldNames: Record<string, string> = {
+                sku: 'SKU',
+                name: 'Nombre del producto',
+                'price.amount': 'Precio de venta',
+                'cost.amount': 'Costo del producto',
+                stock: 'Stock actual',
+                unitId: 'Unidad de medida',
+                status: 'Estado',
+                minimumInventory: 'Inventario mínimo',
+                discount: 'Descuento',
+                taxes: 'Impuestos',
+              };
+              
+              const missingFields = errorFields.map(field => {
+                // Manejar campos anidados como price.amount
+                if (field === 'price' && errors.price?.amount) return 'Precio de venta';
+                if (field === 'cost' && errors.cost?.amount) return 'Costo del producto';
+                return fieldNames[field] || field;
+              }).join(', ');
+              
+              toast.error('Campos obligatorios faltantes', {
+                description: `Por favor completa: ${missingFields}`
+              });
+              
+              // Enfocar el primer campo con error
+              const firstErrorField = errorFields[0] as keyof CreateProductForm;
+              form.setFocus(firstErrorField);
+            })} 
+            className="flex flex-col flex-1 min-h-0"
+          >
             <div className="flex-1 overflow-y-auto px-6 py-4">
               <div className="space-y-6">
                 {dialogMode === 'create' && createMode === 'quick' ? (

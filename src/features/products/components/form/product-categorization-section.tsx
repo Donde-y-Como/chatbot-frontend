@@ -194,13 +194,6 @@ export function ProductCategorizationSection({
             </FormItem>
           )}
         />
-
-        {/* Información adicional */}
-        <div className="text-sm text-muted-foreground space-y-1">
-          <p>• Las categorías ayudan a organizar y filtrar productos</p>
-          <p>• Las etiquetas permiten una clasificación más flexible</p>
-          <p>• Puedes seleccionar múltiples categorías y etiquetas</p>
-        </div>
       </CardContent>
     </Card>
   );
