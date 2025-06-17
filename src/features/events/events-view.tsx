@@ -19,9 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EventCard } from '@/features/events/event-card.tsx'
 import { EventCreateModal } from '@/features/events/event-create-modal.tsx'
+import { QuickEventDialog } from '@/features/events/quick-event-dialog.tsx'
 import { useGetBookings } from '@/features/events/hooks/useGetBookings.ts'
 import { useGetEvents } from '@/features/events/hooks/useGetEvents.ts'
 import {
@@ -34,12 +42,15 @@ import {
   AlertCircle,
   Calendar,
   CalendarIcon,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Filter,
   List,
   Plus,
   Search,
+  Settings,
   X
 } from 'lucide-react'
 import moment from "moment-timezone"
@@ -61,6 +72,7 @@ export default function EventsView() {
   const { data: allBookings, isLoading: isBookingsLoading, error: bookingsError } = useGetBookings()
   const { data: events, isLoading: isEventsLoading, error: eventsError } = useGetEvents()
   const [showCreate, setShowCreate] = useState<boolean>(false)
+  const [showQuickCreate, setShowQuickCreate] = useState<boolean>(false)
   const [viewMode, setViewMode] = useState<string>('calendar')
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
@@ -69,6 +81,15 @@ export default function EventsView() {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false)
   const eventsPerPage = 10
+
+  // Handlers for dropdown options
+  const handleQuickEvent = () => {
+    setShowQuickCreate(true)
+  }
+
+  const handleCompleteEvent = () => {
+    setShowCreate(true)
+  }
 
   // Apply filters and search to events
   const filteredEvents = useMemo(() => {
@@ -257,10 +278,34 @@ export default function EventsView() {
             </div>
 
             <div className='flex flex-col sm:flex-row items-center gap-2'>
-              <Button variant='default' onClick={() => setShowCreate(true)} className="w-full sm:w-auto">
-                <Plus className='mr-2 h-4 w-4' />
-                Nuevo Evento
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='default' className="w-full sm:w-auto">
+                    <Plus className='mr-2 h-4 w-4' />
+                    Nuevo Evento
+                    <ChevronDown className='ml-2 h-4 w-4' />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <DropdownMenuItem onClick={handleQuickEvent} className="p-3">
+                    <Clock className="mr-3 h-5 w-5 text-blue-500" />
+                    <div className="flex flex-col gap-1">
+                      <span className="font-medium">Evento rápido</span>
+                      <span className="text-xs text-muted-foreground">Solo campos esenciales: nombre, descripción, ubicación, capacidad, fechas y precio</span>
+                    </div>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem onClick={handleCompleteEvent} className="p-3">
+                    <Settings className="mr-3 h-5 w-5 text-green-500" />
+                    <div className="flex flex-col gap-1">
+                      <span className="font-medium">Evento completo</span>
+                      <span className="text-xs text-muted-foreground">Todos los campos y opciones avanzadas como recurrencias, fotos y más</span>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               <div className='flex items-center w-full sm:w-auto'>
                 <Tabs value={viewMode} onValueChange={setViewMode} className="w-full">
@@ -550,6 +595,11 @@ export default function EventsView() {
         <EventCreateModal
           open={showCreate}
           onClose={() => setShowCreate(false)}
+        />
+
+        <QuickEventDialog
+          open={showQuickCreate}
+          onOpenChange={setShowQuickCreate}
         />
       </ScrollArea >
     </div >
