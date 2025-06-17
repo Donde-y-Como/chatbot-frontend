@@ -22,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useProductContext, useProductActions } from '../context/products-context';
 import { useGetUnits, useGetCategories, useGetProductTags } from '../hooks/useGetAuxiliaryData';
-import { ProductStatus } from '../types';
+import { ProductStatus, Category } from '../types';
 import { cn } from '@/lib/utils';
 
 export function ProductViewDialog() {
@@ -43,7 +43,23 @@ export function ProductViewDialog() {
   }
 
   const unit = units.find(u => u.id === selectedProduct.unitId);
-  const productCategories = categories.filter(c => selectedProduct.categoryIds?.includes(c.id));
+  const productCategories = categories.filter(c => selectedProduct.categoryIds?.includes(c.id) && !c.parentCategoryId);
+  
+  // Buscar subcategorías en todas las categorías padre
+  const productSubcategories: Category[] = [];
+  if (selectedProduct.subcategoryIds) {
+    for (const subcategoryId of selectedProduct.subcategoryIds) {
+      for (const parentCategory of categories.filter(c => !c.parentCategoryId)) {
+        if (parentCategory.subcategories) {
+          const subcategory = parentCategory.subcategories.find(sub => sub.id === subcategoryId);
+          if (subcategory) {
+            productSubcategories.push(subcategory);
+            break;
+          }
+        }
+      }
+    }
+  }
   const productTags = tags.filter(t => selectedProduct.tagIds?.includes(t.id));
 
   const formatCurrency = (priceObj: { amount: number; currency: string } | number) => {
@@ -300,18 +316,47 @@ export function ProductViewDialog() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Categorías</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Categorías principales</p>
                   <div className="flex flex-wrap gap-2">
                     {productCategories.length > 0 ? (
                       productCategories.map((category) => (
                         <Badge key={category.id} variant="outline">
-                          {category.name}
+                          📁 {category.name}
                         </Badge>
                       ))
                     ) : (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <FolderOpen className="h-4 w-4" />
-                        <span>Sin categorías asignadas</span>
+                        <span>Sin categorías principales asignadas</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Subcategorías</p>
+                  <div className="flex flex-wrap gap-2">
+                    {productSubcategories.length > 0 ? (
+                      productSubcategories.map((subcategory) => {
+                        // Buscar la categoría padre de esta subcategoría
+                        let parentCategoryName = '';
+                        for (const parentCategory of categories.filter(c => !c.parentCategoryId)) {
+                          if (parentCategory.subcategories?.some(sub => sub.id === subcategory.id)) {
+                            parentCategoryName = parentCategory.name;
+                            break;
+                          }
+                        }
+                        const displayName = parentCategoryName ? `${parentCategoryName} > ${subcategory.name}` : subcategory.name;
+                        return (
+                          <Badge key={subcategory.id} variant="secondary">
+                            📂 {displayName}
+                          </Badge>
+                        );
+                      })
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <FolderOpen className="h-4 w-4" />
+                        <span>Sin subcategorías asignadas</span>
                       </div>
                     )}
                   </div>

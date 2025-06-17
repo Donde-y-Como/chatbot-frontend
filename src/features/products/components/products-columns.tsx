@@ -212,27 +212,68 @@ export const createProductColumns = (
   {
     accessorKey: 'categoryIds',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Categorías" />
+      <DataTableColumnHeader column={column} title="Categorización" />
     ),
     cell: ({ row }) => {
-      const { categoryIds } = row.original;
-      if (!categoryIds || categoryIds.length === 0) {
+      const { categoryIds, subcategoryIds } = row.original;
+      const hasCategoriesOrSubcategories = 
+        (categoryIds && categoryIds.length > 0) || 
+        (subcategoryIds && subcategoryIds.length > 0);
+      
+      if (!hasCategoriesOrSubcategories) {
         return <span className="text-muted-foreground text-sm">-</span>;
+      }
+
+      const allItems: Array<{id: string; name: string; type: 'category' | 'subcategory'}> = [];
+      
+      // Agregar categorías principales
+      if (categoryIds && categoryIds.length > 0) {
+        categoryIds.forEach((categoryId) => {
+          const category = categories.find(c => c.id === categoryId && !c.parentCategoryId);
+          if (category) {
+            allItems.push({
+              id: categoryId,
+              name: category.name,
+              type: 'category' as const
+            });
+          }
+        });
+      }
+      
+      // Agregar subcategorías
+      if (subcategoryIds && subcategoryIds.length > 0) {
+        subcategoryIds.forEach((subcategoryId) => {
+          // Buscar la subcategoría en todas las categorías padre
+          for (const parentCategory of categories.filter(c => !c.parentCategoryId)) {
+            if (parentCategory.subcategories) {
+              const subcategory = parentCategory.subcategories.find(sub => sub.id === subcategoryId);
+              if (subcategory) {
+                allItems.push({
+                  id: subcategoryId,
+                  name: `${parentCategory.name} > ${subcategory.name}`,
+                  type: 'subcategory' as const
+                });
+                break;
+              }
+            }
+          }
+        });
       }
 
       return (
         <div className="flex flex-wrap gap-1 max-w-[200px]">
-          {categoryIds.slice(0, 2).map((categoryId) => {
-            const category = categories.find(c => c.id === categoryId);
-            return (
-              <Badge key={categoryId} variant="outline" className="text-xs">
-                {category?.name || 'Sin nombre'}
-              </Badge>
-            );
-          })}
-          {categoryIds.length > 2 && (
+          {allItems.slice(0, 3).map((item) => (
+            <Badge 
+              key={item.id} 
+              variant={item.type === 'category' ? 'outline' : 'secondary'} 
+              className="text-xs"
+            >
+              {item.type === 'category' ? '📁' : '📂'} {item.name}
+            </Badge>
+          ))}
+          {allItems.length > 3 && (
             <Badge variant="outline" className="text-xs">
-              +{categoryIds.length - 2}
+              +{allItems.length - 3}
             </Badge>
           )}
         </div>

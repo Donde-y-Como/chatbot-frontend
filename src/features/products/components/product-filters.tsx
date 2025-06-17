@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Filter, X } from 'lucide-react';
+import { Check, Filter, X, ChevronRight, ChevronDown, FolderOpen, Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -17,8 +17,10 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ProductStatus, ProductFilters } from '../types';
 import { useGetUnits, useGetCategories, useGetProductTags } from '../hooks/useGetAuxiliaryData';
+import { organizeCategoriesHierarchy, getCategoryFullName } from '../utils/categoryUtils';
 
 interface ProductFiltersComponentProps {
   onFiltersChange?: (filters: ProductFilters) => void;
@@ -31,11 +33,16 @@ export function ProductFiltersComponent({
 }: ProductFiltersComponentProps) {
   const [localFilters, setLocalFilters] = useState<ProductFilters>(initialFilters);
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   // Obtener datos para los filtros
   const { data: units = [] } = useGetUnits();
   const { data: categories = [] } = useGetCategories();
   const { data: tags = [] } = useGetProductTags();
+
+  // Filtrar solo las categorías padre (que no tienen parentCategoryId)
+  // El backend ya devuelve las subcategorías anidadas en la propiedad 'subcategories'
+  const parentCategories = categories.filter(cat => !cat.parentCategoryId);
 
   // Contar filtros activos (excluyendo search)
   const activeFiltersCount = Object.entries(localFilters).filter(([key, value]) => {
@@ -43,6 +50,16 @@ export function ProductFiltersComponent({
     if (Array.isArray(value)) return value.length > 0;
     return Boolean(value);
   }).length;
+
+  const toggleCategoryExpansion = (categoryId: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
+  };
 
   const handleApplyFilters = () => {
     onFiltersChange?.(localFilters);
@@ -74,6 +91,25 @@ export function ProductFiltersComponent({
     });
   };
 
+  const removeFilterItem = (key: keyof ProductFilters, value?: string) => {
+    if (key === 'status') {
+      const newFilters = { ...localFilters };
+      delete newFilters.status;
+      setLocalFilters(newFilters);
+      onFiltersChange?.(newFilters);
+    } else if (value && Array.isArray(localFilters[key])) {
+      const newFilters = {
+        ...localFilters,
+        [key]: (localFilters[key] as string[])?.filter(id => id !== value)
+      };
+      if ((newFilters[key] as string[])?.length === 0) {
+        delete newFilters[key];
+      }
+      setLocalFilters(newFilters);
+      onFiltersChange?.(newFilters);
+    }
+  };
+
   return (
     <div className="flex flex-col sm:flex-row gap-2 w-full">
       {/* Filtros avanzados */}
@@ -92,7 +128,7 @@ export function ProductFiltersComponent({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-4" align="end">
+        <PopoverContent className="w-96 p-4" align="end">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-medium">Filtros avanzados</h4>
@@ -131,27 +167,100 @@ export function ProductFiltersComponent({
               </Select>
             </div>
 
-            {/* Categorías */}
-            {categories.length > 0 && (
+            {/* Categorías Principales */}
+            {parentCategories.length > 0 && (
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Categorías</Label>
-                <div className="max-h-32 overflow-y-auto space-y-2">
-                  {categories.map((category) => (
-                    <div key={category.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`category-${category.id}`}
-                        checked={localFilters.categoryIds?.includes(category.id) || false}
-                        onCheckedChange={() => toggleArrayFilter('categoryIds', category.id)}
-                      />
-                      <Label 
-                        htmlFor={`category-${category.id}`}
-                        className="text-sm font-normal"
-                      >
-                        {category.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4" />
+                  Categorías Principales
+                </Label>
+                <ScrollArea className="max-h-32 w-full">
+                  <div className="space-y-2">
+                    {parentCategories.map((parentCategory) => (
+                      <div key={parentCategory.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`category-${parentCategory.id}`}
+                          checked={localFilters.categoryIds?.includes(parentCategory.id) || false}
+                          onCheckedChange={() => toggleArrayFilter('categoryIds', parentCategory.id)}
+                        />
+                        <Label 
+                          htmlFor={`category-${parentCategory.id}`}
+                          className="text-sm font-normal flex-1"
+                        >
+                          {parentCategory.name}
+                        </Label>
+                        {parentCategory.subcategories && parentCategory.subcategories.length > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {parentCategory.subcategories.length}
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+
+            {/* Subcategorías */}
+            {parentCategories.some(cat => cat.subcategories && cat.subcategories.length > 0) && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Folder className="h-4 w-4" />
+                  Subcategorías
+                </Label>
+                <ScrollArea className="max-h-40 w-full">
+                  <div className="space-y-2">
+                    {parentCategories.map((parentCategory) => (
+                      parentCategory.subcategories && parentCategory.subcategories.length > 0 && (
+                        <div key={parentCategory.id} className="space-y-2">
+                          {/* Header de la categoría padre */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => toggleCategoryExpansion(parentCategory.id)}
+                            >
+                              {expandedCategories.has(parentCategory.id) ? (
+                                <ChevronDown className="h-3 w-3" />
+                              ) : (
+                                <ChevronRight className="h-3 w-3" />
+                              )}
+                            </Button>
+                            <span className="text-xs font-medium text-muted-foreground">
+                              {parentCategory.name}
+                            </span>
+                            <Badge variant="secondary" className="text-xs">
+                              {parentCategory.subcategories.length}
+                            </Badge>
+                          </div>
+                          
+                          {/* Subcategorías */}
+                          {expandedCategories.has(parentCategory.id) && (
+                            <div className="space-y-2 ml-6">
+                              {parentCategory.subcategories.map((subcategory) => (
+                                <div key={subcategory.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`subcategory-${subcategory.id}`}
+                                    checked={localFilters.subcategoryIds?.includes(subcategory.id) || false}
+                                    onCheckedChange={() => toggleArrayFilter('subcategoryIds', subcategory.id)}
+                                  />
+                                  <Label 
+                                    htmlFor={`subcategory-${subcategory.id}`}
+                                    className="text-sm font-normal"
+                                  >
+                                    {subcategory.name}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             )}
 
@@ -159,23 +268,25 @@ export function ProductFiltersComponent({
             {units.length > 0 && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Unidades</Label>
-                <div className="max-h-32 overflow-y-auto space-y-2">
-                  {units.map((unit) => (
-                    <div key={unit.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`unit-${unit.id}`}
-                        checked={localFilters.unitIds?.includes(unit.id) || false}
-                        onCheckedChange={() => toggleArrayFilter('unitIds', unit.id)}
-                      />
-                      <Label 
-                        htmlFor={`unit-${unit.id}`}
-                        className="text-sm font-normal"
-                      >
-                        {unit.name} ({unit.abbreviation})
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+                <ScrollArea className="max-h-32 w-full">
+                  <div className="space-y-2">
+                    {units.map((unit) => (
+                      <div key={unit.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`unit-${unit.id}`}
+                          checked={localFilters.unitIds?.includes(unit.id) || false}
+                          onCheckedChange={() => toggleArrayFilter('unitIds', unit.id)}
+                        />
+                        <Label 
+                          htmlFor={`unit-${unit.id}`}
+                          className="text-sm font-normal"
+                        >
+                          {unit.name} ({unit.abbreviation})
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             )}
 
@@ -183,23 +294,25 @@ export function ProductFiltersComponent({
             {tags.length > 0 && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Etiquetas</Label>
-                <div className="max-h-32 overflow-y-auto space-y-2">
-                  {tags.map((tag) => (
-                    <div key={tag.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`tag-${tag.id}`}
-                        checked={localFilters.tagIds?.includes(tag.id) || false}
-                        onCheckedChange={() => toggleArrayFilter('tagIds', tag.id)}
-                      />
-                      <Label 
-                        htmlFor={`tag-${tag.id}`}
-                        className="text-sm font-normal"
-                      >
-                        {tag.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+                <ScrollArea className="max-h-32 w-full">
+                  <div className="space-y-2">
+                    {tags.map((tag) => (
+                      <div key={tag.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`tag-${tag.id}`}
+                          checked={localFilters.tagIds?.includes(tag.id) || false}
+                          onCheckedChange={() => toggleArrayFilter('tagIds', tag.id)}
+                        />
+                        <Label 
+                          htmlFor={`tag-${tag.id}`}
+                          className="text-sm font-normal"
+                        >
+                          {tag.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             )}
 
@@ -238,12 +351,7 @@ export function ProductFiltersComponent({
                 variant="ghost"
                 size="sm"
                 className="ml-1 h-auto p-0 text-xs"
-                onClick={() => {
-                  const newFilters = { ...localFilters };
-                  delete newFilters.status;
-                  setLocalFilters(newFilters);
-                  onFiltersChange?.(newFilters);
-                }}
+                onClick={() => removeFilterItem('status')}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -251,30 +359,81 @@ export function ProductFiltersComponent({
           )}
           
           {localFilters.categoryIds?.map(categoryId => {
-            const category = categories.find(c => c.id === categoryId);
-            return (
+            const category = categories.find(c => c.id === categoryId && !c.parentCategoryId);
+            return category ? (
               <Badge key={categoryId} variant="secondary" className="text-xs">
-                {category?.name || 'Categoría'}
+                📁 {category.name}
                 <Button
                   variant="ghost"
                   size="sm"
                   className="ml-1 h-auto p-0 text-xs"
-                  onClick={() => {
-                    const newFilters = {
-                      ...localFilters,
-                      categoryIds: localFilters.categoryIds?.filter(id => id !== categoryId)
-                    };
-                    if (newFilters.categoryIds?.length === 0) {
-                      delete newFilters.categoryIds;
-                    }
-                    setLocalFilters(newFilters);
-                    onFiltersChange?.(newFilters);
-                  }}
+                  onClick={() => removeFilterItem('categoryIds', categoryId)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ) : null;
+          })}
+
+          {localFilters.subcategoryIds?.map(subcategoryId => {
+            // Buscar la subcategoría en todas las categorías padre
+            let fullName = 'Subcategoría no encontrada';
+            for (const parentCategory of parentCategories) {
+              if (parentCategory.subcategories) {
+                const subcategory = parentCategory.subcategories.find(sub => sub.id === subcategoryId);
+                if (subcategory) {
+                  fullName = `${parentCategory.name} > ${subcategory.name}`;
+                  break;
+                }
+              }
+            }
+            return (
+              <Badge key={subcategoryId} variant="secondary" className="text-xs">
+                📂 {fullName}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-1 h-auto p-0 text-xs"
+                  onClick={() => removeFilterItem('subcategoryIds', subcategoryId)}
                 >
                   <X className="h-3 w-3" />
                 </Button>
               </Badge>
             );
+          })}
+
+          {localFilters.unitIds?.map(unitId => {
+            const unit = units.find(u => u.id === unitId);
+            return unit ? (
+              <Badge key={unitId} variant="secondary" className="text-xs">
+                📐 {unit.name}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-1 h-auto p-0 text-xs"
+                  onClick={() => removeFilterItem('unitIds', unitId)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ) : null;
+          })}
+
+          {localFilters.tagIds?.map(tagId => {
+            const tag = tags.find(t => t.id === tagId);
+            return tag ? (
+              <Badge key={tagId} variant="secondary" className="text-xs">
+                🏷️ {tag.name}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-1 h-auto p-0 text-xs"
+                  onClick={() => removeFilterItem('tagIds', tagId)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ) : null;
           })}
         </div>
       )}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Category } from '../settings/categories/types';
 
 export enum ProductStatus {
   ACTIVO = "ACTIVO",
@@ -91,14 +92,8 @@ export type Unit = {
   updatedAt: string;
 }
 
-export type Category = {
-  id: string;
-  businessId: string;
-  name: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Re-exportar Category desde settings para mantener compatibilidad
+export type { Category } from '../settings/categories/types';
 
 export type ProductTag = {
   id: string;
