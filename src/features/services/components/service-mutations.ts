@@ -19,7 +19,7 @@ export interface ServiceFormData {
   // Nuevos campos
   productInfo: ProductInfo
   codigoBarras: number
-  unidadMedida: Unit
+  unidadMedida?: Unit
   photos: string[]
 }
 

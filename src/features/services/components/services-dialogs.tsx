@@ -2,11 +2,20 @@ import { useServices } from '../context/services-context.tsx'
 import { ServiceActionDialog } from './service-action-dialog.tsx'
 import { ServicesDeleteDialog } from './services-delete-dialog.tsx'
 import { ServiceViewDialog } from '@/features/services/components/service-view-dialog.tsx'
+import { QuickServiceDialog } from './quick-service-dialog.tsx'
 
 export function ServicesDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useServices()
   return (
     <>
+      {/* Diálogo para servicio rápido */}
+      <QuickServiceDialog
+        key='quick-service-add'
+        open={open === 'quick-add'}
+        onOpenChange={() => setOpen('quick-add')}
+      />
+
+      {/* Diálogo para servicio completo */}
       <ServiceActionDialog
         key='user-add'
         open={open === 'add'}
