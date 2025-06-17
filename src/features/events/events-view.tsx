@@ -45,13 +45,13 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Clock,
   Filter,
   List,
   Plus,
   Search,
   Settings,
-  X
+  X,
+  Zap
 } from 'lucide-react'
 import moment from "moment-timezone"
 import { useMemo, useState } from 'react'
@@ -288,7 +288,7 @@ export default function EventsView() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64">
                   <DropdownMenuItem onClick={handleQuickEvent} className="p-3">
-                    <Clock className="mr-3 h-5 w-5 text-blue-500" />
+                    <Zap className="mr-3 h-5 w-5 text-blue-500" />
                     <div className="flex flex-col gap-1">
                       <span className="font-medium">Evento rápido</span>
                       <span className="text-xs text-muted-foreground">Solo campos esenciales: nombre, descripción, ubicación, capacidad, fechas y precio</span>
