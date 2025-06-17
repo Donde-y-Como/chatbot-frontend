@@ -1,5 +1,5 @@
-import { Control } from 'react-hook-form';
-import { Tags, FolderOpen, ChevronRight, ChevronDown, Folder } from 'lucide-react';
+import { Control, useController } from 'react-hook-form';
+import { Tags, FolderOpen, ChevronRight, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { CreateProductForm, Category, ProductTag } from '../../types';
 
@@ -28,7 +27,6 @@ export function ProductCategorizationSection({
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   
   // Filtrar solo las categorías padre (que no tienen parentCategoryId)
-  // El backend ya devuelve las subcategorías anidadas en la propiedad 'subcategories'
   const parentCategories = categories.filter(cat => !cat.parentCategoryId);
 
   const toggleCategoryExpansion = (categoryId: string) => {
@@ -43,7 +41,6 @@ export function ProductCategorizationSection({
 
   // Función helper para obtener el nombre completo de una subcategoría
   const getSubcategoryFullName = (subcategoryId: string): string => {
-    // Buscar la subcategoría en todas las categorías padre
     for (const parentCategory of parentCategories) {
       if (parentCategory.subcategories) {
         const subcategory = parentCategory.subcategories.find(sub => sub.id === subcategoryId);
@@ -52,7 +49,6 @@ export function ProductCategorizationSection({
         }
       }
     }
-    // Si no se encuentra en subcategorías, buscar en todas las categorías (por si acaso)
     const category = categories.find(cat => cat.id === subcategoryId);
     return category?.name || 'Categoría no encontrada';
   };
@@ -71,7 +67,7 @@ export function ProductCategorizationSection({
       <CardContent className="space-y-6">
         {/* Categorías y Subcategorías */}
         <div className="space-y-4">
-          {/* Categorías Principales */}
+          {/* Categorías */}
           <FormField
             control={control}
             name="categoryIds"
@@ -79,188 +75,100 @@ export function ProductCategorizationSection({
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
                   <FolderOpen className="h-4 w-4" />
-                  Categorías Principales
+                  Categorías
                 </FormLabel>
                 {parentCategories.length > 0 ? (
-                  <div className="space-y-4">
-                    <ScrollArea className="h-60 w-full border rounded-md p-3">
+                  <div className="space-y-3">
+                    <div className="border rounded-md p-3 max-h-60 overflow-y-auto">
                       <div className="space-y-2">
-                        {parentCategories.map((parentCategory) => (
-                          <div key={parentCategory.id} className="space-y-2">
-                            {/* Categoría Principal */}
-                            <div className="flex items-start space-x-3 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800">
-                              <Checkbox
-                                checked={field.value?.includes(parentCategory.id) || false}
-                                onCheckedChange={(checked) => {
-                                  const currentValue = field.value || [];
-                                  if (checked) {
-                                    field.onChange([...currentValue, parentCategory.id]);
-                                  } else {
-                                    field.onChange(
-                                      currentValue.filter((id) => id !== parentCategory.id)
-                                    );
-                                  }
-                                }}
-                              />
-                              <div className="flex-1 space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm font-medium leading-none">
-                                    {parentCategory.name}
-                                  </p>
-                                  {parentCategory.subcategories && parentCategory.subcategories.length > 0 && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      {parentCategory.subcategories.length} subcategorías
-                                    </Badge>
+                        {parentCategories.map((parentCategory) => {
+                          const isExpanded = expandedCategories.has(parentCategory.id);
+                          const hasSubcategories = parentCategory.subcategories && parentCategory.subcategories.length > 0;
+                          const isSelected = field.value?.includes(parentCategory.id) || false;
+
+                          return (
+                            <div key={parentCategory.id} className="space-y-2">
+                              {/* Categoría Principal */}
+                              <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800">
+                                {/* Botón de expansión */}
+                                {hasSubcategories ? (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => toggleCategoryExpansion(parentCategory.id)}
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronDown className="h-3 w-3" />
+                                    ) : (
+                                      <ChevronRight className="h-3 w-3" />
+                                    )}
+                                  </Button>
+                                ) : (
+                                  <div className="w-6" />
+                                )}
+                                
+                                {/* Checkbox */}
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={(checked) => {
+                                    const currentValue = field.value || [];
+                                    if (checked) {
+                                      field.onChange([...currentValue, parentCategory.id]);
+                                    } else {
+                                      field.onChange(currentValue.filter((id) => id !== parentCategory.id));
+                                    }
+                                  }}
+                                />
+                                
+                                {/* Contenido */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-medium leading-none truncate">
+                                      {parentCategory.name}
+                                    </p>
+                                    {hasSubcategories && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        {parentCategory.subcategories?.length || 0}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {parentCategory.description && (
+                                    <p className="text-xs text-muted-foreground mt-1 truncate">
+                                      {parentCategory.description}
+                                    </p>
                                   )}
                                 </div>
-                                {parentCategory.description && (
-                                  <p className="text-xs text-muted-foreground">
-                                    {parentCategory.description}
-                                  </p>
-                                )}
                               </div>
+
+                              {/* Subcategorías - Solo mostrar si está expandida */}
+                              {hasSubcategories && isExpanded && (
+                                <SubcategorySection 
+                                  control={control}
+                                  parentCategory={parentCategory}
+                                />
+                              )}
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
-                    </ScrollArea>
+                    </div>
                     
-                    {/* Mostrar categorías principales seleccionadas */}
-                    {field.value && field.value.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">
-                          Categorías principales seleccionadas:
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {field.value.map((categoryId) => {
-                            const category = parentCategories.find(c => c.id === categoryId);
-                            return category ? (
-                              <Badge key={categoryId} variant="outline">
-                                📁 {category.name}
-                              </Badge>
-                            ) : null;
-                          })}
-                        </div>
-                      </div>
-                    )}
+                    {/* Mostrar selecciones */}
+                    <SelectionsDisplay 
+                      control={control}
+                      selectedCategories={field.value || []}
+                      getSubcategoryFullName={getSubcategoryFullName}
+                      parentCategories={parentCategories}
+                    />
                   </div>
                 ) : (
-                  <div className="text-center py-6 text-muted-foreground">
+                  <div className="text-center py-6 text-muted-foreground border rounded-md">
                     <FolderOpen className="mx-auto h-8 w-8 mb-2 opacity-50" />
                     <p className="text-sm">No hay categorías disponibles</p>
                     <p className="text-xs">
                       Crea categorías desde la configuración para organizar tus productos
-                    </p>
-                  </div>
-                )}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Subcategorías */}
-          <FormField
-            control={control}
-            name="subcategoryIds"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-2">
-                  <Folder className="h-4 w-4" />
-                  Subcategorías
-                </FormLabel>
-                {parentCategories.some(cat => cat.subcategories && cat.subcategories.length > 0) ? (
-                  <div className="space-y-4">
-                    <ScrollArea className="h-60 w-full border rounded-md p-3">
-                      <div className="space-y-3">
-                        {parentCategories.map((parentCategory) => (
-                          parentCategory.subcategories && parentCategory.subcategories.length > 0 && (
-                            <div key={parentCategory.id} className="space-y-2">
-                              {/* Header de la categoría padre */}
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-6 w-6 p-0"
-                                  onClick={() => toggleCategoryExpansion(parentCategory.id)}
-                                >
-                                  {expandedCategories.has(parentCategory.id) ? (
-                                    <ChevronDown className="h-3 w-3" />
-                                  ) : (
-                                    <ChevronRight className="h-3 w-3" />
-                                  )}
-                                </Button>
-                                <span className="text-sm font-medium text-muted-foreground">
-                                  {parentCategory.name}
-                                </span>
-                                <Badge variant="secondary" className="text-xs">
-                                  {parentCategory.subcategories.length}
-                                </Badge>
-                              </div>
-                              
-                              {/* Subcategorías */}
-                              {expandedCategories.has(parentCategory.id) && (
-                                <div className="space-y-2 ml-6 animate-in slide-in-from-top-2 duration-200">
-                                  {parentCategory.subcategories.map((subcategory) => (
-                                    <div key={subcategory.id} className="flex items-start space-x-3 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800">
-                                      <Checkbox
-                                        checked={field.value?.includes(subcategory.id) || false}
-                                        onCheckedChange={(checked) => {
-                                          const currentValue = field.value || [];
-                                          if (checked) {
-                                            field.onChange([...currentValue, subcategory.id]);
-                                          } else {
-                                            field.onChange(
-                                              currentValue.filter((id) => id !== subcategory.id)
-                                            );
-                                          }
-                                        }}
-                                      />
-                                      <div className="space-y-1">
-                                        <p className="text-sm leading-none">
-                                          {subcategory.name}
-                                        </p>
-                                        {subcategory.description && (
-                                          <p className="text-xs text-muted-foreground">
-                                            {subcategory.description}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )
-                        ))}
-                      </div>
-                    </ScrollArea>
-                    
-                    {/* Mostrar subcategorías seleccionadas */}
-                    {field.value && field.value.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">
-                          Subcategorías seleccionadas:
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {field.value.map((subcategoryId) => {
-                            const fullName = getSubcategoryFullName(subcategoryId);
-                            return (
-                              <Badge key={subcategoryId} variant="outline" className="text-xs">
-                                📂 {fullName}
-                              </Badge>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <Folder className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                    <p className="text-sm">No hay subcategorías disponibles</p>
-                    <p className="text-xs">
-                      Crea subcategorías desde la configuración para una mejor organización
                     </p>
                   </div>
                 )}
@@ -282,10 +190,10 @@ export function ProductCategorizationSection({
               </FormLabel>
               {tags.length > 0 ? (
                 <div className="space-y-4">
-                  <ScrollArea className="h-40 w-full border rounded-md p-3">
-                    <div className="space-y-3">
+                  <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
+                    <div className="space-y-2">
                       {tags.map((tag) => (
-                        <div key={tag.id} className="flex items-center space-x-3">
+                        <div key={tag.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800">
                           <Checkbox
                             checked={field.value?.includes(tag.id) || false}
                             onCheckedChange={(checked) => {
@@ -293,9 +201,7 @@ export function ProductCategorizationSection({
                               if (checked) {
                                 field.onChange([...currentValue, tag.id]);
                               } else {
-                                field.onChange(
-                                  currentValue.filter((id) => id !== tag.id)
-                                );
+                                field.onChange(currentValue.filter((id) => id !== tag.id));
                               }
                             }}
                           />
@@ -313,13 +219,13 @@ export function ProductCategorizationSection({
                         </div>
                       ))}
                     </div>
-                  </ScrollArea>
+                  </div>
                   
                   {/* Mostrar etiquetas seleccionadas */}
                   {field.value && field.value.length > 0 && (
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">
-                        Etiquetas seleccionadas:
+                        Etiquetas seleccionadas ({field.value.length}):
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {field.value.map((tagId) => {
@@ -343,7 +249,7 @@ export function ProductCategorizationSection({
                   )}
                 </div>
               ) : (
-                <div className="text-center py-6 text-muted-foreground">
+                <div className="text-center py-6 text-muted-foreground border rounded-md">
                   <Tags className="mx-auto h-8 w-8 mb-2 opacity-50" />
                   <p className="text-sm">No hay etiquetas disponibles</p>
                   <p className="text-xs">
@@ -357,5 +263,107 @@ export function ProductCategorizationSection({
         />
       </CardContent>
     </Card>
+  );
+}
+
+// Componente para mostrar selecciones
+interface SelectionsDisplayProps {
+  control: Control<CreateProductForm>;
+  selectedCategories: string[];
+  getSubcategoryFullName: (id: string) => string;
+  parentCategories: Category[];
+}
+
+function SelectionsDisplay({ 
+  control, 
+  selectedCategories, 
+  getSubcategoryFullName, 
+  parentCategories 
+}: SelectionsDisplayProps) {
+  const { field: subcategoryField } = useController({
+    control,
+    name: 'subcategoryIds',
+    defaultValue: []
+  });
+
+  const selectedSubcategories = subcategoryField.value || [];
+  const totalSelected = selectedCategories.length + selectedSubcategories.length;
+
+  if (totalSelected === 0) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-muted-foreground">
+        Selecciones ({totalSelected}):
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {/* Categorías principales */}
+        {selectedCategories.map((categoryId) => {
+          const category = parentCategories.find(c => c.id === categoryId);
+          return category ? (
+            <Badge key={categoryId} variant="outline" className="text-xs">
+              {category.name}
+            </Badge>
+          ) : null;
+        })}
+        
+        {/* Subcategorías */}
+        {selectedSubcategories.map((subcategoryId) => {
+          const fullName = getSubcategoryFullName(subcategoryId);
+          return (
+            <Badge key={subcategoryId} variant="secondary" className="text-xs">
+              {fullName}
+            </Badge>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Componente separado para manejar subcategorías
+interface SubcategorySectionProps {
+  control: Control<CreateProductForm>;
+  parentCategory: Category;
+}
+
+function SubcategorySection({ control, parentCategory }: SubcategorySectionProps) {
+  const { field } = useController({
+    control,
+    name: 'subcategoryIds',
+    defaultValue: []
+  });
+
+  return (
+    <div className="ml-8 space-y-1 animate-in slide-in-from-top-2 duration-200">
+      {parentCategory.subcategories?.map((subcategory) => (
+        <div key={subcategory.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800">
+          <div className="w-6" /> {/* Espaciado para alineación */}
+          <Checkbox
+            checked={field.value?.includes(subcategory.id) || false}
+            onCheckedChange={(checked) => {
+              const currentValue = field.value || [];
+              if (checked) {
+                field.onChange([...currentValue, subcategory.id]);
+              } else {
+                field.onChange(currentValue.filter((id) => id !== subcategory.id));
+              }
+            }}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm leading-none truncate">
+              {subcategory.name}
+            </p>
+            {subcategory.description && (
+              <p className="text-xs text-muted-foreground mt-1 truncate">
+                {subcategory.description}
+              </p>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

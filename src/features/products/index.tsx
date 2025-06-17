@@ -44,7 +44,7 @@ function ProductsContent() {
   }
 
   return (
-    <Main fixed>
+    <Main>
       <section className="p-2">
         <div className="mb-2 w-full flex sm:items-center flex-col sm:flex-row sm:justify-between">
           <div className="flex flex-col gap-2">
@@ -112,7 +112,7 @@ function ProductsContent() {
         </div>
 
         {/* Tabla de productos */}
-        <div className="-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0">
+        <div className="w-full">
           {products.length > 0 && unitsData && categoriesData && tagsData ? (
             <CustomTable<Product> 
               data={products} 

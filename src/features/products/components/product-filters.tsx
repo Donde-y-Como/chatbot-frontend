@@ -20,7 +20,6 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ProductStatus, ProductFilters } from '../types';
 import { useGetUnits, useGetCategories, useGetProductTags } from '../hooks/useGetAuxiliaryData';
-import { organizeCategoriesHierarchy, getCategoryFullName } from '../utils/categoryUtils';
 
 interface ProductFiltersComponentProps {
   onFiltersChange?: (filters: ProductFilters) => void;
@@ -40,13 +39,11 @@ export function ProductFiltersComponent({
   const { data: categories = [] } = useGetCategories();
   const { data: tags = [] } = useGetProductTags();
 
-  // Filtrar solo las categorías padre (que no tienen parentCategoryId)
-  // El backend ya devuelve las subcategorías anidadas en la propiedad 'subcategories'
   const parentCategories = categories.filter(cat => !cat.parentCategoryId);
 
-  // Contar filtros activos (excluyendo search)
+  // Contar filtros activos
   const activeFiltersCount = Object.entries(localFilters).filter(([key, value]) => {
-    if (key === 'search') return false; // Excluir search del conteo
+    if (key === 'search') return false; 
     if (Array.isArray(value)) return value.length > 0;
     return Boolean(value);
   }).length;
@@ -358,23 +355,8 @@ export function ProductFiltersComponent({
             </Badge>
           )}
           
-          {localFilters.categoryIds?.map(categoryId => {
-            const category = categories.find(c => c.id === categoryId && !c.parentCategoryId);
-            return category ? (
-              <Badge key={categoryId} variant="secondary" className="text-xs">
-                📁 {category.name}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-1 h-auto p-0 text-xs"
-                  onClick={() => removeFilterItem('categoryIds', categoryId)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ) : null;
-          })}
-
+          {/* Mostrar filtros activos con lógica inteligente */}
+          {/* Si hay subcategorías filtradas, solo mostrar subcategorías */}
           {localFilters.subcategoryIds?.map(subcategoryId => {
             // Buscar la subcategoría en todas las categorías padre
             let fullName = 'Subcategoría no encontrada';
@@ -389,7 +371,7 @@ export function ProductFiltersComponent({
             }
             return (
               <Badge key={subcategoryId} variant="secondary" className="text-xs">
-                📂 {fullName}
+                {fullName}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -402,11 +384,31 @@ export function ProductFiltersComponent({
             );
           })}
 
+          {/* Solo mostrar categorías padre si NO hay subcategorías filtradas */}
+          {(!localFilters.subcategoryIds || localFilters.subcategoryIds.length === 0) &&
+            localFilters.categoryIds?.map(categoryId => {
+              const category = categories.find(c => c.id === categoryId && !c.parentCategoryId);
+              return category ? (
+                <Badge key={categoryId} variant="secondary" className="text-xs">
+                  {category.name}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-1 h-auto p-0 text-xs"
+                    onClick={() => removeFilterItem('categoryIds', categoryId)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ) : null;
+            })
+          }
+
           {localFilters.unitIds?.map(unitId => {
             const unit = units.find(u => u.id === unitId);
             return unit ? (
               <Badge key={unitId} variant="secondary" className="text-xs">
-                📐 {unit.name}
+                {unit.name}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -423,7 +425,7 @@ export function ProductFiltersComponent({
             const tag = tags.find(t => t.id === tagId);
             return tag ? (
               <Badge key={tagId} variant="secondary" className="text-xs">
-                🏷️ {tag.name}
+                {tag.name}
                 <Button
                   variant="ghost"
                   size="sm"

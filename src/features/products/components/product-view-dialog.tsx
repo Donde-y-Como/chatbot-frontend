@@ -315,29 +315,14 @@ export function ProductViewDialog() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Categorías principales</p>
-                  <div className="flex flex-wrap gap-2">
-                    {productCategories.length > 0 ? (
-                      productCategories.map((category) => (
-                        <Badge key={category.id} variant="outline">
-                          📁 {category.name}
-                        </Badge>
-                      ))
-                    ) : (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <FolderOpen className="h-4 w-4" />
-                        <span>Sin categorías principales asignadas</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Subcategorías</p>
-                  <div className="flex flex-wrap gap-2">
-                    {productSubcategories.length > 0 ? (
-                      productSubcategories.map((subcategory) => {
+                {/* Lógica inteligente: Si hay subcategorías, solo mostrar subcategorías */}
+                {productSubcategories.length > 0 ? (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">
+                      Categorías ({productSubcategories.length})
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {productSubcategories.map((subcategory) => {
                         // Buscar la categoría padre de esta subcategoría
                         let parentCategoryName = '';
                         for (const parentCategory of categories.filter(c => !c.parentCategoryId)) {
@@ -349,18 +334,35 @@ export function ProductViewDialog() {
                         const displayName = parentCategoryName ? `${parentCategoryName} > ${subcategory.name}` : subcategory.name;
                         return (
                           <Badge key={subcategory.id} variant="secondary">
-                            📂 {displayName}
+                            {displayName}
                           </Badge>
                         );
                       })
-                    ) : (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <FolderOpen className="h-4 w-4" />
-                        <span>Sin subcategorías asignadas</span>
-                      </div>
-                    )}
+                    }
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  /* Si no hay subcategorías, mostrar categorías principales */
+                  productCategories.length > 0 ? (
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">
+                        Categorías ({productCategories.length})
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {productCategories.map((category) => (
+                          <Badge key={category.id} variant="secondary">
+                            {category.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <FolderOpen className="h-4 w-4" />
+                      <span>Sin categorías asignadas</span>
+                    </div>
+                  )
+                )}
 
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-2">Etiquetas</p>

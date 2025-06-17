@@ -216,68 +216,77 @@ export const createProductColumns = (
     ),
     cell: ({ row }) => {
       const { categoryIds, subcategoryIds } = row.original;
-      const hasCategoriesOrSubcategories = 
-        (categoryIds && categoryIds.length > 0) || 
-        (subcategoryIds && subcategoryIds.length > 0);
       
-      if (!hasCategoriesOrSubcategories) {
-        return <span className="text-muted-foreground text-sm">-</span>;
-      }
-
-      const allItems: Array<{id: string; name: string; type: 'category' | 'subcategory'}> = [];
-      
-      // Agregar categorías principales
-      if (categoryIds && categoryIds.length > 0) {
-        categoryIds.forEach((categoryId) => {
-          const category = categories.find(c => c.id === categoryId && !c.parentCategoryId);
-          if (category) {
-            allItems.push({
-              id: categoryId,
-              name: category.name,
-              type: 'category' as const
-            });
-          }
-        });
-      }
-      
-      // Agregar subcategorías
+      // Si hay subcategorías, solo mostrar subcategorías (no duplicar categorías padre)
       if (subcategoryIds && subcategoryIds.length > 0) {
-        subcategoryIds.forEach((subcategoryId) => {
+        const subcategoryItems = subcategoryIds.map((subcategoryId) => {
           // Buscar la subcategoría en todas las categorías padre
           for (const parentCategory of categories.filter(c => !c.parentCategoryId)) {
             if (parentCategory.subcategories) {
               const subcategory = parentCategory.subcategories.find(sub => sub.id === subcategoryId);
               if (subcategory) {
-                allItems.push({
+                return {
                   id: subcategoryId,
                   name: `${parentCategory.name} > ${subcategory.name}`,
-                  type: 'subcategory' as const
-                });
-                break;
+                };
               }
             }
           }
-        });
-      }
+          return null;
+        }).filter((item): item is { id: string; name: string } => item !== null);
 
-      return (
-        <div className="flex flex-wrap gap-1 max-w-[200px]">
-          {allItems.slice(0, 3).map((item) => (
-            <Badge 
-              key={item.id} 
-              variant={item.type === 'category' ? 'outline' : 'secondary'} 
-              className="text-xs"
-            >
-              {item.type === 'category' ? '📁' : '📂'} {item.name}
-            </Badge>
-          ))}
-          {allItems.length > 3 && (
-            <Badge variant="outline" className="text-xs">
-              +{allItems.length - 3}
-            </Badge>
-          )}
-        </div>
-      );
+        return (
+          <div className="flex flex-wrap gap-1 max-w-[200px]">
+            {subcategoryItems.slice(0, 3).map((item) => (
+              <Badge 
+                key={item.id} 
+                variant="secondary" 
+                className="text-xs"
+              >
+                {item.name}
+              </Badge>
+            ))}
+            {subcategoryItems.length > 3 && (
+              <Badge variant="secondary" className="text-xs">
+                +{subcategoryItems.length - 3}
+              </Badge>
+            )}
+          </div>
+        );
+      }
+      
+      // Si solo hay categorías padre (sin subcategorías), mostrar categorías padre
+      if (categoryIds && categoryIds.length > 0) {
+        const categoryItems = categoryIds.map((categoryId) => {
+          const category = categories.find(c => c.id === categoryId && !c.parentCategoryId);
+          return category ? {
+            id: categoryId,
+            name: category.name,
+          } : null;
+        }).filter((item): item is { id: string; name: string } => item !== null);
+
+        return (
+          <div className="flex flex-wrap gap-1 max-w-[200px]">
+            {categoryItems.slice(0, 3).map((item) => (
+              <Badge 
+                key={item.id} 
+                variant="secondary" 
+                className="text-xs"
+              >
+                {item.name}
+              </Badge>
+            ))}
+            {categoryItems.length > 3 && (
+              <Badge variant="secondary" className="text-xs">
+                +{categoryItems.length - 3}
+              </Badge>
+            )}
+          </div>
+        );
+      }
+      
+      // Si no hay categorías ni subcategorías
+      return <span className="text-muted-foreground text-sm">-</span>;
     },
     enableSorting: false,
   },
