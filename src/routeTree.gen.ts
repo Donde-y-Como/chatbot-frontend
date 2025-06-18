@@ -41,6 +41,9 @@ const AuthenticatedSettingsIndexLazyImport = createFileRoute(
 const AuthenticatedServiciosIndexLazyImport = createFileRoute(
   '/_authenticated/servicios/',
 )()
+const AuthenticatedProductsIndexLazyImport = createFileRoute(
+  '/_authenticated/products/',
+)()
 const AuthenticatedEventosIndexLazyImport = createFileRoute(
   '/_authenticated/eventos/',
 )()
@@ -184,6 +187,15 @@ const AuthenticatedServiciosIndexLazyRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any).lazy(() =>
     import('./routes/_authenticated/servicios/index.lazy').then((d) => d.Route),
+  )
+
+const AuthenticatedProductsIndexLazyRoute =
+  AuthenticatedProductsIndexLazyImport.update({
+    id: '/products/',
+    path: '/products/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/products/index.lazy').then((d) => d.Route),
   )
 
 const AuthenticatedEventosIndexLazyRoute =
@@ -484,6 +496,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEventosIndexLazyImport
       parentRoute: typeof AuthenticatedRouteImport
     }
+    '/_authenticated/products/': {
+      id: '/_authenticated/products/'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof AuthenticatedProductsIndexLazyImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
     '/_authenticated/servicios/': {
       id: '/_authenticated/servicios/'
       path: '/servicios'
@@ -541,6 +560,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClientesIndexLazyRoute: typeof AuthenticatedClientesIndexLazyRoute
   AuthenticatedEmpleadosIndexLazyRoute: typeof AuthenticatedEmpleadosIndexLazyRoute
   AuthenticatedEventosIndexLazyRoute: typeof AuthenticatedEventosIndexLazyRoute
+  AuthenticatedProductsIndexLazyRoute: typeof AuthenticatedProductsIndexLazyRoute
   AuthenticatedServiciosIndexLazyRoute: typeof AuthenticatedServiciosIndexLazyRoute
 }
 
@@ -553,6 +573,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClientesIndexLazyRoute: AuthenticatedClientesIndexLazyRoute,
   AuthenticatedEmpleadosIndexLazyRoute: AuthenticatedEmpleadosIndexLazyRoute,
   AuthenticatedEventosIndexLazyRoute: AuthenticatedEventosIndexLazyRoute,
+  AuthenticatedProductsIndexLazyRoute: AuthenticatedProductsIndexLazyRoute,
   AuthenticatedServiciosIndexLazyRoute: AuthenticatedServiciosIndexLazyRoute,
 }
 
@@ -585,6 +606,7 @@ export interface FileRoutesByFullPath {
   '/clientes': typeof AuthenticatedClientesIndexLazyRoute
   '/empleados': typeof AuthenticatedEmpleadosIndexLazyRoute
   '/eventos': typeof AuthenticatedEventosIndexLazyRoute
+  '/products': typeof AuthenticatedProductsIndexLazyRoute
   '/servicios': typeof AuthenticatedServiciosIndexLazyRoute
   '/settings/': typeof AuthenticatedSettingsIndexLazyRoute
 }
@@ -613,6 +635,7 @@ export interface FileRoutesByTo {
   '/clientes': typeof AuthenticatedClientesIndexLazyRoute
   '/empleados': typeof AuthenticatedEmpleadosIndexLazyRoute
   '/eventos': typeof AuthenticatedEventosIndexLazyRoute
+  '/products': typeof AuthenticatedProductsIndexLazyRoute
   '/servicios': typeof AuthenticatedServiciosIndexLazyRoute
   '/settings': typeof AuthenticatedSettingsIndexLazyRoute
 }
@@ -644,6 +667,7 @@ export interface FileRoutesById {
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexLazyRoute
   '/_authenticated/empleados/': typeof AuthenticatedEmpleadosIndexLazyRoute
   '/_authenticated/eventos/': typeof AuthenticatedEventosIndexLazyRoute
+  '/_authenticated/products/': typeof AuthenticatedProductsIndexLazyRoute
   '/_authenticated/servicios/': typeof AuthenticatedServiciosIndexLazyRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexLazyRoute
 }
@@ -676,6 +700,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/empleados'
     | '/eventos'
+    | '/products'
     | '/servicios'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
@@ -703,6 +728,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/empleados'
     | '/eventos'
+    | '/products'
     | '/servicios'
     | '/settings'
   id:
@@ -732,6 +758,7 @@ export interface FileRouteTypes {
     | '/_authenticated/clientes/'
     | '/_authenticated/empleados/'
     | '/_authenticated/eventos/'
+    | '/_authenticated/products/'
     | '/_authenticated/servicios/'
     | '/_authenticated/settings/'
   fileRoutesById: FileRoutesById
@@ -801,6 +828,7 @@ export const routeTree = rootRoute
         "/_authenticated/clientes/",
         "/_authenticated/empleados/",
         "/_authenticated/eventos/",
+        "/_authenticated/products/",
         "/_authenticated/servicios/"
       ]
     },
@@ -896,6 +924,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/eventos/": {
       "filePath": "_authenticated/eventos/index.lazy.ts",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/products/": {
+      "filePath": "_authenticated/products/index.lazy.tsx",
       "parent": "/_authenticated"
     },
     "/_authenticated/servicios/": {

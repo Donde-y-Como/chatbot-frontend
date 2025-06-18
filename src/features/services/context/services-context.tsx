@@ -2,13 +2,14 @@ import React, { useState } from 'react'
 import useDialogState from '@/hooks/use-dialog-state'
 import { Service } from '@/features/appointments/types.ts'
 
-type ServicesDialogType = 'add' | 'edit' | 'delete' | 'view'
+type ServicesDialogType = 'add' | 'edit' | 'delete' | 'view' | 'quick-add'
 
 interface ServicesContextType {
   open: ServicesDialogType | null
   setOpen: (str: ServicesDialogType | null) => void
   currentRow: Service | null
   setCurrentRow: React.Dispatch<React.SetStateAction<Service | null>>
+  handleSelectServiceType: (type: 'quick' | 'complete') => void
 }
 
 const ServicesContext = React.createContext<ServicesContextType | null>(null)
@@ -21,8 +22,22 @@ export default function ServicesProvider({ children }: Props) {
   const [open, setOpen] = useDialogState<ServicesDialogType>(null)
   const [currentRow, setCurrentRow] = useState<Service | null>(null)
 
+  const handleSelectServiceType = (type: 'quick' | 'complete') => {
+    if (type === 'quick') {
+      setOpen('quick-add')
+    } else {
+      setOpen('add')
+    }
+  }
+
   return (
-    <ServicesContext value={{ open, setOpen, currentRow, setCurrentRow }}>
+    <ServicesContext value={{ 
+      open, 
+      setOpen, 
+      currentRow, 
+      setCurrentRow, 
+      handleSelectServiceType 
+    }}>
       {children}
     </ServicesContext>
   )

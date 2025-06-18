@@ -6,24 +6,45 @@ import { DataTableViewOptions } from './data-table-view-options'
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
+  showSearch?: boolean
+  searchColumn?: string
+  searchPlaceholder?: string
+  enableGlobalFilter?: boolean
 }
 
 export function DataTableToolbar<TData>({
   table,
+  showSearch = true,
+  searchColumn = 'name',
+  searchPlaceholder = 'Buscar...',
+  enableGlobalFilter = false,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
+
+  // Función para buscar
+  const handleSearchChange = (value: string) => {
+    if (enableGlobalFilter) {
+      table.setGlobalFilter(value)
+    } else {
+      table.getColumn(searchColumn)?.setFilterValue(value)
+    }
+  }
 
   return (
     <div className='flex items-center justify-between'>
       <div className='flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2'>
-        <Input
-          placeholder='Buscar...'
-          value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
-          onChange={(event) =>
-            table.getColumn('name')?.setFilterValue(event.target.value)
-          }
-          className='h-8 sm:w-[150px] lg:w-[250px] w-full'
-        />
+        {showSearch && (
+          <Input
+            placeholder={searchPlaceholder}
+            value={
+              enableGlobalFilter
+                ? (table.getState().globalFilter ?? '') 
+                : (table.getColumn(searchColumn)?.getFilterValue() as string) ?? ''
+            }
+            onChange={(event) => handleSearchChange(event.target.value)}
+            className='h-8 sm:w-[150px] lg:w-[250px] w-full'
+          />
+        )}
         {isFiltered && (
           <Button
             variant='ghost'
