@@ -1,6 +1,7 @@
-import { Product } from '../products/types'
+import { Product, ProductStatus as ProductsProductStatus } from '../products/types'
 import { Service } from '../services/types'
 import { EventPrimitives } from '../events/types'
+import { ProductStatus as GlobalProductStatus } from '../../types/global'
 
 // Categorías disponibles en el POS
 export type POSCategory = 'TODOS' | 'PRODUCTOS' | 'PAQUETES' | 'SERVICIOS' | 'EVENTOS'
@@ -41,7 +42,7 @@ export interface POSFilters {
   subcategories?: string[]
   units?: string[]
   unidadMedida?: string[]
-  status?: string
+  status?: ProductsProductStatus | GlobalProductStatus
   activeOnly?: boolean
   dateRange?: DateRange
   isActive: boolean

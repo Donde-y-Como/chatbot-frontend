@@ -117,13 +117,19 @@ function StoreContent() {
 
   // Manejar filtros avanzados
   const handleFilterButtonClick = () => {
-    if (!filters.isActive) {
-      toggleFiltersActive()
-    }
     setIsAdvancedFiltersOpen(true)
   }
 
   const handleAdvancedFiltersClose = () => {
+    setIsAdvancedFiltersOpen(false)
+  }
+
+  const handleFiltersApply = (newFilters: Partial<typeof filters>) => {
+    updateFilters(newFilters)
+  }
+
+  const handleFiltersReset = () => {
+    resetFilters()
     setIsAdvancedFiltersOpen(false)
   }
 
@@ -191,11 +197,8 @@ function StoreContent() {
         isOpen={isAdvancedFiltersOpen}
         onClose={handleAdvancedFiltersClose}
         filters={filters}
-        onFiltersChange={updateFilters}
-        onResetFilters={() => {
-          resetFilters()
-          setIsAdvancedFiltersOpen(false)
-        }}
+        onFiltersChange={handleFiltersApply}
+        onResetFilters={handleFiltersReset}
         auxiliaryData={auxiliaryData}
       />
     </div>

@@ -1,10 +1,32 @@
 import { useState, useCallback, useMemo } from 'react'
 import { POSFilters, POSCategory, POSItem } from '../types'
-import { Product } from '../../products/types'
+import { Product, ProductStatus as ProductsProductStatus } from '../../products/types'
 import { Service } from '../../services/types'
 import { EventPrimitives } from '../../events/types'
+import { ProductStatus as GlobalProductStatus } from '../../../types/global'
 import { productToPOSItem, serviceToPOSItem, eventToPOSItem } from '../types'
 import { format } from 'date-fns'
+
+const mapStatusForComparison = (filterStatus: ProductsProductStatus | GlobalProductStatus, itemType: POSCategory) => {
+  if (itemType === 'PRODUCTOS') {
+    return filterStatus
+  }
+  // Si es servicios o eventos, mapear de products a global format
+  if (itemType === 'SERVICIOS' || itemType === 'EVENTOS') {
+    switch (filterStatus) {
+      case ProductsProductStatus.ACTIVO:
+        return GlobalProductStatus.ACTIVE
+      case ProductsProductStatus.INACTIVO:
+        return GlobalProductStatus.INACTIVE
+      case ProductsProductStatus.SIN_STOCK:
+        return null // Los servicios no tienen "sin stock"
+      default:
+        return filterStatus
+    }
+  }
+  
+  return null
+}
 
 const DEFAULT_FILTERS: POSFilters = {
   search: '',
@@ -181,18 +203,39 @@ export function usePOSFilters({ products, services, events }: UsePOSFiltersProps
 
       // Filtrar por estado
       if (filters.status) {
+        console.log('Filtrando por status:', filters.status)
+        const beforeCount = allItems.length
+        
         allItems = allItems.filter(item => {
           if (!item.originalData) return false
           
           let itemStatus: string | undefined
-          if ('productInfo' in item.originalData && item.originalData.productInfo?.status) {
+          const expectedStatus = mapStatusForComparison(filters.status!, item.type)
+          
+          if (expectedStatus === null) {
+            return false
+          }
+          
+          if (item.type === 'PRODUCTOS' && 'status' in item.originalData) {
+            itemStatus = item.originalData.status
+          }
+          else if (item.type === 'SERVICIOS' && 'productInfo' in item.originalData && item.originalData.productInfo?.status) {
             itemStatus = item.originalData.productInfo.status
-          } else if ('status' in item.originalData && item.originalData.status) {
+          }
+          else if (item.type === 'EVENTOS' && 'productInfo' in item.originalData && item.originalData.productInfo?.status) {
+            itemStatus = item.originalData.productInfo.status
+          }
+          else if ('status' in item.originalData && item.originalData.status) {
             itemStatus = item.originalData.status
           }
           
-          return itemStatus === filters.status
+          const matches = itemStatus === expectedStatus
+          console.log(`${item.type} ${item.name}: status=${itemStatus}, expectedStatus=${expectedStatus}, matches=${matches}`)
+          
+          return matches
         })
+        
+        console.log(`Items después del filtro de status: ${allItems.length} (antes: ${beforeCount})`)
       }
 
       // Filtrar eventos por activeOnly

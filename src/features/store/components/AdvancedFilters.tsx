@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, Filter, RotateCcw, CalendarIcon } from 'lucide-react'
 import { Button } from '../../../components/ui/button'
 import { Input } from '../../../components/ui/input'
@@ -20,8 +20,25 @@ import {
   SelectValue,
 } from '../../../components/ui/select'
 import { POSFilters, AuxiliaryData, DateRange } from '../types'
+import { ProductStatus as ProductsProductStatus } from '../../products/types'
+import { ProductStatus as GlobalProductStatus } from '../../../types/global'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
+
+type StatusValue = ProductsProductStatus | GlobalProductStatus | 'ALL'
+
+const mapStatusValue = (value: string): { products?: ProductsProductStatus; services?: GlobalProductStatus } => {
+  switch (value) {
+    case ProductsProductStatus.ACTIVO:
+      return { products: ProductsProductStatus.ACTIVO, services: GlobalProductStatus.ACTIVE }
+    case ProductsProductStatus.INACTIVO:
+      return { products: ProductsProductStatus.INACTIVO, services: GlobalProductStatus.INACTIVE }
+    case ProductsProductStatus.SIN_STOCK:
+      return { products: ProductsProductStatus.SIN_STOCK }
+    default:
+      return {}
+  }
+}
 
 interface AdvancedFiltersProps {
   isOpen: boolean
@@ -43,10 +60,18 @@ export function AdvancedFilters({
   const [localFilters, setLocalFilters] = useState<POSFilters>(filters)
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false)
 
+  useEffect(() => {
+    setLocalFilters(filters)
+  }, [filters])
+
   if (!isOpen) return null
 
   const handleApplyFilters = () => {
-    onFiltersChange(localFilters)
+    const filtersToApply = {
+      ...localFilters,
+      isActive: true
+    }
+    onFiltersChange(filtersToApply)
     onClose()
   }
 
@@ -56,8 +81,9 @@ export function AdvancedFilters({
       category: 'TODOS',
       isActive: false
     }
-    onResetFilters()
     setLocalFilters(resetFilters)
+    onResetFilters()
+    onClose()
   }
 
   const updateLocalFilters = (updates: Partial<POSFilters>) => {
@@ -159,19 +185,26 @@ export function AdvancedFilters({
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Estado</Label>
                 <Select
-                  value={localFilters.status || ''}
-                  onValueChange={(value) => 
-                    updateLocalFilters({ status: value || undefined })
-                  }
+                  value={localFilters.status || 'ALL'}
+                  onValueChange={(value) => {
+                    if (value === 'ALL') {
+                      updateLocalFilters({ status: undefined })
+                    } else {
+                      const statusMap = mapStatusValue(value)
+                      if (statusMap.products) {
+                        updateLocalFilters({ status: statusMap.products })
+                      }
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar estado" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos los estados</SelectItem>
-                    <SelectItem value="active">Activo</SelectItem>
-                    <SelectItem value="inactive">Inactivo</SelectItem>
-                    <SelectItem value="draft">Borrador</SelectItem>
+                    <SelectItem value="ALL">Todos los estados</SelectItem>
+                    <SelectItem value={ProductsProductStatus.ACTIVO}>Activo</SelectItem>
+                    <SelectItem value={ProductsProductStatus.INACTIVO}>Inactivo</SelectItem>
+                    <SelectItem value={ProductsProductStatus.SIN_STOCK}>Sin Stock</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
