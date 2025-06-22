@@ -4,24 +4,107 @@ import { Service } from '../../services/types'
 import { EventPrimitives } from '../../events/types'
 
 export const POSApiService = {
-  getProducts: async (): Promise<Product[]> => {
-    const response = await api.get('/products/item')
+  getProducts: async (filters?: {
+    categoryIds?: string[]
+    tagIds?: string[]
+    status?: string
+    unitIds?: string[]
+  }): Promise<Product[]> => {
+    let url = '/products/item'
+    const params = new URLSearchParams()
+    
+    if (filters?.categoryIds?.length) {
+      params.append('categoryIds', filters.categoryIds.join(','))
+    }
+    if (filters?.tagIds?.length) {
+      params.append('tagIds', filters.tagIds.join(','))
+    }
+    if (filters?.status) {
+      params.append('status', filters.status)
+    }
+    if (filters?.unitIds?.length) {
+      params.append('unitIds', filters.unitIds.join(','))
+    }
+    
+    if (params.toString()) {
+      url += '?' + params.toString()
+    }
+    
+    const response = await api.get(url)
     if (response.status !== 200) {
       throw new Error('Error obteniendo productos')
     }
     return response.data.products || response.data
   },
 
-  getServices: async (): Promise<Service[]> => {
-    const response = await api.get('/services')
+  getServices: async (filters?: {
+    categoryIds?: string[]
+    tagIds?: string[]
+    status?: string
+    unidadMedida?: string[]
+  }): Promise<Service[]> => {
+    let url = '/services'
+    const params = new URLSearchParams()
+    
+    if (filters?.categoryIds?.length) {
+      params.append('categoryIds', filters.categoryIds.join(','))
+    }
+    if (filters?.tagIds?.length) {
+      params.append('tagIds', filters.tagIds.join(','))
+    }
+    if (filters?.status) {
+      params.append('status', filters.status)
+    }
+    if (filters?.unidadMedida?.length) {
+      params.append('unidadMedida', filters.unidadMedida.join(','))
+    }
+    
+    if (params.toString()) {
+      url += '?' + params.toString()
+    }
+    
+    const response = await api.get(url)
     if (response.status !== 200) {
       throw new Error('Error obteniendo servicios')
     }
-    return response.data
+    return response.data.services || response.data
   },
 
-  getEvents: async (): Promise<EventPrimitives[]> => {
-    const response = await api.get('/events')
+  getEvents: async (filters?: {
+    categoryIds?: string[]
+    tagIds?: string[]
+    status?: string
+    activeOnly?: boolean
+    dateFrom?: string
+    dateTo?: string
+  }): Promise<EventPrimitives[]> => {
+    let url = '/events'
+    const params = new URLSearchParams()
+    
+    if (filters?.categoryIds?.length) {
+      params.append('categoryIds', filters.categoryIds.join(','))
+    }
+    if (filters?.tagIds?.length) {
+      params.append('tagIds', filters.tagIds.join(','))
+    }
+    if (filters?.status) {
+      params.append('status', filters.status)
+    }
+    if (filters?.activeOnly !== undefined) {
+      params.append('activeOnly', filters.activeOnly.toString())
+    }
+    if (filters?.dateFrom) {
+      params.append('dateFrom', filters.dateFrom)
+    }
+    if (filters?.dateTo) {
+      params.append('dateTo', filters.dateTo)
+    }
+    
+    if (params.toString()) {
+      url += '?' + params.toString()
+    }
+    
+    const response = await api.get(url)
     if (response.status !== 200) {
       throw new Error('Error obteniendo eventos')
     }

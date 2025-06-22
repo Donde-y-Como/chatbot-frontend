@@ -10,10 +10,17 @@ import { usePOSFilters } from './usePOSFilters'
  * Proporciona una API unificada para manejar productos, servicios, eventos, carrito y filtros
  */
 export function usePOS() {
-  // Obtener datos
-  const productsQuery = useGetPOSProducts()
-  const servicesQuery = useGetPOSServices()
-  const eventsQuery = useGetPOSEvents()
+  // Hook de filtros (inicializamos primero para obtener el estado actual)
+  const filtersHook = usePOSFilters({ products: [], services: [], events: [] })
+  
+  // Determinar si aplicar filtros al backend
+  const shouldApplyFilters = filtersHook.filters.isActive
+  const backendFilters = shouldApplyFilters ? filtersHook.filters : undefined
+
+  // Obtener datos con filtros si están activos
+  const productsQuery = useGetPOSProducts(backendFilters)
+  const servicesQuery = useGetPOSServices(backendFilters)
+  const eventsQuery = useGetPOSEvents(backendFilters)
   const auxiliaryDataQuery = useGetPOSAuxiliaryData()
 
   // Datos procesados
@@ -36,7 +43,9 @@ export function usePOS() {
 
   // Hooks de funcionalidad
   const cart = usePOSCart()
-  const filtersHook = usePOSFilters({ products, services, events })
+  
+  // Actualizar los datos del hook de filtros con los datos reales
+  const filtersWithData = usePOSFilters({ products, services, events })
 
   // Función para refrescar todos los datos
   const refetchAll = () => {
@@ -61,16 +70,16 @@ export function usePOS() {
     cart,
     
     // Funcionalidad de filtros
-    filters: filtersHook.filters,
-    filteredItems: filtersHook.filteredItems,
-    filterStats: filtersHook.filterStats,
+    filters: filtersWithData.filters,
+    filteredItems: filtersWithData.filteredItems,
+    filterStats: filtersWithData.filterStats,
     
     // Acciones de filtros
-    updateFilters: filtersHook.updateFilters,
-    resetFilters: filtersHook.resetFilters,
-    setCategory: filtersHook.setCategory,
-    setSearch: filtersHook.setSearch,
-    toggleFiltersActive: filtersHook.toggleFiltersActive,
+    updateFilters: filtersWithData.updateFilters,
+    resetFilters: filtersWithData.resetFilters,
+    setCategory: filtersWithData.setCategory,
+    setSearch: filtersWithData.setSearch,
+    toggleFiltersActive: filtersWithData.toggleFiltersActive,
     
     // Acciones generales
     refetchAll

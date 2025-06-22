@@ -22,6 +22,12 @@ export interface POSItem {
   originalData: Product | Service | EventPrimitives | null
 }
 
+// Rango de fechas
+export interface DateRange {
+  from: Date | null
+  to: Date | null
+}
+
 // Configuración de filtros
 export interface POSFilters {
   search: string
@@ -32,7 +38,12 @@ export interface POSFilters {
   }
   tags?: string[]
   categories?: string[]
+  subcategories?: string[]
   units?: string[]
+  unidadMedida?: string[]
+  status?: string
+  activeOnly?: boolean
+  dateRange?: DateRange
   isActive: boolean
 }
 
@@ -50,7 +61,10 @@ export interface CartState {
 export interface AuxiliaryData {
   tags: Array<{ id: string; name: string; color?: string }>
   categories: Array<{ id: string; name: string }>
+  subcategories: Array<{ id: string; name: string; categoryId?: string }>
   units: Array<{ id: string; name: string; abbreviation: string }>
+  unidadesMedida: Array<{ id: string; name: string; abbreviation: string }>
+  statuses: Array<{ id: string; name: string }>
 }
 
 // Estado principal del POS

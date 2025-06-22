@@ -4,6 +4,7 @@ import { Product } from '../../products/types'
 import { Service } from '../../services/types'
 import { EventPrimitives } from '../../events/types'
 import { productToPOSItem, serviceToPOSItem, eventToPOSItem } from '../types'
+import { format } from 'date-fns'
 
 const DEFAULT_FILTERS: POSFilters = {
   search: '',
@@ -11,7 +12,12 @@ const DEFAULT_FILTERS: POSFilters = {
   priceRange: undefined,
   tags: undefined,
   categories: undefined,
+  subcategories: undefined,
   units: undefined,
+  unidadMedida: undefined,
+  status: undefined,
+  activeOnly: undefined,
+  dateRange: undefined,
   isActive: false
 }
 
@@ -105,17 +111,121 @@ export function usePOSFilters({ products, services, events }: UsePOSFiltersProps
         })
       }
 
+      // Filtrar por tags
       if (filters.tags && filters.tags.length > 0) {
-        // Filtrar por tags cuando la lógica esté implementada
-        // Necesitaría acceso a los tags de cada item
+        allItems = allItems.filter(item => {
+          if (!item.originalData) return false
+          
+          let itemTags: string[] = []
+          if ('productInfo' in item.originalData && item.originalData.productInfo?.tagIds) {
+            itemTags = item.originalData.productInfo.tagIds
+          } else if ('tagIds' in item.originalData && item.originalData.tagIds) {
+            itemTags = item.originalData.tagIds
+          }
+          
+          return filters.tags!.some(tagId => itemTags.includes(tagId))
+        })
       }
 
+      // Filtrar por categorías
       if (filters.categories && filters.categories.length > 0) {
-        // Filtrar por categorías específicas cuando la lógica esté implementada
+        allItems = allItems.filter(item => {
+          if (!item.originalData) return false
+          
+          let itemCategories: string[] = []
+          if ('productInfo' in item.originalData && item.originalData.productInfo?.categoryIds) {
+            itemCategories = item.originalData.productInfo.categoryIds
+          } else if ('categoryIds' in item.originalData && item.originalData.categoryIds) {
+            itemCategories = item.originalData.categoryIds
+          }
+          
+          return filters.categories!.some(categoryId => itemCategories.includes(categoryId))
+        })
       }
 
+      // Filtrar por subcategorías
+      if (filters.subcategories && filters.subcategories.length > 0) {
+        allItems = allItems.filter(item => {
+          if (!item.originalData) return false
+          
+          let itemSubcategories: string[] = []
+          if ('productInfo' in item.originalData && item.originalData.productInfo?.subcategoryIds) {
+            itemSubcategories = item.originalData.productInfo.subcategoryIds
+          } else if ('subcategoryIds' in item.originalData && item.originalData.subcategoryIds) {
+            itemSubcategories = item.originalData.subcategoryIds
+          }
+          
+          return filters.subcategories!.some(subcategoryId => itemSubcategories.includes(subcategoryId))
+        })
+      }
+
+      // Filtrar por unidades (productos)
       if (filters.units && filters.units.length > 0) {
-        // Filtrar por unidades cuando la lógica esté implementada
+        allItems = allItems.filter(item => {
+          if (!item.originalData || item.type !== 'PRODUCTOS') return false
+          
+          const product = item.originalData as Product
+          return product.unitId && filters.units!.includes(product.unitId)
+        })
+      }
+
+      // Filtrar por unidades de medida (servicios)
+      if (filters.unidadMedida && filters.unidadMedida.length > 0) {
+        allItems = allItems.filter(item => {
+          if (!item.originalData || item.type !== 'SERVICIOS') return false
+          
+          const service = item.originalData as Service
+          return service.unidadMedida && service.unidadMedida.id && filters.unidadMedida!.includes(service.unidadMedida.id)
+        })
+      }
+
+      // Filtrar por estado
+      if (filters.status) {
+        allItems = allItems.filter(item => {
+          if (!item.originalData) return false
+          
+          let itemStatus: string | undefined
+          if ('productInfo' in item.originalData && item.originalData.productInfo?.status) {
+            itemStatus = item.originalData.productInfo.status
+          } else if ('status' in item.originalData && item.originalData.status) {
+            itemStatus = item.originalData.status
+          }
+          
+          return itemStatus === filters.status
+        })
+      }
+
+      // Filtrar eventos por activeOnly
+      if (filters.activeOnly !== undefined) {
+        allItems = allItems.filter(item => {
+          if (item.type !== 'EVENTOS') return true
+          
+          // Lógica para determinar si un evento está activo
+          const event = item.originalData as EventPrimitives
+          if (!event || !event.duration) return false
+          
+          const now = new Date()
+          const eventStart = new Date(event.duration.startAt)
+          
+          return filters.activeOnly ? eventStart > now : true
+        })
+      }
+
+      // Filtrar por rango de fechas (solo eventos)
+      if (filters.dateRange && (filters.dateRange.from || filters.dateRange.to)) {
+        allItems = allItems.filter(item => {
+          if (item.type !== 'EVENTOS') return true
+          
+          const event = item.originalData as EventPrimitives
+          if (!event || !event.duration) return false
+          
+          const eventDate = new Date(event.duration.startAt)
+          
+          const meetsFrom = !filters.dateRange!.from || eventDate >= filters.dateRange!.from
+          const meetsTo = !filters.dateRange!.to || eventDate <= filters.dateRange!.to
+          
+          return meetsFrom && meetsTo
+        })
       }
     }
 

@@ -30,7 +30,14 @@ export function useGetPOSAuxiliaryData() {
   const auxiliaryData: AuxiliaryData = {
     tags: tagsQuery.data || [],
     categories: categoriesQuery.data || [],
-    units: unitsQuery.data || []
+    subcategories: [], // No disponible en backend por ahora
+    units: unitsQuery.data || [],
+    unidadesMedida: [], // No disponible en backend por ahora
+    statuses: [
+      { id: 'active', name: 'Activo' },
+      { id: 'inactive', name: 'Inactivo' },
+      { id: 'draft', name: 'Borrador' }
+    ]
   }
 
   return {
