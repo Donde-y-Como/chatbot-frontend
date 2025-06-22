@@ -10,7 +10,7 @@ interface CategoryTabsProps {
 const categories: { value: POSCategory; label: string; disabled?: boolean }[] = [
   { value: 'TODOS', label: 'Todos' },
   { value: 'PRODUCTOS', label: 'Productos' },
-  { value: 'PAQUETES', label: 'Paquetes', disabled: true },
+  { value: 'PAQUETES', label: 'Paquetes' },
   { value: 'SERVICIOS', label: 'Servicios' },
   { value: 'EVENTOS', label: 'Eventos' }
 ]

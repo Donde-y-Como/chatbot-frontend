@@ -3,6 +3,30 @@ import { Service } from '../services/types'
 import { EventPrimitives } from '../events/types'
 import { ProductStatus as GlobalProductStatus } from '../../types/global'
 
+export interface Bundle {
+  sku: string
+  name: string
+  description: string
+  items: Array<{
+    id: string
+    itemId: string
+    type: 'product'
+    quantity: number
+  }>
+  price: {
+    amount: number
+    currency: string
+  }
+  cost: {
+    amount: number
+    currency: string
+  }
+  status: 'ACTIVO' | 'INACTIVO'
+  tagIds: string[]
+  files: any[]
+  createdAt: string
+}
+
 // Categorías disponibles en el POS
 export type POSCategory = 'TODOS' | 'PRODUCTOS' | 'PAQUETES' | 'SERVICIOS' | 'EVENTOS'
 
@@ -20,7 +44,7 @@ export interface POSItem {
   price: POSPrice
   image?: string
   quantity: number
-  originalData: Product | Service | EventPrimitives | null
+  originalData: Product | Service | EventPrimitives | Bundle | null
 }
 
 // Rango de fechas
@@ -74,6 +98,7 @@ export interface POSState {
   products: Product[]
   services: Service[]
   events: EventPrimitives[]
+  bundles: Bundle[]
   auxiliaryData: AuxiliaryData
   
   // UI State
@@ -85,6 +110,7 @@ export interface POSState {
   setProducts: (products: Product[]) => void
   setServices: (services: Service[]) => void
   setEvents: (events: EventPrimitives[]) => void
+  setBundles: (bundles: Bundle[]) => void
   setAuxiliaryData: (data: AuxiliaryData) => void
   setIsLoading: (loading: boolean) => void
   updateFilters: (filters: Partial<POSFilters>) => void
@@ -126,4 +152,14 @@ export const eventToPOSItem = (event: EventPrimitives): Omit<POSItem, 'quantity'
   price: event.productInfo?.precioModificado || event.price,
   image: event.photos?.[0],
   originalData: event
+})
+
+// Utilidad para convertir paquetes a POSItem
+export const bundleToPOSItem = (bundle: Bundle): Omit<POSItem, 'quantity'> => ({
+  id: `bundle-${bundle.sku}-${bundle.createdAt}`, // ID único combinando SKU y fecha
+  type: 'PAQUETES',
+  name: bundle.name,
+  price: bundle.price,
+  image: bundle.files?.[0]?.url,
+  originalData: bundle
 })

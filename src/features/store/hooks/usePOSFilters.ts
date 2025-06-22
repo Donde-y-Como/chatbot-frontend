@@ -1,15 +1,25 @@
 import { useState, useCallback, useMemo } from 'react'
-import { POSFilters, POSCategory, POSItem } from '../types'
+import { POSFilters, POSCategory, POSItem, Bundle } from '../types'
 import { Product, ProductStatus as ProductsProductStatus } from '../../products/types'
 import { Service } from '../../services/types'
 import { EventPrimitives } from '../../events/types'
 import { ProductStatus as GlobalProductStatus } from '../../../types/global'
-import { productToPOSItem, serviceToPOSItem, eventToPOSItem } from '../types'
+import { productToPOSItem, serviceToPOSItem, eventToPOSItem, bundleToPOSItem } from '../types'
 import { format } from 'date-fns'
 
 const mapStatusForComparison = (filterStatus: ProductsProductStatus | GlobalProductStatus, itemType: POSCategory) => {
   if (itemType === 'PRODUCTOS') {
     return filterStatus
+  }
+  if (itemType === 'PAQUETES') {
+    switch (filterStatus) {
+      case ProductsProductStatus.ACTIVO:
+        return 'ACTIVO'
+      case ProductsProductStatus.INACTIVO:
+        return 'INACTIVO'
+      default:
+        return filterStatus
+    }
   }
   // Si es servicios o eventos, mapear de products a global format
   if (itemType === 'SERVICIOS' || itemType === 'EVENTOS') {
@@ -47,9 +57,10 @@ interface UsePOSFiltersProps {
   products: Product[]
   services: Service[]
   events: EventPrimitives[]
+  bundles: Bundle[]
 }
 
-export function usePOSFilters({ products, services, events }: UsePOSFiltersProps) {
+export function usePOSFilters({ products, services, events, bundles }: UsePOSFiltersProps) {
   const [filters, setFilters] = useState<POSFilters>(DEFAULT_FILTERS)
 
   // Actualizar filtros
@@ -108,6 +119,22 @@ export function usePOSFilters({ products, services, events }: UsePOSFiltersProps
       allItems.push(...eventItems)
     }
 
+    // Agregar paquetes según categoría seleccionada
+    if (filters.category === 'TODOS' || filters.category === 'PAQUETES') {
+      const bundleItems = bundles.map(bundle => ({
+        ...bundleToPOSItem(bundle),
+        quantity: 1
+      }))
+      allItems.push(...bundleItems)
+    }
+
+    // Eliminar duplicados basados en ID
+    const uniqueItems = allItems.filter((item, index, self) => 
+      index === self.findIndex(i => i.id === item.id)
+    )
+    
+    allItems = uniqueItems
+
     // Filtrar por búsqueda
     if (filters.search.trim()) {
       const searchTerm = filters.search.toLowerCase().trim()
@@ -139,7 +166,10 @@ export function usePOSFilters({ products, services, events }: UsePOSFiltersProps
           if (!item.originalData) return false
           
           let itemTags: string[] = []
-          if ('productInfo' in item.originalData && item.originalData.productInfo?.tagIds) {
+          if (item.type === 'PAQUETES' && 'tagIds' in item.originalData && item.originalData.tagIds) {
+            itemTags = item.originalData.tagIds
+          }
+          else if ('productInfo' in item.originalData && item.originalData.productInfo?.tagIds) {
             itemTags = item.originalData.productInfo.tagIds
           } else if ('tagIds' in item.originalData && item.originalData.tagIds) {
             itemTags = item.originalData.tagIds
@@ -219,6 +249,9 @@ export function usePOSFilters({ products, services, events }: UsePOSFiltersProps
           if (item.type === 'PRODUCTOS' && 'status' in item.originalData) {
             itemStatus = item.originalData.status
           }
+          else if (item.type === 'PAQUETES' && 'status' in item.originalData) {
+            itemStatus = item.originalData.status
+          }
           else if (item.type === 'SERVICIOS' && 'productInfo' in item.originalData && item.originalData.productInfo?.status) {
             itemStatus = item.originalData.productInfo.status
           }
@@ -273,14 +306,15 @@ export function usePOSFilters({ products, services, events }: UsePOSFiltersProps
     }
 
     return allItems
-  }, [products, services, events, filters])
+  }, [products, services, events, bundles, filters])
 
   // Estadísticas de filtros
   const filterStats = useMemo(() => {
     const totalProducts = products.length
     const totalServices = services.length
     const totalEvents = events.length
-    const totalItems = totalProducts + totalServices + totalEvents
+    const totalBundles = bundles.length
+    const totalItems = totalProducts + totalServices + totalEvents + totalBundles
     const filteredCount = filteredItems.length
 
     return {
@@ -289,9 +323,10 @@ export function usePOSFilters({ products, services, events }: UsePOSFiltersProps
       products: totalProducts,
       services: totalServices,
       events: totalEvents,
+      bundles: totalBundles,
       isFiltered: filteredCount < totalItems
     }
-  }, [products.length, services.length, events.length, filteredItems.length])
+  }, [products.length, services.length, events.length, bundles.length, filteredItems.length])
 
   return {
     // Estado

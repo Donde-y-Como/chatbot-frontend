@@ -1,9 +1,10 @@
-import React from 'react'
-import { Plus, ShoppingCart } from 'lucide-react'
+import React, { useState } from 'react'
+import { Plus, ShoppingCart, Info } from 'lucide-react'
 import { Button } from '../../../components/ui/button'
 import { Card, CardContent } from '../../../components/ui/card'
 import { Badge } from '../../../components/ui/badge'
-import { POSItem } from '../types'
+import { POSItem, Bundle } from '../types'
+import { BundleDetailsDialog } from './BundleDetailsDialog'
 
 interface ItemGridProps {
   items: POSItem[]
@@ -16,9 +17,20 @@ interface ItemCardProps {
 }
 
 function ItemCard({ item, onAddToCart }: ItemCardProps) {
+  const [showBundleDetails, setShowBundleDetails] = useState(false)
+  
   const handleAddToCart = () => {
     const { quantity, ...itemWithoutQuantity } = item
     onAddToCart(itemWithoutQuantity)
+  }
+
+  const handleShowDetails = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (item.type === 'PAQUETES' && item.originalData) {
+      setShowBundleDetails(true)
+    }
   }
 
   const formatPrice = (price: typeof item.price) => {
@@ -32,6 +44,8 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
     switch (type) {
       case 'PRODUCTOS':
         return 'bg-blue-500'
+      case 'PAQUETES':
+        return 'bg-orange-500'
       case 'SERVICIOS':
         return 'bg-green-500'
       case 'EVENTOS':
@@ -42,73 +56,99 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
   }
 
   return (
-    <Card className="group relative overflow-hidden border-2 border-transparent hover:border-primary/20 transition-all duration-200 hover:shadow-lg">
-      <CardContent className="p-0">
-        {/* Imagen del producto */}
-        <div className="relative aspect-square overflow-hidden bg-muted">
-          {item.image ? (
-            <img
-              src={item.image}
-              alt={item.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/80">
-              <div className="text-4xl text-muted-foreground/30">
-                {item.type === 'PRODUCTOS' && '📦'}
-                {item.type === 'SERVICIOS' && '🔧'}
-                {item.type === 'EVENTOS' && '🎪'}
+    <>
+      <Card className="group relative overflow-hidden border-2 border-transparent hover:border-primary/20 transition-all duration-200 hover:shadow-lg">
+        <CardContent className="p-0">
+          {/* Imagen del producto */}
+          <div className="relative aspect-square overflow-hidden bg-muted">
+            {item.image ? (
+              <img
+                src={item.image}
+                alt={item.name}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/80">
+                <div className="text-4xl text-muted-foreground/30">
+                  {item.type === 'PRODUCTOS' && '📦'}
+                  {item.type === 'PAQUETES' && '🎁'}
+                  {item.type === 'SERVICIOS' && '🔧'}
+                  {item.type === 'EVENTOS' && '🎪'}
+                </div>
               </div>
-            </div>
-          )}
-          
-          {/* Badge de tipo */}
-          <div className="absolute top-2 left-2">
-            <Badge 
-              variant="secondary" 
-              className={`${getTypeColor(item.type)} text-white text-xs px-2 py-1`}
-            >
-              {item.type.substring(0, item.type.length - 1)}
-            </Badge>
-          </div>
-
-          {/* Botón de agregar - visible en hover */}
-          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-            <Button
-              onClick={handleAddToCart}
-              size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-200"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Agregar
-            </Button>
-          </div>
-        </div>
-
-        {/* Información del producto */}
-        <div className="p-4 space-y-2">
-          <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.5rem] leading-tight">
-            {item.name}
-          </h3>
-          
-          <div className="flex items-center justify-between">
-            <span className="text-lg font-bold text-primary">
-              {formatPrice(item.price)}
-            </span>
+            )}
             
-            {/* Botón de agregar para dispositivos táctiles */}
-            <Button
-              onClick={handleAddToCart}
-              size="sm"
-              variant="outline"
-              className="md:hidden p-2 h-8 w-8"
-            >
-              <ShoppingCart className="h-4 w-4" />
-            </Button>
+            {/* Badge de tipo */}
+            <div className="absolute top-2 left-2">
+              <Badge 
+                variant="secondary" 
+                className={`${getTypeColor(item.type)} text-white text-xs px-2 py-1`}
+              >
+                {item.type.substring(0, item.type.length - 1)}
+              </Badge>
+            </div>
+
+            {/* Botón de información para paquetes */}
+            {item.type === 'PAQUETES' && (
+              <div className="absolute top-2 right-2 z-20">
+                <button
+                  onClick={handleShowDetails}
+                  className="h-8 w-8 rounded-full bg-white hover:bg-gray-50 text-gray-600 hover:text-blue-600 shadow-lg border-2 border-gray-200 transition-all duration-200 flex items-center justify-center"
+                  title="Ver detalles del paquete"
+                  type="button"
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Botón de agregar - visible en hover */}
+            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center z-0">
+              <Button
+                onClick={handleAddToCart}
+                size="lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-200"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Agregar
+              </Button>
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+
+          {/* Información del producto */}
+          <div className="p-4 space-y-2">
+            <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.5rem] leading-tight">
+              {item.name}
+            </h3>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-bold text-primary">
+                {formatPrice(item.price)}
+              </span>
+              
+              {/* Botón de agregar para dispositivos táctiles */}
+              <Button
+                onClick={handleAddToCart}
+                size="sm"
+                variant="outline"
+                className="md:hidden p-2 h-8 w-8"
+              >
+                <ShoppingCart className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Diálogo de detalles del paquete */}
+      {item.type === 'PAQUETES' && item.originalData && (
+        <BundleDetailsDialog 
+          bundle={item.originalData as Bundle}
+          isOpen={showBundleDetails}
+          onClose={() => setShowBundleDetails(false)}
+        />
+      )}
+    </>
   )
 }
 

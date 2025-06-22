@@ -2,6 +2,7 @@ import { api } from '../../../api/axiosInstance.ts'
 import { Product } from '../../products/types'
 import { Service } from '../../services/types'
 import { EventPrimitives } from '../../events/types'
+import { Bundle } from '../types'
 
 export const POSApiService = {
   getProducts: async (filters?: {
@@ -154,10 +155,60 @@ export const POSApiService = {
     return response.data
   },
 
+  getBundles: async (filters?: {
+    tagIds?: string[]
+    status?: string
+  }): Promise<Bundle[]> => {
+    let url = '/bundles/'
+    const params = new URLSearchParams()
+    
+    if (filters?.tagIds?.length) {
+      params.append('tagIds', filters.tagIds.join(','))
+    }
+    if (filters?.status) {
+      params.append('status', filters.status)
+    }
+    
+    if (params.toString()) {
+      url += '?' + params.toString()
+    }
+    
+    const response = await api.get(url)
+    if (response.status !== 200) {
+      throw new Error('Error obteniendo paquetes')
+    }
+    return response.data.bundles || response.data
+  },
+
+  getBundleById: async (bundleId: string): Promise<Bundle> => {
+    const response = await api.get(`/bundles/${bundleId}`)
+    if (response.status !== 200) {
+      throw new Error('Error obteniendo paquete')
+    }
+    return response.data
+  },
+
+  getTagById: async (tagId: string): Promise<{ id: string; name: string; color?: string }> => {
+    const response = await api.get(`/products/productTags/${tagId}`)
+    if (response.status !== 200) {
+      throw new Error('Error obteniendo etiqueta')
+    }
+    return response.data
+  },
+
+  getProductById: async (productId: string): Promise<Product> => {
+    const response = await api.get(`/products/item/${productId}`)
+    if (response.status !== 200) {
+      throw new Error('Error obteniendo producto')
+    }
+    return response.data
+  },
+
   searchAll: async (query: string): Promise<{
     products: Product[]
     services: Service[]
     events: EventPrimitives[]
+    bundles: Bundle[]
   }> => {
     try {
       const response = await api.get(`/pos/search?q=${encodeURIComponent(query)}`)
@@ -168,16 +219,18 @@ export const POSApiService = {
     } catch (error) {
       console.warn('Endpoint de búsqueda unificada no disponible, usando búsquedas separadas')
       
-      const [products, services, events] = await Promise.allSettled([
+      const [products, services, events, bundles] = await Promise.allSettled([
         api.get(`/products/item?search=${encodeURIComponent(query)}`),
         api.get(`/services?search=${encodeURIComponent(query)}`),
-        api.get(`/events?search=${encodeURIComponent(query)}`)
+        api.get(`/events?search=${encodeURIComponent(query)}`),
+        api.get(`/bundles/?search=${encodeURIComponent(query)}`)
       ])
 
       return {
         products: products.status === 'fulfilled' ? (products.value.data.products || products.value.data || []) : [],
         services: services.status === 'fulfilled' ? (services.value.data || []) : [],
-        events: events.status === 'fulfilled' ? (events.value.data || []) : []
+        events: events.status === 'fulfilled' ? (events.value.data || []) : [],
+        bundles: bundles.status === 'fulfilled' ? (bundles.value.data.bundles || bundles.value.data || []) : []
       }
     }
   }
