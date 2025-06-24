@@ -51,7 +51,10 @@ export default function Clients() {
                 data={clients} 
                 columns={columns}
                 toolbar={(table) => (
-                  <DataTableToolbar table={table}>
+                  <DataTableToolbar 
+                    table={table}
+                    searchPlaceholder="Buscar por nombre, email, dirección, notas o teléfono..."
+                  >
                     <DataTableFacetedFilter
                       column={table.getColumn('platformIdentities')}
                       title="Plataformas"

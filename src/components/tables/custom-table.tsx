@@ -36,13 +36,15 @@ interface DataTableProps<T> {
   columns: ColumnDef<T>[]
   data: T[]
   toolbar?: (table: Table<T>) => React.ReactNode
+  globalFilterFn?: any
 }
 
-export function CustomTable<T>({ columns, data, toolbar }: DataTableProps<T>) {
+export function CustomTable<T>({ columns, data, toolbar, globalFilterFn }: DataTableProps<T>) {
   const [rowSelection, setRowSelection] = useState({})
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [sorting, setSorting] = useState<SortingState>([])
+  const [globalFilter, setGlobalFilter] = useState('')
 
   const table = useReactTable({
     data,
@@ -52,12 +54,16 @@ export function CustomTable<T>({ columns, data, toolbar }: DataTableProps<T>) {
       columnVisibility,
       rowSelection,
       columnFilters,
+      globalFilter,
     },
     enableRowSelection: true,
+    enableGlobalFilter: !!globalFilterFn,
+    globalFilterFn: globalFilterFn,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

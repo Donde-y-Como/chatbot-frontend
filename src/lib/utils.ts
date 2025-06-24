@@ -3,6 +3,8 @@ import { twMerge } from 'tailwind-merge'
 import { Chat } from '@/features/chats/ChatTypes.ts'
 import { UserData } from '../features/auth/types'
 import { PlatformName } from '../features/clients/types'
+import { UserIcon } from 'lucide-react'
+import { Employee } from '@/features/employees/types.ts'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -43,4 +45,17 @@ export function sortByLastMessageTimestamp(a: Chat, b: Chat): number {
   }
 
   return 0
+}
+
+// Function to generate role options dynamically from employees data
+export function generateRoleOptions(employees: Employee[]) {
+  const uniqueRoles = new Set(employees.map((employee) => employee.role))
+
+  return Array.from(uniqueRoles).map((role) => {
+    return {
+      value: role,
+      label: role.charAt(0).toUpperCase() + role.slice(1),
+      icon: UserIcon,
+    }
+  })
 }

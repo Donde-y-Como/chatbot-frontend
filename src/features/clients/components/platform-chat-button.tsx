@@ -99,16 +99,13 @@ export function PlatformChatButton({ clientId, platformName, profileName, size =
 
   return (
     <>
-      <Button 
-        variant="ghost" 
-        size={size} 
+      <span
         onClick={handleClick}
-        disabled={isLoading}
         className={`px-2 rounded-full ${className || ''}`}
         id={id}
       >
         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : renderIcon()}
-      </Button>
+      </span>
 
       {/* Diálogo para múltiples conversaciones */}
       {dialogOpen && chats.length > 1 && (

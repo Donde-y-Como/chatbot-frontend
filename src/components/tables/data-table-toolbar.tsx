@@ -7,30 +7,37 @@ import { DataTableViewOptions } from './data-table-view-options'
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
   children?: React.ReactNode
+  searchPlaceholder?: string
 }
 
 export function DataTableToolbar<TData>({
   table,
   children,
+  searchPlaceholder = 'Buscar...',
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0
+  const isFiltered = table.getState().columnFilters.length > 0 || !!table.getState().globalFilter
 
   return (
     <div className='flex items-center justify-between'>
       <div className='flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2'>
-        <Input
-          placeholder='Buscar por nombre, email, dirección, notas o teléfono...'
-          value={(table.getColumn('globalFilter')?.getFilterValue() as string) ?? ''}
-          onChange={(event) =>
-            table.getColumn('globalFilter')?.setFilterValue(event.target.value)
-          }
-          className='h-8 sm:w-[250px] lg:w-[350px] w-full'
-        />
+        {(table.getColumn('globalFilter') || table.options.enableGlobalFilter) && (
+          <Input
+            placeholder={searchPlaceholder}
+            value={(table.getState().globalFilter as string) ?? ''}
+            onChange={(event) =>
+              table.setGlobalFilter(event.target.value)
+            }
+            className='h-8 sm:w-[250px] lg:w-[350px] w-full'
+          />
+        )}
         {children}
         {isFiltered && (
           <Button
             variant='ghost'
-            onClick={() => table.resetColumnFilters()}
+            onClick={() => {
+              table.resetColumnFilters()
+              table.setGlobalFilter('')
+            }}
             className='h-8 px-2 lg:px-3'
           >
             Restablecer

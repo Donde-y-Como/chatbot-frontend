@@ -1,4 +1,4 @@
-import { ColumnDef } from '@tanstack/react-table'
+import { ColumnDef, FilterFn } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import LongText from '@/components/long-text'
@@ -6,7 +6,36 @@ import { Service } from '@/features/appointments/types.ts'
 import { DataTableColumnHeader } from '@/components/tables/data-table-column-header'
 import { DataTableRowActions } from './data-table-row-actions'
 
+// Global filter function for multi-field search
+const globalFilterFn: FilterFn<Service> = (row, columnId, value) => {
+  if (!value) return true
+  
+  const service = row.original
+  const searchValue = String(value).toLowerCase()
+  
+  // Search in name, description, price amount, and currency
+  const matches = (
+    service.name.toLowerCase().includes(searchValue) ||
+    service.description.toLowerCase().includes(searchValue) ||
+    service.price.amount.toString().includes(searchValue) ||
+    service.price.currency.toLowerCase().includes(searchValue) ||
+    service.duration.value.toString().includes(searchValue) ||
+    service.duration.unit.toLowerCase().includes(searchValue) ||
+    service.maxConcurrentBooks.toString().includes(searchValue) ||
+    service.minBookingLeadHours.toString().includes(searchValue)
+  )
+  
+  return matches
+}
+
 export const columns: ColumnDef<Service>[] = [
+  // Global filter column (hidden, used for multi-field search)
+  {
+    id: 'globalFilter',
+    filterFn: globalFilterFn,
+    enableColumnFilter: false,
+    enableGlobalFilter: true,
+  },
   {
     accessorKey: 'name',
     header: ({ column }) => (
