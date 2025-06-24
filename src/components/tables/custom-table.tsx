@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -11,11 +11,12 @@ import {
   getSortedRowModel,
   RowData,
   SortingState,
+  Table,
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table'
 import {
-  Table,
+  Table as UITable,
   TableBody,
   TableCell,
   TableHead,
@@ -34,9 +35,10 @@ declare module '@tanstack/react-table' {
 interface DataTableProps<T> {
   columns: ColumnDef<T>[]
   data: T[]
+  toolbar?: (table: Table<T>) => React.ReactNode
 }
 
-export function CustomTable<T>({ columns, data }: DataTableProps<T>) {
+export function CustomTable<T>({ columns, data, toolbar }: DataTableProps<T>) {
   const [rowSelection, setRowSelection] = useState({})
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -66,9 +68,9 @@ export function CustomTable<T>({ columns, data }: DataTableProps<T>) {
 
   return (
     <div className='space-y-4'>
-      <DataTableToolbar table={table} />
+      {toolbar ? toolbar(table) : <DataTableToolbar table={table} />}
       <div className='rounded-md border max-h-[70vh] overflow-auto'>
-        <Table>
+        <UITable>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className='group/row'>
@@ -123,7 +125,7 @@ export function CustomTable<T>({ columns, data }: DataTableProps<T>) {
               </TableRow>
             )}
           </TableBody>
-        </Table>
+        </UITable>
       </div>
       <DataTablePagination table={table} />
     </div>
