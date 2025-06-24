@@ -59,3 +59,16 @@ export function generateRoleOptions(employees: Employee[]) {
     }
   })
 }
+
+export function formatWhatsAppPhone(platformId: string): string {
+  // Extract phone number from format like 5219512010452@s.whatsapp.net
+  const phoneMatch = platformId.match(/^(\d+)@s\.whatsapp\.net$/)
+  if (!phoneMatch) return platformId
+
+  const phoneNumber = phoneMatch[1]
+  // Format 521XXXXXXXXX to +52 1 XXX XXX XXXX
+  if (phoneNumber.startsWith('521') && phoneNumber.length === 13) {
+    return `+52 1 ${phoneNumber.slice(3, 6)} ${phoneNumber.slice(6, 9)} ${phoneNumber.slice(9)}`
+  }
+  return phoneNumber
+}

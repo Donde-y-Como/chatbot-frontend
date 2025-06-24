@@ -1,23 +1,26 @@
-import { format, parseISO } from 'date-fns';
-import { ColumnDef } from '@tanstack/react-table';
-import { IconBrandFacebook, IconBrandInstagram, IconBrandWhatsapp } from '@tabler/icons-react';
-import { es } from 'date-fns/locale/es';
-import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
-import { Badge } from '@/components/ui/badge.tsx';
-import { Button } from '@/components/ui/button';
+import { format, parseISO } from 'date-fns'
+import { ColumnDef } from '@tanstack/react-table'
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconBrandWhatsapp,
+} from '@tabler/icons-react'
+import { es } from 'date-fns/locale/es'
+import { cn, formatWhatsAppPhone } from '@/lib/utils'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx'
+import { Badge } from '@/components/ui/badge.tsx'
+import { Button } from '@/components/ui/button'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx';
-import { DataTableColumnHeader } from '@/components/tables/data-table-column-header.tsx';
-import { ClientPrimitives, PlatformName, Tag } from '../types';
-import { DataTableRowActions } from './data-table-row-actions';
-import { PlatformChatButton } from './platform-chat-button';
-
+import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
+import { DataTableColumnHeader } from '@/components/tables/data-table-column-header.tsx'
+import { ClientPrimitives, PlatformName, Tag } from '../types'
+import { DataTableRowActions } from './data-table-row-actions'
+import { PlatformChatButton } from './platform-chat-button'
 
 // Helper function para mostrar nombres de plataformas en español
 function getPlatformDisplayName(platformName: PlatformName): string {
@@ -36,18 +39,6 @@ function getPlatformDisplayName(platformName: PlatformName): string {
 }
 
 // Helper function to format WhatsApp Web phone numbers
-function formatWhatsAppPhone(platformId: string): string {
-  // Extract phone number from format like 5219512010452@s.whatsapp.net
-  const phoneMatch = platformId.match(/^(\d+)@s\.whatsapp\.net$/)
-  if (!phoneMatch) return platformId
-
-  const phoneNumber = phoneMatch[1]
-  // Format 521XXXXXXXXX to +52 1 XXX XXX XXXX
-  if (phoneNumber.startsWith('521') && phoneNumber.length === 13) {
-    return `+52 1 ${phoneNumber.slice(3, 6)} ${phoneNumber.slice(6, 9)} ${phoneNumber.slice(9)}`
-  }
-  return phoneNumber
-}
 
 // Helper function to extract raw phone number digits for search
 function extractPhoneDigits(platformId: string): string {
@@ -87,9 +78,7 @@ function globalFilterFn(
       const terms = [identity.platformId.toLowerCase()]
 
       if (identity.platformName === PlatformName.WhatsappWeb) {
-        // Add formatted phone number
         terms.push(formatWhatsAppPhone(identity.platformId).toLowerCase())
-        // Add raw digits for partial search (e.g., "9512010452")
         const rawDigits = extractPhoneDigits(identity.platformId)
         if (rawDigits) {
           terms.push(rawDigits)
