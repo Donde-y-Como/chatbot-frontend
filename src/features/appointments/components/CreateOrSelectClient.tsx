@@ -13,13 +13,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCreateClient } from '../hooks/useCreateClient'
 import { useGetClients } from '../hooks/useGetClients'
+import { ClientPrimitives, PlatformName } from '@/features/clients/types'
 
-// Define a basic client type (replace with your actual type)
-interface Client {
-  id: string
-  name: string
-  photo?: string // Assuming photo is optional
-}
+// Use the full client type that includes platform identities
+type Client = ClientPrimitives
 
 interface CreateOrSelectClientProps {
   value: string // Selected client ID
@@ -57,9 +54,27 @@ const ClientListItem = React.memo(function ClientListItem({
     onSelect(client.id)
   }, [client.id, onSelect])
 
+  // Extract phone number from WhatsApp Web platform identity
+  const phoneNumber = useMemo(() => {
+    const whatsappIdentity = client.platformIdentities?.find(
+      identity => identity.platformName === PlatformName.WhatsappWeb
+    )
+    
+    if (!whatsappIdentity) return null
+    
+    const phoneMatch = whatsappIdentity.platformId.match(/^(\d+)@s\.whatsapp\.net$/)
+    if (!phoneMatch) return null
+    
+    const phoneNum = phoneMatch[1]
+    if (phoneNum.startsWith('521') && phoneNum.length === 13) {
+      return `+52 1 ${phoneNum.slice(3, 6)} ${phoneNum.slice(6, 9)} ${phoneNum.slice(9)}`
+    }
+    return phoneNum
+  }, [client.platformIdentities])
+
   return (
     <div
-      className='flex items-center gap-2 p-2 hover:bg-accent cursor-pointer'
+      className='flex items-center gap-3 p-3 hover:bg-accent cursor-pointer'
       onClick={handleSelect}
     >
       <Avatar className='h-8 w-8'>
@@ -72,7 +87,12 @@ const ClientListItem = React.memo(function ClientListItem({
           {client.name.charAt(0).toUpperCase()}
         </AvatarFallback>
       </Avatar>
-      <span>{client.name}</span>
+      <div className='flex flex-col min-w-0 flex-1'>
+        <span className='font-medium text-sm truncate'>{client.name}</span>
+        {phoneNumber && (
+          <span className='text-xs text-muted-foreground'>{phoneNumber}</span>
+        )}
+      </div>
     </div>
   )
 })
@@ -95,18 +115,72 @@ export function CreateOrSelectClient({
     return clients?.find((client) => client.id === value)
   }, [clients, value])
 
+  // Helper function to extract phone digits for search
+  const extractPhoneDigits = useCallback((platformId: string): string => {
+    const phoneMatch = platformId.match(/^(\d+)@s\.whatsapp\.net$/)
+    if (!phoneMatch) return ''
+    
+    const phoneNumber = phoneMatch[1]
+    // For 521XXXXXXXXX, return the last 10 digits (the actual phone number without country code)
+    if (phoneNumber.startsWith('521') && phoneNumber.length === 13) {
+      return phoneNumber.slice(3) // Remove 521 prefix, return 10 digits
+    }
+    return phoneNumber
+  }, [])
+
+  // Helper function to format WhatsApp Web phone numbers for display
+  const formatWhatsAppPhone = useCallback((platformId: string): string => {
+    const phoneMatch = platformId.match(/^(\d+)@s\.whatsapp\.net$/)
+    if (!phoneMatch) return platformId
+    
+    const phoneNumber = phoneMatch[1]
+    // Format 521XXXXXXXXX to +52 1 XXX XXX XXXX
+    if (phoneNumber.startsWith('521') && phoneNumber.length === 13) {
+      const formatted = `+52 1 ${phoneNumber.slice(3, 6)} ${phoneNumber.slice(6, 9)} ${phoneNumber.slice(9)}`
+      return formatted
+    }
+    return phoneNumber
+  }, [])
+
   const filteredClients = useMemo(() => {
     if (!clients) return []
     if (!debouncedSearchQuery) {
       return clients.filter((client) => client.id !== value)
     }
-    return clients.filter(
-      (client) =>
-        client.name
-          .toLowerCase()
-          .includes(debouncedSearchQuery.toLowerCase()) && client.id !== value // Don't show already selected client in dropdown
-    )
-  }, [clients, debouncedSearchQuery, value])
+    
+    const searchValue = debouncedSearchQuery.toLowerCase()
+    
+    return clients.filter((client) => {
+      if (client.id === value) return false // Don't show already selected client
+      
+      // Search in name
+      if (client.name.toLowerCase().includes(searchValue)) {
+        return true
+      }
+      
+      // Search in platform IDs (especially phone numbers)
+      if (client.platformIdentities && client.platformIdentities.length > 0) {
+        for (const identity of client.platformIdentities) {
+          // Search in original platform ID
+          if (identity.platformId.toLowerCase().includes(searchValue)) {
+            return true
+          }
+          
+          // For WhatsApp Web, also search in formatted phone and raw digits
+          if (identity.platformName === PlatformName.WhatsappWeb) {
+            const formattedPhone = formatWhatsAppPhone(identity.platformId).toLowerCase()
+            const rawDigits = extractPhoneDigits(identity.platformId)
+            
+            if (formattedPhone.includes(searchValue) || rawDigits.includes(searchValue)) {
+              return true
+            }
+          }
+        }
+      }
+      
+      return false
+    })
+  }, [clients, debouncedSearchQuery, value, extractPhoneDigits, formatWhatsAppPhone])
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
     if (
@@ -226,7 +300,7 @@ export function CreateOrSelectClient({
           <Input
             ref={inputRef}
             placeholder={
-              selectedClient ? selectedClient.name : 'Buscar o crear cliente...'
+              selectedClient ? selectedClient.name : 'Buscar por nombre o teléfono...'
             }
             value={searchQueryInput}
             onChange={handleSearchInputChange}
