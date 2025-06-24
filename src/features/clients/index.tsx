@@ -9,6 +9,7 @@ import { DataTableToolbar } from '../../components/tables/data-table-toolbar.tsx
 import { ClientPrimitives } from './types.ts'
 import { createColumns } from './components/clients-columns.tsx'
 import { DataTableFacetedFilter, platformOptions, generateTagOptions } from './components/clients-table-filters.tsx'
+import { AddTagButton } from '../chats/AddTagButton.tsx'
 import { useMemo } from 'react'
 import { useGetTags } from './hooks/useGetTags.ts'
 import { ClientPrimaryButtons } from './components/client-primary-buttons.tsx'
@@ -56,11 +57,14 @@ export default function Clients() {
                       title="Plataformas"
                       options={platformOptions}
                     />
-                    <DataTableFacetedFilter
-                      column={table.getColumn('tagIds')}
-                      title="Etiquetas"
-                      options={tagOptions}
-                    />
+                    <div className="flex items-center gap-2">
+                      <DataTableFacetedFilter
+                        column={table.getColumn('tagIds')}
+                        title="Etiquetas"
+                        options={tagOptions}
+                      />
+                      <AddTagButton withLabel/>
+                    </div>
                   </DataTableToolbar>
                 )}
               />
