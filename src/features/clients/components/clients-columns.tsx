@@ -1,21 +1,23 @@
-import { format, parseISO } from 'date-fns'
-import { ColumnDef } from '@tanstack/react-table'
+import { format, parseISO } from 'date-fns';
+import { ColumnDef } from '@tanstack/react-table';
+import { IconBrandFacebook, IconBrandInstagram, IconBrandWhatsapp } from '@tabler/icons-react';
+import { es } from 'date-fns/locale/es';
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
+import { Badge } from '@/components/ui/badge.tsx';
+import { Button } from '@/components/ui/button';
 import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconBrandWhatsapp,
-} from '@tabler/icons-react'
-import { es } from 'date-fns/locale/es'
-import { cn } from '@/lib/utils'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx'
-import { Badge } from '@/components/ui/badge.tsx'
-import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
-import { DataTableColumnHeader } from '@/components/tables/data-table-column-header.tsx'
-import { ClientPrimitives, PlatformName, Tag } from '../types'
-import { DataTableRowActions } from './data-table-row-actions'
-import { PlatformChatButton } from './platform-chat-button'
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx';
+import { DataTableColumnHeader } from '@/components/tables/data-table-column-header.tsx';
+import { ClientPrimitives, PlatformName, Tag } from '../types';
+import { DataTableRowActions } from './data-table-row-actions';
+import { PlatformChatButton } from './platform-chat-button';
+
 
 // Helper function para mostrar nombres de plataformas en español
 function getPlatformDisplayName(platformName: PlatformName): string {
@@ -38,12 +40,11 @@ function formatWhatsAppPhone(platformId: string): string {
   // Extract phone number from format like 5219512010452@s.whatsapp.net
   const phoneMatch = platformId.match(/^(\d+)@s\.whatsapp\.net$/)
   if (!phoneMatch) return platformId
-  
+
   const phoneNumber = phoneMatch[1]
   // Format 521XXXXXXXXX to +52 1 XXX XXX XXXX
   if (phoneNumber.startsWith('521') && phoneNumber.length === 13) {
-    const formatted = `+52 1 ${phoneNumber.slice(3, 6)} ${phoneNumber.slice(6, 9)} ${phoneNumber.slice(9)}`
-    return formatted
+    return `+52 1 ${phoneNumber.slice(3, 6)} ${phoneNumber.slice(6, 9)} ${phoneNumber.slice(9)}`
   }
   return phoneNumber
 }
@@ -52,7 +53,7 @@ function formatWhatsAppPhone(platformId: string): string {
 function extractPhoneDigits(platformId: string): string {
   const phoneMatch = platformId.match(/^(\d+)@s\.whatsapp\.net$/)
   if (!phoneMatch) return ''
-  
+
   const phoneNumber = phoneMatch[1]
   // For 521XXXXXXXXX, return the last 10 digits (the actual phone number without country code)
   if (phoneNumber.startsWith('521') && phoneNumber.length === 13) {
@@ -62,12 +63,16 @@ function extractPhoneDigits(platformId: string): string {
 }
 
 // Global filter function for multi-field search
-function globalFilterFn(row: { original: ClientPrimitives }, columnId: string, filterValue: string) {
+function globalFilterFn(
+  row: { original: ClientPrimitives },
+  columnId: string,
+  filterValue: string
+) {
   if (!filterValue) return true
-  
+
   const searchValue = filterValue.toLowerCase()
   const client = row.original as ClientPrimitives
-  
+
   // Search in basic fields
   const searchFields = [
     client.name?.toLowerCase() || '',
@@ -75,27 +80,28 @@ function globalFilterFn(row: { original: ClientPrimitives }, columnId: string, f
     client.address?.toLowerCase() || '',
     client.notes?.toLowerCase() || '',
   ]
-  
+
   // Search in platform IDs (especially phone numbers)
-  const platformSearchTerms = client.platformIdentities?.flatMap(identity => {
-    const terms = [identity.platformId.toLowerCase()]
-    
-    if (identity.platformName === PlatformName.WhatsappWeb) {
-      // Add formatted phone number
-      terms.push(formatWhatsAppPhone(identity.platformId).toLowerCase())
-      // Add raw digits for partial search (e.g., "9512010452")
-      const rawDigits = extractPhoneDigits(identity.platformId)
-      if (rawDigits) {
-        terms.push(rawDigits)
+  const platformSearchTerms =
+    client.platformIdentities?.flatMap((identity) => {
+      const terms = [identity.platformId.toLowerCase()]
+
+      if (identity.platformName === PlatformName.WhatsappWeb) {
+        // Add formatted phone number
+        terms.push(formatWhatsAppPhone(identity.platformId).toLowerCase())
+        // Add raw digits for partial search (e.g., "9512010452")
+        const rawDigits = extractPhoneDigits(identity.platformId)
+        if (rawDigits) {
+          terms.push(rawDigits)
+        }
       }
-    }
-    
-    return terms
-  }) || []
-  
+
+      return terms
+    }) || []
+
   const allSearchTerms = [...searchFields, ...platformSearchTerms]
-  
-  return allSearchTerms.some(field => field.includes(searchValue))
+
+  return allSearchTerms.some((field) => field.includes(searchValue))
 }
 
 export const createColumns = (
@@ -119,7 +125,9 @@ export const createColumns = (
         <div className='flex items-center space-x-3'>
           <Avatar className='h-10 w-10'>
             <AvatarImage src={photo} alt={name} className='object-cover' />
-            <AvatarFallback className='text-sm font-medium'>{name.charAt(0)}</AvatarFallback>
+            <AvatarFallback className='text-sm font-medium'>
+              {name.charAt(0)}
+            </AvatarFallback>
           </Avatar>
           <div className='flex flex-col'>
             <TooltipProvider>
@@ -157,7 +165,6 @@ export const createColumns = (
     size: 250,
   },
 
-
   {
     accessorKey: 'platformIdentities',
     header: ({ column }) => (
@@ -172,16 +179,18 @@ export const createColumns = (
       return (
         <div className='flex flex-wrap gap-1 max-w-[300px]'>
           {platformIdentities.map((identity, index) => {
-            const PlatformIcon = {
-              [PlatformName.Whatsapp]: IconBrandWhatsapp,
-              [PlatformName.WhatsappWeb]: WhatsAppBusinessIcon,
-              [PlatformName.Facebook]: IconBrandFacebook,
-              [PlatformName.Instagram]: IconBrandInstagram,
-            }[identity.platformName] || null
+            const PlatformIcon =
+              {
+                [PlatformName.Whatsapp]: IconBrandWhatsapp,
+                [PlatformName.WhatsappWeb]: WhatsAppBusinessIcon,
+                [PlatformName.Facebook]: IconBrandFacebook,
+                [PlatformName.Instagram]: IconBrandInstagram,
+              }[identity.platformName] || null
 
-            const displayText = identity.platformName === PlatformName.WhatsappWeb 
-              ? `${getPlatformDisplayName(identity.platformName)}: ${formatWhatsAppPhone(identity.platformId)}`
-              : getPlatformDisplayName(identity.platformName)
+            const displayText =
+              identity.platformName === PlatformName.WhatsappWeb
+                ? `${getPlatformDisplayName(identity.platformName)}: ${formatWhatsAppPhone(identity.platformId)}`
+                : getPlatformDisplayName(identity.platformName)
 
             return (
               <TooltipProvider key={index}>
@@ -212,7 +221,8 @@ export const createColumns = (
                           size={12}
                           className={cn(
                             (identity.platformName === PlatformName.Whatsapp ||
-                              identity.platformName === PlatformName.WhatsappWeb) &&
+                              identity.platformName ===
+                                PlatformName.WhatsappWeb) &&
                               'text-green-600',
                             identity.platformName === PlatformName.Facebook &&
                               'text-blue-600',
@@ -237,7 +247,7 @@ export const createColumns = (
     filterFn: (row, id, value) => {
       const platformIdentities = row.original.platformIdentities || []
       if (!value || value.length === 0) return true
-      return platformIdentities.some(identity => 
+      return platformIdentities.some((identity) =>
         value.includes(identity.platformName)
       )
     },
@@ -254,15 +264,19 @@ export const createColumns = (
     cell: ({ row }) => {
       const tagIds = row.original.tagIds
       if (!tagIds || tagIds.length === 0 || !tags.length) {
-        return <div className='text-muted-foreground text-sm'>Sin etiquetas</div>
+        return (
+          <div className='text-muted-foreground text-sm'>Sin etiquetas</div>
+        )
       }
 
       const clientTags = tagIds
-        .map(tagId => tags.find(tag => tag.id === tagId))
+        .map((tagId) => tags.find((tag) => tag.id === tagId))
         .filter(Boolean)
 
       if (clientTags.length === 0) {
-        return <div className='text-muted-foreground text-sm'>Sin etiquetas</div>
+        return (
+          <div className='text-muted-foreground text-sm'>Sin etiquetas</div>
+        )
       }
 
       return (
@@ -286,8 +300,10 @@ export const createColumns = (
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className='flex flex-col gap-1'>
-                    {clientTags.slice(2).map(tag => (
-                      <span key={tag!.id} className='text-sm'>{tag!.name}</span>
+                    {clientTags.slice(2).map((tag) => (
+                      <span key={tag!.id} className='text-sm'>
+                        {tag!.name}
+                      </span>
                     ))}
                   </div>
                 </TooltipContent>
@@ -321,9 +337,7 @@ export const createColumns = (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className='max-w-[150px] truncate text-sm'>
-                {address}
-              </div>
+              <div className='max-w-[150px] truncate text-sm'>{address}</div>
             </TooltipTrigger>
             <TooltipContent>
               <p className='max-w-[300px] break-words'>{address}</p>
@@ -344,7 +358,8 @@ export const createColumns = (
     ),
     cell: ({ row }) => {
       const birthdate = row.original.birthdate
-      if (!birthdate) return <div className='text-muted-foreground text-sm'>-</div>
+      if (!birthdate)
+        return <div className='text-muted-foreground text-sm'>-</div>
 
       return (
         <Badge variant='outline' className='text-xs font-mono'>
@@ -366,12 +381,21 @@ export const createColumns = (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge variant='secondary' className='text-xs font-mono cursor-help'>
-              {format(parseISO(row.original.createdAt), 'dd/MM/y', { locale: es })}
+            <Badge
+              variant='secondary'
+              className='text-xs font-mono cursor-help'
+            >
+              {format(parseISO(row.original.createdAt), 'dd/MM/y', {
+                locale: es,
+              })}
             </Badge>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{format(parseISO(row.original.createdAt), 'dd/MM/yyyy HH:mm', { locale: es })}</p>
+            <p>
+              {format(parseISO(row.original.createdAt), 'dd/MM/yyyy HH:mm', {
+                locale: es,
+              })}
+            </p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

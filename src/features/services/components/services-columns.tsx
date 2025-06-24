@@ -1,122 +1,255 @@
 import { ColumnDef, FilterFn } from '@tanstack/react-table'
-import { cn } from '@/lib/utils'
-import { Badge } from '@/components/ui/badge'
-import LongText from '@/components/long-text'
+import { Calendar, Clock, DollarSign, Users } from 'lucide-react'
+import { Badge } from '@/components/ui/badge.tsx'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip.tsx'
+import { DataTableColumnHeader } from '@/components/tables/data-table-column-header.tsx'
 import { Service } from '@/features/appointments/types.ts'
-import { DataTableColumnHeader } from '@/components/tables/data-table-column-header'
 import { DataTableRowActions } from './data-table-row-actions'
+import { dayInitialsMap } from '@/features/employees/types'
 
-// Global filter function for multi-field search
-const globalFilterFn: FilterFn<Service> = (row, columnId, value) => {
-  if (!value) return true
+// Helper function to get work days summary
+function getWorkDaysSummary(schedule: Record<string, any>): string {
+  if (!schedule || Object.keys(schedule).length === 0) return 'Sin horario'
   
-  const service = row.original
-  const searchValue = String(value).toLowerCase()
+  const workDays = Object.keys(schedule)
+    .filter(day => schedule[day] && schedule[day].startAt !== undefined)
+    .map(day => dayInitialsMap[day as keyof typeof dayInitialsMap])
+    .filter(Boolean)
   
-  // Search in name, description, price amount, and currency
-  const matches = (
-    service.name.toLowerCase().includes(searchValue) ||
-    service.description.toLowerCase().includes(searchValue) ||
-    service.price.amount.toString().includes(searchValue) ||
-    service.price.currency.toLowerCase().includes(searchValue) ||
-    service.duration.value.toString().includes(searchValue) ||
-    service.duration.unit.toLowerCase().includes(searchValue) ||
-    service.maxConcurrentBooks.toString().includes(searchValue) ||
-    service.minBookingLeadHours.toString().includes(searchValue)
-  )
+  if (workDays.length === 0) return 'Sin horario'
+  if (workDays.length === 7) return 'L-DO'
+  if (workDays.length === 6 && !workDays.includes('DO')) return 'L-SA'
+  if (workDays.length === 5 && workDays.includes('LU') && workDays.includes('VI')) return 'L-V'
   
-  return matches
+  return workDays.join(', ')
 }
 
-export const columns: ColumnDef<Service>[] = [
-  // Global filter column (hidden, used for multi-field search)
-  {
-    id: 'globalFilter',
-    filterFn: globalFilterFn,
-    enableColumnFilter: false,
-    enableGlobalFilter: true,
-  },
+// Global filter function for multi-field search
+export const globalFilterFn: FilterFn<Service> = (row, columnId, value) => {
+  if (!value) return true
+
+  const service = row.original
+  const searchValue = String(value).toLowerCase()
+
+  // Search only in name and description
+  return (
+    service.name.toLowerCase().includes(searchValue) ||
+    service.description.toLowerCase().includes(searchValue)
+  )
+}
+
+export const createColumns = (): ColumnDef<Service>[] => [
   {
     accessorKey: 'name',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Nombre' />
     ),
     cell: ({ row }) => {
-      const name = row.getValue('name');
-      const truncatedName = typeof name === 'string' && name.length > 30 ? `${name.substring(0, 30)}...` : name;
-      return <LongText className=''>{typeof truncatedName === 'string' ? truncatedName : ''}</LongText>;
+      const name = row.original.name
+      const truncatedName =
+        name.length > 25 ? `${name.substring(0, 25)}...` : name
+      const needsTooltip = name.length > 25
+
+      const content = (
+        <div className='flex flex-col'>
+          <p className='font-medium text-sm'>{truncatedName}</p>
+        </div>
+      )
+
+      if (needsTooltip) {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className='cursor-help'>{content}</div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{name}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      }
+
+      return content
     },
     enableHiding: false,
-    enableSorting: false,
+    enableSorting: true,
   },
+
   {
-    accessorKey: 'descripción',
+    accessorKey: 'description',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Descripción' />
     ),
     cell: ({ row }) => {
-      const description = row.original.description;
-      const truncatedDescription = description.length > 25 ? `${description.substring(0, 25)}...` : description;
-      return <LongText className=''>{truncatedDescription || ''}</LongText>;
+      const description = row.original.description
+      if (!description)
+        return (
+          <span className='text-muted-foreground text-sm'>Sin descripción</span>
+        )
+
+      const truncatedDescription =
+        description.length > 35
+          ? `${description.substring(0, 35)}...`
+          : description
+      const needsTooltip = description.length > 35
+
+      const content = (
+        <div className='text-sm text-muted-foreground max-w-[250px]'>
+          {truncatedDescription}
+        </div>
+      )
+
+      if (needsTooltip) {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className='cursor-help'>{content}</div>
+              </TooltipTrigger>
+              <TooltipContent className='max-w-[300px]'>
+                <p>{description}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      }
+
+      return content
     },
-    meta: { className: '' },
-    enableSorting: false,
+    enableSorting: true,
+    enableHiding: true,
   },
+
   {
-    accessorKey: 'duración',
+    id: 'duration',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Duración' />
     ),
     cell: ({ row }) => {
       const { duration } = row.original
+      const unitLabel = duration.unit === 'minutes' ? 'min' : 'h'
+
       return (
-        <span className='w-fit text-nowrap'>
-          {duration.value} {duration.unit === 'minutes' ? 'minutos' : 'horas'}
-        </span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant='secondary' className='text-xs font-medium gap-1'>
+                <Clock className='h-3 w-3' />
+                {duration.value} {unitLabel}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                Duración: {duration.value}{' '}
+                {duration.unit === 'minutes' ? 'minutos' : 'horas'}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )
     },
-    enableSorting: false,
+    enableSorting: true,
+    enableHiding: true,
   },
+
   {
-    accessorKey: 'precio',
+    id: 'price',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Precio' />
     ),
     cell: ({ row }) => {
       const { amount, currency } = row.original.price
+
       return (
-        <span className='w-fit text-nowrap'>
+        <Badge variant='outline' className='text-sm font-semibold gap-1'>
+          <DollarSign className='h-3 w-3' />
           {amount} {currency}
-        </span>
+        </Badge>
       )
     },
-    enableSorting: false,
+    enableSorting: true,
+    enableHiding: false,
   },
+
   {
-    accessorKey: 'espacios',
+    id: 'maxConcurrentBooks',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Espacios concurrentes' />
+      <DataTableColumnHeader column={column} title='Espacios' />
     ),
     cell: ({ row }) => {
+      const maxBooks = row.original.maxConcurrentBooks
+
       return (
-        <div className='flex space-x-2'>
-          <Badge variant='outline' className={cn('capitalize')}>
-            {row.original.maxConcurrentBooks}
-          </Badge>
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant='default' className='text-xs font-medium gap-1'>
+                <Users className='h-3 w-3' />
+                {maxBooks}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Máximo {maxBooks} citas concurrentes</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )
+    },
+    enableSorting: true,
+    enableHiding: true,
+  },
+
+  {
+    id: 'minBookingLeadHours',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Anticipación' />
+    ),
+    cell: ({ row }) => {
+      const leadHours = row.original.minBookingLeadHours
+
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant='secondary' className='text-xs font-medium gap-1'>
+                <Calendar className='h-3 w-3' />
+                {leadHours}h
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Reservar con {leadHours} horas de anticipación</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )
+    },
+    enableSorting: true,
+    enableHiding: true,
+  },
+  {
+    id: 'schedule',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Horario' />
+    ),
+    cell: ({ row }) => {
+      const schedule = row.original.schedule
+      const workDays = getWorkDaysSummary(schedule)
+      
+      return (
+        <Badge variant='outline' className='text-xs font-medium'>
+          {workDays}
+        </Badge>
       )
     },
     enableSorting: false,
-  },
-  {
-    accessorKey: 'horas',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Horas de anticipación' />
-    ),
-    cell: ({ row }) => {
-      return <span className='text-sm'>{row.original.minBookingLeadHours}</span>
-    },
-    enableSorting: false,
+    enableHiding: true,
   },
   {
     id: 'actions',
