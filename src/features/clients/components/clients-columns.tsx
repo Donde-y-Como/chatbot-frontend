@@ -48,6 +48,19 @@ function formatWhatsAppPhone(platformId: string): string {
   return phoneNumber
 }
 
+// Helper function to extract raw phone number digits for search
+function extractPhoneDigits(platformId: string): string {
+  const phoneMatch = platformId.match(/^(\d+)@s\.whatsapp\.net$/)
+  if (!phoneMatch) return ''
+  
+  const phoneNumber = phoneMatch[1]
+  // For 521XXXXXXXXX, return the last 10 digits (the actual phone number without country code)
+  if (phoneNumber.startsWith('521') && phoneNumber.length === 13) {
+    return phoneNumber.slice(3) // Remove 521 prefix, return 10 digits
+  }
+  return phoneNumber
+}
+
 // Global filter function for multi-field search
 function globalFilterFn(row: { original: ClientPrimitives }, columnId: string, filterValue: string) {
   if (!filterValue) return true
@@ -64,11 +77,20 @@ function globalFilterFn(row: { original: ClientPrimitives }, columnId: string, f
   ]
   
   // Search in platform IDs (especially phone numbers)
-  const platformSearchTerms = client.platformIdentities?.map(identity => {
+  const platformSearchTerms = client.platformIdentities?.flatMap(identity => {
+    const terms = [identity.platformId.toLowerCase()]
+    
     if (identity.platformName === PlatformName.WhatsappWeb) {
-      return formatWhatsAppPhone(identity.platformId).toLowerCase()
+      // Add formatted phone number
+      terms.push(formatWhatsAppPhone(identity.platformId).toLowerCase())
+      // Add raw digits for partial search (e.g., "9512010452")
+      const rawDigits = extractPhoneDigits(identity.platformId)
+      if (rawDigits) {
+        terms.push(rawDigits)
+      }
     }
-    return identity.platformId.toLowerCase()
+    
+    return terms
   }) || []
   
   const allSearchTerms = [...searchFields, ...platformSearchTerms]
