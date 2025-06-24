@@ -23,27 +23,39 @@ export default function Chats() {
   const { chats } = usePaginatedChats()
 
   // Fetch messages for selected chat
-  const { data: chatMessages, isPending: isMessagesLoading } = useQuery({
+  const { 
+    data: chatMessages, 
+    isPending: isMessagesLoading,
+    isError: isChatError,
+    error: chatError 
+  } = useQuery({
     queryKey: ['chat', selectedChatId],
     queryFn: () => {
       if (!selectedChatId) return undefined;
       return chatService.getChatById(selectedChatId)
     },
     enabled: !!selectedChatId,
+    retry: (failureCount, error: any) => {
+      // Don't retry if chat doesn't exist (404)
+      if (error?.response?.status === 404) return false;
+      return failureCount < 2;
+    },
   })
 
   // Handle URL sync and initial chat selection
   useEffect(() => {
-    if (!chats.length) return
-
     const urlChatId = searchParams.chatId
-    const isValidChat = urlChatId && chats.some((chat) => chat.id === urlChatId)
-    console.log(isValidChat)
-    const chatIdToUse = isValidChat ? urlChatId : null
-
-    setSelectedChatId(chatIdToUse)
-    setMobileSelectedChatId(chatIdToUse)
-  }, [chats, searchParams.chatId])
+    
+    // Allow navigation to any chat ID from URL, even if not in paginated list
+    // This enables direct navigation from search results
+    if (urlChatId) {
+      setSelectedChatId(urlChatId)
+      setMobileSelectedChatId(urlChatId)
+    } else {
+      setSelectedChatId(null)
+      setMobileSelectedChatId(null)
+    }
+  }, [searchParams.chatId])
 
   // Handle back button click in mobile view
   const handleBackClick = () => {
@@ -72,6 +84,8 @@ export default function Chats() {
         ) : (
           <ChatContent
             isLoading={isMessagesLoading}
+            isError={isChatError}
+            error={chatError}
             chatData={chatMessages}
             selectedChatId={selectedChatId || ''}
             mobileSelectedChatId={mobileSelectedChatId}
