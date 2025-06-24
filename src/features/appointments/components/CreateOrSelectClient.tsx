@@ -23,7 +23,7 @@ interface CreateOrSelectClientProps {
   onChange: (value: string) => void
 }
 
-// Helper hook for debouncing
+// Helper hook for debouncing with faster response
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
 
@@ -40,11 +40,18 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
+// Performance constants
+const MAX_RESULTS = 50
+const MIN_SEARCH_LENGTH = 2
+const ITEM_HEIGHT = 64 // Height of each list item
+const MAX_LIST_HEIGHT = 240 // Max height of dropdown
+
 // Memoized Client List Item
 interface ClientListItemProps {
   client: Client
   onSelect: (clientId: string) => void
 }
+
 
 const ClientListItem = React.memo(function ClientListItem({
   client,
@@ -109,7 +116,7 @@ export function CreateOrSelectClient({
   const inputRef = useRef<HTMLInputElement>(null)
   const { data: clients, isLoading: isLoadingClients } = useGetClients()
   const createClientMutation = useCreateClient()
-  const debouncedSearchQuery = useDebounce(searchQueryInput, 300)
+  const debouncedSearchQuery = useDebounce(searchQueryInput, 200) // Faster debounce
 
   const selectedClient = useMemo(() => {
     return clients?.find((client) => client.id === value)
@@ -144,42 +151,63 @@ export function CreateOrSelectClient({
 
   const filteredClients = useMemo(() => {
     if (!clients) return []
+    
+    // If no search query, don't show any results to avoid rendering 5000 items
     if (!debouncedSearchQuery) {
-      return clients.filter((client) => client.id !== value)
+      return []
+    }
+    
+    // Only start searching after minimum characters to improve performance
+    if (debouncedSearchQuery.length < MIN_SEARCH_LENGTH) {
+      return []
     }
     
     const searchValue = debouncedSearchQuery.toLowerCase()
+    const results: Client[] = []
     
-    return clients.filter((client) => {
-      if (client.id === value) return false // Don't show already selected client
+    // Use for loop for better performance than filter + early exit
+    for (let i = 0; i < clients.length && results.length < MAX_RESULTS; i++) {
+      const client = clients[i]
       
-      // Search in name
+      if (client.id === value) continue // Don't show already selected client
+      
+      let isMatch = false
+      
+      // Search in name first (most common case)
       if (client.name.toLowerCase().includes(searchValue)) {
-        return true
-      }
-      
-      // Search in platform IDs (especially phone numbers)
-      if (client.platformIdentities && client.platformIdentities.length > 0) {
+        isMatch = true
+      } else if (client.platformIdentities && client.platformIdentities.length > 0) {
+        // Only search in platform IDs if name doesn't match
         for (const identity of client.platformIdentities) {
           // Search in original platform ID
           if (identity.platformId.toLowerCase().includes(searchValue)) {
-            return true
+            isMatch = true
+            break
           }
           
           // For WhatsApp Web, also search in formatted phone and raw digits
           if (identity.platformName === PlatformName.WhatsappWeb) {
-            const formattedPhone = formatWhatsAppPhone(identity.platformId).toLowerCase()
             const rawDigits = extractPhoneDigits(identity.platformId)
+            if (rawDigits.includes(searchValue)) {
+              isMatch = true
+              break
+            }
             
-            if (formattedPhone.includes(searchValue) || rawDigits.includes(searchValue)) {
-              return true
+            const formattedPhone = formatWhatsAppPhone(identity.platformId).toLowerCase()
+            if (formattedPhone.includes(searchValue)) {
+              isMatch = true
+              break
             }
           }
         }
       }
       
-      return false
-    })
+      if (isMatch) {
+        results.push(client)
+      }
+    }
+    
+    return results
   }, [clients, debouncedSearchQuery, value, extractPhoneDigits, formatWhatsAppPhone])
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
@@ -237,7 +265,7 @@ export function CreateOrSelectClient({
     (e: ChangeEvent<HTMLInputElement>) => {
       const query = e.target.value
       setSearchQueryInput(query)
-      if (query.length > 0) {
+      if (query.length >= MIN_SEARCH_LENGTH) {
         setIsDropdownOpen(true)
       } else {
         setIsDropdownOpen(false)
@@ -247,10 +275,10 @@ export function CreateOrSelectClient({
   )
 
   const handleSearchInputFocus = useCallback(() => {
-    if (filteredClients.length > 0 || searchQueryInput.length > 0) {
+    if (searchQueryInput.length >= MIN_SEARCH_LENGTH) {
       setIsDropdownOpen(true)
     }
-  }, [filteredClients.length, searchQueryInput.length])
+  }, [searchQueryInput.length])
 
   if (isCreatingNew) {
     return (
@@ -300,7 +328,7 @@ export function CreateOrSelectClient({
           <Input
             ref={inputRef}
             placeholder={
-              selectedClient ? selectedClient.name : 'Buscar por nombre o teléfono...'
+              selectedClient ? selectedClient.name : `Buscar por nombre o teléfono (mín. ${MIN_SEARCH_LENGTH} caracteres)...`
             }
             value={searchQueryInput}
             onChange={handleSearchInputChange}
@@ -315,22 +343,28 @@ export function CreateOrSelectClient({
         </div>
         {isDropdownOpen && (
           <div
-            className='absolute z-50 mt-1 w-full bg-popover rounded-md border border-border shadow-md max-h-60 overflow-y-auto' // Reduced max-h for better UX
+            className='absolute z-50 mt-1 w-full bg-popover rounded-md border border-border shadow-md'
+            style={{ maxHeight: MAX_LIST_HEIGHT + 32 }} // Extra space for padding
           >
             {isLoadingClients ? (
               <div className='p-4 text-center text-muted-foreground'>
                 Cargando clientes...
               </div>
-            ) : filteredClients.length === 0 && debouncedSearchQuery ? (
+            ) : debouncedSearchQuery.length < MIN_SEARCH_LENGTH ? (
+              <div className='p-4 text-center text-muted-foreground'>
+                Escribe al menos {MIN_SEARCH_LENGTH} caracteres para buscar
+              </div>
+            ) : filteredClients.length === 0 ? (
               <div className='p-4 text-center text-muted-foreground'>
                 No se encontraron clientes "{debouncedSearchQuery}"
               </div>
-            ) : filteredClients.length === 0 && !debouncedSearchQuery ? (
-              <div className='p-4 text-center text-muted-foreground'>
-                No hay clientes para mostrar.
-              </div>
             ) : (
-              <div>
+              <div className='max-h-60 overflow-y-auto'>
+                {filteredClients.length >= MAX_RESULTS && (
+                  <div className='p-2 text-xs text-muted-foreground bg-popover border-b sticky top-0 z-10 shadow-sm'>
+                    Mostrando primeros {MAX_RESULTS} resultados. Refina tu búsqueda para mejores resultados.
+                  </div>
+                )}
                 {filteredClients.map((client) => (
                   <ClientListItem
                     key={client.id}
