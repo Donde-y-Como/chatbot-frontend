@@ -274,7 +274,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                 />
               </div>
             ) : (
-              chat.client?.name || 'Unknown'
+              chat.client?.name || 'Desconocido'
             )}
           </span>
 

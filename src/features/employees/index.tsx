@@ -1,17 +1,26 @@
 import { TableSkeleton } from '@/components/TableSkeleton.tsx'
 import { Main } from '@/components/layout/main'
 import { CustomTable } from '@/components/tables/custom-table.tsx'
+import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx'
 import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
 import { Separator } from '../../components/ui/separator.tsx'
 import { SidebarTrigger } from '../../components/ui/sidebar.tsx'
 import { EmployeeDialogs } from './components/employee-dialogs.tsx'
 import { EmployeePrimaryButtons } from './components/employee-primary-buttons.tsx'
-import { columns } from './components/employees-columns.tsx'
+import { createColumns, globalFilterFn } from './components/employees-columns.tsx'
+import { DataTableFacetedFilter } from './components/employees-table-filters.tsx'
 import EmployeesProvider from './context/employees-context.tsx'
 import { Employee } from './types.ts'
+import { useMemo } from 'react'
+import { generateRoleOptions } from '@/lib/utils.ts'
 
 export default function Employees() {
   const { data: employees, isLoading } = useGetEmployees()
+  const columns = useMemo(() => createColumns(), [])
+  const roleOptions = useMemo(() => {
+    if (!employees) return []
+    return generateRoleOptions(employees)
+  }, [employees])
 
   if (isLoading) {
     return <TableSkeleton />
@@ -37,7 +46,25 @@ export default function Employees() {
             <EmployeePrimaryButtons />
           </div>
           <div className="-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0">
-            {employees && <CustomTable<Employee> data={employees} columns={columns} />}
+            {employees && (
+              <CustomTable<Employee> 
+                data={employees} 
+                columns={columns}
+                globalFilterFn={globalFilterFn}
+                toolbar={(table) => (
+                  <DataTableToolbar 
+                    table={table}
+                    searchPlaceholder="Buscar por nombre o email..."
+                  >
+                    <DataTableFacetedFilter
+                      column={table.getColumn('role')}
+                      title="Roles"
+                      options={roleOptions}
+                    />
+                  </DataTableToolbar>
+                )}
+              />
+            )}
           </div>
         </section>
       </Main>

@@ -16,6 +16,7 @@ import { createProductColumns } from './components/products-columns';
 import { calculateProductStats } from './utils/productUtils';
 import { Product, ProductFilters } from './types';
 import { useState } from 'react';
+import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx'
 
 function ProductsContent() {
   const [filters, setFilters] = useState<ProductFilters>({});
@@ -117,10 +118,12 @@ function ProductsContent() {
             <CustomTable<Product> 
               data={products} 
               columns={columns}
-              showSearch={true}
-              searchColumn="name"
-              searchPlaceholder="Buscar por nombre o SKU..."
-              enableGlobalFilter={true}
+              toolbar={(table) => (
+                <DataTableToolbar
+                  table={table}
+                  searchPlaceholder='Buscar por nombre, descripcion...'
+                ></DataTableToolbar>
+              )}
             />
           ) : (
             <Card>

@@ -1,10 +1,12 @@
 import { Link, useRouter } from '@tanstack/react-router'
 import {
   AlertTriangle,
+  BadgeCheck,
+  Bell,
   Calendar,
   ChevronsUpDown,
+  CreditCard,
   LogOut,
-  Settings
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -140,8 +142,8 @@ export function NavUser({ user }: { user: UserData }) {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to='/settings'>
-                  <Settings />
-                  Configuración
+                  <BadgeCheck />
+                  Perfil
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

@@ -5,8 +5,11 @@ import { SidebarTrigger } from '../../components/ui/sidebar.tsx'
 import { useGetClients } from '../appointments/hooks/useGetClients.ts'
 import ClientsProvider from './context/clients-context.tsx'
 import { CustomTable } from '../../components/tables/custom-table.tsx'
+import { DataTableToolbar } from '../../components/tables/data-table-toolbar.tsx'
 import { ClientPrimitives } from './types.ts'
 import { createColumns } from './components/clients-columns.tsx'
+import { DataTableFacetedFilter, platformOptions, generateTagOptions } from './components/clients-table-filters.tsx'
+import { AddTagButton } from '../chats/AddTagButton.tsx'
 import { useMemo } from 'react'
 import { useGetTags } from './hooks/useGetTags.ts'
 import { ClientPrimaryButtons } from './components/client-primary-buttons.tsx'
@@ -16,7 +19,7 @@ export default function Clients() {
   const { data: clients, isLoading } = useGetClients()
   const { data: tags, isLoading: tagsIsLoading } = useGetTags()
   const columns = useMemo(() => createColumns(tags), [tags])
-
+  const tagOptions = useMemo(() => generateTagOptions(tags || []), [tags])
 
   if (isLoading || tagsIsLoading) {
     return <TableSkeleton />
@@ -43,7 +46,32 @@ export default function Clients() {
             <ClientPrimaryButtons />
           </div>
           <div className="-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0">
-            {clients && tags && <CustomTable<ClientPrimitives> data={clients} columns={columns} />}
+            {clients && tags && (
+              <CustomTable<ClientPrimitives> 
+                data={clients} 
+                columns={columns}
+                toolbar={(table) => (
+                  <DataTableToolbar 
+                    table={table}
+                    searchPlaceholder="Buscar por nombre, email, dirección, notas o teléfono..."
+                  >
+                    <DataTableFacetedFilter
+                      column={table.getColumn('platformIdentities')}
+                      title="Plataformas"
+                      options={platformOptions}
+                    />
+                    <div className="flex items-center gap-2">
+                      <DataTableFacetedFilter
+                        column={table.getColumn('tagIds')}
+                        title="Etiquetas"
+                        options={tagOptions}
+                      />
+                      <AddTagButton withLabel/>
+                    </div>
+                  </DataTableToolbar>
+                )}
+              />
+            )}
           </div>
         </section>
       </Main>

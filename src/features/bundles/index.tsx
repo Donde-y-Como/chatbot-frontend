@@ -6,6 +6,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { TableSkeleton } from '@/components/TableSkeleton'
 import { Main } from '@/components/layout/main'
 import { CustomTable } from '@/components/tables/custom-table'
+import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx'
 import { BundleDialogs } from './components/bundle-dialogs'
 import { BundleFiltersComponent } from './components/bundle-filters'
 import { BundlePrimaryButtons } from './components/bundle-primary-buttons'
@@ -114,10 +115,12 @@ function BundlesContent() {
             <CustomTable<Bundle>
               data={bundles}
               columns={columns}
-              showSearch={true}
-              searchColumn='name'
-              searchPlaceholder='Buscar paquetes por nombre o SKU...'
-              enableGlobalFilter={true}
+              toolbar={(table) => (
+                <DataTableToolbar
+                  table={table}
+                  searchPlaceholder='Buscar por nombre, descripcion...'
+                ></DataTableToolbar>
+              )}
             />
           ) : (
             <Card>

@@ -6,49 +6,38 @@ import { DataTableViewOptions } from './data-table-view-options'
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
-  showSearch?: boolean
-  searchColumn?: string
+  children?: React.ReactNode
   searchPlaceholder?: string
-  enableGlobalFilter?: boolean
 }
 
 export function DataTableToolbar<TData>({
   table,
-  showSearch = true,
-  searchColumn = 'name',
+  children,
   searchPlaceholder = 'Buscar...',
-  enableGlobalFilter = false,
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0
-
-  // Función para buscar
-  const handleSearchChange = (value: string) => {
-    if (enableGlobalFilter) {
-      table.setGlobalFilter(value)
-    } else {
-      table.getColumn(searchColumn)?.setFilterValue(value)
-    }
-  }
+  const isFiltered = table.getState().columnFilters.length > 0 || !!table.getState().globalFilter
 
   return (
     <div className='flex items-center justify-between'>
       <div className='flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2'>
-        {showSearch && (
+        {(table.getColumn('globalFilter') || table.options.enableGlobalFilter) && (
           <Input
             placeholder={searchPlaceholder}
-            value={
-              enableGlobalFilter
-                ? (table.getState().globalFilter ?? '') 
-                : (table.getColumn(searchColumn)?.getFilterValue() as string) ?? ''
+            value={(table.getState().globalFilter as string) ?? ''}
+            onChange={(event) =>
+              table.setGlobalFilter(event.target.value)
             }
-            onChange={(event) => handleSearchChange(event.target.value)}
-            className='h-8 sm:w-[150px] lg:w-[250px] w-full'
+            className='h-8 sm:w-[250px] lg:w-[350px] w-full'
           />
         )}
+        {children}
         {isFiltered && (
           <Button
             variant='ghost'
-            onClick={() => table.resetColumnFilters()}
+            onClick={() => {
+              table.resetColumnFilters()
+              table.setGlobalFilter('')
+            }}
             className='h-8 px-2 lg:px-3'
           >
             Restablecer
