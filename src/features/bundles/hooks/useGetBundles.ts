@@ -7,6 +7,5 @@ export const useGetBundles = (filters?: BundleFilters) => {
     queryKey: ['bundles', filters],
     queryFn: () => BundleApiService.getAllBundles(filters),
     staleTime: 5 * 60 * 1000, // 5 minutos
-    initialData: []
   });
 };

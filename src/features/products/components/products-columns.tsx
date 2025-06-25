@@ -89,11 +89,40 @@ const getStockBadge = (stock: number, minimumInventory: number) => {
   );
 };
 
+// Global filter function for multi-field search
+function globalFilterFn(
+  row: { original: Product },
+  columnId: string,
+  filterValue: string
+) {
+  if (!filterValue) return true
+
+  const searchValue = filterValue.toLowerCase()
+  const product = row.original
+
+  // Search in basic fields
+  const searchFields = [
+    product.name?.toLowerCase() || '',
+    product.description?.toLowerCase() || '',
+    product.sku?.toLowerCase() || '',
+    product.notes?.toLowerCase() || '',
+    product.barcode?.toLowerCase() || '',
+  ]
+
+  return searchFields.some((field) => field.includes(searchValue))
+}
+
 export const createProductColumns = (
   units: Unit[] = [],
   categories: Category[] = [],
   tags: ProductTag[] = []
 ): ColumnDef<Product>[] => [
+  // Global filter column (hidden, used for multi-field search)
+  {
+    id: 'globalFilter',
+    filterFn: globalFilterFn,
+    enableColumnFilter: false,
+  },
   {
     accessorKey: 'name',
     header: ({ column }) => (

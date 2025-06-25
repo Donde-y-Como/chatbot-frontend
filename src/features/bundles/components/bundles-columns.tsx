@@ -45,9 +45,36 @@ const getStatusBadge = (status: ProductStatus) => {
   )
 }
 
+// Global filter function for multi-field search
+function globalFilterFn(
+  row: { original: Bundle },
+  columnId: string,
+  filterValue: string
+) {
+  if (!filterValue) return true
+
+  const searchValue = filterValue.toLowerCase()
+  const bundle = row.original
+
+  // Search in basic fields
+  const searchFields = [
+    bundle.name?.toLowerCase() || '',
+    bundle.description?.toLowerCase() || '',
+    bundle.sku?.toLowerCase() || '',
+  ]
+
+  return searchFields.some((field) => field.includes(searchValue))
+}
+
 export const createBundleColumns = (
   tags: ProductTag[] = []
 ): ColumnDef<Bundle>[] => [
+  // Global filter column (hidden, used for multi-field search)
+  {
+    id: 'globalFilter',
+    filterFn: globalFilterFn,
+    enableColumnFilter: false,
+  },
   {
     accessorKey: 'name',
     header: ({ column }) => (
