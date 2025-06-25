@@ -1,15 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { SearchBar } from './components/SearchBar'
 import { CategoryTabs } from './components/CategoryTabs'
 import { ItemGrid } from './components/ItemGrid'
 import { Cart } from './components/Cart'
 import { FilterButton } from './components/FilterButton'
 import { AdvancedFilters } from './components/AdvancedFilters'
+import { QuickAppointmentDialog } from '../appointments/components/QuickAppointmentDialog'
+import { EventBookingModal } from '../events/event-booking-modal'
 import { usePOS } from './hooks/usePOS'
 import { Skeleton } from '../../components/ui/skeleton'
 import { Alert, AlertDescription } from '../../components/ui/alert'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '../../components/ui/button'
+import { appointmentService } from '../appointments/appointmentService'
+import { EventApiService } from '../events/EventApiService'
+import { useEventMutations } from '../events/hooks/useEventMutations'
 
 // Componente de carga
 function POSLoading() {
@@ -78,6 +83,9 @@ function POSError({ error, onRetry }: { error: any; onRetry: () => void }) {
 
 function StoreContent() {
     const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
+    const [isQuickAppointmentOpen, setIsQuickAppointmentOpen] = useState(false)
+    const [isEventBookingOpen, setIsEventBookingOpen] = useState(false)
+    const [pendingItemForDialog, setPendingItemForDialog] = useState<any>(null)
     
     // Hook principal del POS
     const {
@@ -105,6 +113,13 @@ function StoreContent() {
     refetchAll
     } = usePOS()
 
+  const { bookEvent } = useEventMutations()
+
+  // Inicializar POS al montar el componente
+  useEffect(() => {
+    cart.initializePOS()
+  }, [cart.initializePOS])
+
   // Manejar carga
   if (isLoading) {
     return <POSLoading />
@@ -131,6 +146,81 @@ function StoreContent() {
   const handleFiltersReset = () => {
     resetFilters()
     setIsAdvancedFiltersOpen(false)
+  }
+
+  const handleAddToCart = async (item: any) => {
+    if (item.type === 'SERVICIOS') {
+      setPendingItemForDialog(item)
+      setIsQuickAppointmentOpen(true)
+      return
+    }
+    
+    if (item.type === 'EVENTOS') {
+      setPendingItemForDialog(item)
+      setIsEventBookingOpen(true)
+      return
+    }
+    
+    await cart.addToCart(item)
+    // Abrir carrito automáticamente si está cerrado
+    // if (!cart.cart.isOpen) {
+    //   cart.openCart()
+    // }
+  }
+
+  const handleAppointmentSuccess = async (appointmentId?: string) => {
+    if (pendingItemForDialog) {
+      const cartItem = {
+        ...pendingItemForDialog,
+        name: `Cita: ${pendingItemForDialog.name}`, // Prefijo para identificar que es una cita
+      }
+      
+      await cart.addToCart(cartItem, appointmentId)
+      setPendingItemForDialog(null)
+      
+      if (!cart.cart.isOpen) {
+        cart.openCart()
+      }
+    }
+  }
+
+  const handleEventBookingSuccess = async (bookingData: any) => {
+    if (pendingItemForDialog) {
+      try {
+        await bookEvent({
+          eventId: pendingItemForDialog.id,
+          clientId: bookingData.clientId,
+          date: bookingData.date,
+          participants: bookingData.participants,
+          notes: bookingData.notes || 'Reserva desde POS'
+        })
+        
+        const cartItem = {
+          ...pendingItemForDialog,
+          name: `Reserva: ${pendingItemForDialog.name}`,
+        }
+        
+        await cart.addToCart(cartItem)
+        setPendingItemForDialog(null)
+        
+        if (bookingData.clientId !== cart.cart.selectedClientId) {
+          cart.setSelectedClient(bookingData.clientId)
+        }
+        
+        // Abrir carrito automáticamente
+        if (!cart.cart.isOpen) {
+          cart.openCart()
+        }
+        
+        setIsEventBookingOpen(false)
+      } catch (error) {
+        console.error('Error creating booking:', error)
+      }
+    }
+  }
+
+  const handleClientChange = (clientId: string) => {
+    cart.setSelectedClient(clientId)
   }
 
   return (
@@ -172,13 +262,7 @@ function StoreContent() {
         <div className="flex-1 overflow-auto">
           <ItemGrid 
             items={filteredItems}
-            onAddToCart={(item) => {
-              cart.addToCart(item)
-              // Abrir carrito automáticamente si está cerrado
-              if (!cart.cart.isOpen) {
-                cart.openCart()
-              }
-            }}
+            onAddToCart={handleAddToCart}
           />
         </div>
       </div>
@@ -190,6 +274,7 @@ function StoreContent() {
         onRemoveItem={cart.removeFromCart}
         onUpdateQuantity={cart.updateCartQuantity}
         onClientSelect={cart.setSelectedClient}
+        onClearCart={cart.clearCart}
       />
 
       {/* Filtros avanzados */}
@@ -200,6 +285,35 @@ function StoreContent() {
         onFiltersChange={handleFiltersApply}
         onResetFilters={handleFiltersReset}
         auxiliaryData={auxiliaryData}
+      />
+
+      {/* Dialogs para citas y eventos rápidos */}
+      <QuickAppointmentDialog
+        open={isQuickAppointmentOpen}
+        onOpenChange={(open) => {
+          setIsQuickAppointmentOpen(open)
+          if (!open) {
+            setPendingItemForDialog(null)
+          }
+        }}
+        onSuccess={handleAppointmentSuccess}
+        initialClientId={cart.cart.selectedClientId}
+        onClientChange={handleClientChange}
+        initialServiceId={pendingItemForDialog?.id} 
+      />
+
+      <EventBookingModal
+        eventId={pendingItemForDialog?.id || ''}
+        open={isEventBookingOpen}
+        onClose={() => {
+          setIsEventBookingOpen(false)
+          setPendingItemForDialog(null)
+        }}
+        onSaveBooking={handleEventBookingSuccess}
+        onRemoveBooking={async (bookingId: string) => {
+          console.log('Remove booking:', bookingId)
+        }}
+        initialClientId={cart.cart.selectedClientId}
       />
     </div>
   )

@@ -7,6 +7,8 @@ import { usePOSCart } from './usePOSCart'
 import { usePOSFilters } from './usePOSFilters'
 
 export function usePOS() {
+  const cart = usePOSCart()
+  
   // Hook de filtros (inicializamos primero para obtener el estado actual)
   const filtersHook = usePOSFilters({ products: [], services: [], events: [], bundles: [] })
   
@@ -28,12 +30,13 @@ export function usePOS() {
   const bundles = bundlesQuery.data || []
   const auxiliaryData = auxiliaryDataQuery.data
 
-  // Estado de carga
+  // Estado de carga (incluir loading del carrito)
   const isLoading = productsQuery.isLoading || 
                    servicesQuery.isLoading || 
                    eventsQuery.isLoading || 
                    bundlesQuery.isLoading ||
-                   auxiliaryDataQuery.isLoading
+                   auxiliaryDataQuery.isLoading ||
+                   cart.isLoading
 
   // Errores
   const error = productsQuery.error || 
@@ -42,8 +45,7 @@ export function usePOS() {
                bundlesQuery.error ||
                auxiliaryDataQuery.error
 
-  // Hooks de funcionalidad
-  const cart = usePOSCart()
+  // Hooks de funcionalidad - usar el carrito ya inicializado
   
   // Actualizar los datos del hook de filtros con los datos reales
   const filtersWithData = usePOSFilters({ products, services, events, bundles })
@@ -55,6 +57,7 @@ export function usePOS() {
     eventsQuery.refetch()
     bundlesQuery.refetch()
     auxiliaryDataQuery.refetch()
+    cart.refreshCart() 
   }
 
   return {

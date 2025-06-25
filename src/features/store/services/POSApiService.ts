@@ -4,6 +4,32 @@ import { Service } from '../../services/types'
 import { EventPrimitives } from '../../events/types'
 import { Bundle } from '../types'
 
+interface CartItem {
+  itemId: string
+  itemType: 'product' | 'service' | 'event' | 'bundle'
+  quantity: number
+  notes?: string
+  reservationId?: string
+}
+
+interface CartItemUpdate {
+  itemType: 'product' | 'service' | 'event' | 'bundle'
+  quantity?: number
+  newPrice?: {
+    amount: number
+    currency: string
+  }
+}
+
+interface POSInitializeResponse {
+  data: {
+    cart: any
+    hasActiveCart: boolean
+  }
+  message: string
+  success: boolean
+}
+
 export const POSApiService = {
   getProducts: async (filters?: {
     categoryIds?: string[]
@@ -204,6 +230,74 @@ export const POSApiService = {
     return response.data
   },
 
+  getServiceById: async (serviceId: string): Promise<Service> => {
+    const response = await api.get(`/services/${serviceId}`)
+    if (response.status !== 200) {
+      throw new Error('Error obteniendo servicio')
+    }
+    return response.data
+  },
+
+  getEventById: async (eventId: string): Promise<EventPrimitives> => {
+    const response = await api.get(`/events/${eventId}`)
+    if (response.status !== 200) {
+      throw new Error('Error obteniendo evento')
+    }
+    return response.data
+  },
+
+  getItemNameById: async (itemId: string, itemType: 'product' | 'service' | 'event' | 'bundle'): Promise<string> => {
+    try {
+      switch (itemType) {
+        case 'product': {
+          const product = await api.get(`/products/item/${itemId}`)
+          if (product.status !== 200) throw new Error('Error obteniendo producto')
+          return product.data.name
+        }
+        case 'service': {
+          const service = await api.get(`/services/${itemId}`)
+          if (service.status !== 200) throw new Error('Error obteniendo servicio')
+          return service.data.name
+        }
+        case 'event': {
+          const event = await api.get(`/events/${itemId}`)
+          if (event.status !== 200) throw new Error('Error obteniendo evento')
+          return event.data.name
+        }
+        case 'bundle': {
+          const bundle = await api.get(`/bundles/${itemId}`)
+          if (bundle.status !== 200) throw new Error('Error obteniendo paquete')
+          return bundle.data.name
+        }
+        default:
+          return 'Item desconocido'
+      }
+    } catch (error) {
+      console.error(`Error obteniendo nombre para ${itemType} ${itemId}:`, error)
+      return 'Error al cargar nombre'
+    }
+  },
+
+  getMultipleItemNames: async (items: Array<{ itemId: string; itemType: 'product' | 'service' | 'event' | 'bundle' }>): Promise<Record<string, string>> => {
+    const namePromises = items.map(async (item) => {
+      const name = await POSApiService.getItemNameById(item.itemId, item.itemType)
+      return { id: item.itemId, name }
+    })
+    
+    const results = await Promise.allSettled(namePromises)
+    const nameMap: Record<string, string> = {}
+    
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        nameMap[result.value.id] = result.value.name
+      } else {
+        nameMap[items[index].itemId] = 'Error al cargar'
+      }
+    })
+    
+    return nameMap
+  },
+
   searchAll: async (query: string): Promise<{
     products: Product[]
     services: Service[]
@@ -233,5 +327,63 @@ export const POSApiService = {
         bundles: bundles.status === 'fulfilled' ? (bundles.value.data.bundles || bundles.value.data || []) : []
       }
     }
+  },
+
+  posInitialize: async (): Promise<POSInitializeResponse> => {
+    const response = await api.get('/pos/initialize')
+    if (response.status !== 200) {
+      throw new Error('Error inicializando POS')
+    }
+    return response.data
+  },
+
+  getCart: async () => {
+    const response = await api.get('/cart')
+    if (response.status !== 200) {
+      throw new Error('Error obteniendo carrito')
+    }
+    return response.data
+  },
+
+  addToCart: async (item: CartItem) => {
+    const response = await api.post('/cart/items', item)
+    if (response.status !== 201 && response.status !== 200) {
+      throw new Error('Error agregando item al carrito')
+    }
+    return response.data
+  },
+
+  updateCartQuantity: async (itemId: string, update: CartItemUpdate) => {
+    const response = await api.put(`/cart/items/${itemId}/quantity`, update)
+    if (response.status !== 200) {
+      throw new Error('Error actualizando cantidad')
+    }
+    return response.data
+  },
+
+  updateCartPrice: async (itemId: string, update: CartItemUpdate) => {
+    const response = await api.put(`/cart/items/${itemId}/price`, update)
+    if (response.status !== 200) {
+      throw new Error('Error actualizando precio')
+    }
+    return response.data
+  },
+
+  removeFromCart: async (itemId: string, itemType: string) => {
+    const response = await api.delete(`/cart/items/${itemId}`, {
+      data: { itemType }
+    })
+    if (response.status !== 200 && response.status !== 204) {
+      throw new Error('Error removiendo item del carrito')
+    }
+    return response.data
+  },
+
+  clearCart: async () => {
+    const response = await api.delete('/cart')
+    if (response.status !== 200 && response.status !== 204) {
+      throw new Error('Error limpiando carrito')
+    }
+    return response.data
   }
 }

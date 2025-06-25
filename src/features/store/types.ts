@@ -4,6 +4,7 @@ import { EventPrimitives } from '../events/types'
 import { ProductStatus as GlobalProductStatus } from '../../types/global'
 
 export interface Bundle {
+  id?: string
   sku: string
   name: string
   description: string
@@ -155,11 +156,13 @@ export const eventToPOSItem = (event: EventPrimitives): Omit<POSItem, 'quantity'
 })
 
 // Utilidad para convertir paquetes a POSItem
-export const bundleToPOSItem = (bundle: Bundle): Omit<POSItem, 'quantity'> => ({
-  id: `bundle-${bundle.sku}-${bundle.createdAt}`, // ID único combinando SKU y fecha
-  type: 'PAQUETES',
-  name: bundle.name,
-  price: bundle.price,
-  image: bundle.files?.[0]?.url,
-  originalData: bundle
-})
+export const bundleToPOSItem = (bundle: Bundle): Omit<POSItem, 'quantity'> => {
+  return {
+    id: bundle.id!,
+    type: 'PAQUETES',
+    name: bundle.name,
+    price: bundle.price,
+    image: bundle.files?.[0]?.url,
+    originalData: bundle
+  }
+}

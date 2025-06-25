@@ -233,7 +233,6 @@ export function usePOSFilters({ products, services, events, bundles }: UsePOSFil
 
       // Filtrar por estado
       if (filters.status) {
-        console.log('Filtrando por status:', filters.status)
         const beforeCount = allItems.length
         
         allItems = allItems.filter(item => {
@@ -263,12 +262,9 @@ export function usePOSFilters({ products, services, events, bundles }: UsePOSFil
           }
           
           const matches = itemStatus === expectedStatus
-          console.log(`${item.type} ${item.name}: status=${itemStatus}, expectedStatus=${expectedStatus}, matches=${matches}`)
           
           return matches
         })
-        
-        console.log(`Items después del filtro de status: ${allItems.length} (antes: ${beforeCount})`)
       }
 
       // Filtrar eventos por activeOnly

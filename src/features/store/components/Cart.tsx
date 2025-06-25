@@ -13,6 +13,7 @@ interface CartProps {
   onRemoveItem: (itemId: string) => void
   onUpdateQuantity: (itemId: string, quantity: number) => void
   onClientSelect: (clientId: string) => void
+  onClearCart: () => void
 }
 
 interface CartItemCardProps {
@@ -37,8 +38,25 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
         return 'bg-green-500'
       case 'EVENTOS':
         return 'bg-purple-500'
+      case 'PAQUETES':
+        return 'bg-orange-500'
       default:
         return 'bg-gray-500'
+    }
+  }
+  
+  const getTypeIcon = (type: typeof item.type) => {
+    switch (type) {
+      case 'PRODUCTOS':
+        return '📦'
+      case 'SERVICIOS':
+        return '🔧'
+      case 'EVENTOS':
+        return '🎪'
+      case 'PAQUETES':
+        return '📋'
+      default:
+        return '❓'
     }
   }
 
@@ -57,9 +75,7 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/80">
             <div className="text-xl text-muted-foreground/50">
-              {item.type === 'PRODUCTOS' && '📦'}
-              {item.type === 'SERVICIOS' && '🔧'}
-              {item.type === 'EVENTOS' && '🎪'}
+              {getTypeIcon(item.type)}
             </div>
           </div>
         )}
@@ -69,8 +85,12 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
           <Badge 
             variant="secondary" 
             className={`${getTypeColor(item.type)} text-white text-xs px-1 py-0.5 scale-75`}
+            title={item.type}
           >
-            {item.type.substring(0, 3)}
+            {item.type === 'PRODUCTOS' && 'PRO'}
+            {item.type === 'SERVICIOS' && 'SER'}
+            {item.type === 'EVENTOS' && 'EVE'}
+            {item.type === 'PAQUETES' && 'PAQ'}
           </Badge>
         </div>
       </div>
@@ -79,7 +99,13 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <h4 className="font-medium text-sm line-clamp-2 leading-tight">
-            {item.name}
+            {item.name === 'Cargando...' ? (
+              <span className="text-muted-foreground animate-pulse">
+                Cargando nombre...
+              </span>
+            ) : (
+              item.name
+            )}
           </h4>
           <Button
             variant="ghost"
@@ -94,7 +120,11 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
         <div className="mt-2 flex items-center justify-between">
           {/* Precio unitario */}
           <div className="text-xs text-muted-foreground">
-            {formatPrice(item.price)} c/u
+            {item.name === 'Cargando...' ? (
+              <span className="animate-pulse">--- c/u</span>
+            ) : (
+              `${formatPrice(item.price)} c/u`
+            )}
           </div>
           
           {/* Controles de cantidad */}
@@ -140,7 +170,8 @@ export function Cart({
   onToggle, 
   onRemoveItem, 
   onUpdateQuantity, 
-  onClientSelect 
+  onClientSelect,
+  onClearCart
 }: CartProps) {
   const formatPrice = (price: typeof cart.total) => {
     return new Intl.NumberFormat('es-MX', {
@@ -272,7 +303,7 @@ export function Cart({
                 <Button 
                   variant="outline" 
                   className="w-full h-10"
-                  onClick={() => {/* Limpiar carrito */}}
+                  onClick={onClearCart}
                 >
                   Limpiar Carrito
                 </Button>

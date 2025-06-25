@@ -21,6 +21,7 @@ export const EventApiService = {
     if (response.status !== 201) {
       throw new Error('Error creating event')
     }
+    return response.data
   },
 
   bookGroupEvent: async (eventId: string, clientIds: string[], date: string) => {
@@ -37,7 +38,8 @@ export const EventApiService = {
     if (response.status !== 201) {
       throw new Error('Error booking event')
     }
-
+    
+    return response.data
   },
 
   cancelBooking: async (bookingId: string) => {

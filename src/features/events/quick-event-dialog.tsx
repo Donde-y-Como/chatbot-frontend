@@ -37,15 +37,22 @@ import { useEventMutations } from './hooks/useEventMutations'
 import { getDefaultProductInfo } from '@/types'
 import { toast } from 'sonner'
 import * as React from 'react'
+import { EventApiService } from './EventApiService'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: (bookingId?: string) => void
+  initialClientId?: string
+  onClientChange?: (clientId: string) => void
 }
 
 export function QuickEventDialog({
   open,
   onOpenChange,
+  onSuccess,
+  initialClientId,
+  onClientChange,
 }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { createEvent } = useEventMutations()
@@ -79,7 +86,7 @@ export function QuickEventDialog({
   }, [open, reset, defaultValues])
 
   // Handler for form submission success
-  const handleSuccess = useCallback(() => {
+  const handleSuccess = useCallback(async (eventId?: string) => {
     reset()
     handleOpenChange(false)
     setIsSubmitting(false)
@@ -122,8 +129,27 @@ export function QuickEventDialog({
         },
       }
 
-      createEvent(completeEventData)
-      handleSuccess()
+      const eventResult = await EventApiService.createEvent(completeEventData)
+      
+      let resultId = eventResult.id
+      if (initialClientId && eventResult) {
+        const bookingData = {
+          eventId: eventResult.id,
+          clientId: initialClientId,
+          date: values.startAt,
+          participants: 1,
+          notes: 'Reserva desde POS',
+          status: 'pendiente',
+          paymentStatus: 'pendiente'
+        }
+        
+        const bookingResult = await EventApiService.bookEvent(bookingData)
+        resultId = bookingResult?.id || eventResult.id
+      }
+      
+      toast.success('Evento creado exitosamente')
+      await handleSuccess()
+      onSuccess?.(resultId)
     } catch (error) {
       console.error('Error creating quick event:', error)
       toast.error('Error al crear el evento')

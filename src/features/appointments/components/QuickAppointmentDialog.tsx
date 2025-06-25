@@ -43,19 +43,29 @@ import { cn } from '@/lib/utils'
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSuccess?: () => void
+  onSuccess?: (appointmentId?: string) => void
+  initialClientId?: string
+  onClientChange?: (clientId: string) => void
+  initialServiceId?: string 
 }
 
 export function QuickAppointmentDialog({
   open,
   onOpenChange,
   onSuccess,
+  initialClientId,
+  onClientChange,
+  initialServiceId,
 }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { data: services = [], isLoading: servicesLoading } = useGetServices()
 
   // Default values for quick appointment
-  const defaultValues = useMemo(() => getDefaultQuickAppointment(), [])
+  const defaultValues = useMemo(() => ({
+    ...getDefaultQuickAppointment(),
+    clientId: initialClientId || '',
+    serviceIds: initialServiceId ? [initialServiceId] : [] 
+  }), [initialClientId, initialServiceId])
 
   const form = useForm<QuickAppointmentFormValues>({
     resolver: zodResolver(quickAppointmentSchema),
@@ -73,20 +83,21 @@ export function QuickAppointmentDialog({
     onOpenChange(state)
   }, [reset, onOpenChange])
 
-  // Reset form when modal is opened
   React.useEffect(() => {
     if (open) {
-      reset(defaultValues)
+      reset({
+        ...defaultValues,
+        clientId: initialClientId || '',
+        serviceIds: initialServiceId ? [initialServiceId] : []
+      })
     }
-  }, [open, reset, defaultValues])
+  }, [open, reset, defaultValues, initialClientId, initialServiceId])
 
-  // Handler for form submission success
-  const handleSuccess = useCallback(() => {
+  const handleSuccess = useCallback(async () => {
     reset()
     handleOpenChange(false)
     setIsSubmitting(false)
-    onSuccess?.()
-  }, [reset, handleOpenChange, onSuccess])
+  }, [reset, handleOpenChange])
 
   const onSubmit = async (values: QuickAppointmentFormValues) => {
     setIsSubmitting(true)
@@ -109,9 +120,15 @@ export function QuickAppointmentDialog({
         deposit: null,
       }
 
-      await appointmentService.makeAppointment(appointmentData)
+      const result = await appointmentService.makeAppointment(appointmentData)
       toast.success('Cita creada exitosamente')
-      handleSuccess()
+
+      if (onClientChange && values.clientId !== initialClientId) {
+        onClientChange(values.clientId)
+      }
+      
+      await handleSuccess()
+      onSuccess?.(result.id)
     } catch (error) {
       console.error('Error creating quick appointment:', error)
       toast.error('Error al crear la cita')
@@ -188,7 +205,13 @@ export function QuickAppointmentDialog({
                         <FormControl>
                           <CreateOrSelectClient
                             value={field.value}
-                            onChange={field.onChange}
+                            onChange={(clientId) => {
+                              field.onChange(clientId)
+                              // Notificar cambio de cliente
+                              if (onClientChange) {
+                                onClientChange(clientId)
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
