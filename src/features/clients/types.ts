@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Media, PlatformName } from '@/features/chats/ChatTypes.ts'
 
 export type PlatformIdentity = {
     platformId: string;
@@ -9,18 +10,6 @@ export type PlatformIdentity = {
 export type Annex = {
     name: string;
     media: Media;
-}
-
-export enum PlatformName {
-    Whatsapp = "whatsapp",
-    Facebook = "facebook",
-    Instagram = "instagram",
-    WhatsappWeb = "whatsappWeb",
-}
-
-export type Media = {
-    url: string
-    type: string
 }
 
 export const platformIdentitySchema = z.object({

@@ -1,6 +1,6 @@
 import { api } from '@/api/axiosInstance.ts'
 import { UserData } from '@/features/auth/types.ts'
-import { PlatformName } from '@/features/clients/types.ts'
+import { PlatformName } from '@/features/chats/ChatTypes.ts'
 import {
   baileysApi,
   CreateSessionResponse,

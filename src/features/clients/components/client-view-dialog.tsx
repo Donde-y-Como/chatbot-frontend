@@ -6,19 +6,19 @@ import {
 } from '@tabler/icons-react'
 import { es } from 'date-fns/locale'
 import {
+  AlertCircle,
   Calendar,
-  Mail,
-  MapPin,
-  Paperclip,
-  Tag,
+  CalendarDays,
   Clock,
   ExternalLink,
   FileType,
-  CalendarDays,
-  Users,
   Loader2,
-  AlertCircle,
+  Mail,
+  MapPin,
   MapPinned,
+  Paperclip,
+  Tag,
+  Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils.ts'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -42,9 +42,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PlatformName } from '@/features/chats/ChatTypes'
 import { useClientAppointments } from '../hooks/useClientAppointments'
 import { useClientEvents } from '../hooks/useClientEvents'
-import { ClientPrimitives, PlatformName } from '../types'
+import { ClientPrimitives } from '../types'
 import { PlatformChatButton } from './platform-chat-button'
 
 interface ClientViewDialogProps {

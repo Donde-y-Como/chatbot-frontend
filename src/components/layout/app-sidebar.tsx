@@ -81,6 +81,11 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
             url: '/store',
             icon: Store,
           },
+          {
+            title: 'Paquetes',
+            url: '/paquetes',
+            icon: IconPackages
+          }
         ],
       },
     ],

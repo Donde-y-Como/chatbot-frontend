@@ -17,7 +17,7 @@ export type ProductPhoto = {
   alt?: string;
 }
 
-const priceObjectSchema = z.object({
+export const priceObjectSchema = z.object({
   amount: z.number().min(0, { message: "El monto debe ser mayor a 0" }),
   currency: z.string().default("MXN"),
 });

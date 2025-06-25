@@ -19,7 +19,8 @@ import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { TagApiService } from "../../TagApiService";
-import { CreateClientForm, PlatformIdentity, PlatformName, Tag } from "../../types";
+import { CreateClientForm, PlatformIdentity, Tag } from "../../types";
+import { PlatformName } from "@/features/chats/ChatTypes";
 
 const createTagSchema = z.object({
   name: z.string().min(1, { message: "El nombre de la etiqueta es obligatorio" }),

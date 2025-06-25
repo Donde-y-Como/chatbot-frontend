@@ -54,6 +54,8 @@ export type Media = {
   type: string
   url: string
   caption?: string
+  filename?: string;
+  mimetype?: string;
 }
 
 export type PlatformIdentity = {

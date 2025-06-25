@@ -8,7 +8,7 @@ import {
   useGetUser,
   UserQueryKey,
 } from '@/components/layout/hooks/useGetUser.ts'
-import { PlatformName } from '@/features/clients/types.ts'
+import { PlatformName } from '@/features/chats/ChatTypes'
 import { baileysService } from '@/features/settings/whatsappWeb/baileysService.ts'
 import { SessionData } from '@/features/settings/whatsappWeb/types.ts'
 import { WhatsappWebSession } from '@/features/settings/whatsappWeb/whatsapp-web-session.tsx'

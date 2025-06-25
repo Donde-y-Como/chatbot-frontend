@@ -1,9 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { PlatformName } from '../types';
 import { chatService } from '@/features/chats/ChatService';
-import { Chat } from '@/features/chats/ChatTypes';
+import { Chat, PlatformName  } from '@/features/chats/ChatTypes';
 import { 
   Dialog, 
   DialogContent, 

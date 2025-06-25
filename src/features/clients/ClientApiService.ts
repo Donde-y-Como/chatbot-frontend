@@ -1,4 +1,4 @@
-import { api } from "../../api/axiosInstance"
+import { api } from '@/api/axiosInstance.ts'
 import { ClientPrimitives } from "./types"
 
 export const ClientApiService = {
