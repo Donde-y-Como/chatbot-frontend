@@ -71,3 +71,62 @@ export function formatWhatsAppPhone(platformId: string): string {
   }
   return phoneNumber
 }
+
+export const getFileType = (mimetype: string): string => {
+  if (mimetype.startsWith('image/')) return 'image'
+  if (mimetype.startsWith('video/')) return 'video'
+  if (mimetype.startsWith('audio/')) return 'audio'
+  return 'document'
+}
+
+export const isValidFileType = (mimetype: string): boolean => {
+  const allowedTypes = [
+    // Images
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml',
+    // Videos
+    'video/mp4',
+    'video/avi',
+    'video/mov',
+    'video/wmv',
+    'video/flv',
+    'video/webm',
+    // Audio
+    'audio/mp3',
+    'audio/wav',
+    'audio/ogg',
+    'audio/aac',
+    'audio/flac',
+    // Documents
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain',
+    'text/csv',
+    'application/rtf',
+    'application/xml',
+    'text/xml',
+  ]
+
+  const dangerousTypes = [
+    'application/x-executable',
+    'application/x-msdownload',
+    'application/x-dosexec',
+    'application/zip',
+    'application/x-zip-compressed',
+    'application/x-rar-compressed',
+    'application/x-7z-compressed',
+    'application/x-tar',
+    'application/gzip',
+  ]
+
+  return allowedTypes.includes(mimetype) && !dangerousTypes.includes(mimetype)
+}

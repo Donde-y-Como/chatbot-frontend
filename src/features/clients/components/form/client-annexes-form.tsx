@@ -1,71 +1,63 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { File, FileText, Image, Music, Upload, Video, X } from 'lucide-react';
+import { File, Upload, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { formatFileSize } from '@/features/bundles/utils/fileUpload.ts';
-import { Media } from '@/features/chats/ChatTypes';
-import { CreateBundleForm, EditBundleForm } from '../../types';
+import { Annex, CreateClientForm } from '../../types';
 import { getFileType, isValidFileType } from '@/lib/utils.ts'
+import { getFileIcon } from '@/features/bundles/components/form/bundle-files-form.tsx'
 
-
-// File type utilities
-
-export const getFileIcon = (type: string) => {
-  switch (type) {
-    case 'image':
-      return <Image className='h-5 w-5 text-blue-500' />
-    case 'video':
-      return <Video className='h-5 w-5 text-purple-500' />
-    case 'audio':
-      return <Music className='h-5 w-5 text-green-500' />
-    case 'document':
-      return <FileText className='h-5 w-5 text-orange-500' />
-    default:
-      return <File className='h-5 w-5 text-gray-500' />
-  }
-}
 
 interface FileWithPreview extends File {
   preview?: string
 }
 
-interface PendingFile {
+interface PendingAnnex {
   file: FileWithPreview
+  name: string
   type: string
   error?: string
 }
 
-export function BundleFilesForm() {
-  const { control, watch, setValue } = useFormContext<
-    CreateBundleForm | EditBundleForm
-  >()
-  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
+export function ClientAnnexesForm() {
+  const { control, watch, setValue } = useFormContext<CreateClientForm>()
+  const [pendingAnnexes, setPendingAnnexes] = useState<PendingAnnex[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
+  const [newAnnexName, setNewAnnexName] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const currentFiles = watch('files') || []
+  const currentAnnexes = watch('annexes') || []
 
-  // Calculate total size including pending files
+  // Calculate total size including pending annexes
   const getTotalSize = useCallback(() => {
-    return pendingFiles.reduce((total, pf) => total + pf.file.size, 0)
-  }, [pendingFiles])
+    return pendingAnnexes.reduce((total, pa) => total + pa.file.size, 0)
+  }, [pendingAnnexes])
 
   // Handle file selection
   const handleFileSelect = useCallback(
     (files: FileList | null) => {
-      if (!files) return
+      if (!files || !newAnnexName.trim()) {
+        if (!newAnnexName.trim()) {
+          alert(
+            'Por favor ingresa un nombre para el anexo antes de seleccionar archivos'
+          )
+        }
+        return
+      }
 
-      const newPendingFiles: PendingFile[] = []
+      const newPendingAnnexes: PendingAnnex[] = []
       let currentTotalSize = getTotalSize()
 
       Array.from(files).forEach((file) => {
         // Check file type
         if (!isValidFileType(file.type)) {
-          newPendingFiles.push({
+          newPendingAnnexes.push({
             file,
+            name: newAnnexName,
             type: getFileType(file.type),
             error: `Tipo de archivo no permitido: ${file.type}`,
           })
@@ -75,8 +67,9 @@ export function BundleFilesForm() {
         // Check size limit
         if (currentTotalSize + file.size > 100 * 1024 * 1024) {
           // 100MB
-          newPendingFiles.push({
+          newPendingAnnexes.push({
             file,
+            name: newAnnexName,
             type: getFileType(file.type),
             error: 'Excede el límite de 100MB total',
           })
@@ -91,43 +84,45 @@ export function BundleFilesForm() {
 
         const fileWithPreview = Object.assign(file, { preview })
 
-        newPendingFiles.push({
+        newPendingAnnexes.push({
           file: fileWithPreview,
+          name: newAnnexName,
           type: getFileType(file.type),
         })
 
         currentTotalSize += file.size
       })
 
-      setPendingFiles((prev) => [...prev, ...newPendingFiles])
+      setPendingAnnexes((prev) => [...prev, ...newPendingAnnexes])
+      setNewAnnexName('') // Clear name after adding
     },
-    [getTotalSize]
+    [getTotalSize, newAnnexName]
   )
 
-  // Remove pending file
-  const removePendingFile = useCallback((index: number) => {
-    setPendingFiles((prev) => {
-      const newFiles = [...prev]
-      const removedFile = newFiles[index]
+  // Remove pending annex
+  const removePendingAnnex = useCallback((index: number) => {
+    setPendingAnnexes((prev) => {
+      const newAnnexes = [...prev]
+      const removedAnnex = newAnnexes[index]
 
       // Revoke object URL if it exists
-      if (removedFile.file.preview) {
-        URL.revokeObjectURL(removedFile.file.preview)
+      if (removedAnnex.file.preview) {
+        URL.revokeObjectURL(removedAnnex.file.preview)
       }
 
-      newFiles.splice(index, 1)
-      return newFiles
+      newAnnexes.splice(index, 1)
+      return newAnnexes
     })
   }, [])
 
-  // Remove existing file
-  const removeExistingFile = useCallback(
+  // Remove existing annex
+  const removeExistingAnnex = useCallback(
     (index: number) => {
-      const updatedFiles = [...currentFiles]
-      updatedFiles.splice(index, 1)
-      setValue('files', updatedFiles)
+      const updatedAnnexes = [...currentAnnexes]
+      updatedAnnexes.splice(index, 1)
+      setValue('annexes', updatedAnnexes)
     },
-    [currentFiles, setValue]
+    [currentAnnexes, setValue]
   )
 
   // Drag and drop handlers
@@ -159,36 +154,37 @@ export function BundleFilesForm() {
     [handleFileSelect]
   )
 
-  // Get pending files for form submission
-  const getPendingFilesForUpload = useCallback(() => {
-    return pendingFiles.filter((pf) => !pf.error).map((pf) => pf.file)
-  }, [pendingFiles])
+  // Get pending annexes for form submission
+  const getPendingAnnexesForUpload = useCallback(() => {
+    return pendingAnnexes.filter((pa) => !pa.error)
+  }, [pendingAnnexes])
 
-  // Expose function to parent component
+  // Expose function to parent component (like bundles)
   React.useEffect(() => {
     // Store function in a way parent can access it
-    ;(window as any)._getBundlePendingFiles = getPendingFilesForUpload
-    ;(window as any)._clearBundlePendingFiles = () => {
-      pendingFiles.forEach((pf) => {
-        if (pf.file.preview) {
-          URL.revokeObjectURL(pf.file.preview)
+    ;(window as any)._getClientPendingAnnexes = getPendingAnnexesForUpload
+    ;(window as any)._clearClientPendingAnnexes = () => {
+      pendingAnnexes.forEach((pa) => {
+        if (pa.file.preview) {
+          URL.revokeObjectURL(pa.file.preview)
         }
       })
-      setPendingFiles([])
+      setPendingAnnexes([])
+      setNewAnnexName('')
     }
 
     return () => {
-      delete (window as any)._getBundlePendingFiles
-      delete (window as any)._clearBundlePendingFiles
+      delete (window as any)._getClientPendingAnnexes
+      delete (window as any)._clearClientPendingAnnexes
     }
-  }, [getPendingFilesForUpload, pendingFiles])
+  }, [getPendingAnnexesForUpload, pendingAnnexes])
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className='flex items-center gap-2'>
           <Upload className='h-5 w-5' />
-          Archivos del Paquete
+          Documentos Anexos
           <span className='text-sm font-normal text-muted-foreground'>
             (Máximo 100MB total)
           </span>
@@ -197,16 +193,29 @@ export function BundleFilesForm() {
       <CardContent className='space-y-4'>
         <FormField
           control={control}
-          name='files'
+          name='annexes'
           render={() => (
             <FormItem>
+              {/* Name Input */}
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>
+                  Nombre del documento
+                </label>
+                <Input
+                  placeholder='Ej: Identificación, Contrato, etc.'
+                  value={newAnnexName}
+                  onChange={(e) => setNewAnnexName(e.target.value)}
+                  className='w-full'
+                />
+              </div>
+
               {/* Upload Area */}
               <div
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                   isDragOver
                     ? 'border-primary bg-primary/5'
                     : 'border-muted-foreground/25 hover:border-muted-foreground/50'
-                }`}
+                } ${!newAnnexName.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -222,6 +231,7 @@ export function BundleFilesForm() {
                   type='button'
                   variant='outline'
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={!newAnnexName.trim()}
                 >
                   Seleccionar Archivos
                 </Button>
@@ -233,6 +243,12 @@ export function BundleFilesForm() {
                   onChange={handleInputChange}
                   accept='image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.xml'
                 />
+                {!newAnnexName.trim() && (
+                  <p className='text-xs text-destructive mt-2'>
+                    Ingresa un nombre para el documento antes de seleccionar
+                    archivos
+                  </p>
+                )}
               </div>
 
               {/* Size indicator */}
@@ -241,30 +257,30 @@ export function BundleFilesForm() {
                 <span>Límite: 100MB</span>
               </div>
 
-              {/* Existing Files */}
-              {currentFiles.length > 0 && (
+              {/* Existing Annexes */}
+              {currentAnnexes.length > 0 && (
                 <div className='space-y-2'>
-                  <h4 className='font-medium text-sm'>Archivos Actuales</h4>
-                  {currentFiles.map((file, index) => (
-                    <FilePreview
+                  <h4 className='font-medium text-sm'>Documentos Actuales</h4>
+                  {currentAnnexes.map((annex, index) => (
+                    <AnnexPreview
                       key={`existing-${index}`}
-                      media={file}
-                      onRemove={() => removeExistingFile(index)}
+                      annex={annex}
+                      onRemove={() => removeExistingAnnex(index)}
                       isExisting
                     />
                   ))}
                 </div>
               )}
 
-              {/* Pending Files */}
-              {pendingFiles.length > 0 && (
+              {/* Pending Annexes */}
+              {pendingAnnexes.length > 0 && (
                 <div className='space-y-2'>
-                  <h4 className='font-medium text-sm'>Archivos Nuevos</h4>
-                  {pendingFiles.map((pendingFile, index) => (
-                    <PendingFilePreview
+                  <h4 className='font-medium text-sm'>Documentos Nuevos</h4>
+                  {pendingAnnexes.map((pendingAnnex, index) => (
+                    <PendingAnnexPreview
                       key={`pending-${index}`}
-                      pendingFile={pendingFile}
-                      onRemove={() => removePendingFile(index)}
+                      pendingAnnex={pendingAnnex}
+                      onRemove={() => removePendingAnnex(index)}
                     />
                   ))}
                 </div>
@@ -279,26 +295,26 @@ export function BundleFilesForm() {
   )
 }
 
-// Component for existing file preview
-function FilePreview({
-  media,
+// Component for existing annex preview
+function AnnexPreview({
+  annex,
   onRemove,
   isExisting,
 }: {
-  media: Media
+  annex: Annex
   onRemove: () => void
   isExisting?: boolean
 }) {
   return (
     <div className='flex items-center justify-between p-3 border rounded-lg'>
       <div className='flex items-center gap-3'>
-        {getFileIcon(media.type)}
+        {getFileIcon(annex.media.type)}
         <div>
-          <p className='font-medium text-sm'>{media.filename || 'Archivo'}</p>
+          <p className='font-medium text-sm'>{annex.name}</p>
           <div className='flex items-center gap-2'>
-            {media.mimetype && (
+            {annex.media.mimetype && (
               <span className='text-xs text-muted-foreground'>
-                {media.mimetype}
+                {annex.media.mimetype}
               </span>
             )}
           </div>
@@ -325,15 +341,15 @@ function FilePreview({
   )
 }
 
-// Component for pending file preview
-function PendingFilePreview({
-  pendingFile,
+// Component for pending annex preview
+function PendingAnnexPreview({
+  pendingAnnex,
   onRemove,
 }: {
-  pendingFile: PendingFile
+  pendingAnnex: PendingAnnex
   onRemove: () => void
 }) {
-  const { file, type, error } = pendingFile
+  const { file, name, type, error } = pendingAnnex
 
   return (
     <div
@@ -354,7 +370,8 @@ function PendingFilePreview({
         )}
 
         <div>
-          <p className='font-medium text-sm'>{file.name}</p>
+          <p className='font-medium text-sm'>{name}</p>
+          <p className='text-xs text-muted-foreground'>{file.name}</p>
           <div className='flex items-center gap-2'>
             <span className='text-xs text-muted-foreground'>
               {formatFileSize(file.size)}

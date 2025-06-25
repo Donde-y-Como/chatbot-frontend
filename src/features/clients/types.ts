@@ -70,5 +70,7 @@ export const createTagSchema = z.object({
     name: z.string().min(1, { message: "El nombre es obligatorio" }),
 })
 
+export type CreateTagForm = z.infer<typeof createTagSchema>
+
 // Exporting ClientPrimitives as Client for easier usage across the application
 export type Client = ClientPrimitives;

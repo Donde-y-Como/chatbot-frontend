@@ -99,7 +99,7 @@ export function BundleActionDialog() {
         files: [],
       });
     }
-  }, [isDialogOpen, isEdit, selectedBundle?.id, form]);
+  }, [isDialogOpen, isEdit, selectedBundle?.id, form, selectedBundle]);
 
   const handleClose = useCallback(() => {
     setIsDialogOpen(false);
@@ -189,7 +189,7 @@ export function BundleActionDialog() {
       setIsUploadingFiles(false);
       setUploadError('Error al procesar la solicitud');
     }
-  }, [isEdit, selectedBundle?.id, createBundle, updateBundle, handleClose]);
+  }, [isEdit, selectedBundle, handleClose, updateBundle, createBundle]);
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={(open) => {
