@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { Package, AlertTriangle, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomTable } from '@/components/tables/custom-table';
 import { Main } from '@/components/layout/main';
@@ -10,18 +10,15 @@ import { useGetProducts } from './hooks/useGetProducts';
 import { useGetUnits, useGetCategories, useGetProductTags } from './hooks/useGetAuxiliaryData';
 import { ProductProvider } from './context/products-context';
 import { ProductPrimaryButtons } from './components/product-primary-buttons';
-import { ProductFiltersComponent } from './components/product-filters';
 import { ProductDialogs } from './components/product-dialogs';
 import { createProductColumns } from './components/products-columns';
 import { calculateProductStats } from './utils/productUtils';
-import { Product, ProductFilters } from './types';
-import { useState } from 'react';
-import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx'
+import { Product } from './types';
+import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx';
+import { DataTableFacetedFilter, generateStatusOptions, generateCategoryOptions, generateTagOptions, generateUnitOptions } from './components/products-table-filters';
 
 function ProductsContent() {
-  const [filters, setFilters] = useState<ProductFilters>({});
-  
-  const { data: productsData, isLoading: isLoadingProducts } = useGetProducts(filters);
+  const { data: productsData, isLoading: isLoadingProducts } = useGetProducts();
   const { data: unitsData, isLoading: isLoadingUnits } = useGetUnits();
   const { data: categoriesData, isLoading: isLoadingCategories } = useGetCategories();
   const { data: tagsData, isLoading: isLoadingTags } = useGetProductTags();
@@ -33,6 +30,12 @@ function ProductsContent() {
     if (!unitsData || !categoriesData || !tagsData) return [];
     return createProductColumns(unitsData, categoriesData, tagsData);
   }, [unitsData, categoriesData, tagsData]);
+
+  // Generate filter options
+  const statusOptions = useMemo(() => generateStatusOptions(), []);
+  const categoryOptions = useMemo(() => generateCategoryOptions(categoriesData || []), [categoriesData]);
+  const tagOptions = useMemo(() => generateTagOptions(tagsData || []), [tagsData]);
+  const unitOptions = useMemo(() => generateUnitOptions(unitsData || []), [unitsData]);
 
   // Obtener productos de la respuesta
   const products = productsData ? (Array.isArray(productsData) ? productsData : productsData.products || []) : [];
@@ -104,16 +107,8 @@ function ProductsContent() {
           </Card>
         </div>
 
-        {/* Filtros */}
-        <div className="mb-6">
-          <ProductFiltersComponent 
-            onFiltersChange={setFilters}
-            initialFilters={filters}
-          />
-        </div>
-
         {/* Tabla de productos */}
-        <div className="w-full">
+        <div className="-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0">
           {products.length > 0 && unitsData && categoriesData && tagsData ? (
             <CustomTable<Product> 
               data={products} 
@@ -121,8 +116,29 @@ function ProductsContent() {
               toolbar={(table) => (
                 <DataTableToolbar
                   table={table}
-                  searchPlaceholder='Buscar por nombre, descripcion...'
-                ></DataTableToolbar>
+                  searchPlaceholder='Buscar por nombre, SKU o descripción...'
+                >
+                  <DataTableFacetedFilter
+                    column={table.getColumn('status')}
+                    title="Estado"
+                    options={statusOptions}
+                  />
+                  <DataTableFacetedFilter
+                    column={table.getColumn('categoryIds')}
+                    title="Categorías"
+                    options={categoryOptions}
+                  />
+                  <DataTableFacetedFilter
+                    column={table.getColumn('tagIds')}
+                    title="Etiquetas"
+                    options={tagOptions}
+                  />
+                  <DataTableFacetedFilter
+                    column={table.getColumn('unitId')}
+                    title="Unidades"
+                    options={unitOptions}
+                  />
+                </DataTableToolbar>
               )}
             />
           ) : (
@@ -131,9 +147,7 @@ function ProductsContent() {
                 <Package className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No hay productos</h3>
                 <p className="text-muted-foreground mb-6 max-w-md">
-                  {Object.keys(filters).length > 0
-                    ? 'No se encontraron productos que coincidan con los filtros aplicados.'
-                    : 'Comienza creando tu primer producto para gestionar tu inventario.'}
+                  Comienza creando tu primer producto para gestionar tu inventario.
                 </p>
                 <ProductPrimaryButtons />
               </CardContent>

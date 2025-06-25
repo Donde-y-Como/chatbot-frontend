@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { AlertTriangle, Package, TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -8,29 +8,32 @@ import { Main } from '@/components/layout/main'
 import { CustomTable } from '@/components/tables/custom-table'
 import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx'
 import { BundleDialogs } from './components/bundle-dialogs'
-import { BundleFiltersComponent } from './components/bundle-filters'
 import { BundlePrimaryButtons } from './components/bundle-primary-buttons'
 import { createBundleColumns } from './components/bundles-columns'
 import { BundleProvider } from './context/bundles-context'
 import { useGetBundles } from './hooks/useGetBundles'
-import { Bundle, BundleFilters } from './types'
+import { Bundle } from './types'
 import { calculateBundleStats } from './utils/bundleUtils'
+import { DataTableFacetedFilter, generateStatusOptions, generateTagOptions } from './components/bundles-table-filters'
+import { useGetProductTags } from '@/features/products/hooks/useGetAuxiliaryData'
 
 function BundlesContent() {
-  const [filters, setFilters] = useState<BundleFilters>({})
+  const { data: bundlesData, isLoading: isLoadingBundles } = useGetBundles()
+  const { data: tagsData, isLoading: isLoadingTags } = useGetProductTags()
 
-  const { data: bundlesData, isLoading: isLoadingBundles } =
-    useGetBundles(filters)
-
-  const isLoading = isLoadingBundles
+  const isLoading = isLoadingBundles || isLoadingTags
 
   // Crear columnas de la tabla usando useMemo
   const columns = useMemo(() => {
-    return createBundleColumns([])
-  }, [])
+    return createBundleColumns(tagsData || [])
+  }, [tagsData])
+
+  // Generate filter options
+  const statusOptions = useMemo(() => generateStatusOptions(), [])
+  const tagOptions = useMemo(() => generateTagOptions(tagsData || []), [tagsData])
 
   // Obtener bundles de la respuesta
-  const bundles = bundlesData
+  const bundles = bundlesData || []
 
   // Calcular estadísticas
   const stats = calculateBundleStats(bundles)
@@ -101,25 +104,28 @@ function BundlesContent() {
           </Card>
         </div>
 
-        {/* Filtros */}
-        <div className='mb-6'>
-          <BundleFiltersComponent
-            onFiltersChange={setFilters}
-            initialFilters={filters}
-          />
-        </div>
-
-        {/* Tabla de bundles */}
-        <div className='w-full'>
-          {bundles.length > 0 ? (
+        {/* Tabla de paquetes */}
+        <div className='-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0'>
+          {bundles.length > 0 && tagsData ? (
             <CustomTable<Bundle>
               data={bundles}
               columns={columns}
               toolbar={(table) => (
                 <DataTableToolbar
                   table={table}
-                  searchPlaceholder='Buscar por nombre, descripcion...'
-                ></DataTableToolbar>
+                  searchPlaceholder='Buscar paquetes por nombre, SKU o descripción...'
+                >
+                  <DataTableFacetedFilter
+                    column={table.getColumn('status')}
+                    title="Estado"
+                    options={statusOptions}
+                  />
+                  <DataTableFacetedFilter
+                    column={table.getColumn('tagIds')}
+                    title="Etiquetas"
+                    options={tagOptions}
+                  />
+                </DataTableToolbar>
               )}
             />
           ) : (
@@ -128,9 +134,7 @@ function BundlesContent() {
                 <Package className='h-12 w-12 text-muted-foreground mb-4' />
                 <h3 className='text-lg font-semibold mb-2'>No hay paquetes</h3>
                 <p className='text-muted-foreground mb-6 max-w-md'>
-                  {Object.keys(filters).length > 0
-                    ? 'No se encontraron paquetes que coincidan con los filtros aplicados.'
-                    : 'Comienza creando tu primer paquete para agrupar productos y servicios.'}
+                  Comienza creando tu primer paquete para agrupar productos y servicios.
                 </p>
                 <BundlePrimaryButtons />
               </CardContent>
