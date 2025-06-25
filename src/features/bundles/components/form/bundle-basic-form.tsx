@@ -1,5 +1,5 @@
 import { useFormContext } from 'react-hook-form';
-import { Calculator, Package, Tag } from 'lucide-react';
+import { Calculator, Package } from 'lucide-react';
 import {
   FormControl,
   FormField,
@@ -17,15 +17,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { ProductStatus } from '@/features/products/types';
 import { CreateBundleForm, EditBundleForm } from '../../types';
-import { useGetProductTags } from '@/features/products/hooks/useGetAuxiliaryData.ts'
+import { TagSelector } from '@/components/forms/tag-selector';
 
 export function BundleBasicForm() {
   const { control } = useFormContext<CreateBundleForm | EditBundleForm>();
-  const { data: tags = [] } = useGetProductTags();
 
   return (
     <div className="space-y-6">
@@ -199,65 +196,12 @@ export function BundleBasicForm() {
         </CardContent>
       </Card>
 
-      {/* Etiquetas */}
-      {tags.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5" />
-              Etiquetas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FormField
-              control={control}
-              name="tagIds"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Seleccionar etiquetas</FormLabel>
-                  <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
-                    <div className="space-y-2">
-                      {tags.map((tag) => (
-                        <div 
-                          key={tag.id} 
-                          className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
-                        >
-                          <Checkbox
-                            checked={field.value?.includes(tag.id) || false}
-                            onCheckedChange={(checked) => {
-                              const currentValue = field.value || [];
-                              if (checked) {
-                                field.onChange([...currentValue, tag.id]);
-                              } else {
-                                field.onChange(currentValue.filter((id) => id !== tag.id));
-                              }
-                            }}
-                          />
-                          <Badge 
-                            variant="outline"
-                            className="text-sm"
-                            style={{
-                              backgroundColor: tag.color ? `${tag.color}20` : undefined,
-                              borderColor: tag.color || undefined,
-                              color: tag.color || undefined,
-                            }}
-                          >
-                            {tag.name}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Clasifica tu paquete con etiquetas para mejor organización
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-      )}
+      {/* Tags Selector */}
+      <TagSelector 
+        title="Etiquetas del Paquete"
+        description="Seleccionar etiquetas para organizar tu paquete"
+        helperText="Las etiquetas te ayudan a organizar y filtrar tus paquetes. Puedes seleccionar múltiples etiquetas haciendo clic en ellas."
+      />
     </div>
   );
 }

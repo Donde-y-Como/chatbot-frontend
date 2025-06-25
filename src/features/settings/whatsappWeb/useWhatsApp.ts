@@ -8,11 +8,14 @@ export function useWhatsApp() {
     useEffect(() => {
         if (whatsappData?.instanceStatus === "ready") {
             setIsConnected(true);
+        } else {
+            setIsConnected(false);
         }
     }, [whatsappData])
 
     return {
         isConnected,
-        isLoading, whatsappData
+        isLoading, 
+        whatsappData
     }
 }

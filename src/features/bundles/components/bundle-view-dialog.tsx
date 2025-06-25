@@ -1,4 +1,16 @@
-import { Calculator, Calendar, Eye, Package, Wrench } from 'lucide-react'
+import {
+  Calculator,
+  Calendar,
+  Eye,
+  File,
+  FileText,
+  Image,
+  Music,
+  Package,
+  Tag,
+  Video,
+  Wrench,
+} from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,7 +27,24 @@ import { useGetServices } from '@/features/appointments/hooks/useGetServices'
 import { BundleItemResponse } from '@/features/bundles/types.ts'
 import { useGetProductTags } from '@/features/products/hooks/useGetAuxiliaryData'
 import { useGetProducts } from '@/features/products/hooks/useGetProducts'
+import { ProductTag } from '@/features/products/types.ts'
 import { useBundleContext } from '../context/bundles-context'
+
+// File type utilities
+const getFileIcon = (type: string) => {
+  switch (type) {
+    case 'image':
+      return <Image className='h-8 w-8 text-blue-500' />
+    case 'video':
+      return <Video className='h-8 w-8 text-purple-500' />
+    case 'audio':
+      return <Music className='h-8 w-8 text-green-500' />
+    case 'document':
+      return <FileText className='h-8 w-8 text-orange-500' />
+    default:
+      return <File className='h-8 w-8 text-gray-500' />
+  }
+}
 
 export function BundleViewDialog() {
   const {
@@ -67,10 +96,10 @@ export function BundleViewDialog() {
     }
   }
 
-  const getBundleTags = () => {
+  const getBundleTags = (): ProductTag[] => {
     return selectedBundle.tagIds
       .map((tagId) => tags.find((tag) => tag.id === tagId))
-      .filter(Boolean)
+      .filter((tag): tag is ProductTag => tag !== undefined)
   }
 
   const calculateTotalItemsCost = () => {
@@ -317,34 +346,104 @@ export function BundleViewDialog() {
             </CardContent>
           </Card>
 
-          {/*/!* Etiquetas *!/*/}
-          {/*{bundleTags.length > 0 && (*/}
-          {/*  <Card>*/}
-          {/*    <CardHeader>*/}
-          {/*      <CardTitle className="flex items-center gap-2">*/}
-          {/*        <Tag className="h-5 w-5" />*/}
-          {/*        Etiquetas ({bundleTags.length})*/}
-          {/*      </CardTitle>*/}
-          {/*    </CardHeader>*/}
-          {/*    <CardContent>*/}
-          {/*      <div className="flex flex-wrap gap-2">*/}
-          {/*        {bundleTags.map((tag) => (*/}
-          {/*          <Badge */}
-          {/*            key={tag.id}*/}
-          {/*            variant="outline"*/}
-          {/*            style={{*/}
-          {/*              backgroundColor: tag.color ? `${tag.color}20` : undefined,*/}
-          {/*              borderColor: tag.color || undefined,*/}
-          {/*              color: tag.color || undefined,*/}
-          {/*            }}*/}
-          {/*          >*/}
-          {/*            {tag.name}*/}
-          {/*          </Badge>*/}
-          {/*        ))}*/}
-          {/*      </div>*/}
-          {/*    </CardContent>*/}
-          {/*  </Card>*/}
-          {/*)}*/}
+          {/* Archivos del Paquete */}
+          {selectedBundle.files && selectedBundle.files.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <FileText className='h-5 w-5' />
+                  Archivos Adjuntos
+                  <Badge variant='secondary' className='ml-2'>
+                    {selectedBundle.files.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='space-y-3'>
+                  {selectedBundle.files.map((file, index) => (
+                    <div
+                      key={index}
+                      className='group flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 transition-all duration-200'
+                    >
+                      {/* File Icon */}
+                      <div className='flex items-center justify-center h-12 w-12 rounded-lg bg-background border'>
+                        {getFileIcon(file.type)}
+                      </div>
+
+                      {/* File Info */}
+                      <div className='flex-1 min-w-0'>
+                        <div className='flex items-start justify-between'>
+                          <div className='min-w-0 flex-1'>
+                            <h4
+                              className='font-medium text-sm truncate mb-1'
+                              title={file.filename}
+                            >
+                              {file.filename || 'Archivo sin nombre'}
+                            </h4>
+                            <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+                              {file.mimetype && (
+                                <span className='px-2 py-1 bg-background rounded-md font-mono'>
+                                  {file.mimetype.split('/')[1]?.toUpperCase() ||
+                                    file.mimetype}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Action Button */}
+                          <Button
+                            size='sm'
+                            variant='ghost'
+                            className='opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2'
+                            asChild
+                          >
+                            <a
+                              href={file.url}
+                              target='_blank'
+                              rel='noopener noreferrer'
+                            >
+                              <Eye className='h-4 w-4' />
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Etiquetas */}
+          {bundleTags.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <Tag className='h-5 w-5' />
+                  Etiquetas ({bundleTags.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='flex flex-wrap gap-2'>
+                  {bundleTags.map((tag) => (
+                    <Badge
+                      key={tag.id}
+                      variant='outline'
+                      style={{
+                        backgroundColor: tag.color
+                          ? `${tag.color}20`
+                          : undefined,
+                        borderColor: tag.color || undefined,
+                        color: tag.color || undefined,
+                      }}
+                    >
+                      {tag.name}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className='flex justify-end gap-4 pt-4'>

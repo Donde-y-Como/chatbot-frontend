@@ -17,7 +17,10 @@ export function useWhatsAppData() {
     queryFn: async () => {
       if (!user) throw Error('User not found')
 
-      const instanceId = getInstanceId(user)!
+      const instanceId = getInstanceId(user)
+      if (!instanceId) {
+        return { instanceStatus: 'disconnected' as const, qr: '' }
+      }
 
       const data = await waapiService.clientStatus(instanceId)
 

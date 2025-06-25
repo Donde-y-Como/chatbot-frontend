@@ -21,7 +21,6 @@ export const useGetProductTags = () => {
   return useQuery({
     queryKey: ['products', 'tags'],
     queryFn: () => ProductApiService.getProductTags(),
-    staleTime: 1000 * 60 * 30, // 30 minutos,
     initialData: []
   });
 };
