@@ -112,9 +112,11 @@ export function ChatContent({
       )}
 
       {/* Content Section */}
-      <div className='flex flex-1 flex-col gap-2 rounded-md px-4 pb-4 pt-0'>
+      <div className='flex flex-1 flex-col rounded-md overflow-hidden'>
         {isError ? (
-          <ChatErrorState />
+          <div className='px-4 pb-4 pt-0'>
+            <ChatErrorState />
+          </div>
         ) : isLoading || !chatData ? (
           <ChatConversationSkeleton />
         ) : (
@@ -123,12 +125,14 @@ export function ChatContent({
               messages={chatData.messages}
               mobileSelectedChatId={mobileSelectedChatId}
             />
-            <ChatFooter
-              isWhatsAppWebChat={isWhatsAppWebChat}
-              isWhatsAppChat={isWhatsAppChat}
-              selectedChatId={selectedChatId}
-              canSendMessage={canSendMessages}
-            />
+            <div className='px-4 pb-4'>
+              <ChatFooter
+                isWhatsAppWebChat={isWhatsAppWebChat}
+                isWhatsAppChat={isWhatsAppChat}
+                selectedChatId={selectedChatId}
+                canSendMessage={canSendMessages}
+              />
+            </div>
           </>
         )}
       </div>
