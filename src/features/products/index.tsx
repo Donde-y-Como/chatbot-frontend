@@ -11,7 +11,7 @@ import { useGetUnits, useGetCategories, useGetProductTags } from './hooks/useGet
 import { ProductProvider } from './context/products-context';
 import { ProductPrimaryButtons } from './components/product-primary-buttons';
 import { ProductDialogs } from './components/product-dialogs';
-import { createProductColumns } from './components/products-columns';
+import { createProductColumns, globalFilterFn } from './components/products-columns';
 import { calculateProductStats } from './utils/productUtils';
 import { Product } from './types';
 import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx';
@@ -113,6 +113,7 @@ function ProductsContent() {
             <CustomTable<Product> 
               data={products} 
               columns={columns}
+              globalFilterFn={globalFilterFn}
               toolbar={(table) => (
                 <DataTableToolbar
                   table={table}

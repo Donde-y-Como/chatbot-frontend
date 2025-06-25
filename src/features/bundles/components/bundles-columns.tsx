@@ -46,7 +46,7 @@ const getStatusBadge = (status: ProductStatus) => {
 }
 
 // Global filter function for multi-field search
-function globalFilterFn(
+export function globalFilterFn(
   row: { original: Bundle },
   columnId: string,
   filterValue: string

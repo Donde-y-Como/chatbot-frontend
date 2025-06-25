@@ -7,7 +7,7 @@ import ClientsProvider from './context/clients-context.tsx'
 import { CustomTable } from '../../components/tables/custom-table.tsx'
 import { DataTableToolbar } from '../../components/tables/data-table-toolbar.tsx'
 import { ClientPrimitives } from './types.ts'
-import { createColumns } from './components/clients-columns.tsx'
+import { createColumns, globalFilterFn } from './components/clients-columns.tsx'
 import { DataTableFacetedFilter, platformOptions, generateTagOptions } from './components/clients-table-filters.tsx'
 import { AddTagButton } from '../chats/AddTagButton.tsx'
 import { useMemo } from 'react'
@@ -50,6 +50,7 @@ export default function Clients() {
               <CustomTable<ClientPrimitives> 
                 data={clients} 
                 columns={columns}
+                globalFilterFn={globalFilterFn}
                 toolbar={(table) => (
                   <DataTableToolbar 
                     table={table}

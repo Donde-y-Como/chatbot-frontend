@@ -55,7 +55,7 @@ function extractPhoneDigits(platformId: string): string {
 }
 
 // Global filter function for multi-field search
-function globalFilterFn(
+export function globalFilterFn(
   row: { original: ClientPrimitives },
   columnId: string,
   filterValue: string

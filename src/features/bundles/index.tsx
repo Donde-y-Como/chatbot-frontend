@@ -9,7 +9,7 @@ import { CustomTable } from '@/components/tables/custom-table'
 import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx'
 import { BundleDialogs } from './components/bundle-dialogs'
 import { BundlePrimaryButtons } from './components/bundle-primary-buttons'
-import { createBundleColumns } from './components/bundles-columns'
+import { createBundleColumns, globalFilterFn } from './components/bundles-columns'
 import { BundleProvider } from './context/bundles-context'
 import { useGetBundles } from './hooks/useGetBundles'
 import { Bundle } from './types'
@@ -110,6 +110,7 @@ function BundlesContent() {
             <CustomTable<Bundle>
               data={bundles}
               columns={columns}
+              globalFilterFn={globalFilterFn}
               toolbar={(table) => (
                 <DataTableToolbar
                   table={table}

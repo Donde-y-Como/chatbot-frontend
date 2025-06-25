@@ -90,7 +90,7 @@ const getStockBadge = (stock: number, minimumInventory: number) => {
 };
 
 // Global filter function for multi-field search
-function globalFilterFn(
+export function globalFilterFn(
   row: { original: Product },
   columnId: string,
   filterValue: string
