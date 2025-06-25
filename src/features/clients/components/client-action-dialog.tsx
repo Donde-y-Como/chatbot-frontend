@@ -198,9 +198,24 @@ export function ClientActionDialog({
       }
 
       // Get the latest form values and add uploaded annexes
+      // In edit mode, if no pending annexes and no existing annexes changed, preserve original annexes
+      const formValues = form.getValues()
+      let annexesToSend = finalAnnexes
+
+      if (isEdit && pendingAnnexes.length === 0 && currentClient) {
+        // If no new annexes were added and no existing ones were removed, keep original annexes
+        const currentFormAnnexes = formValues.annexes || []
+        const originalAnnexes = currentClient.annexes || []
+        
+        // If current form annexes are the same as original, preserve them
+        if (currentFormAnnexes.length === originalAnnexes.length) {
+          annexesToSend = originalAnnexes
+        }
+      }
+
       const formData = {
-        ...form.getValues(),
-        annexes: finalAnnexes,
+        ...formValues,
+        annexes: annexesToSend,
       }
 
       clientMutation.mutate(formData)

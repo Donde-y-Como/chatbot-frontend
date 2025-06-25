@@ -42,7 +42,9 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
 import { PlatformName } from '@/features/chats/ChatTypes'
+import { useGetTags } from '@/features/clients/hooks/useGetTags.ts'
 import { useClientAppointments } from '../hooks/useClientAppointments'
 import { useClientEvents } from '../hooks/useClientEvents'
 import { ClientPrimitives } from '../types'
@@ -60,11 +62,11 @@ export function ClientViewDialog({
   onOpenChange,
 }: ClientViewDialogProps) {
   // Use our custom hooks for client appointments and events
-  const {
-    appointments,
-    services,
-    isLoading: isLoadingAppointments,
-  } = useClientAppointments(currentClient.id, open)
+  const { appointments, isLoading: isLoadingAppointments } =
+    useClientAppointments(currentClient.id, open)
+
+  const { data: tags = [] } = useGetTags()
+
   const {
     clientEvents,
     isLoading: isLoadingEvents,
@@ -119,9 +121,8 @@ export function ClientViewDialog({
             </Avatar>
             <div>
               <DialogTitle className='text-2xl font-bold'>
-                Detalles del Cliente
+                {currentClient.name}
               </DialogTitle>
-              <p className='text-sm font-medium mt-1'>{currentClient.name}</p>
               <DialogDescription className='flex items-center mt-1'>
                 <Mail className='h-4 w-4 mr-2' />
                 {currentClient.email || 'Sin correo electrónico'}
@@ -177,7 +178,7 @@ export function ClientViewDialog({
                 <Card>
                   <CardContent className='p-4 space-y-3'>
                     <h3 className='font-semibold text-lg'>
-                      Cuentas de Plataforma
+                      Redes sociales
                     </h3>
                     <Separator />
 
@@ -207,7 +208,7 @@ export function ClientViewDialog({
                                         [PlatformName.Whatsapp]:
                                           IconBrandWhatsapp,
                                         [PlatformName.WhatsappWeb]:
-                                          IconBrandWhatsapp,
+                                          WhatsAppBusinessIcon,
                                         [PlatformName.Facebook]:
                                           IconBrandFacebook,
                                         [PlatformName.Instagram]:
@@ -219,11 +220,12 @@ export function ClientViewDialog({
                                         <PlatformIcon
                                           size={14}
                                           className={cn(
-                                            (identity.platformName ===
-                                              PlatformName.Whatsapp ||
-                                              identity.platformName ===
-                                                PlatformName.WhatsappWeb) &&
+                                            identity.platformName ===
+                                              PlatformName.Whatsapp &&
                                               'text-green-500',
+                                            identity.platformName ===
+                                              PlatformName.WhatsappWeb &&
+                                              'text-green-700',
                                             identity.platformName ===
                                               PlatformName.Facebook &&
                                               'text-blue-500',
@@ -258,7 +260,7 @@ export function ClientViewDialog({
                       </div>
                     ) : (
                       <p className='text-muted-foreground'>
-                        Sin identidades de plataforma asociadas
+                        Sin cuentas de redes sociales asociadas
                       </p>
                     )}
                   </CardContent>
@@ -274,12 +276,13 @@ export function ClientViewDialog({
                       <div className='flex flex-wrap gap-2'>
                         {currentClient.tagIds.map((tagId, index) => (
                           <Badge
-                            key={index}
+                            key={tagId}
                             variant='secondary'
                             className='px-3 py-1 text-xs'
                           >
                             <Tag className='h-3 w-3 mr-1' />
-                            {tagId}
+                            {tags.find((tag) => tag.id === tagId)?.name ||
+                              `Etiqueta ${index + 1}`}
                           </Badge>
                         ))}
                       </div>
@@ -303,23 +306,13 @@ export function ClientViewDialog({
                       <div className='flex items-center'>
                         <Clock className='h-4 w-4 mr-2 text-muted-foreground' />
                         <span className='text-muted-foreground'>
-                          Creado: {formatDate(currentClient.createdAt)}
+                          Creado el {formatDate(currentClient.createdAt)}
                         </span>
                       </div>
                       <div className='flex items-center'>
                         <Clock className='h-4 w-4 mr-2 text-muted-foreground' />
                         <span className='text-muted-foreground'>
-                          Actualizado: {formatDate(currentClient.updatedAt)}
-                        </span>
-                      </div>
-                      <div className='flex items-center'>
-                        <span className='text-xs text-muted-foreground'>
-                          ID: {currentClient.id}
-                        </span>
-                      </div>
-                      <div className='flex items-center'>
-                        <span className='text-xs text-muted-foreground'>
-                          Negocio ID: {currentClient.businessId}
+                          Actualizado el {formatDate(currentClient.updatedAt)}
                         </span>
                       </div>
                     </div>
@@ -332,7 +325,7 @@ export function ClientViewDialog({
               <Card>
                 <CardContent className='p-4 space-y-3'>
                   <h3 className='font-semibold text-lg'>
-                    Archivos Adjuntos & Documentos
+                    Anexos
                   </h3>
                   <Separator />
 
