@@ -1,9 +1,9 @@
 import React from 'react'
 import { X, ShoppingCart, Minus, Plus, Trash2 } from 'lucide-react'
-import { Button } from '../../../components/ui/button'
-import { Badge } from '../../../components/ui/badge'
-import { Separator } from '../../../components/ui/separator'
-import { ScrollArea } from '../../../components/ui/scroll-area'
+import { Button } from '@/components/ui/button.tsx'
+import { Badge } from '@/components/ui/badge.tsx'
+import { Separator } from '@/components/ui/separator.tsx'
+import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { CreateOrSelectClient } from '../../appointments/components/CreateOrSelectClient'
 import { CartState, POSItem } from '../types'
 

@@ -9,7 +9,6 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  RowData,
   SortingState,
   Table,
   useReactTable,
@@ -26,11 +25,7 @@ import {
 import { DataTablePagination } from './data-table-pagination'
 import { DataTableToolbar } from './data-table-toolbar'
 
-declare module '@tanstack/react-table' {
-  interface ColumnMeta<TData extends RowData, TValue> {
-    className: string
-  }
-}
+declare module '@tanstack/react-table' {}
 
 interface DataTableProps<T> {
   columns: ColumnDef<T>[]
@@ -39,7 +34,12 @@ interface DataTableProps<T> {
   globalFilterFn?: any
 }
 
-export function CustomTable<T>({ columns, data, toolbar, globalFilterFn }: DataTableProps<T>) {
+export function CustomTable<T>({
+  columns,
+  data,
+  toolbar,
+  globalFilterFn,
+}: DataTableProps<T>) {
   const [rowSelection, setRowSelection] = useState({})
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -85,7 +85,6 @@ export function CustomTable<T>({ columns, data, toolbar, globalFilterFn }: DataT
                     <TableHead
                       key={header.id}
                       colSpan={header.colSpan}
-                      className={header.column.columnDef.meta?.className ?? ''}
                     >
                       {header.isPlaceholder
                         ? null
@@ -110,7 +109,6 @@ export function CustomTable<T>({ columns, data, toolbar, globalFilterFn }: DataT
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className={cell.column.columnDef.meta?.className ?? ''}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,

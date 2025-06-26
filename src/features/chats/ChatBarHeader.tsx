@@ -197,13 +197,13 @@ export function ChatBarHeader({
         />
       </label>
 
-      <div
-        className='mx-4 flex gap-2 my-2 overflow-x-auto overflow-y-hidden whitespace-nowrap no-scrollbar'
+      <div className='mx-4 flex gap-2 my-2 overflow-x-auto overflow-y-hidden whitespace-nowrap pb-1 filters-scrollbar'
         style={{
-          maskImage:
-            'linear-gradient(to right, transparent, black 10px, black calc(100% - 10px), transparent)',
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'hsl(var(--muted-foreground) / 0.3) hsl(var(--muted))',
         }}
       >
+        <AddTagButton withLabel/>
         {platforms.map(({ name, label, icon: Icon, color }) => (
           <Badge
             key={name}
@@ -215,7 +215,6 @@ export function ChatBarHeader({
             {label}
           </Badge>
         ))}
-        <AddTagButton />
       </div>
     </div>
   )
