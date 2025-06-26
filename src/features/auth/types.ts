@@ -1,4 +1,4 @@
-import { PlatformName } from '@/features/clients/types.ts'
+import { PlatformName } from '@/features/chats/ChatTypes.ts'
 
 export interface LoginData {
   email: string

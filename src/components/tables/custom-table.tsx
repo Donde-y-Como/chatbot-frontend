@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -11,11 +11,12 @@ import {
   getSortedRowModel,
   RowData,
   SortingState,
+  Table,
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table'
 import {
-  Table,
+  Table as UITable,
   TableBody,
   TableCell,
   TableHead,
@@ -34,35 +35,16 @@ declare module '@tanstack/react-table' {
 interface DataTableProps<T> {
   columns: ColumnDef<T>[]
   data: T[]
-  showSearch?: boolean
-  searchColumn?: string
-  searchPlaceholder?: string
-  enableGlobalFilter?: boolean
+  toolbar?: (table: Table<T>) => React.ReactNode
+  globalFilterFn?: any
 }
 
-export function CustomTable<T>({ 
-  columns, 
-  data, 
-  showSearch = true,
-  searchColumn = 'name',
-  searchPlaceholder = 'Buscar...',
-  enableGlobalFilter = false
-}: DataTableProps<T>) {
+export function CustomTable<T>({ columns, data, toolbar, globalFilterFn }: DataTableProps<T>) {
   const [rowSelection, setRowSelection] = useState({})
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
-
-  // Función de filtro personalizada para productos (buscar en name y sku)
-  const productGlobalFilterFn = (row: any, columnId: string, value: string) => {
-    const product = row.original
-    const name = product.name?.toString().toLowerCase() || ''
-    const sku = product.sku?.toString().toLowerCase() || ''
-    const searchValue = value.toLowerCase()
-    
-    return name.includes(searchValue) || sku.includes(searchValue)
-  }
 
   const table = useReactTable({
     data,
@@ -75,12 +57,13 @@ export function CustomTable<T>({
       globalFilter,
     },
     enableRowSelection: true,
+    enableGlobalFilter: !!globalFilterFn,
+    globalFilterFn: globalFilterFn,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: enableGlobalFilter ? productGlobalFilterFn : 'includesString',
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -91,15 +74,9 @@ export function CustomTable<T>({
 
   return (
     <div className='space-y-4'>
-      <DataTableToolbar 
-        table={table} 
-        showSearch={showSearch}
-        searchColumn={searchColumn}
-        searchPlaceholder={searchPlaceholder}
-        enableGlobalFilter={enableGlobalFilter}
-      />
+      {toolbar ? toolbar(table) : <DataTableToolbar table={table} />}
       <div className='rounded-md border max-h-[70vh] overflow-auto'>
-        <Table>
+        <UITable>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className='group/row'>
@@ -154,7 +131,7 @@ export function CustomTable<T>({
               </TableRow>
             )}
           </TableBody>
-        </Table>
+        </UITable>
       </div>
       <DataTablePagination table={table} />
     </div>

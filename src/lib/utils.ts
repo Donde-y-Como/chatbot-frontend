@@ -1,9 +1,19 @@
 import { type ClassValue, clsx } from 'clsx'
+import { UserIcon } from 'lucide-react'
 import { twMerge } from 'tailwind-merge'
-import { Chat } from '@/features/chats/ChatTypes.ts'
+import { Chat, PlatformName } from '@/features/chats/ChatTypes.ts'
+import { Employee } from '@/features/employees/types.ts'
+import { UserData } from '../features/auth/types'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+export function getInstanceId(userData: UserData): string | undefined {
+  const whatsappPlatform = userData.socialPlatforms.find(
+    (platform) => platform.platformName === PlatformName.WhatsappWeb
+  )
+  return whatsappPlatform ? whatsappPlatform.platformId : undefined
 }
 
 /**
@@ -34,4 +44,89 @@ export function sortByLastMessageTimestamp(a: Chat, b: Chat): number {
   }
 
   return 0
+}
+
+// Function to generate role options dynamically from employees data
+export function generateRoleOptions(employees: Employee[]) {
+  const uniqueRoles = new Set(employees.map((employee) => employee.role))
+
+  return Array.from(uniqueRoles).map((role) => {
+    return {
+      value: role,
+      label: role.charAt(0).toUpperCase() + role.slice(1),
+      icon: UserIcon,
+    }
+  })
+}
+
+export function formatWhatsAppPhone(platformId: string): string {
+  // Extract phone number from format like 5219512010452@s.whatsapp.net
+  const phoneMatch = platformId.match(/^(\d+)@s\.whatsapp\.net$/)
+  if (!phoneMatch) return platformId
+
+  const phoneNumber = phoneMatch[1]
+  // Format 521XXXXXXXXX to +52 1 XXX XXX XXXX
+  if (phoneNumber.startsWith('521') && phoneNumber.length === 13) {
+    return `+52 1 ${phoneNumber.slice(3, 6)} ${phoneNumber.slice(6, 9)} ${phoneNumber.slice(9)}`
+  }
+  return phoneNumber
+}
+
+export const getFileType = (mimetype: string): string => {
+  if (mimetype.startsWith('image/')) return 'image'
+  if (mimetype.startsWith('video/')) return 'video'
+  if (mimetype.startsWith('audio/')) return 'audio'
+  return 'document'
+}
+
+export const isValidFileType = (mimetype: string): boolean => {
+  const allowedTypes = [
+    // Images
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml',
+    // Videos
+    'video/mp4',
+    'video/avi',
+    'video/mov',
+    'video/wmv',
+    'video/flv',
+    'video/webm',
+    // Audio
+    'audio/mp3',
+    'audio/wav',
+    'audio/ogg',
+    'audio/aac',
+    'audio/flac',
+    // Documents
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain',
+    'text/csv',
+    'application/rtf',
+    'application/xml',
+    'text/xml',
+  ]
+
+  const dangerousTypes = [
+    'application/x-executable',
+    'application/x-msdownload',
+    'application/x-dosexec',
+    'application/zip',
+    'application/x-zip-compressed',
+    'application/x-rar-compressed',
+    'application/x-7z-compressed',
+    'application/x-tar',
+    'application/gzip',
+  ]
+
+  return allowedTypes.includes(mimetype) && !dangerousTypes.includes(mimetype)
 }

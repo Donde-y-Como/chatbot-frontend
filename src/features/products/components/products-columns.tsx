@@ -89,11 +89,40 @@ const getStockBadge = (stock: number, minimumInventory: number) => {
   );
 };
 
+// Global filter function for multi-field search
+export function globalFilterFn(
+  row: { original: Product },
+  columnId: string,
+  filterValue: string
+) {
+  if (!filterValue) return true
+
+  const searchValue = filterValue.toLowerCase()
+  const product = row.original
+
+  // Search in basic fields
+  const searchFields = [
+    product.name?.toLowerCase() || '',
+    product.description?.toLowerCase() || '',
+    product.sku?.toLowerCase() || '',
+    product.notes?.toLowerCase() || '',
+    product.barcode?.toLowerCase() || '',
+  ]
+
+  return searchFields.some((field) => field.includes(searchValue))
+}
+
 export const createProductColumns = (
   units: Unit[] = [],
   categories: Category[] = [],
   tags: ProductTag[] = []
 ): ColumnDef<Product>[] => [
+  // Global filter column (hidden, used for multi-field search)
+  {
+    id: 'globalFilter',
+    filterFn: globalFilterFn,
+    enableColumnFilter: false,
+  },
   {
     accessorKey: 'name',
     header: ({ column }) => (
@@ -210,6 +239,29 @@ export const createProductColumns = (
   },
 
   {
+    accessorKey: 'unitId',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Unidad" />
+    ),
+    cell: ({ row }) => {
+      const { unitId } = row.original;
+      const unit = units.find(u => u.id === unitId);
+      
+      return unit ? (
+        <Badge variant="outline" className="text-xs">
+          {unit.name} ({unit.abbreviation})
+        </Badge>
+      ) : (
+        <span className="text-muted-foreground text-sm">Sin unidad</span>
+      );
+    },
+    enableSorting: true,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+
+  {
     accessorKey: 'categoryIds',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Categorización" />
@@ -289,6 +341,11 @@ export const createProductColumns = (
       return <span className="text-muted-foreground text-sm">-</span>;
     },
     enableSorting: false,
+    filterFn: (row, id, value) => {
+      const rowValue = row.getValue(id) as string[];
+      if (!rowValue || !Array.isArray(rowValue)) return false;
+      return value.some((filterValue: string) => rowValue.includes(filterValue));
+    },
   },
 
   {
@@ -330,6 +387,11 @@ export const createProductColumns = (
       );
     },
     enableSorting: false,
+    filterFn: (row, id, value) => {
+      const rowValue = row.getValue(id) as string[];
+      if (!rowValue || !Array.isArray(rowValue)) return false;
+      return value.some((filterValue: string) => rowValue.includes(filterValue));
+    },
   },
 
   {

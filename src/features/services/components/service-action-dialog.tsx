@@ -1,8 +1,10 @@
+import * as React from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState, useCallback, useMemo } from 'react'
-import { useCreateService, useUpdateService, ServiceFormData } from './service-mutations'
+import { getDefaultProductInfo } from '@/types'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -22,17 +24,6 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { SelectDropdown } from '@/components/select-dropdown'
-import { Service } from '@/features/appointments/types'
-import { scheduleSchema } from '../../employees/types'
-import { ScheduleSection } from '../../employees/components/form/schedule-section'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { FileUpload } from '@/components/file-upload'
-import { useUploadMedia } from '../../chats/hooks/useUploadMedia'
-import { toast } from 'sonner'
-import { getDefaultProductInfo } from '@/types'
-import { ProductInfoStep } from '@/components/product-info'
-import { useGetUnits } from '../hooks/useGetUnits'
 import {
   Select,
   SelectContent,
@@ -40,7 +31,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import * as React from 'react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { FileUpload } from '@/components/file-upload'
+import { ProductInfoStep } from '@/components/product-info'
+import { SelectDropdown } from '@/components/select-dropdown'
+import { Service } from '@/features/appointments/types'
+import { useUploadMedia } from '../../chats/hooks/useUploadMedia'
+import { ScheduleSection } from '../../employees/components/form/schedule-section'
+import { scheduleSchema } from '../../employees/types'
+import { useGetUnits } from '../hooks/useGetUnits'
+import {
+  ServiceFormData,
+  useCreateService,
+  useUpdateService,
+} from './service-mutations'
 
 // Form validation schema actualizado con los nuevos campos
 const formSchema = z.object({
@@ -72,9 +76,14 @@ const formSchema = z.object({
         const num = Number(val)
         return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
       },
-      z.number().min(0, 'El descuento no puede ser negativo').max(100, 'El descuento no puede exceder 100%')
+      z
+        .number()
+        .min(0, 'El descuento no puede ser negativo')
+        .max(100, 'El descuento no puede exceder 100%')
     ),
-    categoryIds: z.array(z.string()).min(1, 'Debe seleccionar al menos una categoría'),
+    categoryIds: z
+      .array(z.string())
+      .min(1, 'Debe seleccionar al menos una categoría'),
     subcategoryIds: z.array(z.string()).default([]),
     status: z.enum(['active', 'inactive']),
     tagIds: z.array(z.string()).default([]),
@@ -86,7 +95,10 @@ const formSchema = z.object({
       },
       z.number().min(0, 'El impuesto no puede ser negativo')
     ),
-    notes: z.string().max(500, 'Las notas no pueden exceder 500 caracteres').default(''),
+    notes: z
+      .string()
+      .max(500, 'Las notas no pueden exceder 500 caracteres')
+      .default(''),
     cost: z.object({
       amount: z.number().min(0, 'El costo no puede ser negativo'),
       currency: z.string().min(1, 'La moneda es requerida'),
@@ -100,13 +112,16 @@ const formSchema = z.object({
     .number()
     .int('El código de barras debe ser un número entero')
     .positive('El código de barras debe ser positivo'),
-  unidadMedida: z.object({
-    id: z.string(),
-    name: z.string(),
-    abbreviation: z.string(),
-    createdAt: z.string(),
-    updatedAt: z.string().optional(),
-  }).optional().nullable(),
+  unidadMedida: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      abbreviation: z.string(),
+      createdAt: z.string(),
+      updatedAt: z.string().optional(),
+    })
+    .optional()
+    .nullable(),
   photos: z.array(z.string()),
 })
 
@@ -127,7 +142,7 @@ export function ServiceActionDialog({
   const [photos, setPhotos] = React.useState<File[]>([])
   const [formSubmitError, setFormSubmitError] = React.useState<string | null>(null)
   const isEdit = !!currentService
-  
+
   const { data: units = [], isLoading: unitsLoading } = useGetUnits()
   const { uploadFile, validateFile, isUploading } = useUploadMedia()
 
@@ -154,55 +169,59 @@ export function ServiceActionDialog({
         SATURDAY: undefined,
         SUNDAY: undefined,
       }
-      
+
       // Copiar los días que están configurados
       if (schedule) {
-        Object.keys(schedule).forEach(day => {
-          if (schedule[day] && typeof schedule[day] === 'object' && 
-              'startAt' in schedule[day] && 'endAt' in schedule[day]) {
+        Object.keys(schedule).forEach((day) => {
+          if (
+            schedule[day] &&
+            typeof schedule[day] === 'object' &&
+            'startAt' in schedule[day] &&
+            'endAt' in schedule[day]
+          ) {
             normalized[day as keyof typeof normalized] = schedule[day]
           }
         })
       }
-      
+
       return normalized
     }
 
     return isEdit
       ? {
-        ...currentService,
-        durationValue: currentService.duration.value,
-        durationUnit: currentService.duration.unit,
-        priceAmount: currentService.price.amount,
-        priceCurrency: currentService.price.currency,
-        schedule: normalizeSchedule(currentService.schedule),
-        productInfo: currentService.productInfo,
-        codigoBarras: Number(currentService.codigoBarras) || 0,
-        unidadMedida: currentService.unidadMedida || null,
-        photos: currentService.photos || [],
-      }
+          ...currentService,
+          durationValue: currentService.duration.value,
+          durationUnit: currentService.duration.unit,
+          priceAmount: currentService.price.amount,
+          priceCurrency: currentService.price.currency,
+          schedule: normalizeSchedule(currentService.schedule),
+          productInfo: currentService.productInfo,
+          codigoBarras: Number(currentService.codigoBarras) || 0,
+          unidadMedida: currentService.unidadMedida || null,
+          photos: currentService.photos || [],
+        }
       : {
-        name: '',
-        description: '',
-        durationValue: 30,
-        durationUnit: 'minutes' as const,
-        priceAmount: 0,
-        priceCurrency: 'MXN',
-        maxConcurrentBooks: 1,
-        minBookingLeadHours: 0,
-        schedule: baseSchedule,
-        productInfo: {
-          ...getDefaultProductInfo(),
-          sku: '',
-          categoryIds: [],
-          subcategoryIds: [],
-          tagIds: [],
-          notes: '',
-        },
-        codigoBarras: 0,
-        unidadMedida: null,
-        photos: [],
-      }
+          name: '',
+          description: '',
+          durationValue: 30,
+          durationUnit: 'minutes' as const,
+          priceAmount: 0,
+          priceCurrency: 'MXN',
+          maxConcurrentBooks: 1,
+          minBookingLeadHours: 0,
+          schedule: baseSchedule,
+          productInfo: {
+            ...getDefaultProductInfo(),
+            sku: '',
+            categoryIds: [],
+            subcategoryIds: [],
+            tagIds: [],
+            notes: '',
+          },
+          codigoBarras: 0,
+          unidadMedida: null,
+          photos: [],
+        }
   }, [currentService, isEdit])
 
   const form = useForm<ServiceForm>({
@@ -210,11 +229,10 @@ export function ServiceActionDialog({
     defaultValues,
   })
 
-  const {
-    reset,
-  } = form
+  const { reset } = form
 
   // Reset form when dialog closes or when switching between create/edit
+
   const handleOpenChange = useCallback((state: boolean) => {
     if (!state) {
       reset()
@@ -223,6 +241,7 @@ export function ServiceActionDialog({
     }
     onOpenChange(state)
   }, [reset, onOpenChange])
+
 
   // Reset form when modal is opened/closed - this clears previous errors
   React.useEffect(() => {
@@ -246,29 +265,29 @@ export function ServiceActionDialog({
     async (file: File) => {
       const { isValid } = validateFile(file)
       if (!isValid) {
-        form.setError("photos", { message: "Algún archivo no es válido" })
-        toast.error("El archivo no es válido")
+        form.setError('photos', { message: 'Algún archivo no es válido' })
+        toast.error('El archivo no es válido')
         return
       }
 
       try {
         const url = await uploadFile(file)
-        form.setValue("photos", [...form.getValues("photos"), url])
+        form.setValue('photos', [...form.getValues('photos'), url])
       } catch (error) {
-        toast.error("Hubo un error al subir la imagen")
+        toast.error('Hubo un error al subir la imagen')
       }
     },
-    [uploadFile, validateFile, form],
+    [uploadFile, validateFile, form]
   )
 
   // Create service mutation
   const createService = useCreateService({
-    onSuccess: handleSuccess
+    onSuccess: handleSuccess,
   })
 
   // Update service mutation
   const updateService = useUpdateService({
-    onSuccess: handleSuccess
+    onSuccess: handleSuccess,
   })
 
   const onSubmit = async (values: ServiceForm) => {
@@ -289,8 +308,10 @@ export function ServiceActionDialog({
       }
     }
 
+
     const formData = { ...form.getValues() }
     
+
     // Si no se seleccionó una unidad de medida válida, eliminar el campo del body
     if (!formData.unidadMedida?.id || formData.unidadMedida.id === '') {
       delete formData.unidadMedida
@@ -299,7 +320,7 @@ export function ServiceActionDialog({
     if (isEdit && currentService) {
       updateService.mutate({
         id: currentService.id,
-        formData: formData as ServiceFormData
+        formData: formData as ServiceFormData,
       })
     } else {
       createService.mutate(formData as ServiceFormData)
@@ -309,26 +330,32 @@ export function ServiceActionDialog({
   }
 
   // Time unit options for dropdown
-  const durationOptions = useMemo(() => [
-    { label: 'Minutos', value: 'minutes' },
-    { label: 'Horas', value: 'hours' },
-  ], [])
+  const durationOptions = useMemo(
+    () => [
+      { label: 'Minutos', value: 'minutes' },
+      { label: 'Horas', value: 'hours' },
+    ],
+    []
+  )
 
   // Currency options
-  const currencyOptions = useMemo(() => [
-    { label: 'MXN', value: 'MXN' },
-    { label: 'USD', value: 'USD' },
-    { label: 'EUR', value: 'EUR' },
-  ], [])
+  const currencyOptions = useMemo(
+    () => [
+      { label: 'MXN', value: 'MXN' },
+      { label: 'USD', value: 'USD' },
+      { label: 'EUR', value: 'EUR' },
+    ],
+    []
+  )
 
   // Check if there are filled fields
   const hasFilledFields = React.useCallback(() => {
-    const formValues = form.getValues();
-    const productInfo = formValues.productInfo;
-    
+    const formValues = form.getValues()
+    const productInfo = formValues.productInfo
+
     return (
-      formValues.name !== '' || 
-      formValues.description !== '' || 
+      formValues.name !== '' ||
+      formValues.description !== '' ||
       formValues.priceAmount !== 0 ||
       formValues.durationValue !== 30 ||
       formValues.maxConcurrentBooks !== 1 ||
@@ -344,25 +371,34 @@ export function ServiceActionDialog({
       productInfo?.taxPercentage !== 0 ||
       productInfo?.cost.amount !== 0 ||
       productInfo?.notes !== ''
-    );
-  }, [form, photos]);
+    )
+  }, [form, photos])
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      // Si está cerrando (isOpen === false) y hay campos rellenados, prevenimos el cierre
-      if (!isOpen && hasFilledFields()) {
-        return;
-      }
-      // En caso contrario, permitimos el cierre y llamamos a handleOpenChange
-      !isOpen && handleOpenChange(isOpen);
-    }}>
-      <DialogContent className="sm:max-w-4xl">
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        // Si está cerrando (isOpen === false) y hay campos rellenados, prevenimos el cierre
+        if (!isOpen && hasFilledFields()) {
+          return
+        }
+        // En caso contrario, permitimos el cierre y llamamos a handleOpenChange
+        !isOpen && handleOpenChange(isOpen)
+      }}
+    >
+      <DialogContent className='sm:max-w-4xl'>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-            toast.error('Completa todos los campos por favor')
-          })}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              toast.error('Completa todos los campos por favor')
+            })}
+          >
             <DialogHeader>
-              <DialogTitle aria-label={isEdit ? 'Editar Servicio' : 'Agregar Nuevo Servicio'}>
+              <DialogTitle
+                aria-label={
+                  isEdit ? 'Editar Servicio' : 'Agregar Nuevo Servicio'
+                }
+              >
                 {isEdit ? 'Editar Servicio' : 'Agregar Nuevo Servicio'}
               </DialogTitle>
               <DialogDescription>
@@ -373,31 +409,33 @@ export function ServiceActionDialog({
               </DialogDescription>
             </DialogHeader>
 
-            <Tabs defaultValue="general" className="w-full mt-4">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="pricing">Precio</TabsTrigger>
-                <TabsTrigger value="product">Producto</TabsTrigger>
-                <TabsTrigger value="schedule">Horario</TabsTrigger>
-                <TabsTrigger value="photos">Fotos</TabsTrigger>
+            <Tabs defaultValue='general' className='w-full mt-4'>
+              <TabsList className='grid w-full grid-cols-5'>
+                <TabsTrigger value='general'>General</TabsTrigger>
+                <TabsTrigger value='pricing'>Precio</TabsTrigger>
+                <TabsTrigger value='product'>Producto</TabsTrigger>
+                <TabsTrigger value='schedule'>Horario</TabsTrigger>
+                <TabsTrigger value='photos'>Fotos</TabsTrigger>
               </TabsList>
 
               {/* General Tab */}
-              <TabsContent value="general" className="space-y-4 pt-4">
-                <ScrollArea className="h-[400px] pr-4">
-                  <div className="space-y-4">
+              <TabsContent value='general' className='space-y-4 pt-4'>
+                <ScrollArea className='h-[400px] pr-4'>
+                  <div className='space-y-4'>
                     <FormField
                       control={form.control}
-                      name="name"
+                      name='name'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel htmlFor="name">Nombre del Servicio</FormLabel>
+                          <FormLabel htmlFor='name'>
+                            Nombre del Servicio
+                          </FormLabel>
                           <FormControl>
                             <Input
-                              id="name"
-                              placeholder="Ej: Mantenimiento de equipo"
+                              id='name'
+                              placeholder='Ej: Mantenimiento de equipo'
                               {...field}
-                              aria-required="true"
+                              aria-required='true'
                             />
                           </FormControl>
                           <FormMessage />
@@ -407,16 +445,18 @@ export function ServiceActionDialog({
 
                     <FormField
                       control={form.control}
-                      name="description"
+                      name='description'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel htmlFor="description">Descripción</FormLabel>
+                          <FormLabel htmlFor='description'>
+                            Descripción
+                          </FormLabel>
                           <FormControl>
                             <Input
-                              id="description"
-                              placeholder="Descripción del servicio"
+                              id='description'
+                              placeholder='Descripción del servicio'
                               {...field}
-                              aria-required="true"
+                              aria-required='true'
                             />
                           </FormControl>
                           <FormMessage />
@@ -424,21 +464,23 @@ export function ServiceActionDialog({
                       )}
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className='grid grid-cols-2 gap-4'>
                       <FormField
                         control={form.control}
-                        name="durationValue"
+                        name='durationValue'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel htmlFor="durationValue">Duración</FormLabel>
+                            <FormLabel htmlFor='durationValue'>
+                              Duración
+                            </FormLabel>
                             <FormControl>
                               <Input
-                                id="durationValue"
-                                type="number"
-                                placeholder="Valor de la duración"
+                                id='durationValue'
+                                type='number'
+                                placeholder='Valor de la duración'
                                 min={1}
                                 {...field}
-                                aria-required="true"
+                                aria-required='true'
                               />
                             </FormControl>
                             <FormMessage />
@@ -448,15 +490,17 @@ export function ServiceActionDialog({
 
                       <FormField
                         control={form.control}
-                        name="durationUnit"
+                        name='durationUnit'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel htmlFor="durationUnit">Unidad de Duración</FormLabel>
+                            <FormLabel htmlFor='durationUnit'>
+                              Unidad de Duración
+                            </FormLabel>
                             <SelectDropdown
                               defaultValue={field.value}
                               onValueChange={field.onChange}
                               items={durationOptions}
-                              aria-required="true"
+                              aria-required='true'
                             />
                             <FormMessage />
                           </FormItem>
@@ -464,21 +508,23 @@ export function ServiceActionDialog({
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className='grid grid-cols-2 gap-4'>
                       <FormField
                         control={form.control}
-                        name="maxConcurrentBooks"
+                        name='maxConcurrentBooks'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel htmlFor="maxConcurrentBooks">Máximo de Reservas Concurrentes</FormLabel>
+                            <FormLabel htmlFor='maxConcurrentBooks'>
+                              Máximo de Reservas Concurrentes
+                            </FormLabel>
                             <FormControl>
                               <Input
-                                id="maxConcurrentBooks"
-                                type="number"
-                                placeholder="Número máximo de reservas"
+                                id='maxConcurrentBooks'
+                                type='number'
+                                placeholder='Número máximo de reservas'
                                 min={1}
                                 {...field}
-                                aria-required="true"
+                                aria-required='true'
                               />
                             </FormControl>
                             <FormMessage />
@@ -488,18 +534,20 @@ export function ServiceActionDialog({
 
                       <FormField
                         control={form.control}
-                        name="minBookingLeadHours"
+                        name='minBookingLeadHours'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel htmlFor="minBookingLeadHours">Horas Mínimas de Anticipación</FormLabel>
+                            <FormLabel htmlFor='minBookingLeadHours'>
+                              Horas Mínimas de Anticipación
+                            </FormLabel>
                             <FormControl>
                               <Input
-                                id="minBookingLeadHours"
-                                type="number"
-                                placeholder="Horas mínimas para reservar"
+                                id='minBookingLeadHours'
+                                type='number'
+                                placeholder='Horas mínimas para reservar'
                                 min={0}
                                 {...field}
-                                aria-required="true"
+                                aria-required='true'
                               />
                             </FormControl>
                             <FormMessage />
@@ -508,18 +556,20 @@ export function ServiceActionDialog({
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className='grid grid-cols-2 gap-4'>
                       <FormField
                         control={form.control}
-                        name="codigoBarras"
+                        name='codigoBarras'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel htmlFor="codigoBarras">Código de Barras</FormLabel>
+                            <FormLabel htmlFor='codigoBarras'>
+                              Código de Barras
+                            </FormLabel>
                             <FormControl>
                               <Input
-                                id="codigoBarras"
-                                type="number"
-                                placeholder="Ej: 1234567890123"
+                                id='codigoBarras'
+                                type='number'
+                                placeholder='Ej: 1234567890123'
                                 {...field}
                                 value={field.value || ''}
                                 onFocus={(e) => {
@@ -529,9 +579,11 @@ export function ServiceActionDialog({
                                 }}
                                 onChange={(e) => {
                                   const value = e.target.value
-                                  field.onChange(value === '' ? 0 : Number(value))
+                                  field.onChange(
+                                    value === '' ? 0 : Number(value)
+                                  )
                                 }}
-                                aria-required="true"
+                                aria-required='true'
                               />
                             </FormControl>
                             <FormMessage />
@@ -541,15 +593,19 @@ export function ServiceActionDialog({
 
                       <FormField
                         control={form.control}
-                        name="unidadMedida"
+                        name='unidadMedida'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel htmlFor="unidadMedida">Unidad de Medida</FormLabel>
+                            <FormLabel htmlFor='unidadMedida'>
+                              Unidad de Medida
+                            </FormLabel>
                             <FormControl>
                               <Select
                                 value={field.value?.id || ''}
                                 onValueChange={(value) => {
-                                  const selectedUnit = units.find(unit => unit.id === value)
+                                  const selectedUnit = units.find(
+                                    (unit) => unit.id === value
+                                  )
                                   if (selectedUnit) {
                                     field.onChange(selectedUnit)
                                   }
@@ -557,7 +613,7 @@ export function ServiceActionDialog({
                                 disabled={unitsLoading}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Seleccionar unidad de medida" />
+                                  <SelectValue placeholder='Seleccionar unidad de medida' />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {units.map((unit) => (
@@ -578,35 +634,37 @@ export function ServiceActionDialog({
               </TabsContent>
 
               {/* Pricing Tab */}
-              <TabsContent value="pricing" className="space-y-4 pt-4">
-                <ScrollArea className="h-[400px] pr-4">
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+              <TabsContent value='pricing' className='space-y-4 pt-4'>
+                <ScrollArea className='h-[400px] pr-4'>
+                  <div className='space-y-4'>
+                    <div className='grid grid-cols-2 gap-4'>
                       <FormField
                         control={form.control}
-                        name="priceAmount"
+                        name='priceAmount'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel htmlFor="priceAmount">Precio</FormLabel>
+                            <FormLabel htmlFor='priceAmount'>Precio</FormLabel>
                             <FormControl>
                               <Input
-                                id="priceAmount"
-                                type="number"
-                                placeholder="0"
+                                id='priceAmount'
+                                type='number'
+                                placeholder='0'
                                 min={0}
-                                step="1"
+                                step='1'
                                 {...field}
                                 value={field.value || ''}
                                 onFocus={(e) => {
                                   if (field.value === 0) {
-                                    field.onChange(undefined);
+                                    field.onChange(undefined)
                                   }
                                 }}
                                 onChange={(e) => {
-                                  const value = e.target.value;
-                                  field.onChange(value === '' ? undefined : Number(value));
+                                  const value = e.target.value
+                                  field.onChange(
+                                    value === '' ? undefined : Number(value)
+                                  )
                                 }}
-                                aria-required="true"
+                                aria-required='true'
                               />
                             </FormControl>
                             <FormMessage />
@@ -616,15 +674,17 @@ export function ServiceActionDialog({
 
                       <FormField
                         control={form.control}
-                        name="priceCurrency"
+                        name='priceCurrency'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel htmlFor="priceCurrency">Moneda</FormLabel>
+                            <FormLabel htmlFor='priceCurrency'>
+                              Moneda
+                            </FormLabel>
                             <SelectDropdown
                               defaultValue={field.value}
                               onValueChange={field.onChange}
                               items={currencyOptions}
-                              aria-required="true"
+                              aria-required='true'
                             />
                             <FormMessage />
                           </FormItem>
@@ -636,17 +696,19 @@ export function ServiceActionDialog({
               </TabsContent>
 
               {/* Product Info Tab */}
-              <TabsContent value="product" className="space-y-4 pt-4">
-                <ScrollArea className="h-[400px] pr-4">
+              <TabsContent value='product' className='space-y-4 pt-4'>
+                <ScrollArea className='h-[400px] pr-4'>
                   <ProductInfoStep />
                 </ScrollArea>
               </TabsContent>
 
               {/* Schedule Tab */}
-              <TabsContent value="schedule" className="space-y-4 pt-4">
-                <ScrollArea className="h-[400px] pr-4">
-                  <div className="space-y-4">
-                    <FormLabel htmlFor="schedule">Horario del Servicio</FormLabel>
+              <TabsContent value='schedule' className='space-y-4 pt-4'>
+                <ScrollArea className='h-[400px] pr-4'>
+                  <div className='space-y-4'>
+                    <FormLabel htmlFor='schedule'>
+                      Horario del Servicio
+                    </FormLabel>
                     <div className='-mx-2'>
                       <ScheduleSection form={form} />
                     </div>
@@ -677,28 +739,34 @@ export function ServiceActionDialog({
                           <FormMessage />
                         </FormItem>
                       )}
+
                     />
                   </div>
                 </ScrollArea>
               </TabsContent>
             </Tabs>
 
-            <DialogFooter className="mt-6 gap-2">
+            <DialogFooter className='mt-6 gap-2'>
               <Button
-                variant="outline"
+                type='button'
+                variant='outline'
                 onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting || isUploading}
-                aria-label="Cancelar"
+                aria-label='Cancelar'
               >
                 Cancelar
               </Button>
               <Button
-                type="submit"
+                type='submit'
                 disabled={isSubmitting || isUploading}
-                aria-label={isEdit ? "Actualizar servicio" : "Crear servicio"}
-                className="min-w-24"
+                aria-label={isEdit ? 'Actualizar servicio' : 'Crear servicio'}
+                className='min-w-24'
               >
-                {isSubmitting || isUploading ? 'Guardando...' : isEdit ? 'Actualizar' : 'Crear'}
+                {isSubmitting || isUploading
+                  ? 'Guardando...'
+                  : isEdit
+                    ? 'Actualizar'
+                    : 'Crear'}
               </Button>
             </DialogFooter>
           </form>

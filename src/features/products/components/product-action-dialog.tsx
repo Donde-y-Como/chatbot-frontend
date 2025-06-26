@@ -274,7 +274,6 @@ export function ProductActionDialog() {
                     <ProductCategorizationSection 
                       control={form.control}
                       categories={categories}
-                      tags={tags}
                     />
                   </>
                 )}

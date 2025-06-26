@@ -8,7 +8,6 @@ import {
   IconBrandWhatsapp,
   IconChecklist,
   IconDotsVertical,
-  IconPhone,
 } from '@tabler/icons-react'
 import { CalendarFold } from 'lucide-react'
 import { cn } from '@/lib/utils.ts'
@@ -147,7 +146,7 @@ export function ConversationHeader({
               />
             )}
             <AvatarFallback className='bg-background'>
-              {chatData.client.name[0]}
+              {chatData.client.name ? chatData.client.name.at(0) : "U" }
             </AvatarFallback>
           </Avatar>
           {PlatformIcon && (
@@ -174,90 +173,107 @@ export function ConversationHeader({
         </span>
       </div>
 
-      <div className='-mr-1 flex items-center gap-1 lg:gap-2'>
-        <IconIaEnabled
-          bgColor={'bg-background'}
-          iconColor={'bg-secondary'}
-          enabled={chatData.thread.enabled}
-          onToggle={onToggleIA}
-          tooltip={chatData.thread.enabled ? 'Desactivar IA' : 'Activar IA'}
-        />
+      <div className='flex items-center gap-3'>
+        {/* IA Toggle - Secondary Action */}
+        <div className='flex items-center'>
+          <IconIaEnabled
+            bgColor={'bg-background'}
+            iconColor={'bg-secondary'}
+            enabled={chatData.thread.enabled}
+            onToggle={onToggleIA}
+            tooltip={chatData.thread.enabled ? 'Desactivar IA' : 'Activar IA'}
+          />
+        </div>
 
-        {/* Componente AddClientFromChats para agendar eventos - renderiza condicionalmente */}
+        {/* Primary Actions Group - Appointments & Events */}
+        <div className='flex items-center gap-2 p-1 rounded-lg bg-background/50 border border-border/50'>
+          <Tooltip.Provider>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <Button
+                  ref={appointmentButtonRef}
+                  size='sm'
+                  variant='ghost'
+                  className='h-9 w-9 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group'
+                  onClick={handleAppointmentClick}
+                >
+                  <IconChecklist size={18} className='group-hover:scale-110 transition-transform duration-200' />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content
+                side='bottom'
+                className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700 animate-in fade-in-0 zoom-in-95'
+                sideOffset={8}
+              >
+                Agendar Cita
+                <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
+              </Tooltip.Content>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+
+          <Tooltip.Provider>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <Button
+                  size='sm'
+                  variant='ghost'
+                  className='h-9 w-9 rounded-md hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-200 group'
+                  onClick={handleEventClick}
+                >
+                  <CalendarFold size={18} className='group-hover:scale-110 transition-transform duration-200' />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content
+                side='bottom'
+                className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700 animate-in fade-in-0 zoom-in-95'
+                sideOffset={8}
+              >
+                Agendar Evento
+                <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
+              </Tooltip.Content>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+        </div>
+
+        {/* Secondary Action - More Options */}
+        <Tooltip.Provider>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <Button
+                size='sm'
+                variant='ghost'
+                className='h-9 w-6 rounded-md hover:bg-gray-100 transition-colors duration-200'
+              >
+                <IconDotsVertical size={16} className='text-muted-foreground' />
+              </Button>
+            </Tooltip.Trigger>
+            <Tooltip.Content
+              side='bottom'
+              className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700 animate-in fade-in-0 zoom-in-95'
+              sideOffset={8}
+            >
+              Más opciones
+              <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
+            </Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>
+
+        {/* Dialogs */}
         {eventDialogOpen && (
           <AddClientFromChats
             key='event-dialog'
             open={eventDialogOpen}
             onClose={() => setEventDialogOpen(false)}
             preselectedClientId={chatData.client?.id || ''}
-            title='Agendar Cliente en Evento' /* Agregar título para evitar advertencia de accesibilidad */
+            title='Agendar Cliente en Evento'
           />
         )}
 
-        <Tooltip.Provider>
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <Button
-                ref={appointmentButtonRef}
-                size='icon'
-                variant='ghost'
-                className='size-8 rounded-full sm:inline-flex lg:size-10'
-                onClick={handleAppointmentClick}
-              >
-                <IconChecklist size={22} className='stroke-muted-foreground' />
-              </Button>
-            </Tooltip.Trigger>
-            <Tooltip.Content
-              side='bottom'
-              className='bg-[#020817] text-white px-2 py-1 rounded-md text-xs'
-            >
-              Agendar Cita
-            </Tooltip.Content>
-          </Tooltip.Root>
-        </Tooltip.Provider>
-
-        {/* MakeAppointmentDialog controlado directamente desde este componente */}
         <MakeAppointmentDialog 
           defaultOpen={appointmentDialogOpen}
           onOpenChange={setAppointmentDialogOpen}
           defaultClientName={chatData.client.name}
         />
-
-        <Tooltip.Provider>
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <Button
-                size='icon'
-                variant='ghost'
-                className='size-8 rounded-full sm:inline-flex lg:size-10'
-                onClick={handleEventClick}
-              >
-                <CalendarFold size={22} className='stroke-muted-foreground' />
-              </Button>
-            </Tooltip.Trigger>
-            <Tooltip.Content
-              side='bottom'
-              className='bg-[#020817] text-white px-2 py-1 rounded-md text-xs'
-            >
-              Agendar a Evento
-            </Tooltip.Content>
-          </Tooltip.Root>
-        </Tooltip.Provider>
-
-        <Button
-          size='icon'
-          variant='ghost'
-          className='hidden size-8 rounded-full sm:inline-flex lg:size-10'
-        >
-          <IconPhone size={22} className='stroke-muted-foreground' />
-        </Button>
-        <Button
-          size='icon'
-          variant='ghost'
-          className='h-10 rounded-md sm:h-8 sm:w-4 lg:h-10 lg:w-6'
-        >
-          <IconDotsVertical className='stroke-muted-foreground sm:size-5' />
-        </Button>
       </div>
     </div>
   )
@@ -280,38 +296,18 @@ export function ConversationHeaderSkeleton() {
         </div>
       </div>
 
-      <div className='-mr-1 flex items-center gap-1 lg:gap-2'>
-        <Button
-          size='icon'
-          variant='ghost'
-          className='size-8 rounded-full sm:inline-flex lg:size-10'
-        >
-          <IconChecklist size={22} className='stroke-muted-foreground' />
-        </Button>
+      <div className='flex items-center gap-3'>
+        {/* IA Toggle Skeleton */}
+        <Skeleton className='h-8 w-8 rounded-full' />
 
-        {/* Botón Calendar Fold */}
-        <Button
-          size='icon'
-          variant='ghost'
-          className='size-8 rounded-full sm:inline-flex lg:size-10'
-        >
-          <CalendarFold size={22} className='stroke-muted-foreground' />
-        </Button>
+        {/* Primary Actions Group Skeleton */}
+        <div className='flex items-center gap-2 p-1 rounded-lg bg-background/50 border border-border/50'>
+          <Skeleton className='h-9 w-9 rounded-md' />
+          <Skeleton className='h-9 w-9 rounded-md' />
+        </div>
 
-        <Button
-          size='icon'
-          variant='ghost'
-          className='hidden size-8 rounded-full sm:inline-flex lg:size-10'
-        >
-          <IconPhone size={22} className='stroke-muted-foreground' />
-        </Button>
-        <Button
-          size='icon'
-          variant='ghost'
-          className='h-10 rounded-md sm:h-8 sm:w-4 lg:h-10 lg:w-6'
-        >
-          <IconDotsVertical className='stroke-muted-foreground sm:size-5' />
-        </Button>
+        {/* More Options Skeleton */}
+        <Skeleton className='h-9 w-6 rounded-md' />
       </div>
     </div>
   )

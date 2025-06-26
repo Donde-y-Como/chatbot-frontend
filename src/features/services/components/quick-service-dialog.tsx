@@ -1,8 +1,9 @@
-import { z } from 'zod'
+import * as React from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState, useCallback, useMemo } from 'react'
-import { useCreateService, ServiceFormData } from './service-mutations'
+import { getDefaultProductInfo } from '@/types'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -23,22 +24,20 @@ import {
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { SelectDropdown } from '@/components/select-dropdown'
-import { scheduleSchema } from '../../employees/types'
 import { ScheduleSection } from '../../employees/components/form/schedule-section'
-import { quickServiceSchema, getDefaultQuickService, QuickServiceFormValues } from '../types-quick'
-import { toast } from 'sonner'
-import { getDefaultProductInfo } from '@/types'
-import * as React from 'react'
+import {
+  getDefaultQuickService,
+  QuickServiceFormValues,
+  quickServiceSchema,
+} from '../types-quick'
+import { ServiceFormData, useCreateService } from './service-mutations'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function QuickServiceDialog({
-  open,
-  onOpenChange,
-}: Props) {
+export function QuickServiceDialog({ open, onOpenChange }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Default values for quick service
@@ -52,12 +51,15 @@ export function QuickServiceDialog({
   const { reset } = form
 
   // Reset form when dialog closes
-  const handleOpenChange = useCallback((state: boolean) => {
-    if (!state) {
-      reset()
-    }
-    onOpenChange(state)
-  }, [reset, onOpenChange])
+  const handleOpenChange = useCallback(
+    (state: boolean) => {
+      if (!state) {
+        reset()
+      }
+      onOpenChange(state)
+    },
+    [reset, onOpenChange]
+  )
 
   // Reset form when modal is opened
   React.useEffect(() => {
@@ -75,7 +77,7 @@ export function QuickServiceDialog({
 
   // Create service mutation
   const createService = useCreateService({
-    onSuccess: handleSuccess
+    onSuccess: handleSuccess,
   })
 
   const onSubmit = async (values: QuickServiceFormValues) => {
@@ -104,50 +106,61 @@ export function QuickServiceDialog({
   }
 
   // Time unit options for dropdown
-  const durationOptions = useMemo(() => [
-    { label: 'Minutos', value: 'minutes' },
-    { label: 'Horas', value: 'hours' },
-  ], [])
+  const durationOptions = useMemo(
+    () => [
+      { label: 'Minutos', value: 'minutes' },
+      { label: 'Horas', value: 'hours' },
+    ],
+    []
+  )
 
   // Currency options
-  const currencyOptions = useMemo(() => [
-    { label: 'MXN', value: 'MXN' },
-    { label: 'USD', value: 'USD' },
-    { label: 'EUR', value: 'EUR' },
-  ], [])
+  const currencyOptions = useMemo(
+    () => [
+      { label: 'MXN', value: 'MXN' },
+      { label: 'USD', value: 'USD' },
+      { label: 'EUR', value: 'EUR' },
+    ],
+    []
+  )
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className='sm:max-w-2xl'>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-            toast.error('Completa todos los campos por favor')
-          })}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              toast.error('Completa todos los campos por favor')
+            })}
+          >
             <DialogHeader>
               <DialogTitle>Crear Servicio Rápido</DialogTitle>
               <DialogDescription>
-                Crea un nuevo servicio con configuración básica. Los campos avanzados se configurarán automáticamente.
+                Crea un nuevo servicio con configuración básica. Los campos
+                avanzados se configurarán automáticamente.
               </DialogDescription>
             </DialogHeader>
 
-            <ScrollArea className="h-[500px] pr-4 mt-4">
-              <div className="space-y-6">
+            <ScrollArea className='h-[500px] pr-4 mt-4'>
+              <div className='space-y-6'>
                 {/* Información básica */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Información Básica</h3>
-                  
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-medium'>Información Básica</h3>
+
                   <FormField
                     control={form.control}
-                    name="name"
+                    name='name'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor="name">Nombre del Servicio</FormLabel>
+                        <FormLabel htmlFor='name'>
+                          Nombre del Servicio
+                        </FormLabel>
                         <FormControl>
                           <Input
-                            id="name"
-                            placeholder="Ej: Consulta médica"
+                            id='name'
+                            placeholder='Ej: Consulta médica'
                             {...field}
-                            aria-required="true"
+                            aria-required='true'
                           />
                         </FormControl>
                         <FormMessage />
@@ -157,16 +170,16 @@ export function QuickServiceDialog({
 
                   <FormField
                     control={form.control}
-                    name="description"
+                    name='description'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel htmlFor="description">Descripción</FormLabel>
+                        <FormLabel htmlFor='description'>Descripción</FormLabel>
                         <FormControl>
                           <Input
-                            id="description"
-                            placeholder="Descripción breve del servicio"
+                            id='description'
+                            placeholder='Descripción breve del servicio'
                             {...field}
-                            aria-required="true"
+                            aria-required='true'
                           />
                         </FormControl>
                         <FormMessage />
@@ -176,24 +189,26 @@ export function QuickServiceDialog({
                 </div>
 
                 {/* Duración */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Duración</h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-medium'>Duración</h3>
+
+                  <div className='grid grid-cols-2 gap-4'>
                     <FormField
                       control={form.control}
-                      name="durationValue"
+                      name='durationValue'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel htmlFor="durationValue">Duración</FormLabel>
+                          <FormLabel htmlFor='durationValue'>
+                            Duración
+                          </FormLabel>
                           <FormControl>
                             <Input
-                              id="durationValue"
-                              type="number"
-                              placeholder="30"
+                              id='durationValue'
+                              type='number'
+                              placeholder='30'
                               min={1}
                               {...field}
-                              aria-required="true"
+                              aria-required='true'
                             />
                           </FormControl>
                           <FormMessage />
@@ -203,15 +218,15 @@ export function QuickServiceDialog({
 
                     <FormField
                       control={form.control}
-                      name="durationUnit"
+                      name='durationUnit'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel htmlFor="durationUnit">Unidad</FormLabel>
+                          <FormLabel htmlFor='durationUnit'>Unidad</FormLabel>
                           <SelectDropdown
                             defaultValue={field.value}
                             onValueChange={field.onChange}
                             items={durationOptions}
-                            aria-required="true"
+                            aria-required='true'
                           />
                           <FormMessage />
                         </FormItem>
@@ -221,35 +236,37 @@ export function QuickServiceDialog({
                 </div>
 
                 {/* Precio */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Precio</h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-medium'>Precio</h3>
+
+                  <div className='grid grid-cols-2 gap-4'>
                     <FormField
                       control={form.control}
-                      name="priceAmount"
+                      name='priceAmount'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel htmlFor="priceAmount">Precio</FormLabel>
+                          <FormLabel htmlFor='priceAmount'>Precio</FormLabel>
                           <FormControl>
                             <Input
-                              id="priceAmount"
-                              type="number"
-                              placeholder="0"
+                              id='priceAmount'
+                              type='number'
+                              placeholder='0'
                               min={0}
-                              step="1"
+                              step='1'
                               {...field}
                               value={field.value || ''}
                               onFocus={(e) => {
                                 if (field.value === 0) {
-                                  field.onChange(undefined);
+                                  field.onChange(undefined)
                                 }
                               }}
                               onChange={(e) => {
-                                const value = e.target.value;
-                                field.onChange(value === '' ? undefined : Number(value));
+                                const value = e.target.value
+                                field.onChange(
+                                  value === '' ? undefined : Number(value)
+                                )
                               }}
-                              aria-required="true"
+                              aria-required='true'
                             />
                           </FormControl>
                           <FormMessage />
@@ -259,15 +276,15 @@ export function QuickServiceDialog({
 
                     <FormField
                       control={form.control}
-                      name="priceCurrency"
+                      name='priceCurrency'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel htmlFor="priceCurrency">Moneda</FormLabel>
+                          <FormLabel htmlFor='priceCurrency'>Moneda</FormLabel>
                           <SelectDropdown
                             defaultValue={field.value}
                             onValueChange={field.onChange}
                             items={currencyOptions}
-                            aria-required="true"
+                            aria-required='true'
                           />
                           <FormMessage />
                         </FormItem>
@@ -277,8 +294,10 @@ export function QuickServiceDialog({
                 </div>
 
                 {/* Horario */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Horario de Disponibilidad</h3>
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-medium'>
+                    Horario de Disponibilidad
+                  </h3>
                   <div className='-mx-2'>
                     <ScheduleSection form={form} />
                   </div>
@@ -286,20 +305,21 @@ export function QuickServiceDialog({
               </div>
             </ScrollArea>
 
-            <DialogFooter className="mt-6 gap-2">
+            <DialogFooter className='mt-6 gap-2'>
               <Button
-                variant="outline"
+                type='button'
+                variant='outline'
                 onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting}
-                aria-label="Cancelar"
+                aria-label='Cancelar'
               >
                 Cancelar
               </Button>
               <Button
-                type="submit"
+                type='submit'
                 disabled={isSubmitting}
-                aria-label="Crear servicio rápido"
-                className="min-w-24"
+                aria-label='Crear servicio rápido'
+                className='min-w-24'
               >
                 {isSubmitting ? 'Creando...' : 'Crear Servicio'}
               </Button>

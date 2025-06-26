@@ -167,30 +167,32 @@ export function ChatConversation({
   }, [messages, mobileSelectedChatId])
 
   return (
-    <div className='flex size-full flex-1'>
-      <div className='chat-text-container relative -mr-4 flex flex-1 flex-col'>
+    <div className='flex size-full flex-1 overflow-hidden'>
+      <div className='chat-text-container relative flex flex-1 flex-col w-full'>
         <ScrollArea
           key={mobileSelectedChatId}
-          className='chat-flex flex h-40 w-full flex-grow flex-col py-2 pb-4 pr-4'
+          className='chat-flex flex h-40 w-full flex-grow flex-col'
         >
-          <div className='flex flex-col space-y-1'>
+          <div className='flex flex-col min-h-full pt-4 pb-6'>
             {Object.entries(messageGroups).map(([date, groupMessages]) => {
               return (
                 <Fragment key={date}>
-                  <div className='text-center text-xs flex items-center justify-center'>
-                    <span className='bg-muted/50 rounded-full p-2'>{date}</span>
+                  <div className='flex items-center justify-center py-4'>
+                    <span className='bg-gray-100/80 backdrop-blur-sm text-gray-600 text-xs font-medium rounded-full px-3 py-1.5 shadow-sm'>
+                      {date}
+                    </span>
                   </div>
-                  {groupMessages.map((message) => {
-                    return (
-                      <div key={`${message.id}`} className='flex flex-col'>
-                        <ChatMessage message={message} />
-                      </div>
-                    )
-                  })}
+                  <div className='space-y-1'>
+                    {groupMessages.map((message) => {
+                      return (
+                        <ChatMessage key={`${message.id}`} message={message} />
+                      )
+                    })}
+                  </div>
                 </Fragment>
               )
             })}
-            <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} className='h-4' />
           </div>
         </ScrollArea>
       </div>
@@ -200,19 +202,44 @@ export function ChatConversation({
 
 export function ChatConversationSkeleton() {
   return (
-    <div className='flex size-full flex-1'>
-      <div className='chat-text-container relative -mr-4 flex flex-1 flex-col'>
-        <ScrollArea className='chat-flex flex h-40 w-full flex-grow flex-col py-2 pb-4 pr-4'>
-          <div className='flex flex-col space-y-6'>
-            {Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton
-                key={index}
-                className={cn(
-                  'h-12 w-48 rounded-lg',
-                  index % 2 === 0 ? 'self-end' : 'self-start'
-                )}
-              />
-            ))}
+    <div className='flex size-full flex-1 overflow-hidden'>
+      <div className='chat-text-container relative flex flex-1 flex-col w-full'>
+        <ScrollArea className='chat-flex flex h-40 w-full flex-grow flex-col'>
+          <div className='flex flex-col min-h-full pt-4 pb-6 space-y-6'>
+            {/* Date skeleton */}
+            <div className='flex items-center justify-center py-4'>
+              <Skeleton className='h-6 w-20 rounded-full' />
+            </div>
+            
+            {Array.from({ length: 4 }).map((_, index) => {
+              const roles = ['user', 'assistant', 'business', 'user']
+              const role = roles[index]
+              const colors = {
+                user: 'bg-gray-100',
+                assistant: 'bg-[#278EFF]/20', 
+                business: 'bg-[#278EFF]/20'
+              }
+              
+              return (
+                <div
+                  key={index}
+                  className={cn(
+                    'flex w-full px-4',
+                    role === 'user' ? 'justify-start' : 'justify-end'
+                  )}
+                >
+                  <Skeleton
+                    className={cn(
+                      'h-12 rounded-2xl shadow-sm',
+                      role === 'user' 
+                        ? 'w-48 rounded-bl-md' 
+                        : 'w-56 rounded-br-md',
+                      colors[role as keyof typeof colors]
+                    )}
+                  />
+                </div>
+              )
+            })}
           </div>
         </ScrollArea>
       </div>

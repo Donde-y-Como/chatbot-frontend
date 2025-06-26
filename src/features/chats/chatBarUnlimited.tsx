@@ -98,68 +98,95 @@ export function ChatBarUnlimited({
   }, [refreshChats])
 
   return (
-    <div className='flex w-full flex-col gap-2 sm:w-[30rem]'>
+    <div className='flex w-full flex-col h-full sm:w-[30rem]'>
+      {/* Header - Fixed at top */}
       {user && (
-        <ChatBarHeader
-          value={search}
-          AIEnabled={user.assistantConfig?.enabled}
-          onInputChange={setSearch}
-          onFilterChange={setActiveFilter}
-          onToggleAllAI={onToggleAllAI}
-          onRefresh={handleRefresh}
-        />
+        <div className='flex-shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+          <ChatBarHeader
+            value={search}
+            AIEnabled={user.assistantConfig?.enabled}
+            onInputChange={setSearch}
+            onFilterChange={setActiveFilter}
+            onToggleAllAI={onToggleAllAI}
+            onRefresh={handleRefresh}
+          />
+        </div>
       )}
 
-      <MessagesFound
-        search={search}
-        onMessageClick={(chatId, messageId) =>
-          handleSelectChat(chatId, messageId)
-        }
-      />
+      {/* Main Content Area - Flexible */}
+      <div className='flex flex-col flex-1 min-h-0 overflow-hidden'>
+        {/* Chats List - Takes remaining space */}
+        <div className='flex-1 overflow-hidden'>
+          <ScrollArea className='h-full pl-2 pr-3' ref={scrollAreaRef}>
+            <div className='py-2'>
+              {isError ? (
+                <div className='py-4 text-center text-sm text-red-500'>
+                  Error al cargar los chats. Intente refrescar.
+                </div>
+              ) : isChatsLoading ? (
+                <div className='space-y-1'>
+                  {Array.from({ length: 7 }).map((_, index) => (
+                    <ChatListItemSkeleton key={`loading-${index}`} />
+                  ))}
+                </div>
+              ) : filteredChatList.length > 0 ? (
+                <div className='space-y-1'>
+                  {filteredChatList.map((chat) => (
+                    <Fragment key={chat.id}>
+                      <ChatListItem
+                        chat={chat}
+                        isSelected={selectedChatId === chat.id}
+                        onClick={() => handleSelectChat(chat.id)}
+                      />
+                      <Separator className='mx-3' />
+                    </Fragment>
+                  ))}
+                </div>
+              ) : (
+                <div className='py-8 text-center text-sm text-muted-foreground'>
+                  <div className='space-y-2'>
+                    <div className='text-4xl opacity-20'>💬</div>
+                    <div className='font-medium'>
+                      {search || activeFilter
+                        ? 'No se encontraron chats'
+                        : 'No hay chats disponibles'}
+                    </div>
+                    {search && (
+                      <div className='text-xs text-muted-foreground/80'>
+                        Intenta con otros términos de búsqueda
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
-      <ScrollArea className='h-full pl-2 pr-3' ref={scrollAreaRef}>
-        {isError ? (
-          <div className='py-4 text-center text-sm text-red-500'>
-            Error al cargar los chats. Intente refrescar.
-          </div>
-        ) : isChatsLoading ? (
-          Array.from({ length: 7 }).map((_, index) => (
-            <Fragment key={`loading-${index}`}>
-              <ChatListItemSkeleton />
-            </Fragment>
-          ))
-        ) : filteredChatList.length > 0 ? (
-          <>
-            {filteredChatList.map((chat) => (
-              <Fragment key={chat.id}>
-                <ChatListItem
-                  chat={chat}
-                  isSelected={selectedChatId === chat.id}
-                  onClick={() => handleSelectChat(chat.id)}
-                />
-                <Separator className='my-1' />
-              </Fragment>
-            ))}
-          </>
-        ) : (
-          <div className='py-4 text-center text-sm text-muted-foreground'>
-            {search || activeFilter
-              ? 'No se encontraron chats'
-              : 'No hay chats disponibles'}
+              {/* Infinite scroll loading indicator */}
+              <div ref={loadingRef} className='pt-4 flex justify-center'>
+                {isFetchingNextPage && (
+                  <div className='flex flex-col items-center gap-2 py-4'>
+                    <Loader2 className='h-5 w-5 animate-spin text-primary' />
+                    <span className='text-xs text-muted-foreground'>
+                      Cargando más chats...
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Messages Found - Fixed at bottom when searching */}
+        {search && search.length >= 2 && (
+          <div className='flex-shrink-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+            <MessagesFound
+              search={search}
+              onMessageClick={(chatId, messageId) =>
+                handleSelectChat(chatId, messageId)
+              }
+            />
           </div>
         )}
-
-        <div ref={loadingRef} className='pt-4 flex justify-center'>
-          {isFetchingNextPage && (
-            <div className='flex flex-col items-center gap-2'>
-              <Loader2 className='h-6 w-6 animate-spin text-primary' />
-              <span className='text-xs text-muted-foreground'>
-                Cargando más chats...
-              </span>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+      </div>
     </div>
   )
 }

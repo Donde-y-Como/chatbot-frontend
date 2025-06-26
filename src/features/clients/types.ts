@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Media, PlatformName } from '@/features/chats/ChatTypes.ts'
 
 export type PlatformIdentity = {
     platformId: string;
@@ -9,18 +10,6 @@ export type PlatformIdentity = {
 export type Annex = {
     name: string;
     media: Media;
-}
-
-export enum PlatformName {
-    Whatsapp = "whatsapp",
-    Facebook = "facebook",
-    Instagram = "instagram",
-    WhatsappWeb = "whatsappWeb",
-}
-
-export type Media = {
-    url: string
-    type: string
 }
 
 export const platformIdentitySchema = z.object({
@@ -80,6 +69,8 @@ export type Tag = {
 export const createTagSchema = z.object({
     name: z.string().min(1, { message: "El nombre es obligatorio" }),
 })
+
+export type CreateTagForm = z.infer<typeof createTagSchema>
 
 // Exporting ClientPrimitives as Client for easier usage across the application
 export type Client = ClientPrimitives;

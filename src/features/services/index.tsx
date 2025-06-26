@@ -1,17 +1,20 @@
 import { TableSkeleton } from '@/components/TableSkeleton.tsx'
 import { Main } from '@/components/layout/main'
 import { CustomTable } from '@/components/tables/custom-table.tsx'
+import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import { Service } from '@/features/appointments/types.ts'
-import { columns } from './components/services-columns.tsx'
+import { createColumns, globalFilterFn } from './components/services-columns.tsx'
 import { ServicesDialogs } from './components/services-dialogs.tsx'
 import { ServicesPrimaryButtons } from './components/services-primary-buttons.tsx'
 import ServicesProvider from './context/services-context.tsx'
 import { SidebarTrigger } from '../../components/ui/sidebar.tsx'
 import { Separator } from '@radix-ui/react-separator'
+import { useMemo } from 'react'
 
 export default function Services() {
   const { data: services, isLoading: isServicesLoading } = useGetServices()
+  const columns = useMemo(() => createColumns(), [])
 
   if (isServicesLoading) {
     return <TableSkeleton />
@@ -38,7 +41,19 @@ export default function Services() {
             <ServicesPrimaryButtons />
           </div>
           <div className='-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0'>
-            {services && <CustomTable<Service>  data={services} columns={columns} />}
+            {services && (
+              <CustomTable<Service> 
+                data={services} 
+                columns={columns}
+                globalFilterFn={globalFilterFn}
+                toolbar={(table) => (
+                  <DataTableToolbar 
+                    table={table}
+                    searchPlaceholder="Buscar por nombre o descripción..."
+                  />
+                )}
+              />
+            )}
           </div>
         </section>
       </Main>

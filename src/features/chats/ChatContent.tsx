@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { differenceInHours } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { AlertCircle, ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   ChatConversation,
   ChatConversationSkeleton,
@@ -11,10 +13,12 @@ import {
   ConversationHeader,
   ConversationHeaderSkeleton,
 } from '@/features/chats/ConversationHeader.tsx'
-import { useGetWhatsAppWebSession } from '@/features/settings/whatsappWeb/useGetWhatsAppWebSession.ts'
+import { useWhatsApp } from '@/features/settings/whatsappWeb/useWhatsApp'
 
 interface ChatContentProps {
   isLoading: boolean
+  isError?: boolean
+  error?: any
   chatData: ChatMessages | undefined
   selectedChatId: string
   mobileSelectedChatId: string | null
@@ -24,19 +28,21 @@ interface ChatContentProps {
 
 export function ChatContent({
   isLoading,
+  isError,
+  error,
   chatData,
   selectedChatId,
   mobileSelectedChatId,
   isMobileVisible,
   onBackClick,
 }: ChatContentProps) {
-  const { data: whatsappData } = useGetWhatsAppWebSession()
+  const { whatsappData } = useWhatsApp()
 
   const canSendMessages = useMemo(() => {
     if (!chatData) return false
 
     if (chatData.platformName === 'whatsappWeb') {
-      return whatsappData?.data.status === 'connected'
+      return whatsappData?.instanceStatus === "ready" || whatsappData?.instanceStatus === "authenticated"
     }
 
     const userMessages = chatData.messages.filter(
@@ -49,7 +55,7 @@ export function ChatContent({
     const lastTimestamp = lastUserMessage.timestamp
 
     return differenceInHours(Date.now(), lastTimestamp) < 24
-  }, [chatData, whatsappData?.data.status])
+  }, [chatData, whatsappData?.instanceStatus])
 
   const isWhatsAppChat = useMemo(() => {
     if (!chatData) return false
@@ -63,6 +69,23 @@ export function ChatContent({
     return chatData.platformName === 'whatsappWeb'
   }, [chatData])
 
+  // Error state component
+  const ChatErrorState = () => (
+    <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+      <AlertCircle className="h-16 w-16 text-destructive/60 mb-4" />
+      <h3 className="font-semibold text-lg mb-2">Chat no encontrado</h3>
+      <p className="text-muted-foreground text-sm mb-6 max-w-md">
+        {error?.response?.status === 404 
+          ? 'Este chat ya no existe o ha sido eliminado.'
+          : 'Hubo un error al cargar el chat. Intenta nuevamente.'}
+      </p>
+      <Button variant="outline" onClick={onBackClick} className="gap-2">
+        <ArrowLeft className="h-4 w-4" />
+        Volver a la lista
+      </Button>
+    </div>
+  )
+
   return (
     <div
       className={cn(
@@ -70,7 +93,15 @@ export function ChatContent({
         isMobileVisible && 'left-0 flex'
       )}
     >
-      {isLoading || !chatData || !selectedChatId ? (
+      {/* Header Section */}
+      {isError ? (
+        <div className="flex-shrink-0 border-b p-4">
+          <Button variant="ghost" onClick={onBackClick} className="gap-2 text-muted-foreground">
+            <ArrowLeft className="h-4 w-4" />
+            Volver
+          </Button>
+        </div>
+      ) : isLoading || !chatData || !selectedChatId ? (
         <ConversationHeaderSkeleton />
       ) : (
         <ConversationHeader
@@ -80,22 +111,30 @@ export function ChatContent({
         />
       )}
 
-      <div className='flex flex-1 flex-col gap-2 rounded-md px-4 pb-4 pt-0'>
-        {isLoading || !chatData ? (
+      {/* Content Section */}
+      <div className='flex flex-1 flex-col rounded-md overflow-hidden'>
+        {isError ? (
+          <div className='px-4 pb-4 pt-0'>
+            <ChatErrorState />
+          </div>
+        ) : isLoading || !chatData ? (
           <ChatConversationSkeleton />
         ) : (
-          <ChatConversation
-            messages={chatData.messages}
-            mobileSelectedChatId={mobileSelectedChatId}
-          />
+          <>
+            <ChatConversation
+              messages={chatData.messages}
+              mobileSelectedChatId={mobileSelectedChatId}
+            />
+            <div className='px-4 pb-4'>
+              <ChatFooter
+                isWhatsAppWebChat={isWhatsAppWebChat}
+                isWhatsAppChat={isWhatsAppChat}
+                selectedChatId={selectedChatId}
+                canSendMessage={canSendMessages}
+              />
+            </div>
+          </>
         )}
-
-        <ChatFooter
-          isWhatsAppWebChat={isWhatsAppWebChat}
-          isWhatsAppChat={isWhatsAppChat}
-          selectedChatId={selectedChatId}
-          canSendMessage={canSendMessages}
-        />
       </div>
     </div>
   )
