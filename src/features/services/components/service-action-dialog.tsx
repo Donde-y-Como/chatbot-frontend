@@ -125,6 +125,7 @@ export function ServiceActionDialog({
 }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [photos, setPhotos] = React.useState<File[]>([])
+  const [formSubmitError, setFormSubmitError] = React.useState<string | null>(null)
   const isEdit = !!currentService
   
   const { data: units = [], isLoading: unitsLoading } = useGetUnits()
@@ -218,6 +219,7 @@ export function ServiceActionDialog({
     if (!state) {
       reset()
       setPhotos([])
+      setFormSubmitError(null)
     }
     onOpenChange(state)
   }, [reset, onOpenChange])
@@ -227,6 +229,7 @@ export function ServiceActionDialog({
     if (open) {
       reset(defaultValues)
       setPhotos([])
+      setFormSubmitError(null)
     }
   }, [open, reset, defaultValues])
 
@@ -234,8 +237,8 @@ export function ServiceActionDialog({
   const handleSuccess = useCallback(() => {
     reset()
     setPhotos([])
+    setFormSubmitError(null)
     handleOpenChange(false)
-    setIsSubmitting(false)
   }, [reset, handleOpenChange])
 
   // Handle image upload
@@ -270,6 +273,14 @@ export function ServiceActionDialog({
 
   const onSubmit = async (values: ServiceForm) => {
     setIsSubmitting(true)
+    setFormSubmitError(null)
+
+    const isValid = await form.trigger()
+    if (!isValid) {
+      setIsSubmitting(false)
+      toast.error('Por favor, completa todos los campos obligatorios.')
+      return
+    }
 
     // Upload photos if any
     if (photos.length > 0) {
@@ -278,8 +289,7 @@ export function ServiceActionDialog({
       }
     }
 
-    // Preparar los datos para enviar al backend
-    const formData = { ...values }
+    const formData = { ...form.getValues() }
     
     // Si no se seleccionó una unidad de medida válida, eliminar el campo del body
     if (!formData.unidadMedida?.id || formData.unidadMedida.id === '') {
@@ -294,6 +304,8 @@ export function ServiceActionDialog({
     } else {
       createService.mutate(formData as ServiceFormData)
     }
+    
+    setIsSubmitting(false)
   }
 
   // Time unit options for dropdown
@@ -646,12 +658,25 @@ export function ServiceActionDialog({
               <TabsContent value="photos" className="space-y-4 pt-4">
                 <ScrollArea className="h-[400px] pr-4">
                   <div className="space-y-4">
-                    <FormLabel>Fotos del Servicio</FormLabel>
-                    <FileUpload
-                      maxFiles={5}
-                      maxSize={100 * 1024 * 1024}
-                      value={photos}
-                      onChange={setPhotos}
+                    <FormField
+                      control={form.control}
+                      name="photos"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fotos del Servicio</FormLabel>
+                          <FormControl>
+                            <div className="mb-2">
+                              <FileUpload
+                                maxFiles={5}
+                                maxSize={100 * 1024 * 1024}
+                                value={photos}
+                                onChange={setPhotos}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
                 </ScrollArea>
