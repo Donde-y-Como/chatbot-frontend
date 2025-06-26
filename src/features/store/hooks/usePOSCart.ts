@@ -1,5 +1,39 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { CartState, POSItem, POSPrice } from '../types'
+import { POSApiService } from '../services/POSApiService'
+import { toast } from 'sonner'
+
+const transformBackendItemToPOSItem = (backendItem: any, itemName?: string): POSItem => {
+  let frontendType: 'PRODUCTOS' | 'SERVICIOS' | 'EVENTOS' | 'PAQUETES'
+  const itemType = backendItem.itemType || backendItem.type
+  
+  switch (itemType) {
+    case 'product':
+      frontendType = 'PRODUCTOS'
+      break
+    case 'service':
+      frontendType = 'SERVICIOS'
+      break
+    case 'event':
+      frontendType = 'EVENTOS'
+      break
+    case 'bundle':
+      frontendType = 'PAQUETES'
+      break
+    default:
+      frontendType = 'PRODUCTOS'
+  }
+  
+  return {
+    id: backendItem.itemId || backendItem.id,
+    type: frontendType,
+    name: itemName || backendItem.name || backendItem.itemName || 'Cargando...',
+    price: backendItem.unitPrice || backendItem.price || { amount: 0, currency: 'MXN' },
+    image: backendItem.image || backendItem.imageUrl,
+    quantity: backendItem.quantity || 1,
+    originalData: backendItem.originalData || backendItem
+  }
+}
 
 const DEFAULT_CART_STATE: CartState = {
   isOpen: false,
@@ -15,6 +49,99 @@ const TAX_RATE = 0.16 // 16%
 
 export function usePOSCart() {
   const [cart, setCart] = useState<CartState>(DEFAULT_CART_STATE)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const initializePOS = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const response = await POSApiService.posInitialize()
+      
+      if (response.data && response.data.cart) {
+        const cartData = response.data.cart
+        
+        const itemsWithoutNames = (cartData.items || []).map(item => transformBackendItemToPOSItem(item))
+        
+        setCart(prev => ({
+          ...prev,
+          items: itemsWithoutNames,
+          selectedClientId: cartData.selectedClientId || '',
+          subtotal: cartData.subtotal || cartData.totalAmount || { amount: 0, currency: 'MXN' },
+          taxes: cartData.taxes || { amount: 0, currency: 'MXN' },
+          total: cartData.total || cartData.totalAmount || { amount: 0, currency: 'MXN' }
+        }))
+        
+        if (cartData.items && cartData.items.length > 0) {
+          const itemsForNames = cartData.items.map((item: any) => ({
+            itemId: item.itemId || item.id,
+            itemType: item.itemType || item.type || 'product'
+          }))
+          
+          
+          const nameMap = await POSApiService.getMultipleItemNames(itemsForNames)
+          
+          const itemsWithNames = cartData.items.map((item: any) => {
+            const itemId = item.itemId || item.id
+            const itemName = nameMap[itemId]
+            return transformBackendItemToPOSItem(item, itemName)
+          })
+                    
+          setCart(prev => ({
+            ...prev,
+            items: itemsWithNames
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Error inicializando POS:', error)
+      toast.error('Error al inicializar el sistema POS')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  const refreshCart = useCallback(async () => {
+    try {
+      const cartData = await POSApiService.getCart()
+      
+      const data = cartData.data || cartData
+      
+      const itemsWithoutNames = (data.items || []).map(item => transformBackendItemToPOSItem(item))
+      
+      setCart(prev => ({
+        ...prev,
+        items: itemsWithoutNames,
+        selectedClientId: data.selectedClientId || '',
+        subtotal: data.subtotal || data.totalAmount || { amount: 0, currency: 'MXN' },
+        taxes: data.taxes || { amount: 0, currency: 'MXN' },
+        total: data.total || data.totalAmount || { amount: 0, currency: 'MXN' }
+      }))
+      
+      if (data.items && data.items.length > 0) {
+        const itemsForNames = data.items.map((item: any) => ({
+          itemId: item.itemId || item.id,
+          itemType: item.itemType || item.type || 'product'
+        }))
+        
+        
+        const nameMap = await POSApiService.getMultipleItemNames(itemsForNames)
+        
+        const itemsWithNames = data.items.map((item: any) => {
+          const itemId = item.itemId || item.id
+          const itemName = nameMap[itemId]
+          return transformBackendItemToPOSItem(item, itemName)
+        })
+        
+        
+        setCart(prev => ({
+          ...prev,
+          items: itemsWithNames
+        }))
+      }
+      
+    } catch (error) {
+      console.error('Error refrescando carrito:', error)
+    }
+  }, [])
 
   // Calcular totales
   const calculateTotals = useCallback((items: POSItem[]): Omit<CartState, 'isOpen' | 'items' | 'selectedClientId'> => {
@@ -32,73 +159,141 @@ export function usePOSCart() {
     }
   }, [])
 
-  // Agregar item al carrito
-  const addToCart = useCallback((item: Omit<POSItem, 'quantity'>) => {
-    setCart(prev => {
-      const existingItemIndex = prev.items.findIndex(cartItem => cartItem.id === item.id)
-      
-      let newItems: POSItem[]
-      if (existingItemIndex >= 0) {
-        // Si el item ya existe, incrementar cantidad
-        newItems = prev.items.map((cartItem, index) =>
-          index === existingItemIndex
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        )
-      } else {
-        // Si es un item nuevo, agregarlo con cantidad 1
-        newItems = [...prev.items, { ...item, quantity: 1 }]
-      }
-      
-      const totals = calculateTotals(newItems)
-      
-      return {
-        ...prev,
-        items: newItems,
-        ...totals
-      }
-    })
-  }, [calculateTotals])
+  const addToCart = useCallback(async (item: Omit<POSItem, 'quantity'>, reservationId?: string) => {
+    if (item.originalData && 'status' in item.originalData && item.originalData.status === 'INACTIVO') {
+      toast.error('No se pueden agregar productos inactivos al carrito')
+      return
+    }
 
-  // Remover item del carrito
-  const removeFromCart = useCallback((itemId: string) => {
-    setCart(prev => {
-      const newItems = prev.items.filter(item => item.id !== itemId)
-      const totals = calculateTotals(newItems)
-      
-      return {
-        ...prev,
-        items: newItems,
-        ...totals
+    try {
+      let itemType: 'product' | 'service' | 'event' | 'bundle'
+      switch (item.type) {
+        case 'PRODUCTOS':
+          itemType = 'product'
+          break
+        case 'SERVICIOS':
+          itemType = 'service'
+          break
+        case 'EVENTOS':
+          itemType = 'event'
+          break
+        case 'PAQUETES':
+          itemType = 'bundle'
+          break
+        default:
+          throw new Error('Tipo de item no válido')
       }
-    })
-  }, [calculateTotals])
 
-  // Actualizar cantidad de un item
-  const updateCartQuantity = useCallback((itemId: string, quantity: number) => {
+      if (item.type === 'PAQUETES') {
+        console.log('Bundle data:', {
+          item,
+          originalData: item.originalData,
+          id: item.id,
+          itemType
+        })
+      }
+
+      const cartItemData = {
+        itemId: item.id,
+        itemType,
+        quantity: 1,
+        notes: undefined,
+        reservationId
+      }
+      
+
+      await POSApiService.addToCart(cartItemData)
+
+      await refreshCart()
+      toast.success(`${item.name} agregado al carrito`)
+    } catch (error) {
+      console.error('Error agregando al carrito:', error)
+      toast.error('Error al agregar item al carrito')
+    }
+  }, [refreshCart])
+
+  const removeFromCart = useCallback(async (itemId: string) => {
+    try {
+      const item = cart.items.find(i => i.id === itemId)
+      if (!item) return
+
+      let itemType: string
+      switch (item.type) {
+        case 'PRODUCTOS':
+          itemType = 'product'
+          break
+        case 'SERVICIOS':
+          itemType = 'service'
+          break
+        case 'EVENTOS':
+          itemType = 'event'
+          break
+        case 'PAQUETES':
+          itemType = 'bundle'
+          break
+        default:
+          itemType = 'product'
+      }
+
+      await POSApiService.removeFromCart(itemId, itemType)
+      
+      await refreshCart()
+      toast.success(`${item.name} removido del carrito`)
+    } catch (error) {
+      console.error('Error removiendo del carrito:', error)
+      toast.error('Error al remover item del carrito')
+    }
+  }, [cart.items, refreshCart])
+
+  const updateCartQuantity = useCallback(async (itemId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(itemId)
+      await removeFromCart(itemId)
       return
     }
     
-    setCart(prev => {
-      const newItems = prev.items.map(item =>
-        item.id === itemId ? { ...item, quantity } : item
-      )
-      
-      const totals = calculateTotals(newItems)
-      
-      return {
-        ...prev,
-        items: newItems,
-        ...totals
-      }
-    })
-  }, [calculateTotals, removeFromCart])
+    try {
+      const item = cart.items.find(i => i.id === itemId)
+      if (!item) return
 
-  // Limpiar carrito
-  const clearCart = useCallback(() => {
-    setCart(DEFAULT_CART_STATE)
+      let itemType: 'product' | 'service' | 'event' | 'bundle'
+      switch (item.type) {
+        case 'PRODUCTOS':
+          itemType = 'product'
+          break
+        case 'SERVICIOS':
+          itemType = 'service'
+          break
+        case 'EVENTOS':
+          itemType = 'event'
+          break
+        case 'PAQUETES':
+          itemType = 'bundle'
+          break
+        default:
+          throw new Error('Tipo de item no válido')
+      }
+
+      await POSApiService.updateCartQuantity(itemId, {
+        itemType,
+        quantity
+      })
+
+      await refreshCart()
+    } catch (error) {
+      console.error('Error actualizando cantidad:', error)
+      toast.error('Error al actualizar cantidad')
+    }
+  }, [cart.items, removeFromCart, refreshCart])
+
+  const clearCart = useCallback(async () => {
+    try {
+      await POSApiService.clearCart()
+      setCart(DEFAULT_CART_STATE)
+      toast.success('Carrito limpiado')
+    } catch (error) {
+      console.error('Error limpiando carrito:', error)
+      toast.error('Error al limpiar carrito')
+    }
   }, [])
 
   // Toggle carrito abierto/cerrado
@@ -140,26 +335,25 @@ export function usePOSCart() {
   }, [])
 
   return {
-    // Estado
     cart,
     totalItems,
     isReadyToProcess,
+    isLoading,
     
-    // Acciones del carrito
     addToCart,
     removeFromCart,
     updateCartQuantity,
     clearCart,
     
-    // Acciones de UI
     toggleCart,
     openCart,
     closeCart,
     
-    // Cliente
     setSelectedClient,
     
-    // Utilidades
+    initializePOS,
+    refreshCart,
+    
     formatPrice
   }
 }

@@ -45,6 +45,7 @@ interface EventBookingModalProps {
   onSaveBooking: (data: { clientId: string; participants: number; date: Date; notes?: string; status?: BookingStatus; amount?: number; paymentStatus?: PaymentStatus }) => Promise<void>;
   onRemoveBooking: (bookingId: string) => Promise<void>;
   onUpdateBooking?: (bookingId: string, data: any) => Promise<void>;
+  initialClientId?: string;
 }
 
 export function EventBookingModal({
@@ -54,6 +55,7 @@ export function EventBookingModal({
   onSaveBooking,
   onRemoveBooking,
   onUpdateBooking,
+  initialClientId,
 }: EventBookingModalProps) {
   const { data: event, isLoading: isEventLoading } = useGetEventWithBookings(eventId);
   const { data: clients, isLoading: isClientsLoading } = useGetClients();
@@ -87,9 +89,16 @@ export function EventBookingModal({
     },
   });
 
-  const [clientId, setClientId] = useState('');
+  const [clientId, setClientId] = useState(initialClientId || '');
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (initialClientId) {
+      setClientId(initialClientId)
+      setValue('clientId', initialClientId)
+    }
+  }, [initialClientId, setValue])
 
   // Actualizar clientId en el formulario cuando cambia
   useEffect(() => {
@@ -109,15 +118,14 @@ export function EventBookingModal({
         amount: 0,
         paymentStatus: 'pendiente'
       });
-      setClientId('');
+      setClientId(initialClientId || '');
+    } else if (open && initialClientId) {
+      setClientId(initialClientId)
+      setValue('clientId', initialClientId)
     }
-  }, [open, reset, setClientId]);
+  }, [open, reset, setClientId, initialClientId, setValue]);
 
-  const onSubmit = async (data: BookingFormValues) => {
-    console.log('Form submitted with data:', data);
-    console.log('Selected date:', selectedDate);
-    console.log('Form errors:', errors);
-    
+  const onSubmit = async (data: BookingFormValues) => {    
     if (!selectedDate) {
       console.error('No date selected');
       return;
@@ -134,7 +142,6 @@ export function EventBookingModal({
         paymentStatus: data.paymentStatus || 'pendiente'
       };
       
-      console.log('Booking data to send:', bookingData);
       await onSaveBooking(bookingData);
       
       // Toast de éxito y cerrar modal
@@ -167,7 +174,9 @@ export function EventBookingModal({
 
   // Filter bookings that match the selected date.
   const bookingsForSelectedDate = useMemo(() => {
-    if (!event || !selectedDate) return [] as Booking[];
+    if (!event || !selectedDate || !event.bookings || !Array.isArray(event.bookings)) {
+      return [] as Booking[];
+    }
     return event.bookings.filter((booking: Booking) =>
       isSameDay(startOfDay(parseISO(booking.date)), selectedDate)
     );
@@ -217,7 +226,6 @@ export function EventBookingModal({
 
           {/* Add Booking Form */}
           <form onSubmit={(e) => {
-            console.log('Form submit event triggered');
             handleSubmit(onSubmit)(e);
           }} className="space-y-4">
             <div className="flex flex-col gap-2">
