@@ -12,14 +12,14 @@ export function FilterButton({ isActive, onClick }: FilterButtonProps) {
     <Button
       variant={isActive ? 'default' : 'outline'}
       onClick={onClick}
-      className={`h-12 px-4 ${
-        isActive 
-          ? 'bg-primary text-primary-foreground' 
+      className={`h-10 sm:h-12 px-3 sm:px-4 ${
+        isActive
+          ? 'bg-primary text-primary-foreground'
           : 'bg-background hover:bg-accent'
       }`}
     >
       <Filter className="h-4 w-4 mr-2" />
-      Filtros
+      <span className="hidden xs:inline">Filtros</span>
       {isActive && (
         <div className="ml-2 w-2 h-2 bg-primary-foreground rounded-full" />
       )}

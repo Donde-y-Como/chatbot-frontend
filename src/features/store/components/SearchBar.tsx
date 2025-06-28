@@ -17,7 +17,7 @@ export function SearchBar({ value, onChange, placeholder = "Buscar..." }: Search
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pl-10 h-12 text-base"
+        className="pl-10 h-10 sm:h-12 text-sm sm:text-base"
       />
     </div>
   )
