@@ -1,5 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react'
-import * as Tooltip from '@radix-ui/react-tooltip'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   IconArrowLeft,
@@ -8,6 +7,8 @@ import {
   IconBrandWhatsapp,
   IconChecklist,
   IconDotsVertical,
+  IconAffiliate,
+  IconUser,
 } from '@tabler/icons-react'
 import { CalendarFold } from 'lucide-react'
 import { cn } from '@/lib/utils.ts'
@@ -15,11 +16,21 @@ import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
 import { MakeAppointmentDialog } from '@/features/appointments/components/MakeAppointmentDialog.tsx'
 import { ChatMessages } from '@/features/chats/ChatTypes.ts'
 import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
 import { AddClientFromChats } from '@/features/events/addClientFromChats.tsx'
-import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
+import { chatService } from '@/features/chats/ChatService.ts'
+import { ConnectClient } from '@/features/chats/ConnectCLient.tsx'
+import { useClients } from '@/features/clients/context/clients-context'
+import { Client } from '../clients/types'
 
 // Declarar la interfaz Window para acceder a openAppointmentDialog
 declare global {
@@ -41,6 +52,8 @@ export function ConversationHeader({
 }: ConversationHeaderProps) {
   const { emit } = useWebSocket()
   const queryClient = useQueryClient()
+  const { setOpen, setCurrentRow } = useClients()
+  const [connectionDialogOpen, setConnectionDialogOpen] = useState(false)
   const [eventDialogOpen, setEventDialogOpen] = useState(false)
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false)
   const appointmentButtonRef = useRef<HTMLButtonElement>(null)
@@ -99,25 +112,96 @@ export function ConversationHeader({
     return identity?.platformId || ''
   }, [chatData])
 
+
+
+  const handleConnectionClick = () => {
+    setConnectionDialogOpen(true)
+  }
+
+  const handleViewClientClick = () => {
+    // Open client view dialog with current client data
+    setCurrentRow({
+      id: chatData.client.id,
+      businessId: chatData.client.businessId,
+      name: chatData.client.name,
+      platformIdentities: chatData.client.platformIdentities,
+      tagIds: chatData.client.tagIds,
+      annexes: chatData.client.annexes,
+      photo: chatData.client.photo,
+      notes: chatData.client.notes,
+      email: chatData.client.email,
+      address: chatData.client.address,
+      birthdate: chatData.client.birthdate,
+      createdAt: chatData.client.createdAt,
+      updatedAt: chatData.client.updatedAt,
+    })
+    setOpen('view')
+  }
+
+  const handleConnectionSuccess = async (linkedClient: Client) => {
+    console.log('Successfully linked client:', linkedClient)
+
+    try {
+      // Update the conversation in the backend to use the new client
+      await chatService.updateConversation(selectedChatId, {
+        clientId: linkedClient.id,
+      })
+
+      // Update the chat data in cache to use the new linked client
+      queryClient.setQueryData<ChatMessages>(
+        ['chat', selectedChatId],
+        (oldChatData) => {
+          if (!oldChatData) return oldChatData
+
+          return {
+            ...oldChatData,
+            client: linkedClient,
+          }
+        }
+      )
+    } catch (error) {
+      console.error('Error updating conversation client:', error)
+      // The UI will still be updated optimistically, but the backend update failed
+      // You might want to show a toast or handle this error differently
+    }
+  }
+
+  const handleConnectionError = (error: Error) => {
+    console.error('Connection error:', error)
+    // Additional error handling if needed
+  }
+
   // Función para abrir el diálogo de agendar cita
   const handleAppointmentClick = () => {
     // Abrir directamente el diálogo con el control interno
     setAppointmentDialogOpen(true)
   }
-  
+
   // Efecto para establecer la función global openAppointmentDialog
   useEffect(() => {
     // Definir la función global para abrir el diálogo desde cualquier parte
-    window.openAppointmentDialog = (clientName?: string) => {
+    window.openAppointmentDialog = () => {
       // Si se proporciona un nombre de cliente, podríamos usarlo en futuras implementaciones
       setAppointmentDialogOpen(true)
     }
-    
+
     // Limpiar cuando el componente se desmonte
     return () => {
       window.openAppointmentDialog = undefined
     }
   }, [])
+
+  // Prepare current client data for ConnectClient component
+  const currentClientData = useMemo(
+    () => ({
+      id: chatData.client.id,
+      name: chatData.client.name,
+      platformName: chatData.platformName,
+      platformId: platformId || '',
+      platformIdentities: chatData.client.platformIdentities,
+    }),
+    [chatData.client, chatData.platformName, platformId]
+  )
 
   // Función para abrir el diálogo de agendar evento
   const handleEventClick = () => {
@@ -146,7 +230,7 @@ export function ConversationHeader({
               />
             )}
             <AvatarFallback className='bg-background'>
-              {chatData.client.name ? chatData.client.name.at(0) : "U" }
+              {chatData.client.name ? chatData.client.name.at(0) : 'U'}
             </AvatarFallback>
           </Avatar>
           {PlatformIcon && (
@@ -155,7 +239,7 @@ export function ConversationHeader({
                 className={cn(
                   'w-3.5 h-3.5',
                   chatData.platformName.toLowerCase() === 'whatsappweb' &&
-                  'text-green-700',
+                    'text-green-700',
                   chatData.platformName.toLowerCase() === 'whatsapp' &&
                     'text-green-500',
                   chatData.platformName.toLowerCase() === 'facebook' &&
@@ -169,7 +253,7 @@ export function ConversationHeader({
         </div>
         <span className='text-sm font-medium lg:text-base  flex flex-col justify-center'>
           {chatData.client.name || <Skeleton className='h-3 w-24' />}
-          <small className='opacity-60'>{platformId}</small>
+          <small className='opacity-60 '>{platformId}</small>
         </span>
       </div>
 
@@ -183,13 +267,75 @@ export function ConversationHeader({
             onToggle={onToggleIA}
             tooltip={chatData.thread.enabled ? 'Desactivar IA' : 'Activar IA'}
           />
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size='icon'
+                  variant='ghost'
+                  className='size-8 rounded-full sm:inline-flex lg:size-10'
+                  onClick={handleConnectionClick}
+                >
+                  <IconAffiliate
+                    size={22}
+                    className='stroke-muted-foreground'
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                side='bottom'
+                className='bg-[#020817] text-white px-2 py-1 rounded-md text-xs'
+              >
+                Vincular Perfil
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          {/* Connect Client Dialog - Now using refactored ConnectClient */}
+          <ConnectClient
+            isDialog={true}
+            open={connectionDialogOpen}
+            onOpenChange={setConnectionDialogOpen}
+            currentClientData={currentClientData}
+            conversationId={selectedChatId}
+            onConnectionSuccess={handleConnectionSuccess}
+            onConnectionError={handleConnectionError}
+            onEmitSocketEvent={emit}
+          />
         </div>
 
         {/* Primary Actions Group - Appointments & Events */}
         <div className='flex items-center gap-2 p-1 rounded-lg bg-background/50 border border-border/50'>
-          <Tooltip.Provider>
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size='sm'
+                  variant='ghost'
+                  className='h-9 w-9 rounded-md hover:bg-purple-50 hover:text-purple-600 transition-all duration-200 group'
+                  onClick={handleViewClientClick}
+                >
+                  <IconUser
+                    size={18}
+                    className='group-hover:scale-110 transition-transform duration-200'
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                side='bottom'
+                className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700 animate-in fade-in-0 zoom-in-95'
+                sideOffset={8}
+              >
+                Ver Cliente
+                <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Button
                   ref={appointmentButtonRef}
                   size='sm'
@@ -197,48 +343,54 @@ export function ConversationHeader({
                   className='h-9 w-9 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group'
                   onClick={handleAppointmentClick}
                 >
-                  <IconChecklist size={18} className='group-hover:scale-110 transition-transform duration-200' />
+                  <IconChecklist
+                    size={18}
+                    className='group-hover:scale-110 transition-transform duration-200'
+                  />
                 </Button>
-              </Tooltip.Trigger>
-              <Tooltip.Content
+              </TooltipTrigger>
+              <TooltipContent
                 side='bottom'
                 className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700 animate-in fade-in-0 zoom-in-95'
                 sideOffset={8}
               >
                 Agendar Cita
                 <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
-              </Tooltip.Content>
-            </Tooltip.Root>
-          </Tooltip.Provider>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-          <Tooltip.Provider>
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Button
                   size='sm'
                   variant='ghost'
                   className='h-9 w-9 rounded-md hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-200 group'
                   onClick={handleEventClick}
                 >
-                  <CalendarFold size={18} className='group-hover:scale-110 transition-transform duration-200' />
+                  <CalendarFold
+                    size={18}
+                    className='group-hover:scale-110 transition-transform duration-200'
+                  />
                 </Button>
-              </Tooltip.Trigger>
-              <Tooltip.Content
+              </TooltipTrigger>
+              <TooltipContent
                 side='bottom'
                 className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700 animate-in fade-in-0 zoom-in-95'
                 sideOffset={8}
               >
                 Agendar Evento
                 <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
-              </Tooltip.Content>
-            </Tooltip.Root>
-          </Tooltip.Provider>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {/* Secondary Action - More Options */}
-        <Tooltip.Provider>
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
                 size='sm'
                 variant='ghost'
@@ -246,17 +398,17 @@ export function ConversationHeader({
               >
                 <IconDotsVertical size={16} className='text-muted-foreground' />
               </Button>
-            </Tooltip.Trigger>
-            <Tooltip.Content
+            </TooltipTrigger>
+            <TooltipContent
               side='bottom'
               className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700 animate-in fade-in-0 zoom-in-95'
               sideOffset={8}
             >
               Más opciones
               <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
-            </Tooltip.Content>
-          </Tooltip.Root>
-        </Tooltip.Provider>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
         {/* Dialogs */}
         {eventDialogOpen && (
@@ -269,7 +421,7 @@ export function ConversationHeader({
           />
         )}
 
-        <MakeAppointmentDialog 
+        <MakeAppointmentDialog
           defaultOpen={appointmentDialogOpen}
           onOpenChange={setAppointmentDialogOpen}
           defaultClientName={chatData.client.name}

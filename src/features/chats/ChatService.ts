@@ -28,4 +28,15 @@ export const chatService = {
   markAsUnread: async (data: { chatId: string }) => {
     await api.post(`/chats/${data.chatId}/mark-as-unread`)
   },
+
+  updateConversation: async (chatId: string, updateData: {
+    clientId?: string
+    platformName?: string
+    currentIntention?: string
+    assistantEnabled?: boolean
+    newClientMessagesCount?: number
+  }) => {
+    const response = await api.put(`/chats/${chatId}`, updateData)
+    return response.data
+  },
 }

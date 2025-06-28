@@ -13,6 +13,7 @@ import { useGetTags } from '../clients/hooks/useGetTags'
 import { MessagesFound } from './MessagesFound'
 import { usePaginatedChats } from './hooks/usePaginatedChats'
 
+
 interface ChatBarProps {
   selectedChatId: string | null
   setSelectedChatId: (id: string) => void

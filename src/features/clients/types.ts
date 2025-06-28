@@ -74,3 +74,5 @@ export type CreateTagForm = z.infer<typeof createTagSchema>
 
 // Exporting ClientPrimitives as Client for easier usage across the application
 export type Client = ClientPrimitives;
+
+export { PlatformName };
