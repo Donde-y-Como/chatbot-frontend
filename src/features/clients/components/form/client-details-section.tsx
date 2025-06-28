@@ -110,8 +110,6 @@ export function ClientDetailsSection({
                         disabled={(date) =>
                           date > new Date() || date < new Date('1900-01-01')
                         }
-                        locale={es}
-                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>

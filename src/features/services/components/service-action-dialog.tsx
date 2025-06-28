@@ -1,8 +1,9 @@
 import * as React from 'react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery } from '@tanstack/react-query'
 import { getDefaultProductInfo } from '@/types'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -35,7 +36,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FileUpload } from '@/components/file-upload'
 import { ProductInfoStep } from '@/components/product-info'
 import { SelectDropdown } from '@/components/select-dropdown'
-import { Service } from '@/features/appointments/types'
+import { MinutesTimeRange, Service } from '@/features/appointments/types'
+import { ScheduleService } from '@/features/settings/profile/ProfileService.ts'
 import { useUploadMedia } from '../../chats/hooks/useUploadMedia'
 import { ScheduleSection } from '../../employees/components/form/schedule-section'
 import { scheduleSchema } from '../../employees/types'
@@ -140,27 +142,51 @@ export function ServiceActionDialog({
 }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [photos, setPhotos] = React.useState<File[]>([])
-  const [formSubmitError, setFormSubmitError] = React.useState<string | null>(null)
+  const [_, setFormSubmitError] = React.useState<string | null>(null)
   const isEdit = !!currentService
 
   const { data: units = [], isLoading: unitsLoading } = useGetUnits()
   const { uploadFile, validateFile, isUploading } = useUploadMedia()
 
-  // Create memoized default values to prevent unnecessary re-renders
-  const defaultValues = useMemo(() => {
-    const baseSchedule = {
+  const userScheduleQuery = useQuery({
+    queryKey: ['user-schedule'],
+    queryFn: async () => {
+      return await ScheduleService.getSchedule()
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  })
+
+  const defaultSchedule = useMemo(() => {
+    return {
       MONDAY: { startAt: 480, endAt: 1020 },
       TUESDAY: { startAt: 480, endAt: 1020 },
       WEDNESDAY: { startAt: 480, endAt: 1020 },
       THURSDAY: { startAt: 480, endAt: 1020 },
       FRIDAY: { startAt: 480, endAt: 1020 },
-      SATURDAY: undefined,
-      SUNDAY: undefined,
     }
+  }, [])
 
+  // Get the schedule to use: user's schedule if creating, current service's if editing, or default
+  const getInitialSchedule = useCallback(() => {
+    if (isEdit && currentService) {
+      return currentService.schedule
+    }
+    if (userScheduleQuery.data?.weeklyWorkDays) {
+      return userScheduleQuery.data.weeklyWorkDays
+    }
+    return defaultSchedule
+  }, [
+    isEdit,
+    currentService,
+    userScheduleQuery.data?.weeklyWorkDays,
+    defaultSchedule,
+  ])
+
+  // Create memoized default values to prevent unnecessary re-renders
+  const defaultValues = useMemo(() => {
     // Función para normalizar el schedule del backend
-    const normalizeSchedule = (schedule: any) => {
-      const normalized = {
+    const normalizeSchedule = (schedule: Record<string, MinutesTimeRange>) => {
+      const normalized: Record<string, MinutesTimeRange | undefined> = {
         MONDAY: undefined,
         TUESDAY: undefined,
         WEDNESDAY: undefined,
@@ -209,7 +235,7 @@ export function ServiceActionDialog({
           priceCurrency: 'MXN',
           maxConcurrentBooks: 1,
           minBookingLeadHours: 0,
-          schedule: baseSchedule,
+          schedule: getInitialSchedule(),
           productInfo: {
             ...getDefaultProductInfo(),
             sku: '',
@@ -222,7 +248,7 @@ export function ServiceActionDialog({
           unidadMedida: null,
           photos: [],
         }
-  }, [currentService, isEdit])
+  }, [currentService, getInitialSchedule, isEdit])
 
   const form = useForm<ServiceForm>({
     resolver: zodResolver(formSchema),
@@ -231,17 +257,26 @@ export function ServiceActionDialog({
 
   const { reset } = form
 
+  // Update form schedule when user schedule data is loaded for new services
+  useEffect(() => {
+    if (!isEdit && userScheduleQuery.data?.weeklyWorkDays && open) {
+      form.setValue('schedule', userScheduleQuery.data.weeklyWorkDays)
+    }
+  }, [userScheduleQuery.data, isEdit, open, form])
+
   // Reset form when dialog closes or when switching between create/edit
 
-  const handleOpenChange = useCallback((state: boolean) => {
-    if (!state) {
-      reset()
-      setPhotos([])
-      setFormSubmitError(null)
-    }
-    onOpenChange(state)
-  }, [reset, onOpenChange])
-
+  const handleOpenChange = useCallback(
+    (state: boolean) => {
+      if (!state) {
+        reset()
+        setPhotos([])
+        setFormSubmitError(null)
+      }
+      onOpenChange(state)
+    },
+    [reset, onOpenChange]
+  )
 
   // Reset form when modal is opened/closed - this clears previous errors
   React.useEffect(() => {
@@ -290,7 +325,7 @@ export function ServiceActionDialog({
     onSuccess: handleSuccess,
   })
 
-  const onSubmit = async (values: ServiceForm) => {
+  const onSubmit = async () => {
     setIsSubmitting(true)
     setFormSubmitError(null)
 
@@ -308,9 +343,7 @@ export function ServiceActionDialog({
       }
     }
 
-
     const formData = { ...form.getValues() }
-    
 
     // Si no se seleccionó una unidad de medida válida, eliminar el campo del body
     if (!formData.unidadMedida?.id || formData.unidadMedida.id === '') {
@@ -325,7 +358,7 @@ export function ServiceActionDialog({
     } else {
       createService.mutate(formData as ServiceFormData)
     }
-    
+
     setIsSubmitting(false)
   }
 
@@ -374,6 +407,8 @@ export function ServiceActionDialog({
     )
   }, [form, photos])
 
+  const isLoadingSchedule = !isEdit && userScheduleQuery.isLoading
+
   return (
     <Dialog
       open={open}
@@ -383,13 +418,15 @@ export function ServiceActionDialog({
           return
         }
         // En caso contrario, permitimos el cierre y llamamos a handleOpenChange
-        !isOpen && handleOpenChange(isOpen)
+        if (!isOpen) {
+          handleOpenChange(isOpen)
+        }
       }}
     >
       <DialogContent className='sm:max-w-4xl'>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+            onSubmit={form.handleSubmit(onSubmit, () => {
               toast.error('Completa todos los campos por favor')
             })}
           >
@@ -572,7 +609,7 @@ export function ServiceActionDialog({
                                 placeholder='Ej: 1234567890123'
                                 {...field}
                                 value={field.value || ''}
-                                onFocus={(e) => {
+                                onFocus={() => {
                                   if (field.value === 0) {
                                     field.onChange('')
                                   }
@@ -653,7 +690,7 @@ export function ServiceActionDialog({
                                 step='1'
                                 {...field}
                                 value={field.value || ''}
-                                onFocus={(e) => {
+                                onFocus={() => {
                                   if (field.value === 0) {
                                     field.onChange(undefined)
                                   }
@@ -703,31 +740,37 @@ export function ServiceActionDialog({
               </TabsContent>
 
               {/* Schedule Tab */}
-              <TabsContent value='schedule' className='space-y-4 pt-4'>
+              <TabsContent value='schedule'>
                 <ScrollArea className='h-[400px] pr-4'>
                   <div className='space-y-4'>
-                    <FormLabel htmlFor='schedule'>
-                      Horario del Servicio
-                    </FormLabel>
-                    <div className='-mx-2'>
+                    {isLoadingSchedule ? (
+                      <div className='flex items-center justify-center py-8'>
+                        <div className='flex items-center gap-3'>
+                          <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-primary'></div>
+                          <span className='text-sm text-muted-foreground'>
+                            Cargando horario predeterminado...
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
                       <ScheduleSection form={form} />
-                    </div>
+                    )}
                   </div>
                 </ScrollArea>
               </TabsContent>
 
               {/* Photos Tab */}
-              <TabsContent value="photos" className="space-y-4 pt-4">
-                <ScrollArea className="h-[400px] pr-4">
-                  <div className="space-y-4">
+              <TabsContent value='photos' className='space-y-4 pt-4'>
+                <ScrollArea className='h-[400px] pr-4'>
+                  <div className='space-y-4'>
                     <FormField
                       control={form.control}
-                      name="photos"
-                      render={({ field }) => (
+                      name='photos'
+                      render={() => (
                         <FormItem>
                           <FormLabel>Fotos del Servicio</FormLabel>
                           <FormControl>
-                            <div className="mb-2">
+                            <div className='mb-2'>
                               <FileUpload
                                 maxFiles={5}
                                 maxSize={100 * 1024 * 1024}
@@ -739,7 +782,6 @@ export function ServiceActionDialog({
                           <FormMessage />
                         </FormItem>
                       )}
-
                     />
                   </div>
                 </ScrollArea>
