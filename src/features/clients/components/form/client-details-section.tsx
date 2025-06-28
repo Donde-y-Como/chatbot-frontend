@@ -103,6 +103,9 @@ export function ClientDetailsSection({
                     <PopoverContent className='w-auto p-0' align='start'>
                       <Calendar
                         mode='single'
+                        locale={es}
+                        captionLayout='dropdown-years'
+                        fixedWeeks
                         selected={
                           field.value ? new Date(field.value) : undefined
                         }

@@ -111,7 +111,7 @@ export function CalendarSidebar({
                   locale={es}
                   mode='single'
                   selected={selectedDate}
-                  onSelect={(d) => setSelectedDate(d as Date)}
+                  onSelect={(d) => setSelectedDate(d)}
                 />
               </div>
               <EmployeesSelector
