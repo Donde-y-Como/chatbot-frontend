@@ -1,49 +1,44 @@
-import { ColumnDef, FilterFn } from '@tanstack/react-table'
-import { Calendar, Clock, DollarSign, Users } from 'lucide-react'
-import { Badge } from '@/components/ui/badge.tsx'
+import { ColumnDef } from '@tanstack/react-table'
+import { Calendar, Clock, DollarSign, Package, Users } from 'lucide-react'
+import { getWorkDaysSummary } from '@/lib/utils.ts'
+import { Badge } from '@/components/ui/badge'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip.tsx'
-import { DataTableColumnHeader } from '@/components/tables/data-table-column-header.tsx'
-import { Service } from '@/features/appointments/types.ts'
+} from '@/components/ui/tooltip'
+import { DataTableColumnHeader } from '@/components/tables/data-table-column-header'
+import { Service } from '@/features/appointments/types'
+import { Category, ProductTag, Unit } from '@/features/products/types.ts'
+import { getServiceStatus } from '../utils/serviceUtils'
 import { DataTableRowActions } from './data-table-row-actions'
-import { dayInitialsMap } from '@/features/employees/types'
-
-// Helper function to get work days summary
-function getWorkDaysSummary(schedule: Record<string, any>): string {
-  if (!schedule || Object.keys(schedule).length === 0) return 'Sin horario'
-  
-  const workDays = Object.keys(schedule)
-    .filter(day => schedule[day] && schedule[day].startAt !== undefined)
-    .map(day => dayInitialsMap[day as keyof typeof dayInitialsMap])
-    .filter(Boolean)
-  
-  if (workDays.length === 0) return 'Sin horario'
-  if (workDays.length === 7) return 'L-DO'
-  if (workDays.length === 6 && !workDays.includes('DO')) return 'L-SA'
-  if (workDays.length === 5 && workDays.includes('LU') && workDays.includes('VI')) return 'L-V'
-  
-  return workDays.join(', ')
-}
 
 // Global filter function for multi-field search
-export const globalFilterFn: FilterFn<Service> = (row, columnId, value) => {
+export function globalFilterFn(
+  row: { original: Service },
+  _columnId: string,
+  value: string
+) {
   if (!value) return true
 
   const service = row.original
   const searchValue = String(value).toLowerCase()
 
-  // Search only in name and description
+  // Search in name, description, and SKU
   return (
     service.name.toLowerCase().includes(searchValue) ||
-    service.description.toLowerCase().includes(searchValue)
+    service.description.toLowerCase().includes(searchValue) ||
+    (service.productInfo?.sku &&
+      service.productInfo.sku.toLowerCase().includes(searchValue))
   )
 }
 
-export const createColumns = (): ColumnDef<Service>[] => [
+export const createColumns = (
+  units: Unit[] = [],
+  categories: Category[] = [],
+  tags: ProductTag[] = []
+): ColumnDef<Service>[] => [
   {
     accessorKey: 'name',
     header: ({ column }) => (
@@ -241,7 +236,7 @@ export const createColumns = (): ColumnDef<Service>[] => [
     cell: ({ row }) => {
       const schedule = row.original.schedule
       const workDays = getWorkDaysSummary(schedule)
-      
+
       return (
         <Badge variant='outline' className='text-xs font-medium'>
           {workDays}
@@ -251,6 +246,131 @@ export const createColumns = (): ColumnDef<Service>[] => [
     enableSorting: false,
     enableHiding: true,
   },
+
+  // Hidden filter columns
+  {
+    id: 'status',
+    accessorFn: (row) => getServiceStatus(row),
+    header: 'Status',
+    cell: ({ row }) => {
+      const status = getServiceStatus(row.original)
+      const variant = status === 'active' ? 'default' : 'secondary'
+      const label = status === 'active' ? 'Activo' : 'Inactivo'
+
+      return (
+        <Badge variant={variant} className='text-xs'>
+          <Package className='w-3 h-3 mr-1' />
+          {label}
+        </Badge>
+      )
+    },
+    filterFn: (row, id, value) => {
+      return value.includes(getServiceStatus(row.original))
+    },
+    enableSorting: false,
+    enableHiding: true,
+  },
+  {
+    id: 'categoryIds',
+    accessorFn: (row) => row.productInfo?.categoryIds || [],
+    header: 'Categorias',
+    cell: ({ row }) => {
+      const categoryIds = row.original.productInfo?.categoryIds || []
+      if (categoryIds.length === 0)
+        return (
+          <span className='text-muted-foreground text-xs'>Sin categoría</span>
+        )
+
+      const categoryNames = categoryIds
+        .map((id) => categories.find((cat) => cat.id === id)?.name)
+        .filter(Boolean)
+        .slice(0, 2)
+
+      return (
+        <div className='flex flex-wrap gap-1'>
+          {categoryNames.map((name, idx) => (
+            <Badge key={idx} variant='outline' className='text-xs'>
+              {name}
+            </Badge>
+          ))}
+          {categoryIds.length > 2 && (
+            <Badge variant='outline' className='text-xs'>
+              +{categoryIds.length - 2}
+            </Badge>
+          )}
+        </div>
+      )
+    },
+    filterFn: (row, id, value) => {
+      const categoryIds = row.original.productInfo?.categoryIds || []
+      return value.some((filterValue: string) =>
+        categoryIds.includes(filterValue)
+      )
+    },
+    enableSorting: false,
+    enableHiding: true,
+  },
+  {
+    id: 'tagIds',
+    accessorFn: (row) => row.productInfo?.tagIds || [],
+    header: 'Etiquetas',
+    cell: ({ row }) => {
+      const tagIds = row.original.productInfo?.tagIds || []
+      if (tagIds.length === 0)
+        return (
+          <span className='text-muted-foreground text-xs'>Sin etiquetas</span>
+        )
+
+      const tagNames = tagIds
+        .map((id) => tags.find((tag) => tag.id === id)?.name)
+        .filter(Boolean)
+        .slice(0, 2)
+
+      return (
+        <div className='flex flex-wrap gap-1'>
+          {tagNames.map((name, idx) => (
+            <Badge key={idx} variant='secondary' className='text-xs'>
+              {name}
+            </Badge>
+          ))}
+          {tagIds.length > 2 && (
+            <Badge variant='secondary' className='text-xs'>
+              +{tagIds.length - 2}
+            </Badge>
+          )}
+        </div>
+      )
+    },
+    filterFn: (row, id, value) => {
+      const tagIds = row.original.productInfo?.tagIds || []
+      return value.some((filterValue: string) => tagIds.includes(filterValue))
+    },
+    enableSorting: false,
+    enableHiding: true,
+  },
+  {
+    id: 'unitId',
+    accessorFn: (row) => row.unidadMedida?.id || '',
+    header: 'Unidad',
+    cell: ({ row }) => {
+      const unit = row.original.unidadMedida
+      if (!unit)
+        return <span className='text-muted-foreground text-xs'>Sin unidad</span>
+
+      return (
+        <Badge variant='outline' className='text-xs'>
+          {unit.name} ({unit.abbreviation})
+        </Badge>
+      )
+    },
+    filterFn: (row, id, value) => {
+      const unitId = row.original.unidadMedida?.id || ''
+      return value.includes(unitId)
+    },
+    enableSorting: false,
+    enableHiding: true,
+  },
+
   {
     id: 'actions',
     cell: DataTableRowActions,

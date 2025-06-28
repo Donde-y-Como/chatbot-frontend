@@ -13,7 +13,7 @@ export function useGetServices() {
       }
     },
     // Using a short staleTime to allow refreshes
-    staleTime: 5000,
+    staleTime: 50000,
     retry: 2, // Retry failed requests up to 2 times
   })
 }

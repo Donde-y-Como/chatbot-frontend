@@ -7,6 +7,7 @@ import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import { DataTableRowActions } from './data-table-row-actions'
 import { Employee, dayInitialsMap } from '../types'
+import { getWorkDaysSummary } from '@/lib/utils.ts'
 
 // Global filter function for multi-field search
 export const globalFilterFn: FilterFn<Employee> = (row, columnId, value) => {
@@ -24,22 +25,6 @@ export const globalFilterFn: FilterFn<Employee> = (row, columnId, value) => {
   return matches
 }
 
-// Helper function to get work days summary
-function getWorkDaysSummary(schedule: Record<string, any>): string {
-  if (!schedule || Object.keys(schedule).length === 0) return 'Sin horario'
-  
-  const workDays = Object.keys(schedule)
-    .filter(day => schedule[day] && schedule[day].startAt !== undefined)
-    .map(day => dayInitialsMap[day as keyof typeof dayInitialsMap])
-    .filter(Boolean)
-  
-  if (workDays.length === 0) return 'Sin horario'
-  if (workDays.length === 7) return 'L-DO'
-  if (workDays.length === 6 && !workDays.includes('DO')) return 'L-SA'
-  if (workDays.length === 5 && workDays.includes('LU') && workDays.includes('VI')) return 'L-V'
-  
-  return workDays.join(', ')
-}
 
 // Role color mapping
 const getRoleVariant = (role: string): 'default' | 'secondary' | 'destructive' | 'outline' => {

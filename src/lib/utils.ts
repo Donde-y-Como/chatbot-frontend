@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from 'clsx'
 import { UserIcon } from 'lucide-react'
 import { twMerge } from 'tailwind-merge'
 import { Chat, PlatformName } from '@/features/chats/ChatTypes.ts'
-import { Employee } from '@/features/employees/types.ts'
+import { dayInitialsMap, Employee } from '@/features/employees/types.ts'
 import { UserData } from '../features/auth/types'
 
 export function cn(...inputs: ClassValue[]) {
@@ -129,4 +129,22 @@ export const isValidFileType = (mimetype: string): boolean => {
   ]
 
   return allowedTypes.includes(mimetype) && !dangerousTypes.includes(mimetype)
+}
+
+
+// Helper function to get work days summary
+export function getWorkDaysSummary(schedule: Record<string, any>): string {
+  if (!schedule || Object.keys(schedule).length === 0) return 'Sin horario'
+
+  const workDays = Object.keys(schedule)
+    .filter(day => schedule[day] && schedule[day].startAt !== undefined)
+    .map(day => dayInitialsMap[day as keyof typeof dayInitialsMap])
+    .filter(Boolean)
+
+  if (workDays.length === 0) return 'Sin horario'
+  if (workDays.length === 7) return 'L-DO'
+  if (workDays.length === 6 && !workDays.includes('DO')) return 'L-SA'
+  if (workDays.length === 5 && workDays.includes('LU') && workDays.includes('VI')) return 'L-V'
+
+  return workDays.join(', ')
 }
