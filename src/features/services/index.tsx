@@ -19,7 +19,6 @@ import { ServicesDialogs } from './components/services-dialogs'
 import { ServicesPrimaryButtons } from './components/services-primary-buttons'
 import {
   DataTableFacetedFilter,
-  generateAvailabilityOptions,
   generateCategoryOptions,
   generateServiceStatusOptions,
   generateTagOptions,
@@ -50,7 +49,6 @@ function ServicesContent() {
 
   // Generate filter options
   const statusOptions = useMemo(() => generateServiceStatusOptions(), [])
-  const availabilityOptions = useMemo(() => generateAvailabilityOptions(), [])
   const categoryOptions = useMemo(
     () => generateCategoryOptions(categoriesData || []),
     [categoriesData]
@@ -176,11 +174,6 @@ function ServicesContent() {
                     column={table.getColumn('status')}
                     title='Estado'
                     options={statusOptions}
-                  />
-                  <DataTableFacetedFilter
-                    column={table.getColumn('availability')}
-                    title='Disponibilidad'
-                    options={availabilityOptions}
                   />
                   <DataTableFacetedFilter
                     column={table.getColumn('categoryIds')}
