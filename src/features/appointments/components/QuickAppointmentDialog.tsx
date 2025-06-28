@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
@@ -18,13 +18,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -32,8 +25,8 @@ import { CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
 import { CreateOrSelectClient } from './CreateOrSelectClient'
+import { CreateOrSelectMultipleServices } from './CreateOrSelectMultipleServices'
 import { useGetServices } from '../hooks/useGetServices'
 import { useDialogState } from '../contexts/DialogStateContext'
 import { appointmentService } from '../appointmentService'
@@ -47,7 +40,10 @@ interface Props {
   onSuccess?: (appointmentId?: string) => void
   initialClientId?: string
   onClientChange?: (clientId: string) => void
-  initialServiceId?: string 
+  initialServiceId?: string
+  defaultDate?: Date
+  defaultStartTime?: number
+  defaultEndTime?: number
 }
 
 export function QuickAppointmentDialog({
@@ -57,17 +53,38 @@ export function QuickAppointmentDialog({
   initialClientId,
   onClientChange,
   initialServiceId,
+  defaultDate,
+  defaultStartTime,
+  defaultEndTime,
 }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [hasPreSelectedTime, setHasPreSelectedTime] = useState(defaultStartTime !== undefined && defaultEndTime !== undefined)
+  const [userModifiedTime, setUserModifiedTime] = useState(false)
   const { data: services = [], isLoading: servicesLoading } = useGetServices()
   const { openDialog, closeDialog } = useDialogState()
 
   // Default values for quick appointment
-  const defaultValues = useMemo(() => ({
-    ...getDefaultQuickAppointment(),
-    clientId: initialClientId || '',
-    serviceIds: initialServiceId ? [initialServiceId] : [] 
-  }), [initialClientId, initialServiceId])
+  const defaultValues = useMemo(() => {
+    const hasTimeRange = defaultStartTime !== undefined && defaultEndTime !== undefined
+    console.log('QuickAppointmentDialog defaultValues:', {
+      defaultStartTime,
+      defaultEndTime,
+      hasTimeRange
+    })
+    return {
+      ...getDefaultQuickAppointment(),
+      clientId: initialClientId || '',
+      serviceIds: initialServiceId ? [initialServiceId] : [],
+      date: defaultDate || new Date(),
+      startAt: defaultStartTime ?? 540, // 9:00 AM if not provided
+      endAt: defaultEndTime ?? 600,     // 10:00 AM if not provided
+    }
+  }, [initialClientId, initialServiceId, defaultDate, defaultStartTime, defaultEndTime])
+
+  // Check if we have a pre-selected time range
+  useEffect(() => {
+    setHasPreSelectedTime(defaultStartTime !== undefined && defaultEndTime !== undefined)
+  }, [defaultStartTime, defaultEndTime])
 
   const form = useForm<QuickAppointmentFormValues>({
     resolver: zodResolver(quickAppointmentSchema),
@@ -75,15 +92,16 @@ export function QuickAppointmentDialog({
   })
 
   const { reset, watch } = form
-  const selectedServiceIds = watch('serviceIds') || []
+  const selectedServiceIds = useMemo(() => watch('serviceIds') || [], [watch])
 
   // Reset form when dialog closes
   const handleOpenChange = useCallback((state: boolean) => {
     if (state) {
       openDialog()
+      // Don't reset here, let useEffect handle it with proper values
     } else {
       closeDialog()
-      reset()
+      reset() // Reset to clean state when closing
     }
     onOpenChange(state)
   }, [reset, onOpenChange, openDialog, closeDialog])
@@ -91,15 +109,12 @@ export function QuickAppointmentDialog({
   React.useEffect(() => {
     if (open) {
       openDialog()
-      reset({
-        ...defaultValues,
-        clientId: initialClientId || '',
-        serviceIds: initialServiceId ? [initialServiceId] : []
-      })
+      reset(defaultValues)
+      setUserModifiedTime(false) // Reset user modification flag
     } else {
       closeDialog()
     }
-  }, [open, reset, defaultValues, initialClientId, initialServiceId, openDialog, closeDialog])
+  }, [open, reset, defaultValues, openDialog, closeDialog])
 
   const handleSuccess = useCallback(async () => {
     reset()
@@ -144,21 +159,6 @@ export function QuickAppointmentDialog({
     }
   }
 
-  // Service selection handlers
-  const handleServiceToggle = (serviceId: string) => {
-    const currentServices = form.getValues('serviceIds') || []
-    const updatedServices = currentServices.includes(serviceId)
-      ? currentServices.filter(id => id !== serviceId)
-      : [...currentServices, serviceId]
-    
-    form.setValue('serviceIds', updatedServices)
-  }
-
-  const handleRemoveService = (serviceId: string) => {
-    const currentServices = form.getValues('serviceIds') || []
-    const updatedServices = currentServices.filter(id => id !== serviceId)
-    form.setValue('serviceIds', updatedServices)
-  }
 
   // Calculate total duration from selected services
   const totalDuration = useMemo(() => {
@@ -186,7 +186,7 @@ export function QuickAppointmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl max-h-[90wh]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
             toast.error('Completa todos los campos por favor')
@@ -198,8 +198,8 @@ export function QuickAppointmentDialog({
               </DialogDescription>
             </DialogHeader>
 
-            <ScrollArea className="h-[500px] pr-4 mt-4">
-              <div className="space-y-6">
+            <ScrollArea className="">
+              <div className="space-y-6 p-1">
                 {/* Cliente */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Cliente</h3>
@@ -235,55 +235,27 @@ export function QuickAppointmentDialog({
                   <FormField
                     control={form.control}
                     name="serviceIds"
-                    render={() => (
+                    render={({ field }) => (
                       <FormItem>
                         <FormLabel>Seleccionar Servicios</FormLabel>
-                        <div className="space-y-3">
-                          {/* Selected services */}
-                          {selectedServiceIds.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {selectedServiceIds.map((serviceId) => {
-                                const service = services.find(s => s.id === serviceId)
-                                return service ? (
-                                  <Badge 
-                                    key={serviceId} 
-                                    variant="secondary" 
-                                    className="flex items-center gap-1"
-                                  >
-                                    {service.name}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleRemoveService(serviceId)}
-                                      className="ml-1 hover:bg-destructive hover:text-destructive-foreground rounded-full"
-                                    >
-                                      ×
-                                    </button>
-                                  </Badge>
-                                ) : null
-                              })}
-                            </div>
-                          )}
-                          
-                          {/* Service selection */}
-                          <Select
-                            value=""
-                            onValueChange={handleServiceToggle}
-                            disabled={servicesLoading}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Agregar servicio" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {services
-                                .filter(service => !selectedServiceIds.includes(service.id))
-                                .map((service) => (
-                                  <SelectItem key={service.id} value={service.id}>
-                                    {service.name} - {service.duration.value} {service.duration.unit === 'hours' ? 'hrs' : 'min'}
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        <FormControl>
+                          <CreateOrSelectMultipleServices
+                            selectedIds={field.value || []}
+                            onChange={(ids) => {
+                              field.onChange(ids)
+                            }}
+                            onToggle={(id) => {
+                              const currentServices = field.value || []
+                              const updatedServices = currentServices.includes(id)
+                                ? currentServices.filter((serviceId: string) => serviceId !== id)
+                                : [...currentServices, id]
+                              
+                              field.onChange(updatedServices)
+                            }}
+                            maxHeight="200px"
+                            placeholder="Buscar o crear servicio..."
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -355,8 +327,15 @@ export function QuickAppointmentDialog({
                               onChange={(e) => {
                                 const minutes = timeToMinutes(e.target.value)
                                 field.onChange(minutes)
-                                // Auto-update end time
-                                form.setValue('endAt', minutes + totalDuration)
+                                setUserModifiedTime(true)
+                                
+                                // Auto-update end time logic:
+                                // 1. If no pre-selected time range, always auto-update
+                                // 2. If pre-selected time range but user has services selected, auto-update
+                                // 3. If pre-selected time range and no services, preserve the time range
+                                if (!hasPreSelectedTime || (hasPreSelectedTime && selectedServiceIds.length > 0)) {
+                                  form.setValue('endAt', minutes + totalDuration)
+                                }
                               }}
                               aria-required="true"
                             />
@@ -401,6 +380,7 @@ export function QuickAppointmentDialog({
 
             <DialogFooter className="mt-6 gap-2">
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting}
