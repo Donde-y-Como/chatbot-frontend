@@ -52,9 +52,28 @@ export function useBookingMutations() {
       
       toast.success("Reserva creada correctamente")
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error creating booking:', error)
-      toast.error("No se pudo crear la reserva. Intenta de nuevo.")
+      
+      // Extraer mensaje de error específico si está disponible
+      let errorMessage = "No se pudo crear la reserva. Intenta de nuevo."
+      
+      if (error?.response?.data?.message) {
+        const apiMessage = error.response.data.message.toLowerCase()
+        if (apiMessage.includes('capacity') || apiMessage.includes('capacidad') || 
+            apiMessage.includes('full') || apiMessage.includes('completo') ||
+            apiMessage.includes('exceed') || apiMessage.includes('supera')) {
+          errorMessage = "El número de participantes supera los espacios disponibles para el evento."
+        } else if (apiMessage.includes('available') || apiMessage.includes('disponible')) {
+          errorMessage = "No hay espacios disponibles para esta fecha."
+        } else {
+          errorMessage = error.response.data.message
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
+      toast.error(errorMessage)
     },
   })
 

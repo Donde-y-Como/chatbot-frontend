@@ -33,13 +33,16 @@ export const EventApiService = {
 
   bookEvent: async (data: { eventId: string, clientId: string, date: string, participants: number, notes?: string, status?: string, amount?: number, paymentStatus?: string }) => {
     const { eventId, ...bookData } = data;
-    const response = await api.post(`/events/${eventId}/book`, { ...bookData })
-
-    if (response.status !== 201) {
+    try {
+      const response = await api.post(`/events/${eventId}/book`, { ...bookData })
+      return response.data
+    } catch (error: any) {
+      // Re-lanzar el error con más contexto para manejo en el hook
+      if (error.response?.status === 400 || error.response?.status === 409) {
+        throw error // Mantener el error original para que el hook pueda procesarlo
+      }
       throw new Error('Error booking event')
     }
-    
-    return response.data
   },
 
   cancelBooking: async (bookingId: string) => {

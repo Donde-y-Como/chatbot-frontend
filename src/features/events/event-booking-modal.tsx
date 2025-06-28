@@ -131,6 +131,22 @@ export function EventBookingModal({
       return;
     }
     
+    // Validar capacidad antes de enviar (contar todas las reservas)
+    if (event?.capacity.isLimited && event.capacity.maxCapacity) {
+      const currentParticipants = bookingsForSelectedDate.reduce((sum, booking) => sum + booking.participants, 0);
+      const totalAfterBooking = currentParticipants + data.participants;
+      
+      if (totalAfterBooking > event.capacity.maxCapacity) {
+        const availableSpots = event.capacity.maxCapacity - currentParticipants;
+        toast.error(
+          availableSpots > 0 
+            ? `No hay suficientes espacios disponibles. Solo quedan ${availableSpots} lugar${availableSpots !== 1 ? 'es' : ''} disponible${availableSpots !== 1 ? 's' : ''} para esta fecha.`
+            : 'No hay espacios disponibles para esta fecha.'
+        );
+        return;
+      }
+    }
+    
     try {
       const bookingData = {
         clientId: data.clientId,
@@ -182,6 +198,34 @@ export function EventBookingModal({
     );
   }, [event, selectedDate]);
 
+  // Helper functions for booking statistics
+  const getBookingStats = useMemo(() => {
+    const confirmedBookings = bookingsForSelectedDate.filter(b => b.status === 'confirmada');
+    const pendingBookings = bookingsForSelectedDate.filter(b => b.status === 'pendiente');
+    const activeBookings = bookingsForSelectedDate.filter(b => 
+      ['confirmada', 'pendiente', 'reprogramada'].includes(b.status)
+    );
+    
+    return {
+      confirmed: {
+        count: confirmedBookings.length,
+        participants: confirmedBookings.reduce((sum, b) => sum + b.participants, 0)
+      },
+      pending: {
+        count: pendingBookings.length,
+        participants: pendingBookings.reduce((sum, b) => sum + b.participants, 0)
+      },
+      active: {
+        count: activeBookings.length,
+        participants: activeBookings.reduce((sum, b) => sum + b.participants, 0)
+      },
+      total: {
+        count: bookingsForSelectedDate.length,
+        participants: bookingsForSelectedDate.reduce((sum, b) => sum + b.participants, 0)
+      }
+    };
+  }, [bookingsForSelectedDate]);
+
 
 
   if (isEventLoading || isClientsLoading) {
@@ -198,12 +242,101 @@ export function EventBookingModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Administrar Reservas</DialogTitle>
+          <DialogTitle>Administrar Reservas - {event?.name}</DialogTitle>
           <DialogDescription>
             {selectedDate ? format(selectedDate, "EEEE, d 'de' MMMM yyyy", { locale: es }) : ''}
           </DialogDescription>
+          
+          {/* Event Capacity Information */}
+          {event && (
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-medium text-sm">Información del Evento</h4>
+                {event.capacity.isLimited ? (
+                  <Badge variant={getBookingStats.total.participants >= (event.capacity.maxCapacity || 0) ? "destructive" : "secondary"}>
+                    {event.capacity.isLimited && event.capacity.maxCapacity ? 
+                      `${getBookingStats.total.participants}/${event.capacity.maxCapacity} asistentes` :
+                      `${getBookingStats.total.participants} asistentes`
+                    }
+                  </Badge>
+                ) : (
+                  <Badge variant="outline">
+                    {getBookingStats.total.participants} asistentes • Sin límite
+                  </Badge>
+                )}
+              </div>
+              
+              {event.capacity.isLimited && event.capacity.maxCapacity ? (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Capacidad total:</span>
+                    <span className="font-medium">{event.capacity.maxCapacity} personas</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Reservas confirmadas:</span>
+                    <span className="font-medium text-green-600">{getBookingStats.confirmed.participants} personas</span>
+                  </div>
+                  {getBookingStats.pending.participants > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span>Reservas pendientes:</span>
+                      <span className="font-medium text-yellow-600">{getBookingStats.pending.participants} personas</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span>Espacios disponibles:</span>
+                    <span className={`font-medium ${
+                      (event.capacity.maxCapacity - getBookingStats.total.participants) > 0 
+                        ? 'text-green-600' 
+                        : 'text-red-600'
+                    }`}>
+                      {Math.max(0, event.capacity.maxCapacity - getBookingStats.total.participants)} personas
+                    </span>
+                  </div>
+                  
+                  {/* Visual capacity bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        getBookingStats.total.participants >= event.capacity.maxCapacity 
+                          ? 'bg-red-500' 
+                          : getBookingStats.total.participants / event.capacity.maxCapacity > 0.8
+                          ? 'bg-yellow-500'
+                          : 'bg-green-500'
+                      }`}
+                      style={{ 
+                        width: `${Math.min(100, (getBookingStats.total.participants / event.capacity.maxCapacity) * 100)}%` 
+                      }}
+                    />
+                  </div>
+                  <div className="text-xs text-muted-foreground text-center">
+                    {((getBookingStats.total.participants / event.capacity.maxCapacity) * 100).toFixed(0)}% ocupado
+                  </div>
+                  
+                  {/* Booking breakdown */}
+                  <div className="pt-2 border-t border-muted-foreground/10">
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <div>Total de reservas: {getBookingStats.total.count} ({getBookingStats.total.participants} asistentes)</div>
+                      <div className="flex gap-4">
+                        <span>• Confirmadas: {getBookingStats.confirmed.count} ({getBookingStats.confirmed.participants}p)</span>
+                        <span>• Pendientes: {getBookingStats.pending.count} ({getBookingStats.pending.participants}p)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">
+                    Este evento no tiene límite de capacidad
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Total de reservas: {getBookingStats.total.count} ({getBookingStats.total.participants} asistentes)
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </DialogHeader>
 
         <div className="space-y-6">
@@ -249,15 +382,39 @@ export function EventBookingModal({
               <Controller
                 control={control}
                 name="participants"
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    type="number"
-                    min={1}
-                    className="w-full"
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                )}
+                render={({ field }) => {
+                  const currentParticipants = bookingsForSelectedDate.reduce((sum, booking) => sum + booking.participants, 0);
+                  const availableSpots = event?.capacity.isLimited && event.capacity.maxCapacity 
+                    ? event.capacity.maxCapacity - currentParticipants 
+                    : null;
+                  const maxAllowed = availableSpots !== null ? Math.min(availableSpots, event!.capacity.maxCapacity!) : undefined;
+                  
+                  return (
+                    <>
+                      <Input
+                        {...field}
+                        type="number"
+                        min={1}
+                        max={maxAllowed}
+                        className="w-full"
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                      {event?.capacity.isLimited && event.capacity.maxCapacity && (
+                        <div className="text-sm text-muted-foreground">
+                          {availableSpots !== null && availableSpots > 0 ? (
+                            <span className="text-blue-600">
+                              {availableSpots} lugar{availableSpots !== 1 ? 'es' : ''} disponible{availableSpots !== 1 ? 's' : ''} para esta fecha
+                            </span>
+                          ) : (
+                            <span className="text-red-600">
+                              No hay espacios disponibles para esta fecha
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )
+                }}
               />
               {errors.participants && (
                 <p className="text-sm text-red-600">{errors.participants.message}</p>
