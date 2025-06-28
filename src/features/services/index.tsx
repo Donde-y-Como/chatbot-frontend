@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Briefcase, Clock, DollarSign, Timer, TrendingUp } from 'lucide-react'
+import { Briefcase, DollarSign, Timer, TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -93,7 +93,7 @@ function ServicesContent() {
         </div>
 
         {/* Statistics */}
-        <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6'>
+        <div className='grid gap-4 md:grid-cols-3 mb-6'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
               <CardTitle className='text-sm font-medium'>
@@ -111,39 +111,6 @@ function ServicesContent() {
                     <span>•</span>
                     <span className='text-red-500'>
                       {stats.inactive} inactivos
-                    </span>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>
-                Disponibilidad
-              </CardTitle>
-              <Clock className='h-4 w-4 text-muted-foreground' />
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl font-bold text-green-600'>
-                {stats.available}
-              </div>
-              <div className='flex items-center gap-1 text-xs'>
-                <span className='text-green-600'>Disponibles</span>
-                {stats.limited > 0 && (
-                  <>
-                    <span>•</span>
-                    <span className='text-yellow-600'>
-                      {stats.limited} limitados
-                    </span>
-                  </>
-                )}
-                {stats.unavailable > 0 && (
-                  <>
-                    <span>•</span>
-                    <span className='text-red-500'>
-                      {stats.unavailable} no disponibles
                     </span>
                   </>
                 )}

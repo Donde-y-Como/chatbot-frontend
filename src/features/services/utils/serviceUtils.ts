@@ -36,32 +36,6 @@ export const getServiceStatus = (service: Service) => {
   return service.productInfo?.status || ProductStatus.ACTIVE
 }
 
-// Check if service is available based on schedule
-const isServiceAvailable = (service: Service) => {
-  const schedule = service.schedule
-  if (!schedule) return false
-  
-  // Check if service has any active schedule
-  const hasActiveSchedule = Object.values(schedule).some(
-    (timeRange) => timeRange.startAt !== timeRange.endAt
-  )
-  
-  return hasActiveSchedule
-}
-
-// Get availability status for a service
-const getAvailabilityStatus = (service: Service) => {
-  const isAvailable = isServiceAvailable(service)
-  if (!isAvailable) return 'unavailable'
-  
-  // Check if service has limited availability (less than 5 days per week)
-  const activeDays = Object.values(service.schedule).filter(
-    (timeRange) => timeRange.startAt !== timeRange.endAt
-  ).length
-  
-  if (activeDays < 5) return 'limited'
-  return 'available'
-}
 
 // Calculate service stats
 export const calculateServiceStats = (services: Service[]) => {
@@ -70,9 +44,6 @@ export const calculateServiceStats = (services: Service[]) => {
       total: 0,
       active: 0,
       inactive: 0,
-      available: 0,
-      limited: 0,
-      unavailable: 0,
       totalValue: 0,
       averagePrice: 0,
       averageDuration: 0,
@@ -115,15 +86,6 @@ export const calculateServiceStats = (services: Service[]) => {
         acc.inactive++
       }
 
-      // Availability calculations
-      const availability = getAvailabilityStatus(service)
-      if (availability === 'available') {
-        acc.available++
-      } else if (availability === 'limited') {
-        acc.limited++
-      } else {
-        acc.unavailable++
-      }
 
       // Financial calculations
       const priceAmount = service.price?.amount || 0
@@ -185,9 +147,6 @@ export const calculateServiceStats = (services: Service[]) => {
       total: 0,
       active: 0,
       inactive: 0,
-      available: 0,
-      limited: 0,
-      unavailable: 0,
       totalValue: 0,
       totalPriceSum: 0,
       totalDuration: 0,
@@ -200,9 +159,6 @@ export const calculateServiceStats = (services: Service[]) => {
     total: stats.total,
     active: stats.active,
     inactive: stats.inactive,
-    available: stats.available,
-    limited: stats.limited,
-    unavailable: stats.unavailable,
     totalValue: stats.totalValue,
     averagePrice: stats.total > 0 ? stats.totalPriceSum / stats.total : 0,
     averageDuration: stats.total > 0 ? stats.totalDuration / stats.total : 0,
