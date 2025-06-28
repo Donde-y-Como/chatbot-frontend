@@ -24,7 +24,7 @@ export function ServiceFilter({
 
   return (
     <ScrollArea orientation="horizontal" className="w-full overflow-x-auto overflow-y-hidden min-h-fit whitespace-nowrap">
-      <div className="flex space-x-2 p-4 ml-16">
+      <div className="flex space-x-2 p-4 sm:ml-16">
         <Badge
           variant={selectedService === 'all' ? 'default' : 'secondary'}
           className="cursor-pointer transition-all duration-200 hover:scale-105"

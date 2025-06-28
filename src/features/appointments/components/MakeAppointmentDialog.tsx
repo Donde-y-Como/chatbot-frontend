@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { useAppointmentForm } from '../hooks/useAppointmentForm'
+import { useDialogState } from '../contexts/DialogStateContext'
 import { MinutesTimeRange } from '../types'
 import { AppointmentStepIndicator } from './AppointmentStepIndicator'
 import {
@@ -37,6 +38,7 @@ export function MakeAppointmentDialog({
   defaultTimeRange
 }: MakeAppointmentDialogProps = {}) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
+  const { openDialog, closeDialog } = useDialogState()
   const {
     activeStep,
     clientId,
@@ -96,7 +98,12 @@ export function MakeAppointmentDialog({
     }
 
     setOpen(newOpen);
-    if (!newOpen) resetForm();
+    if (newOpen) {
+      openDialog();
+    } else {
+      closeDialog();
+      resetForm();
+    }
   };
 
   const handleCancel = (e?: React.MouseEvent) => {
@@ -116,8 +123,13 @@ export function MakeAppointmentDialog({
     if (onOpenChange) {
       // Solo actualizar si hay control externo
       setInternalOpen(defaultOpen);
+      if (defaultOpen) {
+        openDialog();
+      } else {
+        closeDialog();
+      }
     }
-  }, [defaultOpen, onOpenChange]);
+  }, [defaultOpen, onOpenChange, openDialog, closeDialog]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

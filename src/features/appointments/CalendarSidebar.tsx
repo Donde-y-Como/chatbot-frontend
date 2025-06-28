@@ -74,7 +74,7 @@ export function CalendarSidebar({
           </CollapsibleTrigger>
 
           <ScrollArea className='h-screen pr-3'>
-            <CollapsibleContent className='mb-10 h-full space-y-6 flex flex-col'>
+            <CollapsibleContent className='h-full space-y-6 flex flex-col pb-24'>
               <div className='w-full hidden sm:block'>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -114,16 +114,13 @@ export function CalendarSidebar({
                   onSelect={(d) => setSelectedDate(d)}
                 />
               </div>
-              <EmployeesSelector
+            <EmployeesSelector
                 employees={employees}
                 selectedEmployees={selectedEmployees}
                 setSelectedEmployees={setSelectedEmployees}
                 isEmployeesOpen={isEmployeesOpen}
                 setIsEmployeesOpen={setIsEmployeesOpen}
               />
-              <br />
-              <br />
-              <br />
             </CollapsibleContent>
           </ScrollArea>
         </div>

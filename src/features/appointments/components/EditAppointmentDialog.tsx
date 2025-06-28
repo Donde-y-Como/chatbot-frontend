@@ -18,6 +18,7 @@ import {
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { Appointment } from '@/features/appointments/types.ts'
 import { useAppointmentForm } from '../hooks/useAppointmentForm'
+import { useDialogState } from '../contexts/DialogStateContext'
 import { isAppointmentPast } from '../utils/formatters'
 import { AppointmentStepIndicator } from './AppointmentStepIndicator'
 import {
@@ -35,14 +36,26 @@ export function EditAppointmentDialog({
   appointment: Appointment
 }) {
   const [open, setOpen] = useState(false)
+  const { openDialog, closeDialog } = useDialogState()
 
   const handleSuccess = () => {
     setOpen(false)
+    closeDialog()
   }
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevenir que se abra el diálogo padre
     setOpen(true)
+    openDialog()
+  }
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen)
+    if (newOpen) {
+      openDialog()
+    } else {
+      closeDialog()
+    }
   }
 
   const {
@@ -84,7 +97,7 @@ export function EditAppointmentDialog({
     appointment
   )
 
-  const handleOpenChange = (newOpen: boolean) => {
+  const handleDialogOpenChange = (newOpen: boolean) => {
     if (!newOpen && hasFilledFields()) {
       return
     }
@@ -96,6 +109,7 @@ export function EditAppointmentDialog({
     }
 
     setOpen(newOpen)
+    closeDialog()
   }
 
   const handleCancel = (e?: React.MouseEvent) => {
@@ -139,7 +153,7 @@ export function EditAppointmentDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>
         <Button size='sm' variant='outline' className='h-9' onClick={handleButtonClick}>
           <Edit className='h-4 w-4 mr-2' />

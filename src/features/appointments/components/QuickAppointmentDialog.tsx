@@ -35,6 +35,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { CreateOrSelectClient } from './CreateOrSelectClient'
 import { useGetServices } from '../hooks/useGetServices'
+import { useDialogState } from '../contexts/DialogStateContext'
 import { appointmentService } from '../appointmentService'
 import { quickAppointmentSchema, getDefaultQuickAppointment, QuickAppointmentFormValues, minutesToTime, timeToMinutes } from '../types-quick'
 import { toast } from 'sonner'
@@ -59,6 +60,7 @@ export function QuickAppointmentDialog({
 }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { data: services = [], isLoading: servicesLoading } = useGetServices()
+  const { openDialog, closeDialog } = useDialogState()
 
   // Default values for quick appointment
   const defaultValues = useMemo(() => ({
@@ -77,21 +79,27 @@ export function QuickAppointmentDialog({
 
   // Reset form when dialog closes
   const handleOpenChange = useCallback((state: boolean) => {
-    if (!state) {
+    if (state) {
+      openDialog()
+    } else {
+      closeDialog()
       reset()
     }
     onOpenChange(state)
-  }, [reset, onOpenChange])
+  }, [reset, onOpenChange, openDialog, closeDialog])
 
   React.useEffect(() => {
     if (open) {
+      openDialog()
       reset({
         ...defaultValues,
         clientId: initialClientId || '',
         serviceIds: initialServiceId ? [initialServiceId] : []
       })
+    } else {
+      closeDialog()
     }
-  }, [open, reset, defaultValues, initialClientId, initialServiceId])
+  }, [open, reset, defaultValues, initialClientId, initialServiceId, openDialog, closeDialog])
 
   const handleSuccess = useCallback(async () => {
     reset()

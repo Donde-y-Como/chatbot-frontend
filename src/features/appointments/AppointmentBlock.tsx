@@ -166,47 +166,48 @@ export function AppointmentBlock({
           onClick={(e) => e.stopPropagation()}
         >
           {duration > 60 ? (
-            <div className='p-2 flex flex-col h-full'>
-              <div className='flex items-center justify-between text-white text-sm font-semibold truncate'>
-                <span>{client.name}</span>
+            <div className='p-2 flex flex-col h-full min-w-0'>
+              <div className='flex items-center justify-between text-white text-sm font-semibold min-w-0'>
+                <span className='truncate flex-1 mr-2'>{client.name}</span>
                 <Badge
                   variant='outline'
-                  className='bg-white/20 text-white border-0 text-xs'
+                  className='bg-white/20 text-white border-0 text-xs flex-shrink-0'
                 >
                   {formatTime(appointment.timeRange.startAt)} -{' '}
                   {formatTime(appointment.timeRange.endAt)}
                 </Badge>
               </div>
-              <div className='text-white/90 text-xs truncate mt-1'>
+              <div className='text-white/90 text-xs mt-1 min-w-0'>
                 {appointment.status === 'cancelada' && (
-                  <span className='bg-red-500/80 text-white text-xs px-1 py-0.5 rounded mr-1'>
+                  <span className='bg-red-500/80 text-white text-xs px-1 py-0.5 rounded mr-1 inline-block'>
                     CANCELADA
                   </span>
                 )}
-                {appointment.serviceNames
-                  .map((s) => (s.length > 25 ? `${s.substring(0, 25)}...` : s))
-                  .join(', ')}
+                <span className='truncate block'>
+                  {appointment.serviceNames
+                    .map((s) => (s.length > 20 ? `${s.substring(0, 20)}...` : s))
+                    .join(', ')}
+                </span>
               </div>
               {employees.length === 0 && (
-                <div className='mt-auto text-white/80 text-xs flex items-center'>
-                  <Users className='w-3 h-3 mr-1' />
-                  <span>Sin asignar</span>
+                <div className='mt-auto text-white/80 text-xs flex items-center min-w-0'>
+                  <Users className='w-3 h-3 mr-1 flex-shrink-0' />
+                  <span className='truncate'>Sin asignar</span>
                 </div>
               )}
             </div>
           ) : (
-            <div className='p-1 flex items-center justify-between text-white text-xs font-semibold truncate h-full'>
-              <div className='flex items-center gap-1'>
-                <span>{client.name}</span>
+            <div className='p-1 flex items-center text-white text-xs font-semibold h-full min-w-0'>
+              <div className='flex items-center gap-1 flex-1 min-w-0'>
+                <span className='truncate'>{client.name}</span>
                 {appointment.status === 'cancelada' && (
-                  <span className='bg-red-500/80 text-white text-xs px-1 py-0.5 rounded'>
+                  <span className='bg-red-500/80 text-white text-xs px-1 py-0.5 rounded flex-shrink-0'>
                     CANCELADA
                   </span>
                 )}
               </div>
-              <span className='text-white/90'>
-                {formatTime(appointment.timeRange.startAt)} -{' '}
-                {formatTime(appointment.timeRange.endAt)}
+              <span className='text-white/90 text-xs ml-1 flex-shrink-0'>
+                {formatTime(appointment.timeRange.startAt)}
               </span>
             </div>
           )}
@@ -222,7 +223,7 @@ export function AppointmentBlock({
         </div>
       </DialogTrigger>
 
-      <DialogContent className='p-0 overflow-hidden bg-background rounded-lg shadow-lg max-w-4xl w-[95vw] sm:w-full max-h-[90vh] flex flex-col'>
+      <DialogContent className='p-0 overflow-hidden bg-background rounded-lg shadow-lg max-w-4xl w-[95vw] sm:w-full max-h-[90vh] md:max-h-[85vh] flex flex-col'>
         <DialogHeader className='flex-shrink-0 bg-primary/5 px-4 sm:px-6 py-4 border-b'>
           <div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4'>
             <div>
@@ -282,43 +283,45 @@ export function AppointmentBlock({
           </DialogDescription>
         </DialogHeader>
 
-        <div className='flex-1 overflow-y-auto px-4 sm:px-6 py-6 min-h-0'>
-          <div className='space-y-6'>
+        <div className='flex-1 overflow-y-auto px-4 sm:px-6 py-4 min-h-0'>
+          <div className='space-y-4'>
             {/* Services Section */}
             <div>
-              <h3 className='text-base font-medium mb-3 flex items-center'>
-                <CreditCard className='h-4 w-4 mr-2 text-primary' />
+              <h3 className='text-sm font-medium mb-2 flex items-center text-muted-foreground'>
+                <CreditCard className='h-4 w-4 mr-2' />
                 Servicios Contratados
               </h3>
-              <div className='bg-primary/5 rounded-lg p-4 border border-border/50'>
-                {services
-                  .filter((service) =>
-                    appointment.serviceIds.includes(service.id)
-                  )
-                  .map((service) => (
-                    <div
-                      key={service.id}
-                      className='flex items-center justify-between mb-3 last:mb-0'
-                    >
-                      <div>
-                        <h4 className='font-medium'>
-                          {service.name.length > 25
-                            ? `${service.name.substring(0, 25)}...`
-                            : service.name}
-                        </h4>
-                        <p className='text-xs text-muted-foreground mt-0.5'>
-                          {service.duration.value}{' '}
-                          {service.duration.unit === 'hours'
-                            ? 'horas'
-                            : 'minutos'}
-                        </p>
+              <div className='bg-primary/5 rounded-lg p-3 border border-border/50'>
+                <div className='space-y-2'>
+                  {services
+                    .filter((service) =>
+                      appointment.serviceIds.includes(service.id)
+                    )
+                    .map((service) => (
+                      <div
+                        key={service.id}
+                        className='flex items-start justify-between gap-3'
+                      >
+                        <div className='flex-1 min-w-0'>
+                          <h4 className='font-medium text-sm leading-tight'>
+                            {service.name.length > 30
+                              ? `${service.name.substring(0, 30)}...`
+                              : service.name}
+                          </h4>
+                          <p className='text-xs text-muted-foreground mt-0.5'>
+                            {service.duration.value}{' '}
+                            {service.duration.unit === 'hours'
+                              ? 'horas'
+                              : 'minutos'}
+                          </p>
+                        </div>
+                        <Badge variant='outline' className='flex-shrink-0 text-xs'>
+                          {service.price.amount.toLocaleString('es-MX')}{' '}
+                          {service.price.currency}
+                        </Badge>
                       </div>
-                      <Badge variant='outline' className='ml-auto'>
-                        {service.price.amount.toLocaleString('es-MX')}{' '}
-                        {service.price.currency}
-                      </Badge>
-                    </div>
-                  ))}
+                    ))}
+                </div>
 
                 {totalPrice > 0 && (
                   <>
@@ -344,27 +347,23 @@ export function AppointmentBlock({
 
             {/* Assigned Staff Section */}
             <div>
-              <h3 className='text-base font-medium mb-3 flex items-center'>
-                <Users className='h-4 w-4 mr-2 text-primary' />
-                {employees.length === 0
-                  ? 'Personal (Sin asignar)'
-                  : employees.length === 1
-                    ? 'Personal Asignado'
-                    : 'Personal Asignado'}
+              <h3 className='text-sm font-medium mb-2 flex items-center text-muted-foreground'>
+                <Users className='h-4 w-4 mr-2' />
+                Personal Asignado
               </h3>
 
               {employees.length > 0 ? (
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                <div className='space-y-2'>
                   {employees.map((employee) => (
                     <div
                       key={employee.id}
-                      className='flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-primary/5'
+                      className='flex items-center gap-3 p-2 rounded-lg border border-border/50 bg-primary/5'
                       style={{
                         borderLeftColor: employee.color,
-                        borderLeftWidth: '4px',
+                        borderLeftWidth: '3px',
                       }}
                     >
-                      <Avatar className='h-10 w-10 border-2 border-background'>
+                      <Avatar className='h-8 w-8'>
                         <AvatarImage
                           src={employee.photo}
                           alt={employee.name}
@@ -372,13 +371,13 @@ export function AppointmentBlock({
                         />
                         <AvatarFallback
                           style={{ backgroundColor: employee.color }}
-                          className='text-white'
+                          className='text-white text-sm'
                         >
                           {employee.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h4 className='font-medium'>{employee.name}</h4>
+                        <h4 className='font-medium text-sm'>{employee.name}</h4>
                         <p className='text-xs text-muted-foreground'>
                           {employee.role}
                         </p>
@@ -387,14 +386,14 @@ export function AppointmentBlock({
                   ))}
                 </div>
               ) : (
-                <div className='flex items-center p-4 rounded-lg border border-dashed border-muted-foreground/40 bg-muted/30'>
-                  <Avatar className='h-10 w-10 bg-muted'>
+                <div className='flex items-center p-3 rounded-lg border border-dashed border-muted-foreground/40 bg-muted/30'>
+                  <Avatar className='h-8 w-8 bg-muted'>
                     <AvatarFallback>
-                      <User className='h-5 w-5 text-muted-foreground' />
+                      <User className='h-4 w-4 text-muted-foreground' />
                     </AvatarFallback>
                   </Avatar>
                   <div className='ml-3 text-sm text-muted-foreground'>
-                    No hay personal asignado a esta cita
+                    Sin personal asignado
                   </div>
                 </div>
               )}
@@ -402,24 +401,24 @@ export function AppointmentBlock({
 
             {/* Client Info Section */}
             <div>
-              <h3 className='text-base font-medium mb-3 flex items-center'>
-                <User className='h-4 w-4 mr-2 text-primary' />
-                Información del Cliente
+              <h3 className='text-sm font-medium mb-2 flex items-center text-muted-foreground'>
+                <User className='h-4 w-4 mr-2' />
+                Cliente
               </h3>
               <div className='rounded-lg border border-border/50 overflow-hidden'>
-                <div className='p-4 bg-primary/5 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4'>
-                  <Avatar className='h-14 w-14 border-2 border-background'>
+                <div className='p-3 bg-primary/5 flex items-center gap-3'>
+                  <Avatar className='h-10 w-10'>
                     <AvatarImage
                       src={client.photo}
                       alt={client.name}
                       className='object-cover'
                     />
-                    <AvatarFallback className='bg-primary/20 text-primary font-medium text-lg'>
+                    <AvatarFallback className='bg-primary/20 text-primary font-medium'>
                       {client.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className='flex-1'>
-                    <h3 className='text-base font-medium'>{client.name}</h3>
+                  <div className='flex-1 min-w-0'>
+                    <h4 className='font-medium text-sm'>{client.name}</h4>
                     {client.platformIdentities &&
                       client.platformIdentities.length > 0 && (
                         <div className='flex flex-wrap gap-1 mt-1'>
@@ -435,49 +434,36 @@ export function AppointmentBlock({
                         </div>
                       )}
                   </div>
-                  <div className='sm:ml-auto'>
-                    <ClientChatButton clientId={client.id} />
-                  </div>
+                  <ClientChatButton clientId={client.id} />
                 </div>
 
-                <div className='p-4 grid grid-cols-1 gap-3'>
-                  {client.email && (
-                    <div className='flex items-start space-x-3'>
-                      <Mail className='h-4 w-4 text-muted-foreground mt-0.5' />
-                      <div>
-                        <span className='text-sm font-medium block'>
-                          Correo
-                        </span>
+                {(client.email || client.address || client.notes) && (
+                  <div className='p-3 space-y-2 border-t border-border/50'>
+                    {client.email && (
+                      <div className='flex items-center gap-2'>
+                        <Mail className='h-3 w-3 text-muted-foreground flex-shrink-0' />
                         <a
                           href={`mailto:${client.email}`}
-                          className='text-sm text-primary hover:underline'
+                          className='text-xs text-primary hover:underline truncate'
                         >
                           {client.email}
                         </a>
                       </div>
-                    </div>
-                  )}
-                  {client.address && (
-                    <div className='flex items-start space-x-3'>
-                      <MapPin className='h-4 w-4 text-muted-foreground mt-0.5' />
-                      <div>
-                        <span className='text-sm font-medium block'>
-                          Dirección
-                        </span>
-                        <p className='text-sm'>{client.address}</p>
+                    )}
+                    {client.address && (
+                      <div className='flex items-start gap-2'>
+                        <MapPin className='h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5' />
+                        <p className='text-xs text-muted-foreground'>{client.address}</p>
                       </div>
-                    </div>
-                  )}
-                  {client.notes && (
-                    <div className='flex items-start space-x-3'>
-                      <MessageSquare className='h-4 w-4 text-muted-foreground mt-0.5' />
-                      <div>
-                        <span className='text-sm font-medium block'>Notas</span>
-                        <p className='text-sm'>{client.notes}</p>
+                    )}
+                    {client.notes && (
+                      <div className='flex items-start gap-2'>
+                        <MessageSquare className='h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5' />
+                        <p className='text-xs text-muted-foreground'>{client.notes}</p>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

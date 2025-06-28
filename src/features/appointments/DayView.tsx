@@ -12,16 +12,14 @@ import {
   ServiceFilterProps,
 } from '@/features/appointments/ServiceFilter.tsx'
 import { TimeSlots } from '@/features/appointments/TimeSlots.tsx'
-import { MakeAppointmentDialog } from '@/features/appointments/components/MakeAppointmentDialog.tsx'
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
 import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
-import { useDialogState } from '@/features/appointments/contexts/DialogStateContext'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
 import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts'
-import type { Appointment, MinutesTimeRange } from './types'
+import type { Appointment } from './types'
 
 export function DayView({
   appointments,
@@ -42,13 +40,9 @@ export function DayView({
     useState<ServiceFilterProps['selectedService']>('all')
   const [currentTime, setCurrentTime] = useState(date)
   
-  // States for appointment modal
-  const [showAppointmentModal, setShowAppointmentModal] = useState(false)
-  const [selectedTimeRange, setSelectedTimeRange] = useState<MinutesTimeRange | null>(null)
-  const [isRadixUIActive, setIsRadixUIActive] = useState(false)
+  // Removed appointment creation modal states - users can create appointments via sidebar button
 
   const queryClient = useQueryClient()
-  const { hasOpenDialogs } = useDialogState()
 
   const handleSelectedService = (serviceId: string | 'all') => {
     setSelectedService(serviceId)
@@ -66,39 +60,7 @@ export function DayView({
     return () => clearInterval(interval)
   }, [])
 
-  // Effect para detectar actividad en elementos de Radix UI
-  useEffect(() => {
-    const handleGlobalClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      
-      // Si hay un clic en elementos de Radix UI, marcar que hay actividad
-      if (
-        target.closest('[data-radix-select-content]') ||
-        target.closest('[data-radix-select-item]') ||
-        target.closest('[data-radix-popover-content]') ||
-        target.closest('[data-radix-dialog-content]') ||
-        target.closest('[data-radix-portal]') ||
-        // Detectar elementos con atributos de Radix
-        target.hasAttribute('data-radix-select-content') ||
-        target.hasAttribute('data-radix-select-item') ||
-        // Si el elemento está renderizado directamente en el body (portal)
-        (target.parentElement === document.body && target.getAttribute('data-radix-select-content'))
-      ) {
-        setIsRadixUIActive(true)
-        // Resetear después de un breve delay
-        setTimeout(() => setIsRadixUIActive(false), 150)
-      }
-    }
-    
-    // Usar capturing phase para detectar antes que otros listeners
-    document.addEventListener('click', handleGlobalClick, true)
-    document.addEventListener('mousedown', handleGlobalClick, true)
-    
-    return () => {
-      document.removeEventListener('click', handleGlobalClick, true)
-      document.removeEventListener('mousedown', handleGlobalClick, true)
-    }
-  }, [])
+  // Removed click detection utility - no longer needed since day clicking is disabled
 
   const getCurrentTimePosition = () => {
     if (!workHours) return -100 // Position off-screen
@@ -120,72 +82,7 @@ export function DayView({
     }
   }
 
-  // Handle click on time slot to create appointment
-  const handleTimeSlotClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!workHours) return
-    
-    // PRIMERA VERIFICACIÓN: Si hay dialogs abiertos, no crear cita
-    if (hasOpenDialogs) {
-      return
-    }
-    
-    // SEGUNDA VERIFICACIÓN: Si hay actividad reciente en Radix UI, no crear cita
-    if (isRadixUIActive) {
-      return
-    }
-    
-    // TERCERA VERIFICACIÓN: Si el clic viene de un elemento interactivo
-    const target = event.target as HTMLElement
-    
-    // Si el clic viene de elementos de Radix UI o interactivos, no crear cita
-    if (
-      target.closest('button') ||
-      target.closest('[role="dialog"]') ||
-      target.closest('[data-dialog-content]') ||
-      target.closest('[data-appointment-block]') ||
-      target.closest('.appointment-block') ||
-      target.closest('[data-radix-popper-content-wrapper]') ||
-      target.closest('[data-radix-dialog-content]') ||
-      target.closest('[data-radix-select-content]') ||
-      target.closest('[data-radix-select-item]') ||
-      target.closest('[cmdk-root]') ||
-      target.closest('[data-radix-popover-content]') ||
-      target.closest('[data-radix-portal]') ||
-      target.hasAttribute('data-radix-select-trigger') ||
-      target.hasAttribute('data-radix-select-content') ||
-      target.hasAttribute('data-radix-select-item') ||
-      target.getAttribute('data-appointment-block') === 'true'
-    ) {
-      return
-    }
-    
-    const rect = event.currentTarget.getBoundingClientRect()
-    const clickY = event.clientY - rect.top
-    
-    // Each hour is 64px tall
-    const pixelsPerMinute = 64 / 60
-    const clickedMinutesFromStart = Math.floor(clickY / pixelsPerMinute)
-    
-    // Round to nearest 15 minutes
-    const roundedMinutes = Math.round(clickedMinutesFromStart / 15) * 15
-    const startAtMinutes = workHours.startAt + roundedMinutes
-    
-    // Default 1 hour duration
-    const endAtMinutes = startAtMinutes + 60
-    
-    // Make sure we don't exceed work hours
-    if (startAtMinutes >= workHours.endAt || endAtMinutes > workHours.endAt) {
-      return
-    }
-    
-    const timeRange: MinutesTimeRange = {
-      startAt: startAtMinutes,
-      endAt: Math.min(endAtMinutes, workHours.endAt)
-    }
-    
-    setSelectedTimeRange(timeRange)
-    setShowAppointmentModal(true)
-  }
+  // Removed handleTimeSlotClick - day clicking disabled for cleaner UX
 
   const isLoading =
     isWorkHoursLoading ||
@@ -261,7 +158,7 @@ export function DayView({
             </div>
 
             <div
-              className='flex-1 relative cursor-pointer'
+              className='flex-1 relative'
               style={{
                 backgroundImage: `repeating-linear-gradient(
                   to bottom,
@@ -274,7 +171,6 @@ export function DayView({
                 height: `${totalHeight}px`,
                 minHeight: `${totalHeight}px`,
               }}
-              onClick={handleTimeSlotClick}
             >
               {isSameDay(currentTime, date) &&
                 workHours &&
@@ -338,19 +234,6 @@ export function DayView({
           <ScrollBar orientation='vertical' />
         </ScrollArea>
       </div>
-      
-      {/* Appointment Creation Modal */}
-      <MakeAppointmentDialog
-        defaultOpen={showAppointmentModal}
-        onOpenChange={(open) => {
-          setShowAppointmentModal(open)
-          if (!open) {
-            setSelectedTimeRange(null)
-          }
-        }}
-        defaultDate={date}
-        defaultTimeRange={selectedTimeRange || undefined}
-      />
     </div>
   )
 }

@@ -25,7 +25,7 @@ export function CalendarHeader({
   return (
     <div className='p-4 border-b flex flex-col md:flex-row items-center justify-between gap-4'>
       {/* Date Navigation */}
-      <div className='flex items-center gap-2'>
+      <nav className='flex items-center gap-2' role='navigation' aria-label='Navegación de fechas'>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -33,6 +33,7 @@ export function CalendarHeader({
                 variant='ghost'
                 size='icon'
                 onClick={() => setSelectedDate(new Date())}
+                aria-label='Ir a la fecha de hoy'
               >
                 Hoy
               </Button>
@@ -55,6 +56,7 @@ export function CalendarHeader({
                       : addWeeks(selectedDate, -1)
                   )
                 }
+                aria-label={view === 'day' ? 'Día anterior' : 'Semana anterior'}
               >
                 <ChevronLeft className='h-5 w-5' />
               </Button>
@@ -77,6 +79,7 @@ export function CalendarHeader({
                       : addWeeks(selectedDate, 1)
                   )
                 }
+                aria-label={view === 'day' ? 'Día siguiente' : 'Semana siguiente'}
               >
                 <ChevronRight className='h-5 w-5' />
               </Button>
@@ -87,20 +90,22 @@ export function CalendarHeader({
           </Tooltip>
         </TooltipProvider>
 
-        <h2 className='text-lg md:text-xl font-semibold first-letter:uppercase'>
+        <h2 className='text-lg md:text-xl font-semibold first-letter:uppercase' aria-live='polite'>
           {format(
             selectedDate,
             view === 'day' ? 'EEEE, d MMMM yyyy' : "'Semana' w 'de' MMMM yyyy",
             { locale: es }
           )}
         </h2>
-      </div>
+      </nav>
 
       {/* View Switcher (Hidden on Mobile for Simplicity) */}
-      <div className='flex gap-2'>
+      <div className='flex gap-2' role='group' aria-label='Cambiar vista del calendario'>
         <Button
           variant={view === 'day' ? 'outline' : 'ghost'}
           onClick={() => setView('day')}
+          aria-pressed={view === 'day'}
+          aria-label='Cambiar a vista diaria'
         >
           Día
         </Button>

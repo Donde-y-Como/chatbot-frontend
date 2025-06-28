@@ -25,11 +25,18 @@ export function EmployeesSelector({
       open={isEmployeesOpen}
       onOpenChange={setIsEmployeesOpen}
       className='rounded-lg  border p-4 transition-all duration-300 hover:shadow-lg mb-10'
+      role='group'
+      aria-labelledby='employees-section-title'
     >
       <div className='flex items-center justify-between'>
-        <h3 className='font-semibold text-primary/90'>Empleados</h3>
+        <h3 className='font-semibold text-primary/90' id='employees-section-title'>Empleados</h3>
         <CollapsibleTrigger asChild>
-          <Button variant='ghost' size='sm'>
+          <Button 
+            variant='ghost' 
+            size='sm'
+            aria-expanded={isEmployeesOpen}
+            aria-label={isEmployeesOpen ? 'Ocultar lista de empleados' : 'Mostrar lista de empleados'}
+          >
             <ChevronDown
               className={cn(
                 'h-4 w-4 transition-transform duration-300',
