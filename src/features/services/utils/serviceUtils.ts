@@ -63,7 +63,6 @@ export const calculateServiceStats = (services: Service[]) => {
 
   const categoryIds = new Set<string>()
   const tagIds = new Set<string>()
-  const unitIds = new Set<string>()
   
   let minPrice = Infinity
   let maxPrice = -Infinity
@@ -136,11 +135,6 @@ export const calculateServiceStats = (services: Service[]) => {
         service.productInfo.tagIds.forEach(id => tagIds.add(id))
       }
 
-      // Unit tracking
-      if (service.unidadMedida?.id) {
-        unitIds.add(service.unidadMedida.id)
-      }
-
       return acc
     },
     {
@@ -170,7 +164,6 @@ export const calculateServiceStats = (services: Service[]) => {
     servicesWithPhotos: stats.servicesWithPhotos,
     uniqueCategories: categoryIds.size,
     uniqueTags: tagIds.size,
-    uniqueUnits: unitIds.size,
     priceRange: { 
       min: minPrice === Infinity ? 0 : minPrice, 
       max: maxPrice === -Infinity ? 0 : maxPrice 
@@ -190,7 +183,6 @@ export const filterServices = (
     status?: string
     categoryIds?: string[]
     tagIds?: string[]
-    unitIds?: string[]
     availability?: string[]
   } = {}
 ) => {
@@ -226,16 +218,6 @@ export const filterServices = (
         service.productInfo?.tagIds?.includes(tagId)
       )
       if (!hasTag) return false
-    }
-
-    // Unit filter
-    if (filters.unitIds && filters.unitIds.length > 0) {
-      if (
-        service.unidadMedida &&
-        !filters.unitIds.includes(service.unidadMedida.id)
-      ) {
-        return false
-      }
     }
 
     return true

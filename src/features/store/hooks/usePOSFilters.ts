@@ -221,16 +221,6 @@ export function usePOSFilters({ products, services, events, bundles }: UsePOSFil
         })
       }
 
-      // Filtrar por unidades de medida (servicios)
-      if (filters.unidadMedida && filters.unidadMedida.length > 0) {
-        allItems = allItems.filter(item => {
-          if (!item.originalData || item.type !== 'SERVICIOS') return false
-          
-          const service = item.originalData as Service
-          return service.unidadMedida && service.unidadMedida.id && filters.unidadMedida!.includes(service.unidadMedida.id)
-        })
-      }
-
       // Filtrar por estado
       if (filters.status) {
         const beforeCount = allItems.length

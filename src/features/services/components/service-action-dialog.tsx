@@ -114,16 +114,6 @@ const formSchema = z.object({
     .number()
     .int('El código de barras debe ser un número entero')
     .positive('El código de barras debe ser positivo'),
-  unidadMedida: z
-    .object({
-      id: z.string(),
-      name: z.string(),
-      abbreviation: z.string(),
-      createdAt: z.string(),
-      updatedAt: z.string().optional(),
-    })
-    .optional()
-    .nullable(),
   photos: z.array(z.string()),
 })
 
@@ -223,7 +213,6 @@ export function ServiceActionDialog({
           schedule: normalizeSchedule(currentService.schedule),
           productInfo: currentService.productInfo,
           codigoBarras: Number(currentService.codigoBarras) || 0,
-          unidadMedida: currentService.unidadMedida || null,
           photos: currentService.photos || [],
         }
       : {
@@ -245,7 +234,6 @@ export function ServiceActionDialog({
             notes: '',
           },
           codigoBarras: 0,
-          unidadMedida: null,
           photos: [],
         }
   }, [currentService, getInitialSchedule, isEdit])
@@ -345,10 +333,6 @@ export function ServiceActionDialog({
 
     const formData = { ...form.getValues() }
 
-    // Si no se seleccionó una unidad de medida válida, eliminar el campo del body
-    if (!formData.unidadMedida?.id || formData.unidadMedida.id === '') {
-      delete formData.unidadMedida
-    }
 
     if (isEdit && currentService) {
       updateService.mutate({
@@ -394,7 +378,6 @@ export function ServiceActionDialog({
       formValues.maxConcurrentBooks !== 1 ||
       formValues.minBookingLeadHours !== 0 ||
       formValues.codigoBarras !== 0 ||
-      formValues.unidadMedida?.id !== '' ||
       photos.length > 0 ||
       productInfo?.sku !== '' ||
       productInfo?.categoryIds.length > 0 ||
@@ -626,45 +609,7 @@ export function ServiceActionDialog({
                             <FormMessage />
                           </FormItem>
                         )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name='unidadMedida'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel htmlFor='unidadMedida'>
-                              Unidad de Medida
-                            </FormLabel>
-                            <FormControl>
-                              <Select
-                                value={field.value?.id || ''}
-                                onValueChange={(value) => {
-                                  const selectedUnit = units.find(
-                                    (unit) => unit.id === value
-                                  )
-                                  if (selectedUnit) {
-                                    field.onChange(selectedUnit)
-                                  }
-                                }}
-                                disabled={unitsLoading}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Seleccionar unidad de medida' />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {units.map((unit) => (
-                                    <SelectItem key={unit.id} value={unit.id}>
-                                      {unit.name} ({unit.abbreviation})
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      />                      
                     </div>
                   </div>
                 </ScrollArea>

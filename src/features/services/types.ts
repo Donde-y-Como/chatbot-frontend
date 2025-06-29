@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { ProductInfo, productInfoSchema, getDefaultProductInfo } from '@/types'
-import { Unit } from '@/features/settings/units/types'
 import { MinutesTimeRange } from '../appointments/types'
 
 // Enum para tipos de duración
@@ -42,7 +41,6 @@ export interface Service {
   // Nuevos atributos
   productInfo: ProductInfo
   codigoBarras: number
-  unidadMedida: Unit
   photos: string[]
 }
 
@@ -88,7 +86,6 @@ export const creatableServiceSchema = z.object({
     .number()
     .int('El código de barras debe ser un número entero')
     .positive('El código de barras debe ser positivo'),
-  unidadMedida: unitSchema,
   photos: z.array(z.string()),
 })
 
@@ -118,12 +115,5 @@ export const getDefaultService = (): Partial<CreatableService> => ({
   },
   productInfo: getDefaultProductInfo(),
   codigoBarras: 0,
-  unidadMedida: {
-    id: '',
-    name: '',
-    abbreviation: '',
-    createdAt: '',
-    updatedAt: '',
-  },
   photos: [],
 })

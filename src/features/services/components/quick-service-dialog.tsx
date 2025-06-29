@@ -112,7 +112,6 @@ export function QuickServiceDialog({ open, onOpenChange }: Props) {
         notes: '',
       },
       codigoBarras: Date.now(), // Código de barras automático
-      unidadMedida: undefined, // Opcional
       photos: [],
     }
 

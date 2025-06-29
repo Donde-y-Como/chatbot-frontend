@@ -349,29 +349,6 @@ export const createColumns = (
     enableHiding: true,
   },
   {
-    id: 'unitId',
-    accessorFn: (row) => row.unidadMedida?.id || '',
-    header: 'Unidad',
-    cell: ({ row }) => {
-      const unit = row.original.unidadMedida
-      if (!unit)
-        return <span className='text-muted-foreground text-xs'>Sin unidad</span>
-
-      return (
-        <Badge variant='outline' className='text-xs'>
-          {unit.name} ({unit.abbreviation})
-        </Badge>
-      )
-    },
-    filterFn: (row, id, value) => {
-      const unitId = row.original.unidadMedida?.id || ''
-      return value.includes(unitId)
-    },
-    enableSorting: false,
-    enableHiding: true,
-  },
-
-  {
     id: 'actions',
     cell: DataTableRowActions,
   },

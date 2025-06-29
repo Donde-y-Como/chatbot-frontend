@@ -132,7 +132,7 @@ export function ServiceViewDialog({
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Package className="h-5 w-5 text-muted-foreground" />
-                      <h3 className="font-medium">Información del Producto</h3>
+                      <h3 className="font-medium">Detalles del Servicio</h3>
                     </div>
                     <Separator className="mb-3" />
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -176,27 +176,7 @@ export function ServiceViewDialog({
                     <Separator className="mb-3" />
                     <p className="text-sm font-mono text-muted-foreground">{currentService.codigoBarras || 'N/A'}</p>
                   </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Package className="h-5 w-5 text-muted-foreground" />
-                      <h3 className="font-medium">Unidad de Medida</h3>
-                    </div>
-                    <Separator className="mb-3" />
-                    <div className="text-sm">
-                      {currentService.unidadMedida ? (
-                        <>
-                          <p className="font-medium">{currentService.unidadMedida.name}</p>
-                          <p className="text-muted-foreground">({currentService.unidadMedida.abbreviation})</p>
-                        </>
-                      ) : (
-                        <p className="text-muted-foreground">No especificada</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                </Card>                
 
                 {/* Photos */}
                 {currentService.photos && currentService.photos.length > 0 && (

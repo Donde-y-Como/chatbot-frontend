@@ -19,7 +19,6 @@ export interface ServiceFormData {
   // Nuevos campos
   productInfo: ProductInfo
   codigoBarras: number
-  unidadMedida?: Unit
   photos: string[]
 }
 
@@ -47,8 +46,7 @@ const transformFormToApiData = (formData: ServiceFormData) => {
     
     // Nuevos campos - pasados directamente
     productInfo: formData.productInfo,
-    codigoBarras: formData.codigoBarras, // Ahora siempre será número
-    unidadMedida: formData.unidadMedida,
+    codigoBarras: formData.codigoBarras,
     photos: formData.photos,
   }
   

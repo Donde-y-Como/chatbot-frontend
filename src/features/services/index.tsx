@@ -185,11 +185,6 @@ function ServicesContent() {
                     title='Etiquetas'
                     options={tagOptions}
                   />
-                  <DataTableFacetedFilter
-                    column={table.getColumn('unitId')}
-                    title='Unidades'
-                    options={unitOptions}
-                  />
                 </DataTableToolbar>
               )}
             />
