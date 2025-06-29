@@ -95,6 +95,13 @@ export function QuickEventDialog({
   const onSubmit = async (values: QuickEventFormValues) => {
     setIsSubmitting(true)
 
+    const isValid = await form.trigger()
+    if (!isValid) {
+      setIsSubmitting(false)
+      toast.error('Por favor, completa todos los campos obligatorios.')
+      return
+    }
+
     try {
       // Convertir los datos del evento rápido al formato completo
       const completeEventData = {
@@ -175,9 +182,7 @@ export function QuickEventDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-            toast.error('Completa todos los campos por favor')
-          })}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <DialogHeader>
               <DialogTitle>Crear Evento Rápido</DialogTitle>
               <DialogDescription>
@@ -427,6 +432,7 @@ export function QuickEventDialog({
 
             <DialogFooter className="mt-6 gap-2">
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting}
