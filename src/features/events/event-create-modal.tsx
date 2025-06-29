@@ -709,18 +709,9 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
 
               {/* Product Info Tab */}
               <TabsContent value="product" className="space-y-4 pt-4">
-                <ProductInfoStep />
+                <ProductInfoStep type="event" />
               </TabsContent>
             </Tabs>
-
-            {/*{formSubmitError && (*/}
-            {/*  <Alert variant="destructive" className="mt-4">*/}
-            {/*    <AlertCircle className="h-4 w-4" />*/}
-            {/*    <AlertDescription>*/}
-            {/*      {formSubmitError}*/}
-            {/*    </AlertDescription>*/}
-            {/*  </Alert>*/}
-            {/*)}*/}
           </form>
         </Form>
         

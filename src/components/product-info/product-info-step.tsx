@@ -22,7 +22,11 @@ import { ProductStatus } from '@/types'
 import { CategorySelector } from './category-selector'
 import { TagSelector } from './tag-selector'
 
-export function ProductInfoStep() {
+interface ProductInfoStepProps {
+  type?: 'product' | 'service' | 'event'
+}
+
+export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
   const { control, watch, setValue } = useFormContext<CreatableEvent>()
 
   // Watch para validaciones cruzadas
@@ -38,7 +42,7 @@ export function ProductInfoStep() {
           name="productInfo.sku"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>SKU (Código del producto)</FormLabel>
+              <FormLabel>SKU (Código del {type === 'service' ? 'servicio' : type === 'event' ? 'evento' : 'producto'})</FormLabel>
               <FormControl>
                 <Input 
                   placeholder="Ej: EVT-YOGA-001" 
@@ -47,7 +51,7 @@ export function ProductInfoStep() {
                 />
               </FormControl>
               <FormDescription>
-                Código único para identificar este evento como producto
+                Código único para identificar este evento
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -59,7 +63,7 @@ export function ProductInfoStep() {
           name="productInfo.status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Estado del producto</FormLabel>
+              <FormLabel>Estado del {type === 'service' ? 'servicio' : type === 'event' ? 'evento' : 'producto'}</FormLabel>
               <FormControl>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger>

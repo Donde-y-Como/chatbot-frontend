@@ -25,13 +25,6 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FileUpload } from '@/components/file-upload'
 import { ProductInfoStep } from '@/components/product-info'
@@ -83,9 +76,7 @@ const formSchema = z.object({
         .min(0, 'El descuento no puede ser negativo')
         .max(100, 'El descuento no puede exceder 100%')
     ),
-    categoryIds: z
-      .array(z.string())
-      .min(1, 'Debe seleccionar al menos una categoría'),
+    categoryIds: z.array(z.string()).default([]),
     subcategoryIds: z.array(z.string()).default([]),
     status: z.enum(['active', 'inactive']),
     tagIds: z.array(z.string()).default([]),
@@ -320,7 +311,7 @@ export function ServiceActionDialog({
     const isValid = await form.trigger()
     if (!isValid) {
       setIsSubmitting(false)
-      toast.error('Por favor, completa todos los campos obligatorios.')
+      toast.error('Por favor, completa los campos obligatorios')
       return
     }
 
@@ -409,8 +400,9 @@ export function ServiceActionDialog({
       <DialogContent className='sm:max-w-4xl'>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit, () => {
-              toast.error('Completa todos los campos por favor')
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              console.log('Errores de validación:', errors)
+              toast.error('Por favor, completa los campos obligatorios')
             })}
           >
             <DialogHeader>
@@ -433,7 +425,7 @@ export function ServiceActionDialog({
               <TabsList className='grid w-full grid-cols-5'>
                 <TabsTrigger value='general'>General</TabsTrigger>
                 <TabsTrigger value='pricing'>Precio</TabsTrigger>
-                <TabsTrigger value='product'>Producto</TabsTrigger>
+                <TabsTrigger value='product'>Detalles</TabsTrigger>
                 <TabsTrigger value='schedule'>Horario</TabsTrigger>
                 <TabsTrigger value='photos'>Fotos</TabsTrigger>
               </TabsList>
@@ -680,7 +672,7 @@ export function ServiceActionDialog({
               {/* Product Info Tab */}
               <TabsContent value='product' className='space-y-4 pt-4'>
                 <ScrollArea className='h-[400px] pr-4'>
-                  <ProductInfoStep />
+                  <ProductInfoStep type="service" />
                 </ScrollArea>
               </TabsContent>
 

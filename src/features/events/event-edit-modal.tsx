@@ -452,7 +452,7 @@ export function EventEditModal({
               {/* SKU y Estado */}
               <div className='grid grid-cols-2 gap-4'>
                 <div className='grid gap-2'>
-                  <Label htmlFor='sku'>SKU (Código del producto)</Label>
+                  <Label htmlFor='sku'>SKU (Código del evento)</Label>
                   <Input
                     id='sku'
                     placeholder='Ej: EVT-YOGA-001'
@@ -468,7 +468,7 @@ export function EventEditModal({
                 </div>
 
                 <div className='grid gap-2'>
-                  <Label htmlFor='status'>Estado del producto</Label>
+                  <Label htmlFor='status'>Estado del evento</Label>
                   <Select
                     defaultValue={event.productInfo?.status || ProductStatus.ACTIVE}
                     onValueChange={(value: ProductStatus) =>
