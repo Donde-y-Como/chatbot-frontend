@@ -80,7 +80,7 @@ export function CalendarSidebar({
                   <DropdownMenuTrigger asChild>
                     <Button className='w-full bg-primary hover:bg-primary/90 transition-all duration-300'>
                       <Plus className='mr-2 h-4 w-4' />
-                      Agendar Cita
+                      Crear cita
                       <ChevronDown className='ml-2 h-4 w-4' />
                     </Button>
                   </DropdownMenuTrigger>
@@ -88,7 +88,7 @@ export function CalendarSidebar({
                     <DropdownMenuItem onClick={handleQuickAppointment} className="p-3">
                       <Zap className="mr-3 h-5 w-5 text-blue-500" />
                       <div className="flex flex-col gap-1">
-                        <span className="font-medium">Cita rápida</span>
+                        <span className="font-medium">Creación rápida</span>
                         <span className="text-xs text-muted-foreground">Solo campos esenciales: cliente, servicios, fecha y horario</span>
                       </div>
                     </DropdownMenuItem>
@@ -98,7 +98,7 @@ export function CalendarSidebar({
                     <DropdownMenuItem onClick={handleCompleteAppointment} className="p-3">
                       <Settings className="mr-3 h-5 w-5 text-green-500" />
                       <div className="flex flex-col gap-1">
-                        <span className="font-medium">Cita completa</span>
+                        <span className="font-medium">Creación detallada</span>
                         <span className="text-xs text-muted-foreground">Todos los campos: empleados, notas, estado, pago y más</span>
                       </div>
                     </DropdownMenuItem>

@@ -282,7 +282,7 @@ export default function EventsView() {
                 <DropdownMenuTrigger asChild>
                   <Button variant='default' className="w-full sm:w-auto">
                     <Plus className='mr-2 h-4 w-4' />
-                    Nuevo Evento
+                    Crear Evento
                     <ChevronDown className='ml-2 h-4 w-4' />
                   </Button>
                 </DropdownMenuTrigger>
@@ -290,7 +290,7 @@ export default function EventsView() {
                   <DropdownMenuItem onClick={handleQuickEvent} className="p-3">
                     <Zap className="mr-3 h-5 w-5 text-blue-500" />
                     <div className="flex flex-col gap-1">
-                      <span className="font-medium">Evento rápido</span>
+                      <span className="font-medium">Creación rápida</span>
                       <span className="text-xs text-muted-foreground">Solo campos esenciales: nombre, descripción, ubicación, capacidad, fechas y precio</span>
                     </div>
                   </DropdownMenuItem>
@@ -300,7 +300,7 @@ export default function EventsView() {
                   <DropdownMenuItem onClick={handleCompleteEvent} className="p-3">
                     <Settings className="mr-3 h-5 w-5 text-green-500" />
                     <div className="flex flex-col gap-1">
-                      <span className="font-medium">Evento completo</span>
+                      <span className="font-medium">Creación detallada</span>
                       <span className="text-xs text-muted-foreground">Todos los campos y opciones avanzadas como recurrencias, fotos y más</span>
                     </div>
                   </DropdownMenuItem>

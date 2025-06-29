@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { getDefaultProductInfo } from '@/types'
 import { toast } from 'sonner'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -25,6 +26,7 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { SelectDropdown } from '@/components/select-dropdown'
 import { ScheduleSection } from '../../employees/components/form/schedule-section'
+import { ScheduleService } from '@/features/settings/profile/ProfileService.ts'
 import {
   getDefaultQuickService,
   QuickServiceFormValues,
@@ -39,6 +41,14 @@ interface Props {
 
 export function QuickServiceDialog({ open, onOpenChange }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const userScheduleQuery = useQuery({
+    queryKey: ['user-schedule'],
+    queryFn: async () => {
+      return await ScheduleService.getSchedule()
+    },
+    staleTime: 5 * 60 * 1000, // Cache 5 minutes
+  })
 
   // Default values for quick service
   const defaultValues = useMemo(() => getDefaultQuickService(), [])
@@ -64,9 +74,13 @@ export function QuickServiceDialog({ open, onOpenChange }: Props) {
   // Reset form when modal is opened
   React.useEffect(() => {
     if (open) {
-      reset(defaultValues)
+      const values = {
+        ...defaultValues,
+        schedule: userScheduleQuery.data?.weeklyWorkDays || defaultValues.schedule
+      }
+      reset(values)
     }
-  }, [open, reset, defaultValues])
+  }, [open, reset, defaultValues, userScheduleQuery.data?.weeklyWorkDays])
 
   // Handler for form submission success
   const handleSuccess = useCallback(() => {
@@ -298,7 +312,7 @@ export function QuickServiceDialog({ open, onOpenChange }: Props) {
                   <h3 className='text-lg font-medium'>
                     Horario de Disponibilidad
                   </h3>
-                  <div className='-mx-2'>
+                  <div className='px-2'>
                     <ScheduleSection form={form} />
                   </div>
                 </div>
