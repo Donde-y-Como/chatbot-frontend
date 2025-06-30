@@ -326,7 +326,7 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="capacity">Capacidad</TabsTrigger>
                 <TabsTrigger value="schedule">Horario</TabsTrigger>
-                <TabsTrigger value="product">Producto</TabsTrigger>
+                <TabsTrigger value="product">Detalles</TabsTrigger>
               </TabsList>
 
               {/* General Tab */}

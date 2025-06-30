@@ -153,6 +153,48 @@ export const recurrenceSchema = z.object({
   }
 )
 
+// Schema específico para eventos donde SKU y categorías son opcionales
+export const eventProductInfoSchema = z.object({
+  sku: z.string()
+    .max(50, 'El SKU no puede exceder 50 caracteres')
+    .regex(/^[A-Za-z0-9_-]*$/, 'El SKU solo puede contener letras, números, guiones y guiones bajos')
+    .default(''),
+  discountPercentage: z.preprocess(
+    (val) => {
+      if (val === '' || val === null || val === undefined) return 0
+      const num = Number(val)
+      return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
+    },
+    z.number()
+      .min(0, 'El descuento no puede ser negativo')
+      .max(100, 'El descuento no puede ser mayor al 100%')
+  ),
+  categoryIds: z.array(z.string()).default([]),
+  subcategoryIds: z.array(z.string()).default([]),
+  status: z.enum(['active', 'inactive']),
+  tagIds: z.array(z.string()).default([]),
+  taxPercentage: z.preprocess(
+    (val) => {
+      if (val === '' || val === null || val === undefined) return 0
+      const num = Number(val)
+      return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
+    },
+    z.number()
+      .min(0, 'El impuesto no puede ser negativo')
+  ),
+  notes: z.string()
+    .max(500, 'Las notas no pueden exceder 500 caracteres')
+    .default(''),
+  cost: z.object({
+    amount: z.number().min(0, 'El costo no puede ser negativo'),
+    currency: z.string().min(1, 'La moneda es requerida'),
+  }),
+  precioModificado: z.object({
+    amount: z.number().min(0, 'El precio modificado no puede ser negativo'),
+    currency: z.string().min(1, 'La moneda es requerida'),
+  })
+})
+
 export const creatableEventSchema = z.object({
   name: z.string().min(1, { message: 'El nombre es requerido' }),
   description: z.string().min(1, { message: 'La descripción es requerida' }),
@@ -162,7 +204,7 @@ export const creatableEventSchema = z.object({
   recurrence: recurrenceSchema,
   location: z.string().min(1, { message: 'La ubicación es requerida' }),
   photos: z.array(z.string()),
-  productInfo: productInfoSchema,
+  productInfo: eventProductInfoSchema,
 })
 
 // Booking schemas

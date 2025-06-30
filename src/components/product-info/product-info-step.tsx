@@ -51,7 +51,7 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
                 />
               </FormControl>
               <FormDescription>
-                Código único para identificar este evento
+                Código único para identificar este {type === 'service' ? 'servicio' : type === 'event' ? 'evento' : 'producto'}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -91,7 +91,7 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
         name="productInfo.categoryIds"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Categorías *</FormLabel>
+            <FormLabel>Categorías</FormLabel>
             <FormControl>
               <CategorySelector
                 selectedCategoryIds={field.value}
@@ -103,7 +103,7 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
               />
             </FormControl>
             <FormDescription>
-              Selecciona las categorías que mejor describan este evento
+              Selecciona las categorías que mejor describan este {type === 'service' ? 'servicio' : type === 'event' ? 'evento' : 'producto'}
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -124,7 +124,7 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
               />
             </FormControl>
             <FormDescription>
-              Etiquetas adicionales para organizar y filtrar eventos
+              Etiquetas adicionales para organizar y filtrar {type === 'service' ? 'servicios' : type === 'event' ? 'eventos' : 'productos'}
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -267,7 +267,7 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
             <FormLabel>Notas adicionales</FormLabel>
             <FormControl>
               <Textarea
-                placeholder="Información adicional sobre el producto, restricciones, requerimientos especiales, etc."
+                placeholder="Información adicional, restricciones, requerimientos especiales, etc."
                 rows={3}
                 {...field}
               />
