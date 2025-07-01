@@ -8,6 +8,7 @@ import { chatService } from '@/features/chats/ChatService.ts'
 import EmptyChatSelectedState from '@/features/chats/EmptyChatSelectedState'
 import { ChatBarUnlimited } from './chatBarUnlimited'
 import { usePaginatedChats } from './hooks/usePaginatedChats'
+import { DialogStateProvider } from '@/features/appointments/contexts/DialogStateContext.tsx'
 
 const route = getRouteApi('/_authenticated/chats/')
 
@@ -15,37 +16,39 @@ export default function Chats() {
   const searchParams = route.useSearch()
   const navigate = route.useNavigate()
   const isMobile = useIsMobile()
-  
+
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
-  const [mobileSelectedChatId, setMobileSelectedChatId] = useState<string | null>(null)
+  const [mobileSelectedChatId, setMobileSelectedChatId] = useState<
+    string | null
+  >(null)
 
   // Fetch all chats
   const { chats } = usePaginatedChats()
 
   // Fetch messages for selected chat
-  const { 
-    data: chatMessages, 
+  const {
+    data: chatMessages,
     isPending: isMessagesLoading,
     isError: isChatError,
-    error: chatError 
+    error: chatError,
   } = useQuery({
     queryKey: ['chat', selectedChatId],
     queryFn: () => {
-      if (!selectedChatId) return undefined;
+      if (!selectedChatId) return undefined
       return chatService.getChatById(selectedChatId)
     },
     enabled: !!selectedChatId,
     retry: (failureCount, error: any) => {
       // Don't retry if chat doesn't exist (404)
-      if (error?.response?.status === 404) return false;
-      return failureCount < 2;
+      if (error?.response?.status === 404) return false
+      return failureCount < 2
     },
   })
 
   // Handle URL sync and initial chat selection
   useEffect(() => {
     const urlChatId = searchParams.chatId
-    
+
     // Allow navigation to any chat ID from URL, even if not in paginated list
     // This enables direct navigation from search results
     if (urlChatId) {
@@ -71,29 +74,31 @@ export default function Chats() {
 
   return (
     <Main fixed>
-      <section className="flex h-full gap-2">
-        <ChatBarUnlimited
-          navigate={navigate}
-          selectedChatId={selectedChatId}
-          setSelectedChatId={setSelectedChatId}
-          setMobileSelectedChatId={setMobileSelectedChatId}
-        />
-
-        {showEmptyState ? (
-          <EmptyChatSelectedState />
-        ) : (
-          <ChatContent
-            isLoading={isMessagesLoading}
-            isError={isChatError}
-            error={chatError}
-            chatData={chatMessages}
-            selectedChatId={selectedChatId || ''}
-            mobileSelectedChatId={mobileSelectedChatId}
-            isMobileVisible={!!mobileSelectedChatId}
-            onBackClick={handleBackClick}
+      <DialogStateProvider>
+        <section className='flex h-full gap-2'>
+          <ChatBarUnlimited
+            navigate={navigate}
+            selectedChatId={selectedChatId}
+            setSelectedChatId={setSelectedChatId}
+            setMobileSelectedChatId={setMobileSelectedChatId}
           />
-        )}
-      </section>
+
+          {showEmptyState ? (
+            <EmptyChatSelectedState />
+          ) : (
+            <ChatContent
+              isLoading={isMessagesLoading}
+              isError={isChatError}
+              error={chatError}
+              chatData={chatMessages}
+              selectedChatId={selectedChatId || ''}
+              mobileSelectedChatId={mobileSelectedChatId}
+              isMobileVisible={!!mobileSelectedChatId}
+              onBackClick={handleBackClick}
+            />
+          )}
+        </section>
+      </DialogStateProvider>
     </Main>
   )
 }
