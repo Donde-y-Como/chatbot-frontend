@@ -34,7 +34,6 @@ import { ScheduleService } from '@/features/settings/profile/ProfileService.ts'
 import { useUploadMedia } from '../../chats/hooks/useUploadMedia'
 import { ScheduleSection } from '../../employees/components/form/schedule-section'
 import { scheduleSchema } from '../../employees/types'
-import { useGetUnits } from '../hooks/useGetUnits'
 import {
   ServiceFormData,
   useCreateService,
@@ -125,8 +124,6 @@ export function ServiceActionDialog({
   const [photos, setPhotos] = React.useState<File[]>([])
   const [_, setFormSubmitError] = React.useState<string | null>(null)
   const isEdit = !!currentService
-
-  const { data: units = [], isLoading: unitsLoading } = useGetUnits()
   const { uploadFile, validateFile, isUploading } = useUploadMedia()
 
   const userScheduleQuery = useQuery({
@@ -323,7 +320,6 @@ export function ServiceActionDialog({
     }
 
     const formData = { ...form.getValues() }
-
 
     if (isEdit && currentService) {
       updateService.mutate({
@@ -601,7 +597,7 @@ export function ServiceActionDialog({
                             <FormMessage />
                           </FormItem>
                         )}
-                      />                      
+                      />
                     </div>
                   </div>
                 </ScrollArea>
@@ -672,7 +668,7 @@ export function ServiceActionDialog({
               {/* Product Info Tab */}
               <TabsContent value='product' className='space-y-4 pt-4'>
                 <ScrollArea className='h-[400px] pr-4'>
-                  <ProductInfoStep type="service" />
+                  <ProductInfoStep type='service' />
                 </ScrollArea>
               </TabsContent>
 

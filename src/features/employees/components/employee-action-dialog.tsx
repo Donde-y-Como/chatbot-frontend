@@ -182,7 +182,7 @@ export function EmployeeActionDialog({
     if (values.address !== defaultValues.address) return true
     if (values.birthDate !== defaultValues.birthDate) return true
     return photos.length > 0
-  }, [form, photos, isEdit, currentEmployee])
+  }, [form, isEdit, currentEmployee?.name, currentEmployee?.role, currentEmployee?.email, currentEmployee?.birthDate, currentEmployee?.address, photos.length])
 
   const isLoadingSchedule = !isEdit && userScheduleQuery.isLoading
 

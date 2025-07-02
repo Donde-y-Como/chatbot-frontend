@@ -40,7 +40,7 @@ export function ScheduleSection({ form }) {
                 setActiveDays(newActiveDays)
             }
         }
-    }, [scheduleValue, allDays, activeDays])
+    }, [scheduleValue, allDays])
 
     const availableDays = allDays.filter((day) => !activeDays.includes(day))
 
