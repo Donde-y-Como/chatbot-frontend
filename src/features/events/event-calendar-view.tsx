@@ -5,7 +5,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { BookingDeleteDialog } from '@/features/events/booking-delete-dialog.tsx'
 import { EventBookingModal } from '@/features/events/event-booking-modal.tsx'
@@ -16,7 +15,7 @@ import { EventEditModal } from '@/features/events/event-edit-modal.tsx'
 import { Booking, EventPrimitives } from '@/features/events/types.ts'
 import { addDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, parseISO, startOfMonth, startOfWeek } from 'date-fns'
 import { es } from 'date-fns/locale/es'
-import { ChevronLeft, ChevronRight, Clock, MapPin, MoreHorizontal, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { JSX, useState } from 'react'
 import { useEventMutations } from './hooks/useEventMutations'
 import { useBookingMutations } from './hooks/useBookingMutations'
@@ -30,7 +29,6 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
-  // Modal states
   const [selectedEvent, setSelectedEvent] = useState<EventPrimitives | null>(null)
   const [showDetails, setShowDetails] = useState<boolean>(false)
   const [showEdit, setShowEdit] = useState<boolean>(false)
@@ -45,7 +43,7 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
 
   const monthStart = startOfMonth(currentDate)
   const monthEnd = endOfMonth(currentDate)
-  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }) // Semana comienza en lunes (1)
+  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 })
   const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 })
 
   const nextMonth = (): void => {
@@ -61,13 +59,11 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
     setShowCreateEventModal(true)
   }
 
-  // Helper to get the current month's name with proper capitalization
   const getFormattedMonthName = (): string => {
     const monthName = format(currentDate, 'MMMM yyyy', { locale: es })
     return monthName.charAt(0).toUpperCase() + monthName.slice(1)
   }
 
-  // Modal handlers
   const openEventDetails = (event: EventPrimitives): void => {
     setSelectedEvent(event)
     setShowDetails(true)
@@ -93,7 +89,6 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
     setShowBookingDeleteDialog(true)
   }
 
-  // Event mutation handlers
   const handleEditedEvent = (changes: Partial<EventPrimitives>) => {
     if (!selectedEvent) return
     updateEvent(selectedEvent.id, changes)
@@ -176,115 +171,69 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
   }
 
   const renderEventItem = (event: EventPrimitives, currentDay: Date) => {
-    const eventBookings = bookings.filter(b => b.eventId === event.id)
-    const totalParticipants = eventBookings.reduce((sum, booking) => sum + booking.participants, 0)
     const eventStart = parseISO(event.duration.startAt)
     const eventEnd = parseISO(event.duration.endAt)
     
-    // Check if this is the first day of the event
     const isFirstDay = isSameDay(eventStart, currentDay)
-    // Check if this is the last day of the event
     const isLastDay = isSameDay(eventEnd, currentDay)
-    // Check if this event spans multiple days
     const isMultiDayEvent = !isSameDay(eventStart, eventEnd)
-    
-    // Show start time only on the first day
     const timeDisplay = isFirstDay ? format(eventStart, 'HH:mm') : ''
-    
-    // Visual indicators for multi-day events
     let eventIndicator = ''
     let eventClasses = ''
     if (isMultiDayEvent) {
       if (!isFirstDay && !isLastDay) {
-        // Middle day of a multi-day event
         eventIndicator = '… '
         eventClasses = 'bg-secondary/90'
       } else if (!isFirstDay && isLastDay) {
-        // Last day of a multi-day event
         eventIndicator = '✔ '
         eventClasses = 'bg-secondary/90'
       } else if (isFirstDay && !isLastDay) {
-        // First day of a multi-day event
         eventIndicator = '→ '
         eventClasses = 'bg-secondary'
       }
     }
 
     return (
-      <Popover key={event.id}>
-        <PopoverTrigger asChild>
+      <DropdownMenu key={event.id}>
+        <DropdownMenuTrigger asChild>
           <div
             className={`text-xs p-1 truncate cursor-pointer hover:opacity-90 flex items-center gap-1 ${eventClasses || 'bg-secondary'} ${isMultiDayEvent ? 'border-l-2 border-primary' : ''} ${isFirstDay ? 'rounded-l' : ''} ${isLastDay ? 'rounded-r' : ''} ${!isFirstDay && !isLastDay ? '' : 'rounded'}`}
+            onClick={(e) => e.stopPropagation()}
           >
             {timeDisplay && <span className="font-medium">{timeDisplay}</span>}
             <span className="truncate flex-1">{eventIndicator}{event.name}</span>
           </div>
-        </PopoverTrigger>
-        <PopoverContent className="w-80 p-0">
-          <div className="p-4">
-            <h4 className="font-semibold">{event.name}</h4>
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{event.description}</p>
-
-            <div className="mt-3 space-y-2">
-              <div className="flex items-center text-sm">
-                <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-                <span>
-                  {!isSameDay(parseISO(event.duration.startAt), parseISO(event.duration.endAt)) ? (
-                    <>
-                      {format(parseISO(event.duration.startAt), 'dd/MM HH:mm')} -
-                      {format(parseISO(event.duration.endAt), 'dd/MM HH:mm')}
-                    </>
-                  ) : (
-                    <>
-                      {format(parseISO(event.duration.startAt), 'HH:mm')} -
-                      {format(parseISO(event.duration.endAt), 'HH:mm')}
-                    </>
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center text-sm">
-                <Users className="h-4 w-4 mr-1 text-muted-foreground" />
-                <span>
-                  {event.capacity.isLimited && event.capacity.maxCapacity
-                    ? `${totalParticipants}/${event.capacity.maxCapacity} asistentes`
-                    : `${totalParticipants} asistentes`}
-                </span>
-              </div>
-              <div className="flex items-center text-sm">
-                <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
-                <span className="truncate">{event.location}</span>
-              </div>
-            </div>
-
-            <div className="mt-3 pt-3 border-t">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    Acciones
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => openEventDetails(event)}>
-                    Ver detalles
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openEventEdit(event)}>
-                    Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openEventBooking(event)}>
-                    Agendar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={() => openDeleteDialog(event)}
-                  >
-                    Eliminar Evento
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation()
+            openEventDetails(event)
+          }}>
+            Ver detalles
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation()
+            openEventEdit(event)
+          }}>
+            Editar
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation()
+            openEventBooking(event)
+          }}>
+            Agendar
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-destructive"
+            onClick={(e) => {
+              e.stopPropagation()
+              openDeleteDialog(event)
+            }}
+          >
+            Eliminar Evento
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     )
   }
 
@@ -298,20 +247,14 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
       for (let i = 0; i < 7; i++) {
         formattedDate = format(day, 'd')
 
-        // Capture current day for the closure
         const currentDay = day;
-
-        // Encuentra eventos para este día (incluyendo eventos multiday)
         const dayEvents = events.filter(event => {
           const eventStartDate = parseISO(event.duration.startAt)
           const eventEndDate = parseISO(event.duration.endAt)
           
-          // FIXED: Comparar solo fechas, no horas para evitar problemas de timezone
           const dayOnly = new Date(currentDay.getFullYear(), currentDay.getMonth(), currentDay.getDate())
           const startOnly = new Date(eventStartDate.getFullYear(), eventStartDate.getMonth(), eventStartDate.getDate())
           const endOnly = new Date(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate())
-          
-          // Checks if the current day falls within the event's duration (inclusive)
           return dayOnly >= startOnly && dayOnly <= endOnly
         })
 
@@ -367,7 +310,6 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
       </div>
 
 
-      {/* Modals - using our shared mutation functions */}
       {selectedEvent && (
         <>
           <EventDetailsModal
@@ -418,7 +360,6 @@ export function EventCalendarView({ events, bookings }: EventCalendarViewProps) 
         onConfirm={confirmBookingDeletion}
       />
 
-      {/* Create Event Modal - opens when clicking on a calendar day */}
       <EventCreateModal
         open={showCreateEventModal}
         onClose={() => {

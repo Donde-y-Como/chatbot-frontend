@@ -55,14 +55,18 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
   const { createEvent } = useEventMutations()
   const { uploadFile, validateFile, isUploading } = useUploadMedia()
   const defaultValues = React.useMemo(() => {
+    const startDate = defaultDate ? new Date(defaultDate) : new Date()
+    const endDate = new Date(startDate)
+    endDate.setHours(startDate.getHours() + 1)
+    
     return {
       name: '',
       description: '',
       price: { amount: 0, currency: Currency.MXN },
       capacity: { isLimited: false, maxCapacity: null },
       duration: {
-        startAt: '',
-        endAt: '',
+        startAt: defaultDate ? startDate.toISOString() : '',
+        endAt: defaultDate ? endDate.toISOString() : '',
       },
       recurrence: { frequency: RecurrenceFrequency.NEVER, endCondition: null },
       location: '',

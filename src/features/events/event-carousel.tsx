@@ -88,7 +88,7 @@ export default function EventCarousel({ event }: { event: EventPrimitives }) {
                     onClick={() => goToImage(index)}
                     className={cn(
                       "w-2 h-2 rounded-full transition-all duration-300",
-                      index === currentIndex 
+                      index === currentIndex
                         ? "bg-primary w-4" 
                         : "bg-primary/50"
                     )}
