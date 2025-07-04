@@ -282,7 +282,7 @@ function StoreContent() {
               <SearchBar
                 value={filters.search}
                 onChange={setSearch}
-                placeholder='Buscar productos, servicios...'
+                placeholder='Buscar por nombre, SKU o código de barras...'
               />
             </div>
 
@@ -309,7 +309,7 @@ function StoreContent() {
                 <SearchBar
                   value={filters.search}
                   onChange={setSearch}
-                  placeholder='Buscar productos, servicios o eventos...'
+                  placeholder='Buscar por nombre, SKU o código de barras...'
                 />
               </div>
               <FilterButton

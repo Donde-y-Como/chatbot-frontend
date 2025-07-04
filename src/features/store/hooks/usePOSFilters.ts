@@ -135,12 +135,39 @@ export function usePOSFilters({ products, services, events, bundles }: UsePOSFil
     
     allItems = uniqueItems
 
-    // Filtrar por búsqueda
+    // Filtrar por búsqueda (nombre, SKU y código de barras)
     if (filters.search.trim()) {
       const searchTerm = filters.search.toLowerCase().trim()
-      allItems = allItems.filter(item =>
-        item.name.toLowerCase().includes(searchTerm)
-      )
+      allItems = allItems.filter(item => {
+        // Búsqueda por nombre
+        const nameMatch = item.name.toLowerCase().includes(searchTerm)
+        
+        // Búsqueda por SKU
+        let skuMatch = false
+        if (item.originalData) {
+          if (item.type === 'PRODUCTOS' && 'sku' in item.originalData) {
+            skuMatch = item.originalData.sku.toLowerCase().includes(searchTerm)
+          } else if (item.type === 'SERVICIOS' && 'productInfo' in item.originalData && item.originalData.productInfo?.sku) {
+            skuMatch = item.originalData.productInfo.sku.toLowerCase().includes(searchTerm)
+          } else if (item.type === 'EVENTOS' && 'productInfo' in item.originalData && item.originalData.productInfo?.sku) {
+            skuMatch = item.originalData.productInfo.sku.toLowerCase().includes(searchTerm)
+          } else if (item.type === 'PAQUETES' && 'sku' in item.originalData) {
+            skuMatch = item.originalData.sku.toLowerCase().includes(searchTerm)
+          }
+        }
+        
+        // Búsqueda por código de barras
+        let barcodeMatch = false
+        if (item.originalData) {
+          if (item.type === 'PRODUCTOS' && 'barcode' in item.originalData && item.originalData.barcode) {
+            barcodeMatch = item.originalData.barcode.toLowerCase().includes(searchTerm)
+          } else if (item.type === 'SERVICIOS' && 'codigoBarras' in item.originalData && item.originalData.codigoBarras) {
+            barcodeMatch = item.originalData.codigoBarras.toString().includes(searchTerm)
+          }
+        }
+        
+        return nameMatch || skuMatch || barcodeMatch
+      })
     }
 
     // Aquí se pueden agregar más filtros cuando filters.isActive sea true

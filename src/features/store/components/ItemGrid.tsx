@@ -1,10 +1,15 @@
 import React, { useState } from 'react'
-import { Info, Plus, ShoppingCart } from 'lucide-react'
+import { Info, Plus, ShoppingCart, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { Card, CardContent } from '@/components/ui/card.tsx'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog.tsx'
+import { Separator } from '@/components/ui/separator.tsx'
 import { Bundle, POSItem } from '../types'
 import { BundleDetailsDialog } from './BundleDetailsDialog'
+import { Product } from '../../products/types'
+import { Service } from '../../services/types'
+import { EventPrimitives } from '../../events/types'
 
 interface ItemGridProps {
   items: POSItem[]
@@ -16,10 +21,301 @@ interface ItemCardProps {
   onAddToCart: (item: Omit<POSItem, 'quantity'>) => void
 }
 
+function ItemDetailsDialog({ 
+  item, 
+  isOpen, 
+  onClose 
+}: { 
+  item: POSItem | null
+  isOpen: boolean
+  onClose: () => void
+}) {
+  if (!item || !item.originalData) return null
+
+  const formatPrice = (price: { amount: number; currency: string }) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: price.currency
+    }).format(price.amount)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const renderProductDetails = (product: Product) => (
+    <div className="space-y-4">
+      {/* Información básica */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">SKU</label>
+          <p className="text-sm">{product.sku}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Estado</label>
+          <Badge variant={product.status === 'ACTIVO' ? 'default' : 
+                          product.status === 'SIN_STOCK' ? 'destructive' : 'secondary'}>
+            {product.status === 'SIN_STOCK' ? 'Sin Stock' : product.status}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Código de barras */}
+      {product.barcode && (
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Código de Barras</label>
+          <p className="text-sm">{product.barcode}</p>
+        </div>
+      )}
+
+      {/* Descripción */}
+      {product.description && (
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Descripción</label>
+          <p className="text-sm mt-1">{product.description}</p>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* Inventario y precios */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Stock</label>
+          <p className="text-sm">{product.stock} unidades</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Stock Mínimo</label>
+          <p className="text-sm">{product.minimumInventory} unidades</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Precio</label>
+          <p className="text-lg font-semibold text-primary">{formatPrice(product.finalPrice || product.price)}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Costo</label>
+          <p className="text-lg font-semibold">{formatPrice(product.cost)}</p>
+        </div>
+      </div>
+
+      {product.discount > 0 && (
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Descuento</label>
+          <p className="text-sm">{product.discount}%</p>
+        </div>
+      )}
+
+      {product.notes && (
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Notas</label>
+          <p className="text-sm mt-1">{product.notes}</p>
+        </div>
+      )}
+    </div>
+  )
+
+  const renderServiceDetails = (service: Service) => (
+    <div className="space-y-4">
+      {/* Información básica */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">SKU</label>
+          <p className="text-sm">{service.productInfo?.sku || 'N/A'}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Estado</label>
+          <Badge variant={service.productInfo?.status === 'active' ? 'default' : 'secondary'}>
+            {service.productInfo?.status === 'active' ? 'Activo' : 'Inactivo'}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Código de barras */}
+      {service.codigoBarras && (
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Código de Barras</label>
+          <p className="text-sm">{service.codigoBarras}</p>
+        </div>
+      )}
+
+      {/* Descripción */}
+      {service.description && (
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Descripción</label>
+          <p className="text-sm mt-1">{service.description}</p>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* Duración y precios */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Duración</label>
+          <p className="text-sm">{service.duration.value} {service.duration.unit === 'minutes' ? 'minutos' : 'horas'}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Capacidad Máxima</label>
+          <p className="text-sm">{service.maxConcurrentBooks} citas simultáneas</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Precio</label>
+          <p className="text-lg font-semibold text-primary">{formatPrice(service.productInfo?.precioModificado || service.price)}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Costo</label>
+          <p className="text-lg font-semibold">{service.productInfo?.cost ? formatPrice(service.productInfo.cost) : 'N/A'}</p>
+        </div>
+      </div>
+
+      {service.productInfo?.notes && (
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Notas</label>
+          <p className="text-sm mt-1">{service.productInfo.notes}</p>
+        </div>
+      )}
+    </div>
+  )
+
+  const renderEventDetails = (event: EventPrimitives) => (
+    <div className="space-y-4">
+      {/* Información básica */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">SKU</label>
+          <p className="text-sm">{event.productInfo?.sku || 'N/A'}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Estado</label>
+          <Badge variant={event.productInfo?.status === 'active' ? 'default' : 'secondary'}>
+            {event.productInfo?.status === 'active' ? 'Activo' : 'Inactivo'}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Descripción */}
+      {event.description && (
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Descripción</label>
+          <p className="text-sm mt-1">{event.description}</p>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* Fechas y capacidad */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Inicio</label>
+          <p className="text-sm">{formatDate(event.duration.startAt)}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Fin</label>
+          <p className="text-sm">{formatDate(event.duration.endAt)}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Capacidad</label>
+          <p className="text-sm">
+            {event.capacity.isLimited 
+              ? `${event.capacity.maxCapacity} personas máximo`
+              : 'Ilimitada'
+            }
+          </p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Ubicación</label>
+          <p className="text-sm">{event.location}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Precio</label>
+          <p className="text-lg font-semibold text-primary">{formatPrice(event.productInfo?.precioModificado || event.price)}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Costo</label>
+          <p className="text-lg font-semibold">{event.productInfo?.cost ? formatPrice(event.productInfo.cost) : 'N/A'}</p>
+        </div>
+      </div>
+
+      {event.productInfo?.notes && (
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Notas</label>
+          <p className="text-sm mt-1">{event.productInfo.notes}</p>
+        </div>
+      )}
+    </div>
+  )
+
+  const getDialogTitle = () => {
+    const icons = {
+      PRODUCTOS: '📦',
+      SERVICIOS: '🔧', 
+      EVENTOS: '🎪',
+      PAQUETES: '🎁'
+    }
+    
+    return (
+      <DialogTitle className="flex items-center gap-2">
+        <span>{icons[item.type]}</span>
+        Detalles del {item.type.slice(0, -1)}: {item.name}
+      </DialogTitle>
+    )
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          {getDialogTitle()}
+        </DialogHeader>
+        
+        <div className="space-y-6">
+          {item.type === 'PRODUCTOS' && renderProductDetails(item.originalData as Product)}
+          {item.type === 'SERVICIOS' && renderServiceDetails(item.originalData as Service)}
+          {item.type === 'EVENTOS' && renderEventDetails(item.originalData as EventPrimitives)}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function ItemCard({ item, onAddToCart }: ItemCardProps) {
   const [showBundleDetails, setShowBundleDetails] = useState(false)
+  const [showItemDetails, setShowItemDetails] = useState(false)
+
+  // Verificar si el producto está sin stock
+  const isOutOfStock = item.type === 'PRODUCTOS' && 
+    item.originalData && 
+    'status' in item.originalData && 
+    item.originalData.status === 'SIN_STOCK'
+
+  // Verificar si el producto tiene stock 0
+  const hasNoStock = item.type === 'PRODUCTOS' && 
+    item.originalData && 
+    'stock' in item.originalData && 
+    item.originalData.stock === 0
+
+  const isDisabled = !!(isOutOfStock || hasNoStock)
 
   const handleAddToCart = () => {
+    if (isDisabled) return
     const { quantity, ...itemWithoutQuantity } = item
     onAddToCart(itemWithoutQuantity)
   }
@@ -30,6 +326,8 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
 
     if (item.type === 'PAQUETES' && item.originalData) {
       setShowBundleDetails(true)
+    } else if (['PRODUCTOS', 'SERVICIOS', 'EVENTOS'].includes(item.type) && item.originalData) {
+      setShowItemDetails(true)
     }
   }
 
@@ -57,7 +355,11 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
 
   return (
     <>
-      <Card className='group relative overflow-hidden border-2 border-transparent hover:border-primary/20 transition-all duration-200 hover:shadow-lg'>
+      <Card className={`group relative overflow-hidden border-2 transition-all duration-200 ${
+        isDisabled 
+          ? 'border-red-200 bg-gray-50 opacity-60' 
+          : 'border-transparent hover:border-primary/20 hover:shadow-lg'
+      }`}>
         <CardContent className='p-0'>
           {/* Imagen del producto */}
           <div className='relative aspect-square overflow-hidden bg-muted'>
@@ -65,7 +367,9 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
               <img
                 src={item.image}
                 alt={item.name}
-                className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-200'
+                className={`w-full h-full object-cover transition-transform duration-200 ${
+                  isDisabled ? 'grayscale' : 'group-hover:scale-105'
+                }`}
               />
             ) : (
               <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/80'>
@@ -74,6 +378,16 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
                   {item.type === 'PAQUETES' && '🎁'}
                   {item.type === 'SERVICIOS' && '🔧'}
                   {item.type === 'EVENTOS' && '🎪'}
+                </div>
+              </div>
+            )}
+
+            {/* Superposición para productos sin stock */}
+            {isDisabled && (
+              <div className='absolute inset-0 bg-red-500/20 flex items-center justify-center'>
+                <div className='bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold flex items-center gap-1'>
+                  <AlertTriangle className='h-3 w-3' />
+                  Sin Stock
                 </div>
               </div>
             )}
@@ -96,13 +410,13 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
               </Badge>
             </div>
 
-            {/* Botón de información para paquetes */}
-            {item.type === 'PAQUETES' && (
+            {/* Botón de información para paquetes, productos, servicios y eventos */}
+            {(['PAQUETES', 'PRODUCTOS', 'SERVICIOS', 'EVENTOS'].includes(item.type)) && (
               <div className='absolute top-1 right-1 sm:top-2 sm:right-2 z-20'>
                 <button
                   onClick={handleShowDetails}
                   className='h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-white hover:bg-gray-50 text-gray-600 hover:text-blue-600 shadow-lg border-2 border-gray-200 transition-all duration-200 flex items-center justify-center'
-                  title='Ver detalles del paquete'
+                  title={`Ver detalles del ${item.type.slice(0, -1).toLowerCase()}`}
                   type='button'
                 >
                   <Info className='h-3 w-3 sm:h-4 sm:w-4' />
@@ -111,16 +425,18 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
             )}
 
             {/* Botón de agregar - visible en hover en desktop */}
-            <div className='absolute inset-0 bg-black/20 opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center z-0'>
-              <Button
-                onClick={handleAddToCart}
-                size='lg'
-                className='bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transform translate-y-4 md:group-hover:translate-y-0 transition-transform duration-200 hidden md:flex'
-              >
-                <Plus className='h-4 w-4 mr-2' />
-                Agregar
-              </Button>
-            </div>
+            {!isDisabled && (
+              <div className='absolute inset-0 bg-black/20 opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center z-0'>
+                <Button
+                  onClick={handleAddToCart}
+                  size='lg'
+                  className='bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transform translate-y-4 md:group-hover:translate-y-0 transition-transform duration-200 hidden md:flex'
+                >
+                  <Plus className='h-4 w-4 mr-2' />
+                  Agregar
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Información del producto */}
@@ -131,7 +447,9 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
             </h3>
 
             <div className='flex items-center justify-between gap-2'>
-              <span className='text-sm sm:text-base md:text-lg font-bold text-primary truncate'>
+              <span className={`text-sm sm:text-base md:text-lg font-bold truncate ${
+                isDisabled ? 'text-muted-foreground line-through' : 'text-primary'
+              }`}>
                 {formatPrice(item.price)}
               </span>
 
@@ -139,6 +457,7 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
               <Button
                 onClick={handleAddToCart}
                 size='sm'
+                disabled={isDisabled}
                 className='md:hidden flex-shrink-0 h-7 w-7 p-0'
               >
                 <Plus className='h-3 w-3' />
@@ -149,6 +468,7 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
                 onClick={handleAddToCart}
                 size='sm'
                 variant='outline'
+                disabled={isDisabled}
                 className='hidden md:flex lg:hidden flex-shrink-0 h-8 w-8 p-0'
               >
                 <ShoppingCart className='h-4 w-4' />
@@ -166,6 +486,13 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
           onClose={() => setShowBundleDetails(false)}
         />
       )}
+      
+      {/* Diálogo de detalles de productos, servicios y eventos */}
+      <ItemDetailsDialog
+        item={item}
+        isOpen={showItemDetails}
+        onClose={() => setShowItemDetails(false)}
+      />
     </>
   )
 }
