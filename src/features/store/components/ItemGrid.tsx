@@ -14,13 +14,13 @@ import { EventPrimitives } from '../../events/types'
 
 interface ItemGridProps {
   items: POSItem[]
-  onAddToCart: (item: Omit<POSItem, 'quantity'>) => void
+  onAddToCart: (item: Omit<POSItem, 'quantity'> & { quantity?: number }) => void
   onRemoveFromCart: (itemId: string) => void
 }
 
 interface ItemCardProps {
   item: POSItem
-  onAddToCart: (item: Omit<POSItem, 'quantity'>) => void
+  onAddToCart: (item: Omit<POSItem, 'quantity'> & { quantity?: number }) => void
   onRemoveFromCart: (itemId: string) => void
 }
 
@@ -334,10 +334,10 @@ function ItemCard({ item, onAddToCart, onRemoveFromCart }: ItemCardProps) {
   const handleAddToCart = () => {
     if (isDisabled) return
     const { quantity: _, ...itemWithoutQuantity } = item
-    // Agregar múltiples veces según la cantidad seleccionada
-    for (let i = 0; i < quantity; i++) {
-      onAddToCart(itemWithoutQuantity)
-    }
+    const itemToAdd = { ...itemWithoutQuantity, quantity }
+        
+    // Agregar con la cantidad seleccionada directamente
+    onAddToCart(itemToAdd)
     // Resetear cantidad después de agregar
     setQuantity(1)
   }

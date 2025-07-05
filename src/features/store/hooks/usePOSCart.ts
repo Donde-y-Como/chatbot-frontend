@@ -159,7 +159,7 @@ export function usePOSCart() {
     }
   }, [])
 
-  const addToCart = useCallback(async (item: Omit<POSItem, 'quantity'>, reservationId?: string) => {
+  const addToCart = useCallback(async (item: Omit<POSItem, 'quantity'> & { quantity?: number }, reservationId?: string) => {
     if (item.originalData && 'status' in item.originalData && item.originalData.status === 'INACTIVO') {
       toast.error('No se pueden agregar productos inactivos al carrito')
       return
@@ -196,7 +196,7 @@ export function usePOSCart() {
       const cartItemData = {
         itemId: item.id,
         itemType,
-        quantity: 1,
+        quantity: item.quantity || 1,
         notes: undefined,
         reservationId
       }
@@ -205,7 +205,7 @@ export function usePOSCart() {
       await POSApiService.addToCart(cartItemData)
 
       await refreshCart()
-      toast.success(`${item.name} agregado al carrito`)
+      toast.success(`${item.name} agregado al carrito (${cartItemData.quantity})`)
     } catch (error) {
       console.error('Error agregando al carrito:', error)
       toast.error('Error al agregar item al carrito')
