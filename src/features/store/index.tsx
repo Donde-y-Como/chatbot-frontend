@@ -337,7 +337,11 @@ function StoreContent() {
 
         {/* Grid de elementos */}
         <div className='flex-1 pb-20 lg:pb-4 lg:overflow-auto'>
-          <ItemGrid items={filteredItems} onAddToCart={handleAddToCart} />
+          <ItemGrid 
+            items={filteredItems} 
+            onAddToCart={handleAddToCart}
+            onRemoveFromCart={cart.removeFromCart}
+          />
         </div>
       </div>
 

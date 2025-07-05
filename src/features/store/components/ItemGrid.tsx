@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { Info, Plus, ShoppingCart, AlertTriangle } from 'lucide-react'
+import { Info, Plus, ShoppingCart, AlertTriangle, Minus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { Card, CardContent } from '@/components/ui/card.tsx'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog.tsx'
 import { Separator } from '@/components/ui/separator.tsx'
+import { Input } from '@/components/ui/input.tsx'
 import { Bundle, POSItem } from '../types'
 import { BundleDetailsDialog } from './BundleDetailsDialog'
 import { Product } from '../../products/types'
@@ -14,11 +15,13 @@ import { EventPrimitives } from '../../events/types'
 interface ItemGridProps {
   items: POSItem[]
   onAddToCart: (item: Omit<POSItem, 'quantity'>) => void
+  onRemoveFromCart: (itemId: string) => void
 }
 
 interface ItemCardProps {
   item: POSItem
   onAddToCart: (item: Omit<POSItem, 'quantity'>) => void
+  onRemoveFromCart: (itemId: string) => void
 }
 
 function ItemDetailsDialog({ 
@@ -296,9 +299,10 @@ function ItemDetailsDialog({
   )
 }
 
-function ItemCard({ item, onAddToCart }: ItemCardProps) {
+function ItemCard({ item, onAddToCart, onRemoveFromCart }: ItemCardProps) {
   const [showBundleDetails, setShowBundleDetails] = useState(false)
   const [showItemDetails, setShowItemDetails] = useState(false)
+  const [quantity, setQuantity] = useState(1)
 
   // Verificar si el producto está sin stock
   const isOutOfStock = item.type === 'PRODUCTOS' && 
@@ -312,12 +316,74 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
     'stock' in item.originalData && 
     item.originalData.stock === 0
 
+  // Verificar si el producto está inactivo
+  const isInactive = item.originalData && (
+    (item.type === 'PRODUCTOS' && 'status' in item.originalData && item.originalData.status === 'INACTIVO') ||
+    (item.type === 'SERVICIOS' && 'productInfo' in item.originalData && item.originalData.productInfo?.status === 'inactive') ||
+    (item.type === 'EVENTOS' && 'productInfo' in item.originalData && item.originalData.productInfo?.status === 'inactive') ||
+    (item.type === 'PAQUETES' && 'status' in item.originalData && item.originalData.status === 'INACTIVO')
+  )
+
   const isDisabled = !!(isOutOfStock || hasNoStock)
+
+  // Si está inactivo, no mostrar el producto
+  if (isInactive) {
+    return null
+  }
 
   const handleAddToCart = () => {
     if (isDisabled) return
-    const { quantity, ...itemWithoutQuantity } = item
+    const { quantity: _, ...itemWithoutQuantity } = item
+    // Agregar múltiples veces según la cantidad seleccionada
+    for (let i = 0; i < quantity; i++) {
+      onAddToCart(itemWithoutQuantity)
+    }
+    // Resetear cantidad después de agregar
+    setQuantity(1)
+  }
+
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (isDisabled) return
+    const { quantity: _, ...itemWithoutQuantity } = item
     onAddToCart(itemWithoutQuantity)
+  }
+
+  const handleQuickRemove = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (isDisabled) return
+    
+    // Usar la función del carrito para remover el item
+    onRemoveFromCart(item.id)
+  }
+
+  const incrementQuantity = () => {
+    const maxStock = item.type === 'PRODUCTOS' && item.originalData && 'stock' in item.originalData 
+      ? item.originalData.stock 
+      : 999
+    
+    if (quantity < maxStock) {
+      setQuantity(prev => prev + 1)
+    }
+  }
+
+  const decrementQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(prev => prev - 1)
+    }
+  }
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 1
+    const maxStock = item.type === 'PRODUCTOS' && item.originalData && 'stock' in item.originalData 
+      ? item.originalData.stock 
+      : 999
+    
+    if (value >= 1 && value <= maxStock) {
+      setQuantity(value)
+    }
   }
 
   const handleShowDetails = (e: React.MouseEvent) => {
@@ -362,7 +428,7 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
       }`}>
         <CardContent className='p-0'>
           {/* Imagen del producto */}
-          <div className='relative aspect-square overflow-hidden bg-muted'>
+          <div className='relative aspect-square overflow-hidden bg-muted group/image'>
             {item.image ? (
               <img
                 src={item.image}
@@ -380,6 +446,51 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
                   {item.type === 'EVENTOS' && '🎪'}
                 </div>
               </div>
+            )}
+
+            {/* Botones de quick add/remove en hover - ocupan mitades de la imagen */}
+            {!isDisabled && (
+              <>
+                {/* Botón de remover (mitad izquierda) */}
+                <div className='absolute left-0 top-0 w-1/2 h-full opacity-0 group-hover/image:opacity-100 md:group-hover/image:opacity-100 transition-opacity duration-200 z-10'>
+                  <button
+                    onClick={handleQuickRemove}
+                    onTouchStart={(e) => {
+                      e.currentTarget.style.opacity = '1'
+                    }}
+                    onTouchEnd={(e) => {
+                      setTimeout(() => {
+                        e.currentTarget.style.opacity = ''
+                      }, 150)
+                    }}
+                    className='w-full h-full bg-gray-800/70 hover:bg-gray-700/80 active:bg-gray-600/90 text-white transition-all duration-200 flex items-center justify-center backdrop-blur-sm touch-manipulation'
+                    title='Quitar uno'
+                    type='button'
+                  >
+                    <Minus className='h-6 w-6 sm:h-8 sm:w-8' />
+                  </button>
+                </div>
+                
+                {/* Botón de agregar (mitad derecha) */}
+                <div className='absolute right-0 top-0 w-1/2 h-full opacity-0 group-hover/image:opacity-100 md:group-hover/image:opacity-100 transition-opacity duration-200 z-10'>
+                  <button
+                    onClick={handleQuickAdd}
+                    onTouchStart={(e) => {
+                      e.currentTarget.style.opacity = '1'
+                    }}
+                    onTouchEnd={(e) => {
+                      setTimeout(() => {
+                        e.currentTarget.style.opacity = ''
+                      }, 150)
+                    }}
+                    className='w-full h-full bg-gray-800/70 hover:bg-gray-700/80 active:bg-gray-600/90 text-white transition-all duration-200 flex items-center justify-center backdrop-blur-sm touch-manipulation'
+                    title='Agregar uno'
+                    type='button'
+                  >
+                    <Plus className='h-6 w-6 sm:h-8 sm:w-8' />
+                  </button>
+                </div>
+              </>
             )}
 
             {/* Superposición para productos sin stock */}
@@ -423,24 +534,9 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
                 </button>
               </div>
             )}
-
-            {/* Botón de agregar - visible en hover en desktop */}
-            {!isDisabled && (
-              <div className='absolute inset-0 bg-black/20 opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center z-0'>
-                <Button
-                  onClick={handleAddToCart}
-                  size='lg'
-                  className='bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transform translate-y-4 md:group-hover:translate-y-0 transition-transform duration-200 hidden md:flex'
-                >
-                  <Plus className='h-4 w-4 mr-2' />
-                  Agregar
-                </Button>
-              </div>
-            )}
           </div>
 
           {/* Información del producto */}
-
           <div className='p-2 sm:p-3 md:p-4 space-y-1 sm:space-y-2'>
             <h3 className='font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] leading-tight'>
               {item.name}
@@ -452,28 +548,61 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
               }`}>
                 {formatPrice(item.price)}
               </span>
-
-              {/* Botón de agregar siempre visible en móvil */}
-              <Button
-                onClick={handleAddToCart}
-                size='sm'
-                disabled={isDisabled}
-                className='md:hidden flex-shrink-0 h-7 w-7 p-0'
-              >
-                <Plus className='h-3 w-3' />
-              </Button>
-
-              {/* Botón de agregar visible en tablet */}
-              <Button
-                onClick={handleAddToCart}
-                size='sm'
-                variant='outline'
-                disabled={isDisabled}
-                className='hidden md:flex lg:hidden flex-shrink-0 h-8 w-8 p-0'
-              >
-                <ShoppingCart className='h-4 w-4' />
-              </Button>
             </div>
+
+            {/* Control de cantidad */}
+            {!isDisabled && (
+              <div className='space-y-2'>
+                <div className='flex items-center gap-2'>
+                  <span className='text-xs text-muted-foreground'>Cantidad:</span>
+                  <div className='flex items-center gap-1'>
+                    <Button
+                      onClick={decrementQuantity}
+                      size='sm'
+                      variant='outline'
+                      className='h-6 w-6 p-0'
+                      disabled={quantity <= 1}
+                    >
+                      <Minus className='h-3 w-3' />
+                    </Button>
+                    <Input
+                      type='number'
+                      value={quantity}
+                      onChange={handleQuantityChange}
+                      className='h-6 w-12 text-center text-xs p-1'
+                      min='1'
+                      max={item.type === 'PRODUCTOS' && item.originalData && 'stock' in item.originalData ? item.originalData.stock : 999}
+                    />
+                    <Button
+                      onClick={incrementQuantity}
+                      size='sm'
+                      variant='outline'
+                      className='h-6 w-6 p-0'
+                    >
+                      <Plus className='h-3 w-3' />
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Botón de agregar con cantidad */}
+                <Button
+                  onClick={handleAddToCart}
+                  size='sm'
+                  className='w-full h-8 text-xs'
+                  disabled={isDisabled}
+                >
+                  <Plus className='h-3 w-3 mr-1' />
+                  Agregar {quantity > 1 ? `(${quantity})` : ''}
+                </Button>
+              </div>
+            )}
+
+            {/* Mensaje para productos deshabilitados */}
+            {isDisabled && (
+              <div className='text-center py-2'>
+                <span className='text-xs text-muted-foreground'>No disponible</span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -497,7 +626,7 @@ function ItemCard({ item, onAddToCart }: ItemCardProps) {
   )
 }
 
-export function ItemGrid({ items, onAddToCart }: ItemGridProps) {
+export function ItemGrid({ items, onAddToCart, onRemoveFromCart }: ItemGridProps) {
   return (
     <div className='p-2 sm:p-3 md:p-4'>
       {items.length === 0 ? (
@@ -515,7 +644,12 @@ export function ItemGrid({ items, onAddToCart }: ItemGridProps) {
       ) : (
         <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-3 md:gap-4'>
           {items.map((item) => (
-            <ItemCard key={item.id} item={item} onAddToCart={onAddToCart} />
+            <ItemCard 
+              key={item.id} 
+              item={item} 
+              onAddToCart={onAddToCart} 
+              onRemoveFromCart={onRemoveFromCart}
+            />
           ))}
         </div>
       )}

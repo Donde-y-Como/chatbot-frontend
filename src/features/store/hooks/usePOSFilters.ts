@@ -92,39 +92,47 @@ export function usePOSFilters({ products, services, events, bundles }: UsePOSFil
   const filteredItems = useMemo(() => {
     let allItems: POSItem[] = []
 
-    // Agregar productos según categoría seleccionada
+    // Agregar productos según categoría seleccionada (solo activos)
     if (filters.category === 'TODOS' || filters.category === 'PRODUCTOS') {
-      const productItems = products.map(product => ({
-        ...productToPOSItem(product),
-        quantity: 1
-      }))
+      const productItems = products
+        .filter(product => product.status !== 'INACTIVO') // Filtrar productos inactivos
+        .map(product => ({
+          ...productToPOSItem(product),
+          quantity: 1
+        }))
       allItems.push(...productItems)
     }
 
-    // Agregar servicios según categoría seleccionada
+    // Agregar servicios según categoría seleccionada (solo activos)
     if (filters.category === 'TODOS' || filters.category === 'SERVICIOS') {
-      const serviceItems = services.map(service => ({
-        ...serviceToPOSItem(service),
-        quantity: 1
-      }))
+      const serviceItems = services
+        .filter(service => service.productInfo?.status !== 'inactive') // Filtrar servicios inactivos
+        .map(service => ({
+          ...serviceToPOSItem(service),
+          quantity: 1
+        }))
       allItems.push(...serviceItems)
     }
 
-    // Agregar eventos según categoría seleccionada
+    // Agregar eventos según categoría seleccionada (solo activos)
     if (filters.category === 'TODOS' || filters.category === 'EVENTOS') {
-      const eventItems = events.map(event => ({
-        ...eventToPOSItem(event),
-        quantity: 1
-      }))
+      const eventItems = events
+        .filter(event => event.productInfo?.status !== 'inactive') // Filtrar eventos inactivos
+        .map(event => ({
+          ...eventToPOSItem(event),
+          quantity: 1
+        }))
       allItems.push(...eventItems)
     }
 
-    // Agregar paquetes según categoría seleccionada
+    // Agregar paquetes según categoría seleccionada (solo activos)
     if (filters.category === 'TODOS' || filters.category === 'PAQUETES') {
-      const bundleItems = bundles.map(bundle => ({
-        ...bundleToPOSItem(bundle),
-        quantity: 1
-      }))
+      const bundleItems = bundles
+        .filter(bundle => bundle.status !== 'INACTIVO') // Filtrar paquetes inactivos
+        .map(bundle => ({
+          ...bundleToPOSItem(bundle),
+          quantity: 1
+        }))
       allItems.push(...bundleItems)
     }
 
