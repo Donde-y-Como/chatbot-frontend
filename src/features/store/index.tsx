@@ -246,11 +246,7 @@ function StoreContent() {
       style={{ touchAction: 'pan-y' }}
     >
       {/* Área principal */}
-      <div
-        className={`flex-1 flex flex-col transition-all duration-300 ${
-          cart.cart.isOpen ? 'lg:mr-[35%]' : ''
-        }`}
-      >
+      <div className='flex-1 flex flex-col lg:mr-[35%] lg:max-w-[calc(100%-35%)]'>
         {/* Header compacto para móvil */}
         <div className='border-b border-border bg-card sticky top-0 z-10 lg:static'>
           {/* Header móvil */}

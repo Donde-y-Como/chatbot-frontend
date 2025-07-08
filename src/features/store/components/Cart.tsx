@@ -185,8 +185,8 @@ export function Cart({
 
   return (
     <>
-      {/* Botón flotante del carrito */}
-      <div className="fixed right-3 bottom-3 sm:right-4 sm:bottom-4 z-50">
+      {/* Botón flotante del carrito - solo en móvil */}
+      <div className="fixed right-3 bottom-3 sm:right-4 sm:bottom-4 z-50 lg:hidden">
         <Button
           onClick={onToggle}
           size="lg"
@@ -204,11 +204,18 @@ export function Cart({
         </Button>
       </div>
 
-      {/* Panel lateral del carrito */}
+      {/* Panel del carrito - siempre visible en desktop, overlay en móvil */}
       <div
-        className={`fixed right-0 top-0 h-full w-full sm:w-[90%] md:w-[70%] lg:w-[35%] lg:min-w-[400px] max-w-[500px] bg-background border-l border-border shadow-2xl transform transition-transform duration-300 z-40 ${
-          cart.isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`
+          /* Desktop: siempre visible, posición fija a la derecha */
+          lg:fixed lg:right-0 lg:top-0 lg:h-full lg:w-[35%] lg:min-w-[400px] lg:max-w-[500px] lg:translate-x-0 lg:shadow-xl lg:border-l-2
+          /* Móvil: panel deslizable */
+          fixed right-0 top-0 h-full w-full sm:w-[90%] md:w-[70%] 
+          bg-background border-l border-border transform transition-transform duration-300 z-40
+          ${
+            cart.isOpen ? 'translate-x-0 lg:translate-x-0' : 'translate-x-full lg:translate-x-0'
+          }
+        `}
         style={{
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'contain'
@@ -219,18 +226,19 @@ export function Cart({
           <div className="flex items-center justify-between p-3 sm:p-4 border-b border-border bg-card">
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
-              <h2 className="text-base sm:text-lg font-semibold">Carrito</h2>
+              <h2 className="text-base sm:text-lg font-semibold">Orden</h2>
               {totalItems > 0 && (
                 <Badge variant="secondary" className="ml-2 text-xs">
                   {totalItems} {totalItems === 1 ? 'artículo' : 'artículos'}
                 </Badge>
               )}
             </div>
+            {/* Botón cerrar - solo en móvil */}
             <Button
               variant="ghost"
               size="sm"
               onClick={onToggle}
-              className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+              className="h-7 w-7 sm:h-8 sm:w-8 p-0 lg:hidden"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -257,9 +265,15 @@ export function Cart({
                 <h3 className="text-base sm:text-lg font-medium text-muted-foreground mb-2">
                   Carrito vacío
                 </h3>
-                <p className="text-xs sm:text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                   Agrega productos, servicios o eventos para comenzar
                 </p>
+                {/* Mensaje adicional para desktop */}
+                <div className="hidden lg:block">
+                  <p className="text-xs text-muted-foreground/70">
+                    La sección de orden estará siempre visible mientras navegas
+                  </p>
+                </div>
               </div>
             ) : (
               <ScrollArea className="h-full">
@@ -325,10 +339,10 @@ export function Cart({
         </div>
       </div>
 
-      {/* Overlay */}
+      {/* Overlay - solo en móvil */}
       {cart.isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 z-30"
+          className="fixed inset-0 bg-black/20 z-30 lg:hidden"
           onClick={onToggle}
         />
       )}

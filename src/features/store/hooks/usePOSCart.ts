@@ -3,6 +3,24 @@ import { CartState, POSItem, POSPrice } from '../types'
 import { POSApiService } from '../services/POSApiService'
 import { toast } from 'sonner'
 
+// Hook para detectar si estamos en desktop
+const useIsDesktop = () => {
+  const [isDesktop, setIsDesktop] = useState(false)
+  
+  useEffect(() => {
+    const checkIsDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024) // lg breakpoint de Tailwind
+    }
+    
+    checkIsDesktop()
+    window.addEventListener('resize', checkIsDesktop)
+    
+    return () => window.removeEventListener('resize', checkIsDesktop)
+  }, [])
+  
+  return isDesktop
+}
+
 const transformBackendItemToPOSItem = (backendItem: any, itemName?: string): POSItem => {
   let frontendType: 'PRODUCTOS' | 'SERVICIOS' | 'EVENTOS' | 'PAQUETES'
   const itemType = backendItem.itemType || backendItem.type
@@ -35,21 +53,30 @@ const transformBackendItemToPOSItem = (backendItem: any, itemName?: string): POS
   }
 }
 
-const DEFAULT_CART_STATE: CartState = {
-  isOpen: false,
+const getDefaultCartState = (isDesktop: boolean): CartState => ({
+  isOpen: isDesktop, // Abierto por defecto en desktop
   items: [],
   selectedClientId: '',
   subtotal: { amount: 0, currency: 'MXN' },
   taxes: { amount: 0, currency: 'MXN' },
   total: { amount: 0, currency: 'MXN' }
-}
+})
 
 // Configuración de impuestos - puede ser configurable por negocio
 const TAX_RATE = 0.16 // 16%
 
 export function usePOSCart() {
-  const [cart, setCart] = useState<CartState>(DEFAULT_CART_STATE)
+  const isDesktop = useIsDesktop()
+  const [cart, setCart] = useState<CartState>(() => getDefaultCartState(isDesktop))
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Actualizar estado del carrito cuando cambie el tamaño de pantalla
+  useEffect(() => {
+    setCart(prev => ({
+      ...prev,
+      isOpen: isDesktop || prev.isOpen // En desktop siempre abierto, en móvil conservar estado
+    }))
+  }, [isDesktop])
 
   const initializePOS = useCallback(async () => {
     setIsLoading(true)
@@ -288,28 +315,32 @@ export function usePOSCart() {
   const clearCart = useCallback(async () => {
     try {
       await POSApiService.clearCart()
-      setCart(DEFAULT_CART_STATE)
+      setCart(getDefaultCartState(isDesktop))
       toast.success('Carrito limpiado')
     } catch (error) {
       console.error('Error limpiando carrito:', error)
       toast.error('Error al limpiar carrito')
     }
-  }, [])
+  }, [isDesktop])
 
-  // Toggle carrito abierto/cerrado
+  // Toggle carrito abierto/cerrado (solo en móvil)
   const toggleCart = useCallback(() => {
-    setCart(prev => ({ ...prev, isOpen: !prev.isOpen }))
-  }, [])
+    if (!isDesktop) {
+      setCart(prev => ({ ...prev, isOpen: !prev.isOpen }))
+    }
+  }, [isDesktop])
 
   // Abrir carrito
   const openCart = useCallback(() => {
     setCart(prev => ({ ...prev, isOpen: true }))
   }, [])
 
-  // Cerrar carrito
+  // Cerrar carrito (solo en móvil)
   const closeCart = useCallback(() => {
-    setCart(prev => ({ ...prev, isOpen: false }))
-  }, [])
+    if (!isDesktop) {
+      setCart(prev => ({ ...prev, isOpen: false }))
+    }
+  }, [isDesktop])
 
   // Seleccionar cliente
   const setSelectedClient = useCallback((clientId: string) => {
