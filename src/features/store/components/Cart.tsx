@@ -27,16 +27,21 @@ interface CartItemCardProps {
 
 function CartItemCard({ item, onRemove, onUpdateQuantity, onUpdatePrice }: CartItemCardProps) {
   const [isEditingPrice, setIsEditingPrice] = React.useState(false)
-  const [tempPrice, setTempPrice] = React.useState(item.price.amount.toString())
+  // Usar el precio actual (modifiedPrice si existe, sino unitPrice)
+  const currentPrice = item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
+  const [tempPrice, setTempPrice] = React.useState(currentPrice.toString())
   
   // Actualizar tempPrice cuando cambie el precio del item
   React.useEffect(() => {
-    setTempPrice(item.price.amount.toString())
-  }, [item.price.amount])
+    const currentPrice = item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
+    setTempPrice(currentPrice.toString())
+  }, [item.price.amount, item.modifiedPrice?.amount, item.unitPrice?.amount])
   
   const handlePriceClick = () => {
     setIsEditingPrice(true)
-    setTempPrice(item.price.amount.toString())
+    // Usar el precio actual para edición (modifiedPrice o unitPrice)
+    const currentPrice = item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
+    setTempPrice(currentPrice.toString())
   }
   
   const handlePriceSubmit = () => {
@@ -51,7 +56,8 @@ function CartItemCard({ item, onRemove, onUpdateQuantity, onUpdatePrice }: CartI
   }
   
   const handlePriceCancel = () => {
-    setTempPrice(item.price.amount.toString())
+    const currentPrice = item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
+    setTempPrice(currentPrice.toString())
     setIsEditingPrice(false)
   }
   
@@ -190,18 +196,34 @@ function CartItemCard({ item, onRemove, onUpdateQuantity, onUpdatePrice }: CartI
               </div>
             ) : (
               <div className="flex items-center gap-1 flex-1">
-                <span className="text-xs text-muted-foreground">
-                  {item.name === 'Cargando...' ? (
-                    <span className="animate-pulse">--- c/u</span>
-                  ) : (
-                    `${formatPrice(item.price)} c/u`
+                <div className="flex flex-col">
+                  {/* Mostrar precio original tachado si existe modifiedPrice */}
+                  {item.modifiedPrice && item.unitPrice && (
+                    <span className="text-xs text-muted-foreground line-through">
+                      {formatPrice(item.unitPrice)} c/u
+                    </span>
                   )}
-                </span>
+                  {/* Precio actual (modificado o unitario) */}
+                  <span className="text-xs text-muted-foreground">
+                    {item.name === 'Cargando...' ? (
+                      <span className="animate-pulse">--- c/u</span>
+                    ) : (
+                      <>
+                        {formatPrice(item.price)} c/u
+                        {item.modifiedPrice && (
+                          <span className="ml-1 text-orange-600 font-medium" title="Precio modificado">
+                            (✓ editado)
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </span>
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handlePriceClick}
-                  className="h-5 w-5 p-0 text-muted-foreground hover:text-primary"
+                  className="h-5 w-5 p-0 text-muted-foreground hover:text-primary ml-auto"
                   title="Editar precio"
                 >
                   <Edit3 className="h-3 w-3" />

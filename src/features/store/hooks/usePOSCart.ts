@@ -42,11 +42,17 @@ const transformBackendItemToPOSItem = (backendItem: any, itemName?: string): POS
       frontendType = 'PRODUCTOS'
   }
   
+  // Si existe modifiedPrice, usar ese como precio mostrado, sino usar unitPrice
+  const displayPrice = backendItem.modifiedPrice || backendItem.unitPrice || backendItem.price || { amount: 0, currency: 'MXN' }
+  
   return {
     id: backendItem.itemId || backendItem.id,
     type: frontendType,
     name: itemName || backendItem.name || backendItem.itemName || 'Cargando...',
-    price: backendItem.unitPrice || backendItem.price || { amount: 0, currency: 'MXN' },
+    price: displayPrice,
+    unitPrice: backendItem.unitPrice, // Precio original
+    finalPrice: backendItem.finalPrice, // Precio final calculado
+    modifiedPrice: backendItem.modifiedPrice, // Precio modificado manualmente (solo si existe)
     image: backendItem.image || backendItem.imageUrl,
     quantity: backendItem.quantity || 1,
     originalData: backendItem.originalData || backendItem

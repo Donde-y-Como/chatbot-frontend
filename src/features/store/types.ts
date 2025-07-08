@@ -42,7 +42,10 @@ export interface POSItem {
   id: string
   type: POSCategory
   name: string
-  price: POSPrice
+  price: POSPrice // Precio que se muestra (finalPrice o unitPrice)
+  unitPrice?: POSPrice // Precio original del item
+  finalPrice?: POSPrice // Precio final (puede ser modificado)
+  modifiedPrice?: POSPrice // Precio modificado manualmente
   image?: string
   quantity: number
   originalData: Product | Service | EventPrimitives | Bundle | null
