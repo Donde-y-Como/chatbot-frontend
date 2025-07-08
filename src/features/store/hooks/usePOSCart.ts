@@ -312,6 +312,42 @@ export function usePOSCart() {
     }
   }, [cart.items, removeFromCart, refreshCart])
 
+  const updateCartPrice = useCallback(async (itemId: string, newPrice: { amount: number; currency: string }) => {
+    try {
+      const item = cart.items.find(i => i.id === itemId)
+      if (!item) return
+
+      let itemType: 'product' | 'service' | 'event' | 'bundle'
+      switch (item.type) {
+        case 'PRODUCTOS':
+          itemType = 'product'
+          break
+        case 'SERVICIOS':
+          itemType = 'service'
+          break
+        case 'EVENTOS':
+          itemType = 'event'
+          break
+        case 'PAQUETES':
+          itemType = 'bundle'
+          break
+        default:
+          throw new Error('Tipo de item no válido')
+      }
+
+      await POSApiService.updateCartPrice(itemId, {
+        itemType,
+        newPrice
+      })
+
+      await refreshCart()
+      toast.success('Precio actualizado')
+    } catch (error) {
+      console.error('Error actualizando precio:', error)
+      toast.error('Error al actualizar precio')
+    }
+  }, [cart.items, refreshCart])
+
   const clearCart = useCallback(async () => {
     try {
       await POSApiService.clearCart()
@@ -374,6 +410,7 @@ export function usePOSCart() {
     addToCart,
     removeFromCart,
     updateCartQuantity,
+    updateCartPrice,
     clearCart,
     
     toggleCart,

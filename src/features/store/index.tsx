@@ -347,6 +347,7 @@ function StoreContent() {
         onToggle={cart.toggleCart}
         onRemoveItem={cart.removeFromCart}
         onUpdateQuantity={cart.updateCartQuantity}
+        onUpdatePrice={cart.updateCartPrice}
         onClientSelect={cart.setSelectedClient}
         onClearCart={cart.clearCart}
       />

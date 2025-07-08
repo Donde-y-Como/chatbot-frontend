@@ -1,9 +1,10 @@
 import React from 'react'
-import { X, ShoppingCart, Minus, Plus, Trash2 } from 'lucide-react'
+import { X, ShoppingCart, Minus, Plus, Trash2, Edit3, Check, XIcon } from 'lucide-react'
 import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
 import { Separator } from '../../../components/ui/separator'
 import { ScrollArea } from '../../../components/ui/scroll-area'
+import { Input } from '../../../components/ui/input'
 import { CreateOrSelectClient } from '../../appointments/components/CreateOrSelectClient'
 import { CartState, POSItem } from '../types'
 
@@ -12,6 +13,7 @@ interface CartProps {
   onToggle: () => void
   onRemoveItem: (itemId: string) => void
   onUpdateQuantity: (itemId: string, quantity: number) => void
+  onUpdatePrice: (itemId: string, newPrice: { amount: number; currency: string }) => void
   onClientSelect: (clientId: string) => void
   onClearCart: () => void
 }
@@ -20,9 +22,46 @@ interface CartItemCardProps {
   item: POSItem
   onRemove: (itemId: string) => void
   onUpdateQuantity: (itemId: string, quantity: number) => void
+  onUpdatePrice: (itemId: string, newPrice: { amount: number; currency: string }) => void
 }
 
-function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
+function CartItemCard({ item, onRemove, onUpdateQuantity, onUpdatePrice }: CartItemCardProps) {
+  const [isEditingPrice, setIsEditingPrice] = React.useState(false)
+  const [tempPrice, setTempPrice] = React.useState(item.price.amount.toString())
+  
+  // Actualizar tempPrice cuando cambie el precio del item
+  React.useEffect(() => {
+    setTempPrice(item.price.amount.toString())
+  }, [item.price.amount])
+  
+  const handlePriceClick = () => {
+    setIsEditingPrice(true)
+    setTempPrice(item.price.amount.toString())
+  }
+  
+  const handlePriceSubmit = () => {
+    const newAmount = parseFloat(tempPrice)
+    if (!isNaN(newAmount) && newAmount > 0) {
+      onUpdatePrice(item.id, {
+        amount: newAmount,
+        currency: item.price.currency
+      })
+    }
+    setIsEditingPrice(false)
+  }
+  
+  const handlePriceCancel = () => {
+    setTempPrice(item.price.amount.toString())
+    setIsEditingPrice(false)
+  }
+  
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handlePriceSubmit()
+    } else if (e.key === 'Escape') {
+      handlePriceCancel()
+    }
+  }
   const formatPrice = (price: typeof item.price) => {
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
@@ -118,12 +157,56 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
         </div>
 
         <div className="mt-1 sm:mt-2 space-y-1 sm:space-y-2">
-          {/* Precio unitario */}
-          <div className="text-xs text-muted-foreground">
-            {item.name === 'Cargando...' ? (
-              <span className="animate-pulse">--- c/u</span>
+          {/* Precio unitario editable */}
+          <div className="flex items-center gap-1">
+            {isEditingPrice ? (
+              <div className="flex items-center gap-1 flex-1">
+                <Input
+                  type="number"
+                  value={tempPrice}
+                  onChange={(e) => setTempPrice(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  className="h-6 text-xs flex-1 min-w-0 border-primary"
+                  step="0.01"
+                  min="0"
+                  autoFocus
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handlePriceSubmit}
+                  className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                >
+                  <Check className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handlePriceCancel}
+                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                >
+                  <XIcon className="h-3 w-3" />
+                </Button>
+              </div>
             ) : (
-              `${formatPrice(item.price)} c/u`
+              <div className="flex items-center gap-1 flex-1">
+                <span className="text-xs text-muted-foreground">
+                  {item.name === 'Cargando...' ? (
+                    <span className="animate-pulse">--- c/u</span>
+                  ) : (
+                    `${formatPrice(item.price)} c/u`
+                  )}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handlePriceClick}
+                  className="h-5 w-5 p-0 text-muted-foreground hover:text-primary"
+                  title="Editar precio"
+                >
+                  <Edit3 className="h-3 w-3" />
+                </Button>
+              </div>
             )}
           </div>
 
@@ -171,6 +254,7 @@ export function Cart({
                        onToggle,
                        onRemoveItem,
                        onUpdateQuantity,
+                       onUpdatePrice,
                        onClientSelect,
                        onClearCart
                      }: CartProps) {
@@ -284,6 +368,7 @@ export function Cart({
                       item={item}
                       onRemove={onRemoveItem}
                       onUpdateQuantity={onUpdateQuantity}
+                      onUpdatePrice={onUpdatePrice}
                     />
                   ))}
                 </div>
