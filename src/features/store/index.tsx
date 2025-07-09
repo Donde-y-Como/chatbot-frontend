@@ -3,7 +3,7 @@ import { Cart } from '@/features/store/components/Cart.tsx'
 import { POSError } from '@/features/store/components/POSError.tsx'
 import { POSLoading } from '@/features/store/components/POSLoading.tsx'
 import { SelectEventDateDialog } from '@/features/store/components/SelectEventDateDialog.tsx'
-import { CartItemRequest } from '@/features/store/types.ts'
+import { CartItemRequest, PaymentMethod } from '@/features/store/types.ts'
 import { AdvancedFilters } from './components/AdvancedFilters'
 import { StoreHeader } from './components/StoreHeader'
 import { StoreItems } from './components/StoreItems'
@@ -40,6 +40,7 @@ export default function Store() {
 
   // Hook del carrito independiente
   const cart = useCart()
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
 
   // Detectar scroll para cerrar menú móvil automáticamente
   useEffect(() => {
@@ -103,8 +104,10 @@ export default function Store() {
     setIsMobileMenuOpen(false)
   }
 
+
+
   const handleConvertCart = async () => {
-    console.log(cart.cart)
+    console.log({ ...cart.cart, paymentMethod })
   }
 
   return (
@@ -142,6 +145,7 @@ export default function Store() {
           onUpdateQuantity={cart.updateCartQuantity}
           onUpdatePrice={cart.updateCartPrice}
           onClientSelect={cart.setSelectedClient}
+          onPaymentMethodSelect={setPaymentMethod}
           onClearCart={cart.clearCart}
           onConvertCart={handleConvertCart}
         />

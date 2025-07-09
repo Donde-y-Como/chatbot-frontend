@@ -1,15 +1,13 @@
-import React from 'react'
-import { ShoppingCart, X } from 'lucide-react'
-import { Badge } from '@/components/ui/badge.tsx'
-import { Button } from '@/components/ui/button.tsx'
-import { ScrollArea } from '@/components/ui/scroll-area.tsx'
-import { CartItemCard } from '@/features/store/components/CartItemCard.tsx'
-import { CreateOrSelectClient } from '../../appointments/components/CreateOrSelectClient'
-import {
-  CartItemRequest,
-  CartState,
-  UpdateCartItemPriceRequest,
-} from '../types'
+import React, { useState } from 'react';
+import { ShoppingCart, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge.tsx';
+import { Button } from '@/components/ui/button.tsx';
+import { ScrollArea } from '@/components/ui/scroll-area.tsx';
+import { CartItemCard } from '@/features/store/components/CartItemCard.tsx';
+import { PaymentMethodSelector } from '@/features/store/components/PaymentMethodSelector.tsx';
+import { CreateOrSelectClient } from '../../appointments/components/CreateOrSelectClient';
+import { CartItemRequest, CartState, PaymentMethod, UpdateCartItemPriceRequest } from '../types';
+
 
 interface CartProps {
   cart: CartState
@@ -18,6 +16,7 @@ interface CartProps {
   onUpdateQuantity: (item: CartItemRequest) => void
   onUpdatePrice: (item: UpdateCartItemPriceRequest) => void
   onClientSelect: (clientId: string) => void
+  onPaymentMethodSelect: (method: PaymentMethod) => void
   onClearCart: () => void
   onConvertCart: () => void
 }
@@ -31,6 +30,7 @@ export function Cart({
   onClientSelect,
   onClearCart,
   onConvertCart,
+  onPaymentMethodSelect,
 }: CartProps) {
   const formatPrice = (price: typeof cart.total) => {
     return new Intl.NumberFormat('es-MX', {
@@ -40,6 +40,7 @@ export function Cart({
   }
 
   const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
 
   return (
     <>
@@ -169,6 +170,13 @@ export function Cart({
 
               {/* Botones de acción */}
               <div className='space-y-2'>
+                <PaymentMethodSelector
+                  onSelect={(p) => {
+                    setPaymentMethod(p)
+                    onPaymentMethodSelect(p)
+                  }}
+                  selected={paymentMethod}
+                />
                 <Button
                   className='w-full h-10 sm:h-12 text-sm sm:text-base font-medium'
                   disabled={!cart.selectedClientId}

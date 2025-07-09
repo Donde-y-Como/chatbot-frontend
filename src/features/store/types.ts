@@ -117,6 +117,8 @@ export type POSItem = {
   itemDetails: Product | Service | EventPrimitives | Bundle
 }
 
+export type PaymentMethod = 'credit_card' | 'debit_card' | 'cash'
+
 // Rango de fechas
 export interface DateRange {
   from: Date | null
