@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { CartState, POSItem, POSPrice } from '../types'
+import { CartState, POSItem, POSPrice, CartItemWithDetails, CartWithDetails } from '../types'
 import { POSApiService } from '../services/POSApiService'
 import { toast } from 'sonner'
 
@@ -21,11 +21,10 @@ const useIsDesktop = () => {
   return isDesktop
 }
 
-const transformBackendItemToPOSItem = (backendItem: any, itemName?: string): POSItem => {
+const transformCartItemToPOSItem = (cartItem: CartItemWithDetails): POSItem => {
   let frontendType: 'PRODUCTOS' | 'SERVICIOS' | 'EVENTOS' | 'PAQUETES'
-  const itemType = backendItem.itemType || backendItem.type
   
-  switch (itemType) {
+  switch (cartItem.itemType) {
     case 'product':
       frontendType = 'PRODUCTOS'
       break
@@ -42,20 +41,19 @@ const transformBackendItemToPOSItem = (backendItem: any, itemName?: string): POS
       frontendType = 'PRODUCTOS'
   }
   
-  // Si existe modifiedPrice, usar ese como precio mostrado, sino usar unitPrice
-  const displayPrice = backendItem.modifiedPrice || backendItem.unitPrice || backendItem.price || { amount: 0, currency: 'MXN' }
+  const displayPrice = cartItem.effectiveUnitPrice
   
   return {
-    id: backendItem.itemId || backendItem.id,
+    id: cartItem.itemId,
     type: frontendType,
-    name: itemName || backendItem.name || backendItem.itemName || 'Cargando...',
+    name: cartItem.itemName,
     price: displayPrice,
-    unitPrice: backendItem.unitPrice, // Precio original
-    finalPrice: backendItem.finalPrice, // Precio final calculado
-    modifiedPrice: backendItem.modifiedPrice, // Precio modificado manualmente (solo si existe)
-    image: backendItem.image || backendItem.imageUrl,
-    quantity: backendItem.quantity || 1,
-    originalData: backendItem.originalData || backendItem
+    unitPrice: cartItem.unitPrice,
+    finalPrice: cartItem.finalPrice,
+    modifiedPrice: cartItem.modifiedPrice,
+    image: cartItem.itemDetails?.image || cartItem.itemDetails?.imageUrl || cartItem.itemDetails?.photos?.[0],
+    quantity: cartItem.quantity,
+    originalData: cartItem.itemDetails
   }
 }
 
@@ -87,92 +85,70 @@ export function usePOSCart() {
   const initializePOS = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await POSApiService.posInitialize()
+      const response = await POSApiService.getCart(true)
       
-      if (response.data && response.data.cart) {
-        const cartData = response.data.cart
+      if (response.success && response.data) {
+        // Active cart found - restore it
+        const cartData = response.data as CartWithDetails
         
-        const itemsWithoutNames = (cartData.items || []).map(item => transformBackendItemToPOSItem(item))
+        const posItems = (cartData.itemsWithDetails || []).map(item => transformCartItemToPOSItem(item))
         
         setCart(prev => ({
           ...prev,
-          items: itemsWithoutNames,
-          selectedClientId: cartData.selectedClientId || '',
-          subtotal: cartData.subtotal || cartData.totalAmount || { amount: 0, currency: 'MXN' },
-          taxes: cartData.taxes || { amount: 0, currency: 'MXN' },
-          total: cartData.total || cartData.totalAmount || { amount: 0, currency: 'MXN' }
+          items: posItems,
+          selectedClientId: '', // Will be set when client is selected
+          subtotal: { amount: cartData.totalAmount.amount * 0.86, currency: cartData.totalAmount.currency },
+          taxes: { amount: cartData.totalAmount.amount * 0.14, currency: cartData.totalAmount.currency },
+          total: cartData.totalAmount
         }))
         
-        if (cartData.items && cartData.items.length > 0) {
-          const itemsForNames = cartData.items.map((item: any) => ({
-            itemId: item.itemId || item.id,
-            itemType: item.itemType || item.type || 'product'
-          }))
-          
-          
-          const nameMap = await POSApiService.getMultipleItemNames(itemsForNames)
-          
-          const itemsWithNames = cartData.items.map((item: any) => {
-            const itemId = item.itemId || item.id
-            const itemName = nameMap[itemId]
-            return transformBackendItemToPOSItem(item, itemName)
-          })
-                    
-          setCart(prev => ({
-            ...prev,
-            items: itemsWithNames
-          }))
-        }
+        console.log('Carrito activo recuperado con', cartData.itemCount, 'items')
+      } else {
+        // No active cart - start fresh
+        setCart(prev => getDefaultCartState(isDesktop))
+        console.log('POS listo para nueva venta')
       }
+      
     } catch (error) {
       console.error('Error inicializando POS:', error)
       toast.error('Error al inicializar el sistema POS')
+      // Fallback to empty cart state
+      setCart(prev => getDefaultCartState(isDesktop))
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [isDesktop])
 
   const refreshCart = useCallback(async () => {
     try {
-      const cartData = await POSApiService.getCart()
+      const response = await POSApiService.getCart(true)
       
-      const data = cartData.data || cartData
-      
-      const itemsWithoutNames = (data.items || []).map(item => transformBackendItemToPOSItem(item))
-      
-      setCart(prev => ({
-        ...prev,
-        items: itemsWithoutNames,
-        selectedClientId: data.selectedClientId || '',
-        subtotal: data.subtotal || data.totalAmount || { amount: 0, currency: 'MXN' },
-        taxes: data.taxes || { amount: 0, currency: 'MXN' },
-        total: data.total || data.totalAmount || { amount: 0, currency: 'MXN' }
-      }))
-      
-      if (data.items && data.items.length > 0) {
-        const itemsForNames = data.items.map((item: any) => ({
-          itemId: item.itemId || item.id,
-          itemType: item.itemType || item.type || 'product'
-        }))
+      if (response.success && response.data) {
+        const cartData = response.data as CartWithDetails
         
-        
-        const nameMap = await POSApiService.getMultipleItemNames(itemsForNames)
-        
-        const itemsWithNames = data.items.map((item: any) => {
-          const itemId = item.itemId || item.id
-          const itemName = nameMap[itemId]
-          return transformBackendItemToPOSItem(item, itemName)
-        })
-        
+        const posItems = (cartData.itemsWithDetails || []).map(item => transformCartItemToPOSItem(item))
         
         setCart(prev => ({
           ...prev,
-          items: itemsWithNames
+          items: posItems,
+          subtotal: { amount: cartData.totalAmount.amount * 0.86, currency: cartData.totalAmount.currency },
+          taxes: { amount: cartData.totalAmount.amount * 0.14, currency: cartData.totalAmount.currency },
+          total: cartData.totalAmount
+        }))
+      } else {
+        // No cart exists, clear local state
+        setCart(prev => ({
+          ...prev,
+          items: [],
+          subtotal: { amount: 0, currency: 'MXN' },
+          taxes: { amount: 0, currency: 'MXN' },
+          total: { amount: 0, currency: 'MXN' }
         }))
       }
       
     } catch (error) {
       console.error('Error refrescando carrito:', error)
+      // On error, don't modify cart state to prevent data loss
     }
   }, [])
 

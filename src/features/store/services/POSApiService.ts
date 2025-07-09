@@ -2,7 +2,7 @@ import { api } from '../../../api/axiosInstance.ts'
 import { Product } from '../../products/types'
 import { Service } from '../../services/types'
 import { EventPrimitives } from '../../events/types'
-import { Bundle } from '../types'
+import { Bundle, GetCartSuccessResponse } from '../types'
 
 interface CartItem {
   itemId: string
@@ -21,14 +21,6 @@ interface CartItemUpdate {
   }
 }
 
-interface POSInitializeResponse {
-  data: {
-    cart: any
-    hasActiveCart: boolean
-  }
-  message: string
-  success: boolean
-}
 
 export const POSApiService = {
   getProducts: async (filters?: {
@@ -329,16 +321,10 @@ export const POSApiService = {
     }
   },
 
-  posInitialize: async (): Promise<POSInitializeResponse> => {
-    const response = await api.get('/pos/initialize')
-    if (response.status !== 200) {
-      throw new Error('Error inicializando POS')
-    }
-    return response.data
-  },
 
-  getCart: async () => {
-    const response = await api.get('/cart')
+  getCart: async (includeDetails: boolean = false): Promise<GetCartSuccessResponse> => {
+    const url = includeDetails ? '/cart?includeDetails=true' : '/cart'
+    const response = await api.get<GetCartSuccessResponse>(url)
     if (response.status !== 200) {
       throw new Error('Error obteniendo carrito')
     }

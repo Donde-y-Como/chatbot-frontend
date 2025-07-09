@@ -37,6 +37,63 @@ export interface POSPrice {
   currency: string
 }
 
+// Cart API Response Types
+export enum CartItemType {
+  PRODUCT = 'product',
+  SERVICE = 'service',
+  EVENT = 'event',
+  BUNDLE = 'bundle'
+}
+
+export type EventMetadata = {
+  selectedDate: string
+  provisionalBookingId: string
+}
+
+export type CartItemPrimitives = {
+  itemId: string
+  itemType: CartItemType
+  itemName: string
+  quantity: number
+  unitPrice: POSPrice
+  finalPrice: POSPrice
+  modifiedPrice?: POSPrice
+  notes?: string
+  eventMetadata?: EventMetadata
+  addedAt: string
+}
+
+export type CartItemWithDetails = CartItemPrimitives & {
+  itemDetails: any
+  totalPrice: POSPrice
+  effectiveUnitPrice: POSPrice
+  hasPriceModification: boolean
+}
+
+export type CartPrimitives = {
+  id: string
+  businessId: string
+  items: CartItemPrimitives[]
+  createdAt: string
+  updatedAt: string
+}
+
+export type CartWithDetails = CartPrimitives & {
+  itemsWithDetails: CartItemWithDetails[]
+  totalAmount: POSPrice
+  itemCount: number
+}
+
+export interface BasicCartData extends Omit<CartWithDetails, "itemsWithDetails"> {}
+
+export type CartResponseData = BasicCartData | CartWithDetails
+
+export interface GetCartSuccessResponse {
+  success: true
+  data: CartResponseData | null
+  message: string
+}
+
 // Item base para el carrito
 export interface POSItem {
   id: string
