@@ -1,44 +1,27 @@
-import React, { useState, useEffect } from 'react'
-import { X, Filter, RotateCcw, CalendarIcon } from 'lucide-react'
-import { Button } from '../../../components/ui/button'
-import { Input } from '../../../components/ui/input'
-import { Label } from '../../../components/ui/label'
-import { Badge } from '../../../components/ui/badge'
-import { Separator } from '../../../components/ui/separator'
-import { Checkbox } from '../../../components/ui/checkbox'
-import { Calendar as CalendarComponent } from '../../../components/ui/calendar'
+import React, { useEffect, useState } from 'react'
+import { format } from 'date-fns'
+import { CalendarIcon, Filter, RotateCcw, X } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '../../../components/ui/popover'
+} from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../../components/ui/select'
-import { POSFilters, AuxiliaryData, DateRange } from '../types'
-import { ProductStatus as ProductsProductStatus } from '../../products/types'
-import { ProductStatus as GlobalProductStatus } from '../../../types/global'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale/es'
-
-type StatusValue = ProductsProductStatus | GlobalProductStatus | 'ALL'
-
-const mapStatusValue = (value: string): { products?: ProductsProductStatus; services?: GlobalProductStatus } => {
-  switch (value) {
-    case ProductsProductStatus.ACTIVO:
-      return { products: ProductsProductStatus.ACTIVO, services: GlobalProductStatus.ACTIVE }
-    case ProductsProductStatus.INACTIVO:
-      return { products: ProductsProductStatus.INACTIVO, services: GlobalProductStatus.INACTIVE }
-    case ProductsProductStatus.SIN_STOCK:
-      return { products: ProductsProductStatus.SIN_STOCK }
-    default:
-      return {}
-  }
-}
+} from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { ProductStatus } from '@/features/products/types.ts'
+import { AuxiliaryData, POSFilters } from '../types'
 
 interface AdvancedFiltersProps {
   isOpen: boolean
@@ -55,7 +38,7 @@ export function AdvancedFilters({
   filters,
   onFiltersChange,
   onResetFilters,
-  auxiliaryData
+  auxiliaryData,
 }: AdvancedFiltersProps) {
   const [localFilters, setLocalFilters] = useState<POSFilters>(filters)
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false)
@@ -69,7 +52,7 @@ export function AdvancedFilters({
   const handleApplyFilters = () => {
     const filtersToApply = {
       ...localFilters,
-      isActive: true
+      isActive: true,
     }
     onFiltersChange(filtersToApply)
     onClose()
@@ -79,7 +62,7 @@ export function AdvancedFilters({
     const resetFilters: POSFilters = {
       search: '',
       category: 'TODOS',
-      isActive: false
+      isActive: false,
     }
     setLocalFilters(resetFilters)
     onResetFilters()
@@ -87,42 +70,42 @@ export function AdvancedFilters({
   }
 
   const updateLocalFilters = (updates: Partial<POSFilters>) => {
-    setLocalFilters(prev => ({ ...prev, ...updates }))
+    setLocalFilters((prev) => ({ ...prev, ...updates }))
   }
 
   const toggleTag = (tagId: string) => {
     const currentTags = localFilters.tags || []
     const newTags = currentTags.includes(tagId)
-      ? currentTags.filter(id => id !== tagId)
+      ? currentTags.filter((id) => id !== tagId)
       : [...currentTags, tagId]
-    
+
     updateLocalFilters({ tags: newTags })
   }
 
   const toggleCategory = (categoryId: string) => {
     const currentCategories = localFilters.categories || []
     const newCategories = currentCategories.includes(categoryId)
-      ? currentCategories.filter(id => id !== categoryId)
+      ? currentCategories.filter((id) => id !== categoryId)
       : [...currentCategories, categoryId]
-    
+
     updateLocalFilters({ categories: newCategories })
   }
 
   const toggleSubcategory = (subcategoryId: string) => {
     const currentSubcategories = localFilters.subcategories || []
     const newSubcategories = currentSubcategories.includes(subcategoryId)
-      ? currentSubcategories.filter(id => id !== subcategoryId)
+      ? currentSubcategories.filter((id) => id !== subcategoryId)
       : [...currentSubcategories, subcategoryId]
-    
+
     updateLocalFilters({ subcategories: newSubcategories })
   }
 
   const toggleUnidadMedida = (unidadId: string) => {
     const currentUnidades = localFilters.unidadMedida || []
     const newUnidades = currentUnidades.includes(unidadId)
-      ? currentUnidades.filter(id => id !== unidadId)
+      ? currentUnidades.filter((id) => id !== unidadId)
       : [...currentUnidades, unidadId]
-    
+
     updateLocalFilters({ unidadMedida: newUnidades })
   }
 
@@ -145,66 +128,64 @@ export function AdvancedFilters({
   const toggleUnit = (unitId: string) => {
     const currentUnits = localFilters.units || []
     const newUnits = currentUnits.includes(unitId)
-      ? currentUnits.filter(id => id !== unitId)
+      ? currentUnits.filter((id) => id !== unitId)
       : [...currentUnits, unitId]
-    
+
     updateLocalFilters({ units: newUnits })
   }
 
   return (
     <>
       {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/20 z-40"
-        onClick={onClose}
-      />
+      <div className='fixed inset-0 bg-black/20 z-40' onClick={onClose} />
 
       {/* Panel de filtros */}
-      <div className="fixed right-0 top-0 h-full w-[400px] bg-background border-l border-border shadow-2xl z-50 flex flex-col">
+      <div className='fixed right-0 top-0 h-full w-[400px] bg-background border-l border-border shadow-2xl z-50 flex flex-col'>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            <h2 className="text-lg font-semibold">Filtros Avanzados</h2>
+        <div className='flex items-center justify-between p-4 border-b border-border'>
+          <div className='flex items-center gap-2'>
+            <Filter className='h-5 w-5' />
+            <h2 className='text-lg font-semibold'>Filtros Avanzados</h2>
           </div>
           <Button
-            variant="ghost"
-            size="sm"
+            variant='ghost'
+            size='sm'
             onClick={onClose}
-            className="h-8 w-8 p-0"
+            className='h-8 w-8 p-0'
           >
-            <X className="h-4 w-4" />
+            <X className='h-4 w-4' />
           </Button>
         </div>
 
         {/* Contenido de filtros */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className='flex-1 overflow-y-auto p-4 space-y-6'>
           {/* Estado y configuraciones por categoría */}
           {localFilters.category !== 'TODOS' && (
             <>
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Estado</Label>
+              <div className='space-y-3'>
+                <Label className='text-sm font-medium'>Estado</Label>
                 <Select
                   value={localFilters.status || 'ALL'}
                   onValueChange={(value) => {
                     if (value === 'ALL') {
                       updateLocalFilters({ status: undefined })
                     } else {
-                      const statusMap = mapStatusValue(value)
-                      if (statusMap.products) {
-                        updateLocalFilters({ status: statusMap.products })
-                      }
+                      updateLocalFilters({ status: value as ProductStatus })
                     }
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar estado" />
+                    <SelectValue placeholder='Seleccionar estado' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">Todos los estados</SelectItem>
-                    <SelectItem value={ProductsProductStatus.ACTIVO}>Activo</SelectItem>
-                    <SelectItem value={ProductsProductStatus.INACTIVO}>Inactivo</SelectItem>
-                    <SelectItem value={ProductsProductStatus.SIN_STOCK}>Sin Stock</SelectItem>
+                    <SelectItem value='ALL'>Todos los estados</SelectItem>
+                    <SelectItem value={ProductStatus.ACTIVO}>Activo</SelectItem>
+                    <SelectItem value={ProductStatus.INACTIVO}>
+                      Inactivo
+                    </SelectItem>
+                    <SelectItem value={ProductStatus.SIN_STOCK}>
+                      Sin Stock
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -214,20 +195,23 @@ export function AdvancedFilters({
           )}
 
           {/* Filtros específicos para EVENTOS */}
-          {(localFilters.category === 'TODOS' || localFilters.category === 'EVENTOS') && (
+          {(localFilters.category === 'TODOS' ||
+            localFilters.category === 'EVENTOS') && (
             <>
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Configuración de Eventos</Label>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
+              <div className='space-y-3'>
+                <Label className='text-sm font-medium'>
+                  Configuración de Eventos
+                </Label>
+                <div className='space-y-2'>
+                  <div className='flex items-center space-x-2'>
                     <Checkbox
-                      id="activeOnly"
+                      id='activeOnly'
                       checked={localFilters.activeOnly || false}
                       onCheckedChange={(checked) =>
                         updateLocalFilters({ activeOnly: checked === true })
                       }
                     />
-                    <Label htmlFor="activeOnly" className="text-sm">
+                    <Label htmlFor='activeOnly' className='text-sm'>
                       Solo eventos próximos
                     </Label>
                   </div>
@@ -235,24 +219,32 @@ export function AdvancedFilters({
               </div>
 
               {/* Filtro de fechas para eventos */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Rango de Fechas (Eventos)</Label>
-                <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
+              <div className='space-y-3'>
+                <Label className='text-sm font-medium'>
+                  Rango de Fechas (Eventos)
+                </Label>
+                <Popover
+                  open={isDatePopoverOpen}
+                  onOpenChange={setIsDatePopoverOpen}
+                >
                   <PopoverTrigger asChild>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant='outline'
                       className={`w-full justify-between ${
-                        localFilters.dateRange?.from || localFilters.dateRange?.to 
-                          ? 'text-primary' : ''
+                        localFilters.dateRange?.from ||
+                        localFilters.dateRange?.to
+                          ? 'text-primary'
+                          : ''
                       }`}
                     >
-                      <div className="flex items-center">
-                        <CalendarIcon className="h-4 w-4 mr-2" />
-                        <span className="truncate">{formatDateRange()}</span>
+                      <div className='flex items-center'>
+                        <CalendarIcon className='h-4 w-4 mr-2' />
+                        <span className='truncate'>{formatDateRange()}</span>
                       </div>
-                      {(localFilters.dateRange?.from || localFilters.dateRange?.to) && (
+                      {(localFilters.dateRange?.from ||
+                        localFilters.dateRange?.to) && (
                         <X
-                          className="h-4 w-4 ml-1 opacity-60 hover:opacity-100"
+                          className='h-4 w-4 ml-1 opacity-60 hover:opacity-100'
                           onClick={(e) => {
                             e.stopPropagation()
                             clearDateRange()
@@ -261,21 +253,20 @@ export function AdvancedFilters({
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className='w-auto p-0' align='start'>
                     <CalendarComponent
-                      initialFocus
-                      mode="range"
+                      mode='range'
                       defaultMonth={localFilters.dateRange?.from || new Date()}
                       selected={{
                         from: localFilters.dateRange?.from as Date,
-                        to: localFilters.dateRange?.to as Date
+                        to: localFilters.dateRange?.to as Date,
                       }}
                       onSelect={(range) => {
                         updateLocalFilters({
                           dateRange: {
                             from: range?.from || null,
-                            to: range?.to || null
-                          }
+                            to: range?.to || null,
+                          },
                         })
                       }}
                       numberOfMonths={2}
@@ -288,47 +279,59 @@ export function AdvancedFilters({
             </>
           )}
           {/* Rango de precios */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Rango de Precios</Label>
-            <div className="grid grid-cols-2 gap-2">
+          <div className='space-y-3'>
+            <Label className='text-sm font-medium'>Rango de Precios</Label>
+            <div className='grid grid-cols-2 gap-2'>
               <div>
-                <Label htmlFor="min-price" className="text-xs text-muted-foreground">
+                <Label
+                  htmlFor='min-price'
+                  className='text-xs text-muted-foreground'
+                >
                   Mínimo
                 </Label>
                 <Input
-                  id="min-price"
-                  type="number"
-                  placeholder="$0"
+                  id='min-price'
+                  type='number'
+                  placeholder='$0'
                   value={localFilters.priceRange?.min?.toString() || ''}
                   onChange={(e) => {
                     const value = e.target.value.trim()
-                    const min = value && !isNaN(parseFloat(value)) ? parseFloat(value) : undefined
+                    const min =
+                      value && !isNaN(parseFloat(value))
+                        ? parseFloat(value)
+                        : undefined
                     updateLocalFilters({
                       priceRange: {
                         ...localFilters.priceRange,
-                        min
-                      }
+                        min,
+                      },
                     })
                   }}
                 />
               </div>
               <div>
-                <Label htmlFor="max-price" className="text-xs text-muted-foreground">
+                <Label
+                  htmlFor='max-price'
+                  className='text-xs text-muted-foreground'
+                >
                   Máximo
                 </Label>
                 <Input
-                  id="max-price"
-                  type="number"
-                  placeholder="Sin límite"
+                  id='max-price'
+                  type='number'
+                  placeholder='Sin límite'
                   value={localFilters.priceRange?.max?.toString() || ''}
                   onChange={(e) => {
                     const value = e.target.value.trim()
-                    const max = value && !isNaN(parseFloat(value)) ? parseFloat(value) : undefined
+                    const max =
+                      value && !isNaN(parseFloat(value))
+                        ? parseFloat(value)
+                        : undefined
                     updateLocalFilters({
                       priceRange: {
                         ...localFilters.priceRange,
-                        max
-                      }
+                        max,
+                      },
                     })
                   }}
                 />
@@ -339,23 +342,26 @@ export function AdvancedFilters({
           <Separator />
 
           {/* Etiquetas */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">
+          <div className='space-y-3'>
+            <Label className='text-sm font-medium'>
               Etiquetas ({auxiliaryData.tags.length})
             </Label>
-            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+            <div className='flex flex-wrap gap-2 max-h-40 overflow-y-auto'>
               {auxiliaryData.tags.map((tag) => {
                 const isSelected = localFilters.tags?.includes(tag.id) || false
                 return (
                   <Badge
                     key={tag.id}
-                    variant={isSelected ? "default" : "outline"}
+                    variant={isSelected ? 'default' : 'outline'}
                     className={`cursor-pointer transition-colors ${
-                      isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
+                      isSelected
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-accent'
                     }`}
                     onClick={() => toggleTag(tag.id)}
                     style={{
-                      backgroundColor: isSelected && tag.color ? tag.color : undefined
+                      backgroundColor:
+                        isSelected && tag.color ? tag.color : undefined,
                     }}
                   >
                     {tag.name}
@@ -363,7 +369,7 @@ export function AdvancedFilters({
                 )
               })}
               {auxiliaryData.tags.length === 0 && (
-                <p className="text-sm text-muted-foreground">
+                <p className='text-sm text-muted-foreground'>
                   No hay etiquetas disponibles
                 </p>
               )}
@@ -373,15 +379,19 @@ export function AdvancedFilters({
           <Separator />
 
           {/* Categorías */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">
+          <div className='space-y-3'>
+            <Label className='text-sm font-medium'>
               Categorías ({auxiliaryData.categories.length})
             </Label>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
+            <div className='space-y-2 max-h-40 overflow-y-auto'>
               {auxiliaryData.categories.map((category) => {
-                const isSelected = localFilters.categories?.includes(category.id) || false
+                const isSelected =
+                  localFilters.categories?.includes(category.id) || false
                 return (
-                  <div key={category.id} className="flex items-center space-x-2">
+                  <div
+                    key={category.id}
+                    className='flex items-center space-x-2'
+                  >
                     <Checkbox
                       id={`category-${category.id}`}
                       checked={isSelected}
@@ -389,7 +399,7 @@ export function AdvancedFilters({
                     />
                     <Label
                       htmlFor={`category-${category.id}`}
-                      className="text-sm cursor-pointer"
+                      className='text-sm cursor-pointer'
                     >
                       {category.name}
                     </Label>
@@ -397,7 +407,7 @@ export function AdvancedFilters({
                 )
               })}
               {auxiliaryData.categories.length === 0 && (
-                <p className="text-sm text-muted-foreground">
+                <p className='text-sm text-muted-foreground'>
                   No hay categorías disponibles
                 </p>
               )}
@@ -407,15 +417,19 @@ export function AdvancedFilters({
           <Separator />
 
           {/* Subcategorías */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">
+          <div className='space-y-3'>
+            <Label className='text-sm font-medium'>
               Subcategorías ({auxiliaryData.subcategories?.length || 0})
             </Label>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
+            <div className='space-y-2 max-h-40 overflow-y-auto'>
               {auxiliaryData.subcategories?.map((subcategory) => {
-                const isSelected = localFilters.subcategories?.includes(subcategory.id) || false
+                const isSelected =
+                  localFilters.subcategories?.includes(subcategory.id) || false
                 return (
-                  <div key={subcategory.id} className="flex items-center space-x-2">
+                  <div
+                    key={subcategory.id}
+                    className='flex items-center space-x-2'
+                  >
                     <Checkbox
                       id={`subcategory-${subcategory.id}`}
                       checked={isSelected}
@@ -423,15 +437,16 @@ export function AdvancedFilters({
                     />
                     <Label
                       htmlFor={`subcategory-${subcategory.id}`}
-                      className="text-sm cursor-pointer"
+                      className='text-sm cursor-pointer'
                     >
                       {subcategory.name}
                     </Label>
                   </div>
                 )
               }) || []}
-              {(!auxiliaryData.subcategories || auxiliaryData.subcategories.length === 0) && (
-                <p className="text-sm text-muted-foreground">
+              {(!auxiliaryData.subcategories ||
+                auxiliaryData.subcategories.length === 0) && (
+                <p className='text-sm text-muted-foreground'>
                   No hay subcategorías disponibles
                 </p>
               )}
@@ -441,15 +456,16 @@ export function AdvancedFilters({
           <Separator />
 
           {/* Unidades */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">
+          <div className='space-y-3'>
+            <Label className='text-sm font-medium'>
               Unidades (Productos) ({auxiliaryData.units.length})
             </Label>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
+            <div className='space-y-2 max-h-40 overflow-y-auto'>
               {auxiliaryData.units.map((unit) => {
-                const isSelected = localFilters.units?.includes(unit.id) || false
+                const isSelected =
+                  localFilters.units?.includes(unit.id) || false
                 return (
-                  <div key={unit.id} className="flex items-center space-x-2">
+                  <div key={unit.id} className='flex items-center space-x-2'>
                     <Checkbox
                       id={`unit-${unit.id}`}
                       checked={isSelected}
@@ -457,7 +473,7 @@ export function AdvancedFilters({
                     />
                     <Label
                       htmlFor={`unit-${unit.id}`}
-                      className="text-sm cursor-pointer"
+                      className='text-sm cursor-pointer'
                     >
                       {unit.name} ({unit.abbreviation})
                     </Label>
@@ -465,7 +481,7 @@ export function AdvancedFilters({
                 )
               })}
               {auxiliaryData.units.length === 0 && (
-                <p className="text-sm text-muted-foreground">
+                <p className='text-sm text-muted-foreground'>
                   No hay unidades disponibles
                 </p>
               )}
@@ -475,15 +491,17 @@ export function AdvancedFilters({
           <Separator />
 
           {/* Unidades de Medida (Servicios) */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">
-              Unidades de Medida (Servicios) ({auxiliaryData.unidadesMedida?.length || 0})
+          <div className='space-y-3'>
+            <Label className='text-sm font-medium'>
+              Unidades de Medida (Servicios) (
+              {auxiliaryData.unidadesMedida?.length || 0})
             </Label>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
+            <div className='space-y-2 max-h-40 overflow-y-auto'>
               {auxiliaryData.unidadesMedida?.map((unidad) => {
-                const isSelected = localFilters.unidadMedida?.includes(unidad.id) || false
+                const isSelected =
+                  localFilters.unidadMedida?.includes(unidad.id) || false
                 return (
-                  <div key={unidad.id} className="flex items-center space-x-2">
+                  <div key={unidad.id} className='flex items-center space-x-2'>
                     <Checkbox
                       id={`unidad-${unidad.id}`}
                       checked={isSelected}
@@ -491,15 +509,16 @@ export function AdvancedFilters({
                     />
                     <Label
                       htmlFor={`unidad-${unidad.id}`}
-                      className="text-sm cursor-pointer"
+                      className='text-sm cursor-pointer'
                     >
                       {unidad.name} ({unidad.abbreviation})
                     </Label>
                   </div>
                 )
               }) || []}
-              {(!auxiliaryData.unidadesMedida || auxiliaryData.unidadesMedida.length === 0) && (
-                <p className="text-sm text-muted-foreground">
+              {(!auxiliaryData.unidadesMedida ||
+                auxiliaryData.unidadesMedida.length === 0) && (
+                <p className='text-sm text-muted-foreground'>
                   No hay unidades de medida disponibles
                 </p>
               )}
@@ -508,27 +527,20 @@ export function AdvancedFilters({
         </div>
 
         {/* Footer con acciones */}
-        <div className="border-t border-border p-4 space-y-2">
-          <div className="flex gap-2">
-            <Button
-              onClick={handleApplyFilters}
-              className="flex-1"
-            >
+        <div className='border-t border-border p-4 space-y-2'>
+          <div className='flex gap-2'>
+            <Button onClick={handleApplyFilters} className='flex-1'>
               Aplicar Filtros
             </Button>
             <Button
-              variant="outline"
+              variant='outline'
               onClick={handleResetFilters}
-              className="px-3"
+              className='px-3'
             >
-              <RotateCcw className="h-4 w-4" />
+              <RotateCcw className='h-4 w-4' />
             </Button>
           </div>
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            className="w-full"
-          >
+          <Button variant='ghost' onClick={onClose} className='w-full'>
             Cancelar
           </Button>
         </div>

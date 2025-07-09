@@ -1,17 +1,17 @@
 import React from 'react'
 import { ItemGrid } from './ItemGrid'
-import { POSItem } from '../types'
+import { CartItemRequest, POSItem } from '@/features/store/types.ts'
 
 interface StoreItemsProps {
-  items: any[]
-  onAddToCart: (item: any) => void
+  items: POSItem[]
+  onAddToCart: (item: CartItemRequest) => void
   onRemoveFromCart: (itemId: string) => void
 }
 
 export function StoreItems({
   items,
   onAddToCart,
-  onRemoveFromCart
+  onRemoveFromCart,
 }: StoreItemsProps) {
   return (
     <div className='flex-1 pb-20 lg:pb-4 lg:overflow-auto'>

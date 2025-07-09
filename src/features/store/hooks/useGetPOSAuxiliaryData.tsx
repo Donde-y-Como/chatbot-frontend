@@ -1,30 +1,30 @@
 import { useQuery } from '@tanstack/react-query'
+import { ProductApiService } from '@/features/products/ProductApiService.ts'
 import { AuxiliaryData } from '../types'
-import { POSApiService } from '../services/POSApiService'
 
 export function useGetPOSAuxiliaryData() {
   const tagsQuery = useQuery({
     queryKey: ['pos-tags'],
-    queryFn: POSApiService.getProductTags,
+    queryFn: ProductApiService.getProductTags,
     staleTime: 10 * 60 * 1000, // 10 minutos
     gcTime: 30 * 60 * 1000, // 30 minutos
-    retry: 2
+    retry: 2,
   })
 
   const categoriesQuery = useQuery({
     queryKey: ['pos-categories'],
-    queryFn: POSApiService.getCategories,
+    queryFn: ProductApiService.getCategories,
     staleTime: 10 * 60 * 1000, // 10 minutos
     gcTime: 30 * 60 * 1000, // 30 minutos
-    retry: 2
+    retry: 2,
   })
 
   const unitsQuery = useQuery({
     queryKey: ['pos-units'],
-    queryFn: POSApiService.getUnits,
+    queryFn: ProductApiService.getUnits,
     staleTime: 10 * 60 * 1000, // 10 minutos
     gcTime: 30 * 60 * 1000, // 30 minutos
-    retry: 2
+    retry: 2,
   })
 
   const auxiliaryData: AuxiliaryData = {
@@ -36,18 +36,19 @@ export function useGetPOSAuxiliaryData() {
     statuses: [
       { id: 'active', name: 'Activo' },
       { id: 'inactive', name: 'Inactivo' },
-      { id: 'draft', name: 'Borrador' }
-    ]
+      { id: 'draft', name: 'Borrador' },
+    ],
   }
 
   return {
     data: auxiliaryData,
-    isLoading: tagsQuery.isLoading || categoriesQuery.isLoading || unitsQuery.isLoading,
+    isLoading:
+      tagsQuery.isLoading || categoriesQuery.isLoading || unitsQuery.isLoading,
     error: tagsQuery.error || categoriesQuery.error || unitsQuery.error,
     refetch: () => {
-      tagsQuery.refetch()
-      categoriesQuery.refetch()
-      unitsQuery.refetch()
-    }
+      void tagsQuery.refetch()
+      void categoriesQuery.refetch()
+      void unitsQuery.refetch()
+    },
   }
 }

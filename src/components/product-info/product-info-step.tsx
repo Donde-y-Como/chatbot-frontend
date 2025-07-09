@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Control, useFormContext } from 'react-hook-form'
+import { useFormContext } from 'react-hook-form'
 import {
   FormControl,
   FormDescription,
@@ -9,7 +9,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -17,8 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { CreatableEvent } from '@/features/events/types'
-import { ProductStatus } from '@/types'
+import { ProductStatus } from '@/features/products/types'
 import { CategorySelector } from './category-selector'
 import { TagSelector } from './tag-selector'
 
@@ -34,24 +34,37 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
   const selectedSubcategoryIds = watch('productInfo.subcategoryIds')
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* SKU y Estado */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className='grid grid-cols-2 gap-4'>
         <FormField
           control={control}
-          name="productInfo.sku"
+          name='productInfo.sku'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>SKU (Código del {type === 'service' ? 'servicio' : type === 'event' ? 'evento' : 'producto'})</FormLabel>
+              <FormLabel>
+                SKU (Código del{' '}
+                {type === 'service'
+                  ? 'servicio'
+                  : type === 'event'
+                    ? 'evento'
+                    : 'producto'}
+                )
+              </FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="Ej: EVT-YOGA-001" 
+                <Input
+                  placeholder='Ej: EVT-YOGA-001'
                   {...field}
-                  className="font-mono"
+                  className='font-mono'
                 />
               </FormControl>
               <FormDescription>
-                Código único para identificar este {type === 'service' ? 'servicio' : type === 'event' ? 'evento' : 'producto'}
+                Código único para identificar este{' '}
+                {type === 'service'
+                  ? 'servicio'
+                  : type === 'event'
+                    ? 'evento'
+                    : 'producto'}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -60,20 +73,27 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
 
         <FormField
           control={control}
-          name="productInfo.status"
+          name='productInfo.status'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Estado del {type === 'service' ? 'servicio' : type === 'event' ? 'evento' : 'producto'}</FormLabel>
+              <FormLabel>
+                Estado del{' '}
+                {type === 'service'
+                  ? 'servicio'
+                  : type === 'event'
+                    ? 'evento'
+                    : 'producto'}
+              </FormLabel>
               <FormControl>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar estado" />
+                    <SelectValue placeholder='Seleccionar estado' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ProductStatus.ACTIVE}>
+                    <SelectItem value={ProductStatus.ACTIVO}>
                       Activo - Disponible para venta
                     </SelectItem>
-                    <SelectItem value={ProductStatus.INACTIVE}>
+                    <SelectItem value={ProductStatus.INACTIVO}>
                       Inactivo - No disponible temporalmente
                     </SelectItem>
                   </SelectContent>
@@ -88,7 +108,7 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
       {/* Categorías */}
       <FormField
         control={control}
-        name="productInfo.categoryIds"
+        name='productInfo.categoryIds'
         render={({ field }) => (
           <FormItem>
             <FormLabel>Categorías</FormLabel>
@@ -97,13 +117,18 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
                 selectedCategoryIds={field.value}
                 selectedSubcategoryIds={selectedSubcategoryIds}
                 onCategoryChange={field.onChange}
-                onSubcategoryChange={(subcategoryIds) => 
+                onSubcategoryChange={(subcategoryIds) =>
                   setValue('productInfo.subcategoryIds', subcategoryIds)
                 }
               />
             </FormControl>
             <FormDescription>
-              Selecciona las categorías que mejor describan este {type === 'service' ? 'servicio' : type === 'event' ? 'evento' : 'producto'}
+              Selecciona las categorías que mejor describan este{' '}
+              {type === 'service'
+                ? 'servicio'
+                : type === 'event'
+                  ? 'evento'
+                  : 'producto'}
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -113,7 +138,7 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
       {/* Etiquetas */}
       <FormField
         control={control}
-        name="productInfo.tagIds"
+        name='productInfo.tagIds'
         render={({ field }) => (
           <FormItem>
             <FormLabel>Etiquetas</FormLabel>
@@ -124,7 +149,12 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
               />
             </FormControl>
             <FormDescription>
-              Etiquetas adicionales para organizar y filtrar {type === 'service' ? 'servicios' : type === 'event' ? 'eventos' : 'productos'}
+              Etiquetas adicionales para organizar y filtrar{' '}
+              {type === 'service'
+                ? 'servicios'
+                : type === 'event'
+                  ? 'eventos'
+                  : 'productos'}
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -132,20 +162,20 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
       />
 
       {/* Descuento e Impuestos */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className='grid grid-cols-2 gap-4'>
         <FormField
           control={control}
-          name="productInfo.discountPercentage"
+          name='productInfo.discountPercentage'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Descuento (%)</FormLabel>
               <FormControl>
                 <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  placeholder="0"
+                  type='number'
+                  min='0'
+                  max='100'
+                  step='1'
+                  placeholder='0'
                   {...field}
                   value={field.value === 0 ? '' : field.value || ''}
                   onChange={(e) => {
@@ -160,7 +190,8 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
                 />
               </FormControl>
               <FormDescription>
-                Porcentaje de descuento aplicado al precio base (solo números enteros)
+                Porcentaje de descuento aplicado al precio base (solo números
+                enteros)
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -169,16 +200,16 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
 
         <FormField
           control={control}
-          name="productInfo.taxPercentage"
+          name='productInfo.taxPercentage'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Impuesto (%)</FormLabel>
               <FormControl>
                 <Input
-                  type="number"
-                  min="0"
-                  step="1"
-                  placeholder="0"
+                  type='number'
+                  min='0'
+                  step='1'
+                  placeholder='0'
                   {...field}
                   value={field.value === 0 ? '' : field.value || ''}
                   onChange={(e) => {
@@ -202,30 +233,36 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
       </div>
 
       {/* Costo del negocio */}
-      <div className="space-y-4">
+      <div className='space-y-4'>
         <div>
-          <FormLabel className="text-base font-medium">Costo del negocio</FormLabel>
-          <p className="text-sm text-muted-foreground">
+          <FormLabel className='text-base font-medium'>
+            Costo del negocio
+          </FormLabel>
+          <p className='text-sm text-muted-foreground'>
             Costo interno para calcular márgenes (diferente al precio de venta)
           </p>
         </div>
-        
-        <div className="grid grid-cols-2 gap-4">
+
+        <div className='grid grid-cols-2 gap-4'>
           <FormField
             control={control}
-            name="productInfo.cost.amount"
+            name='productInfo.cost.amount'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Monto del costo</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
+                    type='number'
+                    min='0'
+                    step='0.01'
+                    placeholder='0.00'
                     {...field}
                     value={field.value || ''}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? Number(e.target.value) : 0
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -235,19 +272,19 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
 
           <FormField
             control={control}
-            name="productInfo.cost.currency"
+            name='productInfo.cost.currency'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Moneda del costo</FormLabel>
                 <FormControl>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar moneda" />
+                      <SelectValue placeholder='Seleccionar moneda' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="MXN">MXN</SelectItem>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value='MXN'>MXN</SelectItem>
+                      <SelectItem value='USD'>USD</SelectItem>
+                      <SelectItem value='EUR'>EUR</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormControl>
@@ -261,20 +298,18 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
       {/* Notas adicionales */}
       <FormField
         control={control}
-        name="productInfo.notes"
+        name='productInfo.notes'
         render={({ field }) => (
           <FormItem>
             <FormLabel>Notas adicionales</FormLabel>
             <FormControl>
               <Textarea
-                placeholder="Información adicional, restricciones, requerimientos especiales, etc."
+                placeholder='Información adicional, restricciones, requerimientos especiales, etc.'
                 rows={3}
                 {...field}
               />
             </FormControl>
-            <FormDescription>
-              Máximo 500 caracteres
-            </FormDescription>
+            <FormDescription>Máximo 500 caracteres</FormDescription>
             <FormMessage />
           </FormItem>
         )}

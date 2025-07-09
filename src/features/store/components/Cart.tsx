@@ -1,21 +1,11 @@
 import React from 'react'
-import {
-  Check,
-  Edit3,
-  Minus,
-  Plus,
-  ShoppingCart,
-  Trash2,
-  X,
-  XIcon,
-} from 'lucide-react'
+import { ShoppingCart, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge.tsx'
 import { Button } from '@/components/ui/button.tsx'
-import { Input } from '@/components/ui/input.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
-import { Separator } from '@/components/ui/separator.tsx'
+import { CartItemCard } from '@/features/store/components/CartItemCard.tsx'
 import { CreateOrSelectClient } from '../../appointments/components/CreateOrSelectClient'
-import { CartState, POSItem } from '../types'
+import { CartState } from '../types'
 
 interface CartProps {
   cart: CartState
@@ -28,277 +18,6 @@ interface CartProps {
   ) => void
   onClientSelect: (clientId: string) => void
   onClearCart: () => void
-}
-
-interface CartItemCardProps {
-  item: POSItem
-  onRemove: (itemId: string) => void
-  onUpdateQuantity: (itemId: string, quantity: number) => void
-  onUpdatePrice: (
-    itemId: string,
-    newPrice: { amount: number; currency: string }
-  ) => void
-}
-
-function CartItemCard({
-  item,
-  onRemove,
-  onUpdateQuantity,
-  onUpdatePrice,
-}: CartItemCardProps) {
-  const [isEditingPrice, setIsEditingPrice] = React.useState(false)
-  // Usar el precio actual (modifiedPrice si existe, sino unitPrice)
-  const currentPrice =
-    item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
-  const [tempPrice, setTempPrice] = React.useState(currentPrice.toString())
-
-  // Actualizar tempPrice cuando cambie el precio del item
-  React.useEffect(() => {
-    const currentPrice =
-      item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
-    setTempPrice(currentPrice.toString())
-  }, [item.price.amount, item.modifiedPrice?.amount, item.unitPrice?.amount])
-
-  const handlePriceClick = () => {
-    setIsEditingPrice(true)
-    // Usar el precio actual para edición (modifiedPrice o unitPrice)
-    const currentPrice =
-      item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
-    setTempPrice(currentPrice.toString())
-  }
-
-  const handlePriceSubmit = () => {
-    const newAmount = parseFloat(tempPrice)
-    if (!isNaN(newAmount) && newAmount > 0) {
-      onUpdatePrice(item.id, {
-        amount: newAmount,
-        currency: item.price.currency,
-      })
-    }
-    setIsEditingPrice(false)
-  }
-
-  const handlePriceCancel = () => {
-    const currentPrice =
-      item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
-    setTempPrice(currentPrice.toString())
-    setIsEditingPrice(false)
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handlePriceSubmit()
-    } else if (e.key === 'Escape') {
-      handlePriceCancel()
-    }
-  }
-  const formatPrice = (price: typeof item.price) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: price.currency,
-    }).format(price.amount)
-  }
-
-  const getTypeColor = (type: typeof item.type) => {
-    switch (type) {
-      case 'PRODUCTOS':
-        return 'bg-blue-500'
-      case 'SERVICIOS':
-        return 'bg-green-500'
-      case 'EVENTOS':
-        return 'bg-purple-500'
-      case 'PAQUETES':
-        return 'bg-orange-500'
-      default:
-        return 'bg-gray-500'
-    }
-  }
-
-  const getTypeIcon = (type: typeof item.type) => {
-    switch (type) {
-      case 'PRODUCTOS':
-        return '📦'
-      case 'SERVICIOS':
-        return '🔧'
-      case 'EVENTOS':
-        return '🎪'
-      case 'PAQUETES':
-        return '📋'
-      default:
-        return '❓'
-    }
-  }
-
-  const totalItemPrice = item.price.amount * item.quantity
-
-  return (
-    <div className='flex gap-2 sm:gap-3 p-2 sm:p-3 border border-border rounded-lg bg-card'>
-      {/* Imagen miniatura */}
-      <div className='relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted'>
-        {item.image ? (
-          <img
-            src={item.image}
-            alt={item.name}
-            className='w-full h-full object-cover'
-          />
-        ) : (
-          <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/80'>
-            <div className='text-lg sm:text-xl text-muted-foreground/50'>
-              {getTypeIcon(item.type)}
-            </div>
-          </div>
-        )}
-
-        {/* Badge de tipo */}
-        <div className='absolute -top-1 -right-1'>
-          <Badge
-            variant='secondary'
-            className={`${getTypeColor(item.type)} text-white text-xs px-1 py-0.5 scale-75`}
-            title={item.type}
-          >
-            {item.type === 'PRODUCTOS' && 'PRO'}
-            {item.type === 'SERVICIOS' && 'SER'}
-            {item.type === 'EVENTOS' && 'EVE'}
-            {item.type === 'PAQUETES' && 'PAQ'}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Información del item */}
-      <div className='flex-1 min-w-0'>
-        <div className='flex items-start justify-between gap-1 sm:gap-2'>
-          <h4 className='font-medium text-xs sm:text-sm line-clamp-2 leading-tight'>
-            {item.name === 'Cargando...' ? (
-              <span className='text-muted-foreground animate-pulse'>
-                Cargando nombre...
-              </span>
-            ) : (
-              item.name
-            )}
-          </h4>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={() => onRemove(item.id)}
-            className='h-5 w-5 sm:h-6 sm:w-6 p-0 text-muted-foreground hover:text-destructive flex-shrink-0'
-          >
-            <Trash2 className='h-3 w-3' />
-          </Button>
-        </div>
-
-        <div className='mt-1 sm:mt-2 space-y-1 sm:space-y-2'>
-          {/* Precio unitario editable */}
-          <div className='flex items-center gap-1'>
-            {isEditingPrice ? (
-              <div className='flex items-center gap-1 flex-1'>
-                <Input
-                  type='number'
-                  value={tempPrice}
-                  onChange={(e) => setTempPrice(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  className='h-6 text-xs flex-1 min-w-0 border-primary'
-                  step='0.01'
-                  min='0'
-                  autoFocus
-                />
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={handlePriceSubmit}
-                  className='h-6 w-6 p-0 text-green-600 hover:text-green-700'
-                >
-                  <Check className='h-3 w-3' />
-                </Button>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={handlePriceCancel}
-                  className='h-6 w-6 p-0 text-red-600 hover:text-red-700'
-                >
-                  <XIcon className='h-3 w-3' />
-                </Button>
-              </div>
-            ) : (
-              <div className='flex items-center gap-1 flex-1'>
-                <div className='flex flex-col'>
-                  {/* Mostrar precio original tachado si existe modifiedPrice */}
-                  {item.modifiedPrice && item.unitPrice && (
-                    <span className='text-xs text-muted-foreground line-through'>
-                      {formatPrice(item.unitPrice)} c/u
-                    </span>
-                  )}
-                  {/* Precio actual (modificado o unitario) */}
-                  <span className='text-xs text-muted-foreground'>
-                    {item.name === 'Cargando...' ? (
-                      <span className='animate-pulse'>--- c/u</span>
-                    ) : (
-                      <>
-                        {formatPrice(item.price)} c/u
-                        {item.modifiedPrice && (
-                          <span
-                            className='ml-1 text-orange-600 font-medium'
-                            title='Precio modificado'
-                          >
-                            (✓ editado)
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </span>
-                </div>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={handlePriceClick}
-                  className='h-5 w-5 p-0 text-muted-foreground hover:text-primary ml-auto'
-                  title='Editar precio'
-                >
-                  <Edit3 className='h-3 w-3' />
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Controles de cantidad y precio total */}
-          <div className='flex items-center justify-between'>
-            {/* Controles de cantidad */}
-            <div className='flex items-center gap-1 sm:gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                className='h-6 w-6 sm:h-7 sm:w-7 p-0'
-                disabled={item.quantity <= 1}
-              >
-                <Minus className='h-3 w-3' />
-              </Button>
-
-              <span className='text-xs sm:text-sm font-medium min-w-[1.5rem] sm:min-w-[2rem] text-center'>
-                {item.quantity}
-              </span>
-
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                className='h-6 w-6 sm:h-7 sm:w-7 p-0'
-              >
-                <Plus className='h-3 w-3' />
-              </Button>
-            </div>
-
-            {/* Precio total del item */}
-            <span className='font-semibold text-xs sm:text-sm'>
-              {formatPrice({
-                amount: totalItemPrice,
-                currency: item.price.currency,
-              })}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 export function Cart({
@@ -403,10 +122,10 @@ export function Cart({
                   🛒
                 </div>
                 <h3 className='text-base sm:text-lg font-medium text-muted-foreground mb-2'>
-                  Carrito vacío
+                  Orden vacía
                 </h3>
                 <p className='text-xs sm:text-sm text-muted-foreground mb-4'>
-                  Agrega productos, servicios o eventos para comenzar
+                  Agrega productos, servicios, paquetes o eventos para comenzar
                 </p>
                 {/* Mensaje adicional para desktop */}
                 <div className='hidden lg:block'>
@@ -420,7 +139,7 @@ export function Cart({
                 <div className='p-3 sm:p-4 space-y-2 sm:space-y-3'>
                   {cart.items.map((item) => (
                     <CartItemCard
-                      key={item.id}
+                      key={item.itemId}
                       item={item}
                       onRemove={onRemoveItem}
                       onUpdateQuantity={onUpdateQuantity}
@@ -437,17 +156,6 @@ export function Cart({
             <div className='border-t border-border bg-card p-3 sm:p-4 space-y-3'>
               {/* Resumen de precios */}
               <div className='space-y-1 sm:space-y-2'>
-                <div className='flex justify-between text-xs sm:text-sm'>
-                  <span className='text-muted-foreground'>Subtotal:</span>
-                  <span>{formatPrice(cart.subtotal)}</span>
-                </div>
-                <div className='flex justify-between text-xs sm:text-sm'>
-                  <span className='text-muted-foreground'>
-                    Impuestos (16%):
-                  </span>
-                  <span>{formatPrice(cart.taxes)}</span>
-                </div>
-                <Separator />
                 <div className='flex justify-between text-base sm:text-lg font-semibold'>
                   <span>Total:</span>
                   <span className='text-primary'>

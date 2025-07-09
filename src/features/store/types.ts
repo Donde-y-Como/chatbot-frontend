@@ -1,49 +1,48 @@
-import { Product, ProductStatus as ProductsProductStatus } from '../products/types'
-import { Service } from '../services/types'
+import { Bundle } from '@/features/bundles/types.ts'
+import { Media } from '@/features/chats/ChatTypes.ts'
 import { EventPrimitives } from '../events/types'
-import { ProductStatus as GlobalProductStatus } from '../../types/global'
-
-export interface Bundle {
-  id?: string
-  sku: string
-  name: string
-  description: string
-  items: Array<{
-    id: string
-    itemId: string
-    type: 'product'
-    quantity: number
-  }>
-  price: {
-    amount: number
-    currency: string
-  }
-  cost: {
-    amount: number
-    currency: string
-  }
-  status: 'ACTIVO' | 'INACTIVO'
-  tagIds: string[]
-  files: any[]
-  createdAt: string
-}
+import { Product, ProductStatus } from '../products/types'
+import { Service } from '../appointments/types'
 
 // Categorías disponibles en el POS
-export type POSCategory = 'TODOS' | 'PRODUCTOS' | 'PAQUETES' | 'SERVICIOS' | 'EVENTOS'
+export type POSCategory =
+  | 'TODOS'
+  | 'PRODUCTOS'
+  | 'PAQUETES'
+  | 'SERVICIOS'
+  | 'EVENTOS'
 
 // Precio unificado para todos los tipos de items
-export interface POSPrice {
+export interface Price {
   amount: number
   currency: string
 }
 
-// Cart API Response Types
-export enum CartItemType {
-  PRODUCT = 'product',
-  SERVICE = 'service',
-  EVENT = 'event',
-  BUNDLE = 'bundle'
+export interface CartItemRequest {
+  itemId: string
+  itemType: 'product' | 'service' | 'event' | 'bundle'
+  quantity: number
+  notes?: string
+  eventDate?: string
 }
+
+export interface UpdateCartItemPriceRequest {
+  itemType: CartItemType
+  itemId: string
+  newPrice: {
+    amount: number
+    currency: string
+  }
+}
+
+export interface UpdateCartItemQuantityRequest {
+  itemType: CartItemType
+  itemId: string
+  quantity: number
+}
+
+// Cart API Response Types
+export type CartItemType = 'product' | 'service' | 'event' | 'bundle'
 
 export type EventMetadata = {
   selectedDate: string
@@ -55,18 +54,28 @@ export type CartItemPrimitives = {
   itemType: CartItemType
   itemName: string
   quantity: number
-  unitPrice: POSPrice
-  finalPrice: POSPrice
-  modifiedPrice?: POSPrice
+  unitPrice: Price
+  finalPrice: Price
+  modifiedPrice?: Price
   notes?: string
   eventMetadata?: EventMetadata
   addedAt: string
 }
 
+export interface ItemDetailData {
+  id: string
+  name: string
+  description: string
+  photos?: string[]
+  files?: Media[]
+
+  [key: string]: any // For additional properties specific to each item type
+}
+
 export type CartItemWithDetails = CartItemPrimitives & {
-  itemDetails: any
-  totalPrice: POSPrice
-  effectiveUnitPrice: POSPrice
+  itemDetails: ItemDetailData | null
+  totalPrice: Price
+  effectiveUnitPrice: Price
   hasPriceModification: boolean
 }
 
@@ -80,11 +89,12 @@ export type CartPrimitives = {
 
 export type CartWithDetails = CartPrimitives & {
   itemsWithDetails: CartItemWithDetails[]
-  totalAmount: POSPrice
+  totalAmount: Price
   itemCount: number
 }
 
-export interface BasicCartData extends Omit<CartWithDetails, "itemsWithDetails"> {}
+export interface BasicCartData
+  extends Omit<CartWithDetails, 'itemsWithDetails'> {}
 
 export type CartResponseData = BasicCartData | CartWithDetails
 
@@ -95,17 +105,9 @@ export interface GetCartSuccessResponse {
 }
 
 // Item base para el carrito
-export interface POSItem {
-  id: string
-  type: POSCategory
-  name: string
-  price: POSPrice // Precio que se muestra (finalPrice o unitPrice)
-  unitPrice?: POSPrice // Precio original del item
-  finalPrice?: POSPrice // Precio final (puede ser modificado)
-  modifiedPrice?: POSPrice // Precio modificado manualmente
-  image?: string
-  quantity: number
-  originalData: Product | Service | EventPrimitives | Bundle | null
+export type POSItem = {
+  type: CartItemType
+  itemDetails: Product | Service | EventPrimitives | Bundle
 }
 
 // Rango de fechas
@@ -127,7 +129,7 @@ export interface POSFilters {
   subcategories?: string[]
   units?: string[]
   unidadMedida?: string[]
-  status?: ProductsProductStatus | GlobalProductStatus
+  status?: ProductStatus
   activeOnly?: boolean
   dateRange?: DateRange
   isActive: boolean
@@ -136,11 +138,9 @@ export interface POSFilters {
 // Estado del carrito
 export interface CartState {
   isOpen: boolean
-  items: POSItem[]
+  items: CartItemWithDetails[]
   selectedClientId: string
-  subtotal: POSPrice
-  taxes: POSPrice
-  total: POSPrice
+  total: Price
 }
 
 // Datos auxiliares para filtros
@@ -151,78 +151,4 @@ export interface AuxiliaryData {
   units: Array<{ id: string; name: string; abbreviation: string }>
   unidadesMedida: Array<{ id: string; name: string; abbreviation: string }>
   statuses: Array<{ id: string; name: string }>
-}
-
-// Estado principal del POS
-export interface POSState {
-  // Datos
-  products: Product[]
-  services: Service[]
-  events: EventPrimitives[]
-  bundles: Bundle[]
-  auxiliaryData: AuxiliaryData
-  
-  // UI State
-  isLoading: boolean
-  filters: POSFilters
-  cart: CartState
-  
-  // Acciones
-  setProducts: (products: Product[]) => void
-  setServices: (services: Service[]) => void
-  setEvents: (events: EventPrimitives[]) => void
-  setBundles: (bundles: Bundle[]) => void
-  setAuxiliaryData: (data: AuxiliaryData) => void
-  setIsLoading: (loading: boolean) => void
-  updateFilters: (filters: Partial<POSFilters>) => void
-  
-  // Carrito
-  addToCart: (item: Omit<POSItem, 'quantity'>) => void
-  removeFromCart: (itemId: string) => void
-  updateCartQuantity: (itemId: string, quantity: number) => void
-  clearCart: () => void
-  toggleCart: () => void
-  setSelectedClient: (clientId: string) => void
-}
-
-// Utilidad para convertir productos a POSItem
-export const productToPOSItem = (product: Product): Omit<POSItem, 'quantity'> => ({
-  id: product.id,
-  type: 'PRODUCTOS',
-  name: product.name,
-  price: product.finalPrice || product.price,
-  image: product.photos?.[0],
-  originalData: product
-})
-
-// Utilidad para convertir servicios a POSItem
-export const serviceToPOSItem = (service: Service): Omit<POSItem, 'quantity'> => ({
-  id: service.id,
-  type: 'SERVICIOS',
-  name: service.name,
-  price: service.productInfo?.precioModificado || service.price,
-  image: service.photos?.[0],
-  originalData: service
-})
-
-// Utilidad para convertir eventos a POSItem
-export const eventToPOSItem = (event: EventPrimitives): Omit<POSItem, 'quantity'> => ({
-  id: event.id,
-  type: 'EVENTOS',
-  name: event.name,
-  price: event.productInfo?.precioModificado || event.price,
-  image: event.photos?.[0],
-  originalData: event
-})
-
-// Utilidad para convertir paquetes a POSItem
-export const bundleToPOSItem = (bundle: Bundle): Omit<POSItem, 'quantity'> => {
-  return {
-    id: bundle.id!,
-    type: 'PAQUETES',
-    name: bundle.name,
-    price: bundle.price,
-    image: bundle.files?.[0]?.url,
-    originalData: bundle
-  }
 }

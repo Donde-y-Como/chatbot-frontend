@@ -30,6 +30,7 @@ import { FileUpload } from '@/components/file-upload'
 import { ProductInfoStep } from '@/components/product-info'
 import { SelectDropdown } from '@/components/select-dropdown'
 import { MinutesTimeRange, Service } from '@/features/appointments/types'
+import { ProductStatus } from '@/features/products/types.ts'
 import { ScheduleService } from '@/features/settings/profile/ProfileService.ts'
 import { useUploadMedia } from '../../chats/hooks/useUploadMedia'
 import { ScheduleSection } from '../../employees/components/form/schedule-section'
@@ -77,7 +78,7 @@ const formSchema = z.object({
     ),
     categoryIds: z.array(z.string()).default([]),
     subcategoryIds: z.array(z.string()).default([]),
-    status: z.enum(['active', 'inactive']),
+    status: z.nativeEnum(ProductStatus),
     tagIds: z.array(z.string()).default([]),
     taxPercentage: z.preprocess(
       (val) => {

@@ -1,9 +1,12 @@
 import * as React from 'react'
+import { getDefaultProductInfo } from '@/types'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { DateTimePicker } from '@/components/ui/date-time-picker.tsx'
 import {
   Dialog,
-  DialogContent, DialogDescription,
+  DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -21,17 +24,14 @@ import { Switch } from '@/components/ui/switch.tsx'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { FileUpload } from '@/components/file-upload'
-import { toast } from 'sonner'
-import { useUploadMedia } from '../chats/hooks/useUploadMedia'
+import { CategorySelector, TagSelector } from '@/components/product-info'
 import {
   EndCondition,
   EventPrimitives,
   Frequency,
 } from '@/features/events/types'
-import { ProductInfo, ProductStatus, getDefaultProductInfo } from '@/types'
-import { CategorySelector, TagSelector } from '@/components/product-info'
-import { useGetCategories } from '@/features/settings/categories/hooks/useCategories'
-import { useGetTags } from '@/features/settings/tags/hooks/useTags'
+import { ProductStatus } from '@/features/products/types.ts'
+import { useUploadMedia } from '../chats/hooks/useUploadMedia'
 
 type EditableEvent = Partial<EventPrimitives>
 
@@ -79,7 +79,7 @@ export function EventEditModal({
     async (file: File) => {
       const { isValid } = validateFile(file)
       if (!isValid) {
-        toast.error("El archivo no es válido")
+        toast.error('El archivo no es válido')
         return
       }
 
@@ -87,7 +87,7 @@ export function EventEditModal({
         const url = await uploadFile(file)
         updateField('photos', [...(changes.photos || event.photos), url])
       } catch (error) {
-        toast.error("Hubo un error al subir la imagen")
+        toast.error('Hubo un error al subir la imagen')
       }
     },
     [uploadFile, validateFile, changes.photos, event.photos]
@@ -106,17 +106,20 @@ export function EventEditModal({
   }, [photos, handleImageUpload])
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen) {
-        handleCancel() // Resetear cambios al cerrar
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          handleCancel() // Resetear cambios al cerrar
+        }
+      }}
+    >
       <DialogContent className='sm:max-w-[600px]'>
         <DialogHeader>
           <DialogTitle>Editar Evento</DialogTitle>
         </DialogHeader>
 
-        <DialogDescription className="sr-only">Editar evento</DialogDescription>
+        <DialogDescription className='sr-only'>Editar evento</DialogDescription>
 
         <Tabs defaultValue='general' className='w-full'>
           <TabsList className='grid w-full grid-cols-4'>
@@ -194,7 +197,7 @@ export function EventEditModal({
 
             <div className='grid gap-2'>
               <Label>Fotos</Label>
-              <div className="mb-2">
+              <div className='mb-2'>
                 <FileUpload
                   maxFiles={5}
                   maxSize={100 * 1024 * 1024}
@@ -203,22 +206,27 @@ export function EventEditModal({
                 />
               </div>
               {event.photos.length > 0 && (
-                <div className="mt-2">
+                <div className='mt-2'>
                   <Label>Fotos actuales</Label>
-                  <div className="mt-2 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                  <div className='mt-2 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
                     {(changes.photos || event.photos).map((photoUrl, index) => (
-                      <div key={index} className="group relative aspect-square overflow-hidden rounded-lg border bg-background">
+                      <div
+                        key={index}
+                        className='group relative aspect-square overflow-hidden rounded-lg border bg-background'
+                      >
                         <img
                           src={photoUrl}
                           alt={`Foto ${index + 1}`}
-                          className="h-full w-full object-cover transition-all hover:opacity-80"
+                          className='h-full w-full object-cover transition-all hover:opacity-80'
                         />
                         <Button
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-1 right-1 h-6 w-6 rounded-full"
+                          variant='destructive'
+                          size='icon'
+                          className='absolute top-1 right-1 h-6 w-6 rounded-full'
                           onClick={() => {
-                            const updatedPhotos = [...(changes.photos || event.photos)]
+                            const updatedPhotos = [
+                              ...(changes.photos || event.photos),
+                            ]
                             updatedPhotos.splice(index, 1)
                             updateField('photos', updatedPhotos)
                           }}
@@ -457,10 +465,12 @@ export function EventEditModal({
                     id='sku'
                     placeholder='Ej: EVT-YOGA-001'
                     defaultValue={event.productInfo?.sku || ''}
-                    onChange={(e) => 
+                    onChange={(e) =>
                       updateField('productInfo', {
-                        ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
-                        sku: e.target.value
+                        ...(changes.productInfo ||
+                          event.productInfo ||
+                          getDefaultProductInfo()),
+                        sku: e.target.value,
                       })
                     }
                     className='font-mono'
@@ -470,11 +480,15 @@ export function EventEditModal({
                 <div className='grid gap-2'>
                   <Label htmlFor='status'>Estado del evento</Label>
                   <Select
-                    defaultValue={event.productInfo?.status || ProductStatus.ACTIVE}
+                    defaultValue={
+                      event.productInfo?.status || ProductStatus.ACTIVO
+                    }
                     onValueChange={(value: ProductStatus) =>
                       updateField('productInfo', {
-                        ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
-                        status: value
+                        ...(changes.productInfo ||
+                          event.productInfo ||
+                          getDefaultProductInfo()),
+                        status: value,
                       })
                     }
                   >
@@ -482,10 +496,10 @@ export function EventEditModal({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={ProductStatus.ACTIVE}>
+                      <SelectItem value={ProductStatus.ACTIVO}>
                         Activo - Disponible para venta
                       </SelectItem>
-                      <SelectItem value={ProductStatus.INACTIVE}>
+                      <SelectItem value={ProductStatus.INACTIVO}>
                         Inactivo - No disponible temporalmente
                       </SelectItem>
                     </SelectContent>
@@ -497,18 +511,30 @@ export function EventEditModal({
               <div className='grid gap-2'>
                 <Label>Categorías</Label>
                 <CategorySelector
-                  selectedCategoryIds={changes.productInfo?.categoryIds || event.productInfo?.categoryIds || []}
-                  selectedSubcategoryIds={changes.productInfo?.subcategoryIds || event.productInfo?.subcategoryIds || []}
+                  selectedCategoryIds={
+                    changes.productInfo?.categoryIds ||
+                    event.productInfo?.categoryIds ||
+                    []
+                  }
+                  selectedSubcategoryIds={
+                    changes.productInfo?.subcategoryIds ||
+                    event.productInfo?.subcategoryIds ||
+                    []
+                  }
                   onCategoryChange={(categoryIds) =>
                     updateField('productInfo', {
-                      ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
-                      categoryIds
+                      ...(changes.productInfo ||
+                        event.productInfo ||
+                        getDefaultProductInfo()),
+                      categoryIds,
                     })
                   }
                   onSubcategoryChange={(subcategoryIds) =>
                     updateField('productInfo', {
-                      ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
-                      subcategoryIds
+                      ...(changes.productInfo ||
+                        event.productInfo ||
+                        getDefaultProductInfo()),
+                      subcategoryIds,
                     })
                   }
                 />
@@ -518,11 +544,17 @@ export function EventEditModal({
               <div className='grid gap-2'>
                 <Label>Etiquetas</Label>
                 <TagSelector
-                  selectedTagIds={changes.productInfo?.tagIds || event.productInfo?.tagIds || []}
+                  selectedTagIds={
+                    changes.productInfo?.tagIds ||
+                    event.productInfo?.tagIds ||
+                    []
+                  }
                   onTagChange={(tagIds) =>
                     updateField('productInfo', {
-                      ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
-                      tagIds
+                      ...(changes.productInfo ||
+                        event.productInfo ||
+                        getDefaultProductInfo()),
+                      tagIds,
                     })
                   }
                 />
@@ -542,8 +574,10 @@ export function EventEditModal({
                     defaultValue={event.productInfo?.discountPercentage || 0}
                     onChange={(e) =>
                       updateField('productInfo', {
-                        ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
-                        discountPercentage: Number(e.target.value) || 0
+                        ...(changes.productInfo ||
+                          event.productInfo ||
+                          getDefaultProductInfo()),
+                        discountPercentage: Number(e.target.value) || 0,
                       })
                     }
                   />
@@ -560,8 +594,10 @@ export function EventEditModal({
                     defaultValue={event.productInfo?.taxPercentage || 0}
                     onChange={(e) =>
                       updateField('productInfo', {
-                        ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
-                        taxPercentage: Number(e.target.value) || 0
+                        ...(changes.productInfo ||
+                          event.productInfo ||
+                          getDefaultProductInfo()),
+                        taxPercentage: Number(e.target.value) || 0,
                       })
                     }
                   />
@@ -571,12 +607,15 @@ export function EventEditModal({
               {/* Costo del negocio */}
               <div className='space-y-4'>
                 <div>
-                  <Label className='text-base font-medium'>Costo del negocio</Label>
+                  <Label className='text-base font-medium'>
+                    Costo del negocio
+                  </Label>
                   <p className='text-sm text-muted-foreground'>
-                    Costo interno para calcular márgenes (diferente al precio de venta)
+                    Costo interno para calcular márgenes (diferente al precio de
+                    venta)
                   </p>
                 </div>
-                
+
                 <div className='grid grid-cols-2 gap-4'>
                   <div className='grid gap-2'>
                     <Label htmlFor='costAmount'>Monto del costo</Label>
@@ -588,13 +627,16 @@ export function EventEditModal({
                       placeholder='0.00'
                       defaultValue={event.productInfo?.cost?.amount || 0}
                       onChange={(e) => {
-                        const currentProductInfo = changes.productInfo || event.productInfo || getDefaultProductInfo()
+                        const currentProductInfo =
+                          changes.productInfo ||
+                          event.productInfo ||
+                          getDefaultProductInfo()
                         updateField('productInfo', {
                           ...currentProductInfo,
                           cost: {
                             ...currentProductInfo.cost,
-                            amount: Number(e.target.value) || 0
-                          }
+                            amount: Number(e.target.value) || 0,
+                          },
                         })
                       }}
                     />
@@ -605,13 +647,16 @@ export function EventEditModal({
                     <Select
                       defaultValue={event.productInfo?.cost?.currency || 'MXN'}
                       onValueChange={(value) => {
-                        const currentProductInfo = changes.productInfo || event.productInfo || getDefaultProductInfo()
+                        const currentProductInfo =
+                          changes.productInfo ||
+                          event.productInfo ||
+                          getDefaultProductInfo()
                         updateField('productInfo', {
                           ...currentProductInfo,
                           cost: {
                             ...currentProductInfo.cost,
-                            currency: value
-                          }
+                            currency: value,
+                          },
                         })
                       }}
                     >
@@ -638,8 +683,10 @@ export function EventEditModal({
                   defaultValue={event.productInfo?.notes || ''}
                   onChange={(e) =>
                     updateField('productInfo', {
-                      ...(changes.productInfo || event.productInfo || getDefaultProductInfo()),
-                      notes: e.target.value
+                      ...(changes.productInfo ||
+                        event.productInfo ||
+                        getDefaultProductInfo()),
+                      notes: e.target.value,
                     })
                   }
                 />
@@ -652,7 +699,11 @@ export function EventEditModal({
         </Tabs>
 
         <DialogFooter>
-          <Button variant='outline' onClick={handleCancel} disabled={isUploading}>
+          <Button
+            variant='outline'
+            onClick={handleCancel}
+            disabled={isUploading}
+          >
             Cancelar
           </Button>
           <Button

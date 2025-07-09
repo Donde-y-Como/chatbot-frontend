@@ -1,4 +1,4 @@
-import { ProductStatus } from '@/types'
+import { ProductStatus } from '@/features/products/types'
 import { Service } from '@/features/appointments/types'
 
 // Format currency
@@ -33,9 +33,8 @@ export const formatDuration = (duration: {
 
 // Get service status based on product info
 export const getServiceStatus = (service: Service) => {
-  return service.productInfo?.status || ProductStatus.ACTIVE
+  return service.productInfo?.status || ProductStatus.ACTIVO
 }
-
 
 // Calculate service stats
 export const calculateServiceStats = (services: Service[]) => {
@@ -63,7 +62,7 @@ export const calculateServiceStats = (services: Service[]) => {
 
   const categoryIds = new Set<string>()
   const tagIds = new Set<string>()
-  
+
   let minPrice = Infinity
   let maxPrice = -Infinity
   let minDuration = Infinity
@@ -79,12 +78,11 @@ export const calculateServiceStats = (services: Service[]) => {
 
       // Status calculations
       const status = getServiceStatus(service)
-      if (status === 'active') {
+      if (status === ProductStatus.ACTIVO) {
         acc.active++
       } else {
         acc.inactive++
       }
-
 
       // Financial calculations
       const priceAmount = service.price?.amount || 0
@@ -127,12 +125,12 @@ export const calculateServiceStats = (services: Service[]) => {
 
       // Category tracking
       if (service.productInfo?.categoryIds) {
-        service.productInfo.categoryIds.forEach(id => categoryIds.add(id))
+        service.productInfo.categoryIds.forEach((id) => categoryIds.add(id))
       }
 
       // Tag tracking
       if (service.productInfo?.tagIds) {
-        service.productInfo.tagIds.forEach(id => tagIds.add(id))
+        service.productInfo.tagIds.forEach((id) => tagIds.add(id))
       }
 
       return acc
@@ -164,94 +162,16 @@ export const calculateServiceStats = (services: Service[]) => {
     servicesWithPhotos: stats.servicesWithPhotos,
     uniqueCategories: categoryIds.size,
     uniqueTags: tagIds.size,
-    priceRange: { 
-      min: minPrice === Infinity ? 0 : minPrice, 
-      max: maxPrice === -Infinity ? 0 : maxPrice 
+    priceRange: {
+      min: minPrice === Infinity ? 0 : minPrice,
+      max: maxPrice === -Infinity ? 0 : maxPrice,
     },
-    durationRange: { 
-      min: minDuration === Infinity ? 0 : minDuration, 
-      max: maxDuration === -Infinity ? 0 : maxDuration 
+    durationRange: {
+      min: minDuration === Infinity ? 0 : minDuration,
+      max: maxDuration === -Infinity ? 0 : maxDuration,
     },
   }
 }
 
 // Filter services
-export const filterServices = (
-  services: Service[],
-  searchTerm: string,
-  filters: {
-    status?: string
-    categoryIds?: string[]
-    tagIds?: string[]
-    availability?: string[]
-  } = {}
-) => {
-  return services.filter((service) => {
-    // Text search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase()
-      const matchesSearch =
-        service.name.toLowerCase().includes(searchLower) ||
-        service.description.toLowerCase().includes(searchLower) ||
-        (service.productInfo?.sku &&
-          service.productInfo.sku.toLowerCase().includes(searchLower))
-
-      if (!matchesSearch) return false
-    }
-
-    // Status filter
-    if (filters.status && getServiceStatus(service) !== filters.status) {
-      return false
-    }
-
-    // Category filter
-    if (filters.categoryIds && filters.categoryIds.length > 0) {
-      const hasCategory = filters.categoryIds.some((categoryId) =>
-        service.productInfo?.categoryIds?.includes(categoryId)
-      )
-      if (!hasCategory) return false
-    }
-
-    // Tag filter
-    if (filters.tagIds && filters.tagIds.length > 0) {
-      const hasTag = filters.tagIds.some((tagId) =>
-        service.productInfo?.tagIds?.includes(tagId)
-      )
-      if (!hasTag) return false
-    }
-
-    return true
-  })
-}
-
 // Sort services
-export const sortServices = (
-  services: Service[],
-  sortBy: 'name' | 'price' | 'duration' | 'createdAt' = 'name',
-  sortDirection: 'asc' | 'desc' = 'asc'
-) => {
-  return [...services].sort((a, b) => {
-    let comparison = 0
-
-    switch (sortBy) {
-      case 'name':
-        comparison = a.name.localeCompare(b.name)
-        break
-      case 'price':
-        comparison = a.price.amount - b.price.amount
-        break
-      case 'duration': {
-        const aDuration =
-          a.duration.unit === 'hours' ? a.duration.value * 60 : a.duration.value
-        const bDuration =
-          b.duration.unit === 'hours' ? b.duration.value * 60 : b.duration.value
-        comparison = aDuration - bDuration
-        break
-      }
-      default:
-        comparison = 0
-    }
-
-    return sortDirection === 'desc' ? -comparison : comparison
-  })
-}

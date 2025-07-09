@@ -10,7 +10,12 @@ import {
 } from '@/components/ui/tooltip'
 import { DataTableColumnHeader } from '@/components/tables/data-table-column-header'
 import { Service } from '@/features/appointments/types'
-import { Category, ProductTag, Unit } from '@/features/products/types.ts'
+import {
+  Category,
+  ProductStatus,
+  ProductTag,
+  Unit,
+} from '@/features/products/types.ts'
 import { getServiceStatus } from '../utils/serviceUtils'
 import { DataTableRowActions } from './data-table-row-actions'
 
@@ -254,8 +259,8 @@ export const createColumns = (
     header: 'Status',
     cell: ({ row }) => {
       const status = getServiceStatus(row.original)
-      const variant = status === 'active' ? 'default' : 'secondary'
-      const label = status === 'active' ? 'Activo' : 'Inactivo'
+      const variant = status === ProductStatus.ACTIVO ? 'default' : 'secondary'
+      const label = status === ProductStatus.ACTIVO ? 'Activo' : 'Inactivo'
 
       return (
         <Badge variant={variant} className='text-xs'>

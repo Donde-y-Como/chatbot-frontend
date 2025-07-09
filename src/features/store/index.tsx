@@ -2,18 +2,15 @@ import React, { useEffect, useState } from 'react'
 import { Cart } from '@/features/store/components/Cart.tsx'
 import { POSError } from '@/features/store/components/POSError.tsx'
 import { POSLoading } from '@/features/store/components/POSLoading.tsx'
-import { useEventMutations } from '../events/hooks/useEventMutations'
 import { AdvancedFilters } from './components/AdvancedFilters'
 import { StoreHeader } from './components/StoreHeader'
 import { StoreItems } from './components/StoreItems'
 import { StoreLayout } from './components/StoreLayout'
 import { usePOS } from './hooks/usePOS'
+import { CartItemRequest } from '@/features/store/types.ts'
 
 export default function Store() {
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
-  const [, setIsQuickAppointmentOpen] = useState(false)
-  const [, setIsEventBookingOpen] = useState(false)
-  const [, setPendingItemForDialog] = useState<any>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // Hook principal del POS
@@ -36,18 +33,15 @@ export default function Store() {
     resetFilters,
     setCategory,
     setSearch,
-    toggleFiltersActive,
 
     // Acciones
     refetchAll,
   } = usePOS()
 
-  const { bookEvent } = useEventMutations()
-
   // Inicializar POS al montar el componente
   useEffect(() => {
-    cart.initializePOS()
-  }, [cart.initializePOS])
+    void cart.getCart()
+  }, [cart.getCart])
 
   // Detectar scroll para cerrar menú móvil automáticamente
   useEffect(() => {
@@ -90,19 +84,7 @@ export default function Store() {
     setIsAdvancedFiltersOpen(false)
   }
 
-  const handleAddToCart = async (item: any) => {
-    if (item.type === 'SERVICIOS') {
-      setPendingItemForDialog(item)
-      setIsQuickAppointmentOpen(true)
-      return
-    }
-
-    if (item.type === 'EVENTOS') {
-      setPendingItemForDialog(item)
-      setIsEventBookingOpen(true)
-      return
-    }
-
+  const handleAddToCart = async (item: CartItemRequest) => {
     await cart.addToCart(item)
   }
 

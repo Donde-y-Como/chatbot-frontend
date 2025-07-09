@@ -1,10 +1,10 @@
 import React from 'react'
 import { Menu, X } from 'lucide-react'
-import { Button } from '../../../components/ui/button'
+import { Button } from '@/components/ui/button.tsx'
+import { POSFilters } from '../types'
 import { CategoryTabs } from './CategoryTabs'
 import { FilterButton } from './FilterButton'
 import { SearchBar } from './SearchBar'
-import { POSFilters } from '../types'
 
 interface StoreHeaderProps {
   filters: POSFilters
@@ -27,7 +27,7 @@ export function StoreHeader({
   onToggleMobileMenu,
   onFilterButtonClick,
   onSearchChange,
-  onCategoryChange
+  onCategoryChange,
 }: StoreHeaderProps) {
   return (
     <div className='border-b border-border bg-card sticky top-0 z-10 lg:static'>
@@ -105,8 +105,7 @@ export function StoreHeader({
           {/* Estadísticas de filtros */}
           {filterStats.isFiltered && (
             <div className='text-sm text-muted-foreground'>
-              Mostrando {filterStats.filtered} de {filterStats.total}{' '}
-              elementos
+              Mostrando {filterStats.filtered} de {filterStats.total} elementos
             </div>
           )}
         </div>

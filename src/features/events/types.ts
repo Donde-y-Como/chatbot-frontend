@@ -1,5 +1,5 @@
-import { z } from "zod"
-import { ProductInfo, productInfoSchema, getDefaultProductInfo } from '@/types'
+import { z } from 'zod'
+import { ProductInfo } from '@/types'
 
 export type Frequency = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never'
 
@@ -45,14 +45,20 @@ export type EventPrimitives = {
   recurrence: RecurrencePrimitives
   location: string
   photos: string[]
-  productInfo?: ProductInfo // Opcional para compatibilidad con eventos existentes
+  productInfo: ProductInfo // Opcional para compatibilidad con eventos existentes
 }
 
 export type EventWithBookings = EventPrimitives & {
   bookings: Booking[]
 }
 
-export type BookingStatus = 'pendiente' | 'confirmada' | 'reprogramada' | 'completada' | 'cancelada' | 'no asistió'
+export type BookingStatus =
+  | 'pendiente'
+  | 'confirmada'
+  | 'reprogramada'
+  | 'completada'
+  | 'cancelada'
+  | 'no asistió'
 export type PaymentStatus = 'pendiente' | 'pagado' | 'parcial' | 'reembolsado'
 
 export type Booking = {
@@ -110,7 +116,8 @@ export const capacitySchema = z
   .refine(
     (data) => !data.isLimited || (data.isLimited && data.maxCapacity !== null),
     {
-      message: 'La capacidad máxima es requerida cuando la capacidad es limitada',
+      message:
+        'La capacidad máxima es requerida cuando la capacidad es limitada',
       path: ['maxCapacity'],
     }
   )
@@ -120,16 +127,15 @@ export const priceSchema = z.object({
   currency: z.nativeEnum(Currency),
 })
 
-export const durationSchema = z.object({
-  startAt: z.string().datetime({ message: 'Fecha de inicio inválida' }),
-  endAt: z.string().datetime({ message: 'Fecha de fin inválida' }),
-}).refine(
-  (data) => new Date(data.endAt) > new Date(data.startAt),
-  {
+export const durationSchema = z
+  .object({
+    startAt: z.string().datetime({ message: 'Fecha de inicio inválida' }),
+    endAt: z.string().datetime({ message: 'Fecha de fin inválida' }),
+  })
+  .refine((data) => new Date(data.endAt) > new Date(data.startAt), {
     message: 'La fecha de fin debe ser posterior a la fecha de inicio',
     path: ['endAt'],
-  }
-)
+  })
 
 export const recurrenceEndConditionSchema = z.discriminatedUnion('type', [
   z.object({
@@ -142,22 +148,29 @@ export const recurrenceEndConditionSchema = z.discriminatedUnion('type', [
   }),
 ])
 
-export const recurrenceSchema = z.object({
-  frequency: z.nativeEnum(RecurrenceFrequency),
-  endCondition: recurrenceEndConditionSchema.nullable(),
-}).refine(
-  (data) => data.frequency === 'never' ? data.endCondition === null : true,
-  {
-    message: "La condición de finalización debe ser nula cuando la recurrencia es 'never'",
-    path: ['endCondition'],
-  }
-)
+export const recurrenceSchema = z
+  .object({
+    frequency: z.nativeEnum(RecurrenceFrequency),
+    endCondition: recurrenceEndConditionSchema.nullable(),
+  })
+  .refine(
+    (data) => (data.frequency === 'never' ? data.endCondition === null : true),
+    {
+      message:
+        "La condición de finalización debe ser nula cuando la recurrencia es 'never'",
+      path: ['endCondition'],
+    }
+  )
 
 // Schema específico para eventos donde SKU y categorías son opcionales
 export const eventProductInfoSchema = z.object({
-  sku: z.string()
+  sku: z
+    .string()
     .max(50, 'El SKU no puede exceder 50 caracteres')
-    .regex(/^[A-Za-z0-9_-]*$/, 'El SKU solo puede contener letras, números, guiones y guiones bajos')
+    .regex(
+      /^[A-Za-z0-9_-]*$/,
+      'El SKU solo puede contener letras, números, guiones y guiones bajos'
+    )
     .default(''),
   discountPercentage: z.preprocess(
     (val) => {
@@ -165,7 +178,8 @@ export const eventProductInfoSchema = z.object({
       const num = Number(val)
       return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
     },
-    z.number()
+    z
+      .number()
       .min(0, 'El descuento no puede ser negativo')
       .max(100, 'El descuento no puede ser mayor al 100%')
   ),
@@ -179,10 +193,10 @@ export const eventProductInfoSchema = z.object({
       const num = Number(val)
       return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
     },
-    z.number()
-      .min(0, 'El impuesto no puede ser negativo')
+    z.number().min(0, 'El impuesto no puede ser negativo')
   ),
-  notes: z.string()
+  notes: z
+    .string()
     .max(500, 'Las notas no pueden exceder 500 caracteres')
     .default(''),
   cost: z.object({
@@ -192,7 +206,7 @@ export const eventProductInfoSchema = z.object({
   precioModificado: z.object({
     amount: z.number().min(0, 'El precio modificado no puede ser negativo'),
     currency: z.string().min(1, 'La moneda es requerida'),
-  })
+  }),
 })
 
 export const creatableEventSchema = z.object({
@@ -208,8 +222,20 @@ export const creatableEventSchema = z.object({
 })
 
 // Booking schemas
-export const bookingStatusSchema = z.enum(['pendiente', 'confirmada', 'reprogramada', 'completada', 'cancelada', 'no asistió'])
-export const paymentStatusSchema = z.enum(['pendiente', 'pagado', 'parcial', 'reembolsado'])
+export const bookingStatusSchema = z.enum([
+  'pendiente',
+  'confirmada',
+  'reprogramada',
+  'completada',
+  'cancelada',
+  'no asistió',
+])
+export const paymentStatusSchema = z.enum([
+  'pendiente',
+  'pagado',
+  'parcial',
+  'reembolsado',
+])
 
 export const createBookingSchema = z.object({
   clientId: z.string().min(1, { message: 'El cliente es requerido' }),
@@ -217,16 +243,29 @@ export const createBookingSchema = z.object({
   participants: z.number().int().min(1, { message: 'Mínimo 1 participante' }),
   notes: z.string().optional().default(''),
   status: bookingStatusSchema.optional().default('pendiente'),
-  amount: z.number().min(0, { message: 'El monto no puede ser negativo' }).multipleOf(0.01, { message: 'Máximo 2 decimales' }).optional().default(0),
+  amount: z
+    .number()
+    .min(0, { message: 'El monto no puede ser negativo' })
+    .multipleOf(0.01, { message: 'Máximo 2 decimales' })
+    .optional()
+    .default(0),
   paymentStatus: paymentStatusSchema.optional().default('pendiente'),
 })
 
 export const updateBookingSchema = z.object({
   date: z.string().datetime({ message: 'Fecha inválida' }).optional(),
-  participants: z.number().int().min(1, { message: 'Mínimo 1 participante' }).optional(),
+  participants: z
+    .number()
+    .int()
+    .min(1, { message: 'Mínimo 1 participante' })
+    .optional(),
   notes: z.string().optional(),
   status: bookingStatusSchema.optional(),
-  amount: z.number().min(0, { message: 'El monto no puede ser negativo' }).multipleOf(0.01, { message: 'Máximo 2 decimales' }).optional(),
+  amount: z
+    .number()
+    .min(0, { message: 'El monto no puede ser negativo' })
+    .multipleOf(0.01, { message: 'Máximo 2 decimales' })
+    .optional(),
   paymentStatus: paymentStatusSchema.optional(),
 })
 
