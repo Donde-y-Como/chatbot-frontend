@@ -25,7 +25,7 @@ const bundleItemSchema = z.object({
 export const createBundleSchema = z.object({
   // Campos obligatorios
   sku: z.string().min(1, { message: "SKU es obligatorio" }),
-  name: z.string().min(1, { message: "El nombre del bundle es obligatorio" }),
+  name: z.string().min(1, { message: "El nombre del paquete es obligatorio" }),
   price: priceObjectSchema,
   cost: priceObjectSchema,
   items: z.array(bundleItemSchema).min(1, { message: "Debe tener al menos un item" }),

@@ -4,11 +4,11 @@ import { Badge } from '@/components/ui/badge.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { Card, CardContent } from '@/components/ui/card.tsx'
 import { Input } from '@/components/ui/input.tsx'
+import { Bundle } from '@/features/bundles/types.ts'
 import { ProductStatus } from '@/features/products/types.ts'
 import { BundleDetailsDialog } from '@/features/store/components/BundleDetailsDialog.tsx'
-import { CartItemRequest, POSItem } from '@/features/store/types.ts'
-import { Bundle } from '@/features/bundles/types.ts'
 import { ItemDetailsDialog } from '@/features/store/components/ItemDetailsDialog.tsx'
+import { CartItemRequest, POSItem } from '@/features/store/types.ts'
 
 interface ItemCardProps {
   item: POSItem
@@ -233,7 +233,10 @@ export function ItemCard({
                   {item.type === 'bundle' && 'PQ'}
                 </span>
                 <span className='hidden sm:block'>
-                  {item.type.substring(0, item.type.length - 1)}
+                  {item.type === 'product' && 'Producto'}
+                  {item.type === 'service' && 'Servicio'}
+                  {item.type === 'event' && 'Evento'}
+                  {item.type === 'bundle' && 'Paquete'}
                 </span>
               </Badge>
             </div>
