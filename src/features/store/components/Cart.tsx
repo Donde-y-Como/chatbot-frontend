@@ -1,10 +1,19 @@
 import React from 'react'
-import { X, ShoppingCart, Minus, Plus, Trash2, Edit3, Check, XIcon } from 'lucide-react'
-import { Button } from '../../../components/ui/button'
-import { Badge } from '../../../components/ui/badge'
-import { Separator } from '../../../components/ui/separator'
-import { ScrollArea } from '../../../components/ui/scroll-area'
-import { Input } from '../../../components/ui/input'
+import {
+  Check,
+  Edit3,
+  Minus,
+  Plus,
+  ShoppingCart,
+  Trash2,
+  X,
+  XIcon,
+} from 'lucide-react'
+import { Badge } from '@/components/ui/badge.tsx'
+import { Button } from '@/components/ui/button.tsx'
+import { Input } from '@/components/ui/input.tsx'
+import { ScrollArea } from '@/components/ui/scroll-area.tsx'
+import { Separator } from '@/components/ui/separator.tsx'
 import { CreateOrSelectClient } from '../../appointments/components/CreateOrSelectClient'
 import { CartState, POSItem } from '../types'
 
@@ -13,7 +22,10 @@ interface CartProps {
   onToggle: () => void
   onRemoveItem: (itemId: string) => void
   onUpdateQuantity: (itemId: string, quantity: number) => void
-  onUpdatePrice: (itemId: string, newPrice: { amount: number; currency: string }) => void
+  onUpdatePrice: (
+    itemId: string,
+    newPrice: { amount: number; currency: string }
+  ) => void
   onClientSelect: (clientId: string) => void
   onClearCart: () => void
 }
@@ -22,45 +34,57 @@ interface CartItemCardProps {
   item: POSItem
   onRemove: (itemId: string) => void
   onUpdateQuantity: (itemId: string, quantity: number) => void
-  onUpdatePrice: (itemId: string, newPrice: { amount: number; currency: string }) => void
+  onUpdatePrice: (
+    itemId: string,
+    newPrice: { amount: number; currency: string }
+  ) => void
 }
 
-function CartItemCard({ item, onRemove, onUpdateQuantity, onUpdatePrice }: CartItemCardProps) {
+function CartItemCard({
+  item,
+  onRemove,
+  onUpdateQuantity,
+  onUpdatePrice,
+}: CartItemCardProps) {
   const [isEditingPrice, setIsEditingPrice] = React.useState(false)
   // Usar el precio actual (modifiedPrice si existe, sino unitPrice)
-  const currentPrice = item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
+  const currentPrice =
+    item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
   const [tempPrice, setTempPrice] = React.useState(currentPrice.toString())
-  
+
   // Actualizar tempPrice cuando cambie el precio del item
   React.useEffect(() => {
-    const currentPrice = item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
+    const currentPrice =
+      item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
     setTempPrice(currentPrice.toString())
   }, [item.price.amount, item.modifiedPrice?.amount, item.unitPrice?.amount])
-  
+
   const handlePriceClick = () => {
     setIsEditingPrice(true)
     // Usar el precio actual para edición (modifiedPrice o unitPrice)
-    const currentPrice = item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
+    const currentPrice =
+      item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
     setTempPrice(currentPrice.toString())
   }
-  
+
   const handlePriceSubmit = () => {
     const newAmount = parseFloat(tempPrice)
     if (!isNaN(newAmount) && newAmount > 0) {
       onUpdatePrice(item.id, {
         amount: newAmount,
-        currency: item.price.currency
+        currency: item.price.currency,
       })
     }
     setIsEditingPrice(false)
   }
-  
+
   const handlePriceCancel = () => {
-    const currentPrice = item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
+    const currentPrice =
+      item.modifiedPrice?.amount || item.unitPrice?.amount || item.price.amount
     setTempPrice(currentPrice.toString())
     setIsEditingPrice(false)
   }
-  
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handlePriceSubmit()
@@ -71,7 +95,7 @@ function CartItemCard({ item, onRemove, onUpdateQuantity, onUpdatePrice }: CartI
   const formatPrice = (price: typeof item.price) => {
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: price.currency
+      currency: price.currency,
     }).format(price.amount)
   }
 
@@ -108,27 +132,27 @@ function CartItemCard({ item, onRemove, onUpdateQuantity, onUpdatePrice }: CartI
   const totalItemPrice = item.price.amount * item.quantity
 
   return (
-    <div className="flex gap-2 sm:gap-3 p-2 sm:p-3 border border-border rounded-lg bg-card">
+    <div className='flex gap-2 sm:gap-3 p-2 sm:p-3 border border-border rounded-lg bg-card'>
       {/* Imagen miniatura */}
-      <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+      <div className='relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted'>
         {item.image ? (
           <img
             src={item.image}
             alt={item.name}
-            className="w-full h-full object-cover"
+            className='w-full h-full object-cover'
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/80">
-            <div className="text-lg sm:text-xl text-muted-foreground/50">
+          <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/80'>
+            <div className='text-lg sm:text-xl text-muted-foreground/50'>
               {getTypeIcon(item.type)}
             </div>
           </div>
         )}
 
         {/* Badge de tipo */}
-        <div className="absolute -top-1 -right-1">
+        <div className='absolute -top-1 -right-1'>
           <Badge
-            variant="secondary"
+            variant='secondary'
             className={`${getTypeColor(item.type)} text-white text-xs px-1 py-0.5 scale-75`}
             title={item.type}
           >
@@ -141,11 +165,11 @@ function CartItemCard({ item, onRemove, onUpdateQuantity, onUpdatePrice }: CartI
       </div>
 
       {/* Información del item */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-1 sm:gap-2">
-          <h4 className="font-medium text-xs sm:text-sm line-clamp-2 leading-tight">
+      <div className='flex-1 min-w-0'>
+        <div className='flex items-start justify-between gap-1 sm:gap-2'>
+          <h4 className='font-medium text-xs sm:text-sm line-clamp-2 leading-tight'>
             {item.name === 'Cargando...' ? (
-              <span className="text-muted-foreground animate-pulse">
+              <span className='text-muted-foreground animate-pulse'>
                 Cargando nombre...
               </span>
             ) : (
@@ -153,65 +177,68 @@ function CartItemCard({ item, onRemove, onUpdateQuantity, onUpdatePrice }: CartI
             )}
           </h4>
           <Button
-            variant="ghost"
-            size="sm"
+            variant='ghost'
+            size='sm'
             onClick={() => onRemove(item.id)}
-            className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-muted-foreground hover:text-destructive flex-shrink-0"
+            className='h-5 w-5 sm:h-6 sm:w-6 p-0 text-muted-foreground hover:text-destructive flex-shrink-0'
           >
-            <Trash2 className="h-3 w-3" />
+            <Trash2 className='h-3 w-3' />
           </Button>
         </div>
 
-        <div className="mt-1 sm:mt-2 space-y-1 sm:space-y-2">
+        <div className='mt-1 sm:mt-2 space-y-1 sm:space-y-2'>
           {/* Precio unitario editable */}
-          <div className="flex items-center gap-1">
+          <div className='flex items-center gap-1'>
             {isEditingPrice ? (
-              <div className="flex items-center gap-1 flex-1">
+              <div className='flex items-center gap-1 flex-1'>
                 <Input
-                  type="number"
+                  type='number'
                   value={tempPrice}
                   onChange={(e) => setTempPrice(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  className="h-6 text-xs flex-1 min-w-0 border-primary"
-                  step="0.01"
-                  min="0"
+                  className='h-6 text-xs flex-1 min-w-0 border-primary'
+                  step='0.01'
+                  min='0'
                   autoFocus
                 />
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant='ghost'
+                  size='sm'
                   onClick={handlePriceSubmit}
-                  className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                  className='h-6 w-6 p-0 text-green-600 hover:text-green-700'
                 >
-                  <Check className="h-3 w-3" />
+                  <Check className='h-3 w-3' />
                 </Button>
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant='ghost'
+                  size='sm'
                   onClick={handlePriceCancel}
-                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                  className='h-6 w-6 p-0 text-red-600 hover:text-red-700'
                 >
-                  <XIcon className="h-3 w-3" />
+                  <XIcon className='h-3 w-3' />
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center gap-1 flex-1">
-                <div className="flex flex-col">
+              <div className='flex items-center gap-1 flex-1'>
+                <div className='flex flex-col'>
                   {/* Mostrar precio original tachado si existe modifiedPrice */}
                   {item.modifiedPrice && item.unitPrice && (
-                    <span className="text-xs text-muted-foreground line-through">
+                    <span className='text-xs text-muted-foreground line-through'>
                       {formatPrice(item.unitPrice)} c/u
                     </span>
                   )}
                   {/* Precio actual (modificado o unitario) */}
-                  <span className="text-xs text-muted-foreground">
+                  <span className='text-xs text-muted-foreground'>
                     {item.name === 'Cargando...' ? (
-                      <span className="animate-pulse">--- c/u</span>
+                      <span className='animate-pulse'>--- c/u</span>
                     ) : (
                       <>
                         {formatPrice(item.price)} c/u
                         {item.modifiedPrice && (
-                          <span className="ml-1 text-orange-600 font-medium" title="Precio modificado">
+                          <span
+                            className='ml-1 text-orange-600 font-medium'
+                            title='Precio modificado'
+                          >
                             (✓ editado)
                           </span>
                         )}
@@ -220,49 +247,52 @@ function CartItemCard({ item, onRemove, onUpdateQuantity, onUpdatePrice }: CartI
                   </span>
                 </div>
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant='ghost'
+                  size='sm'
                   onClick={handlePriceClick}
-                  className="h-5 w-5 p-0 text-muted-foreground hover:text-primary ml-auto"
-                  title="Editar precio"
+                  className='h-5 w-5 p-0 text-muted-foreground hover:text-primary ml-auto'
+                  title='Editar precio'
                 >
-                  <Edit3 className="h-3 w-3" />
+                  <Edit3 className='h-3 w-3' />
                 </Button>
               </div>
             )}
           </div>
 
           {/* Controles de cantidad y precio total */}
-          <div className="flex items-center justify-between">
+          <div className='flex items-center justify-between'>
             {/* Controles de cantidad */}
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className='flex items-center gap-1 sm:gap-2'>
               <Button
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
                 onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                className="h-6 w-6 sm:h-7 sm:w-7 p-0"
+                className='h-6 w-6 sm:h-7 sm:w-7 p-0'
                 disabled={item.quantity <= 1}
               >
-                <Minus className="h-3 w-3" />
+                <Minus className='h-3 w-3' />
               </Button>
 
-              <span className="text-xs sm:text-sm font-medium min-w-[1.5rem] sm:min-w-[2rem] text-center">
+              <span className='text-xs sm:text-sm font-medium min-w-[1.5rem] sm:min-w-[2rem] text-center'>
                 {item.quantity}
               </span>
 
               <Button
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
                 onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                className="h-6 w-6 sm:h-7 sm:w-7 p-0"
+                className='h-6 w-6 sm:h-7 sm:w-7 p-0'
               >
-                <Plus className="h-3 w-3" />
+                <Plus className='h-3 w-3' />
               </Button>
             </div>
 
             {/* Precio total del item */}
-            <span className="font-semibold text-xs sm:text-sm">
-              {formatPrice({ amount: totalItemPrice, currency: item.price.currency })}
+            <span className='font-semibold text-xs sm:text-sm'>
+              {formatPrice({
+                amount: totalItemPrice,
+                currency: item.price.currency,
+              })}
             </span>
           </div>
         </div>
@@ -272,18 +302,18 @@ function CartItemCard({ item, onRemove, onUpdateQuantity, onUpdatePrice }: CartI
 }
 
 export function Cart({
-                       cart,
-                       onToggle,
-                       onRemoveItem,
-                       onUpdateQuantity,
-                       onUpdatePrice,
-                       onClientSelect,
-                       onClearCart
-                     }: CartProps) {
+  cart,
+  onToggle,
+  onRemoveItem,
+  onUpdateQuantity,
+  onUpdatePrice,
+  onClientSelect,
+  onClearCart,
+}: CartProps) {
   const formatPrice = (price: typeof cart.total) => {
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: price.currency
+      currency: price.currency,
     }).format(price.amount)
   }
 
@@ -292,17 +322,17 @@ export function Cart({
   return (
     <>
       {/* Botón flotante del carrito - solo en móvil */}
-      <div className="fixed right-3 bottom-3 sm:right-4 sm:bottom-4 z-50 lg:hidden">
+      <div className='fixed right-3 bottom-3 sm:right-4 sm:bottom-4 z-50 lg:hidden'>
         <Button
           onClick={onToggle}
-          size="lg"
-          className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90"
+          size='lg'
+          className='relative h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90'
         >
-          <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
+          <ShoppingCart className='h-5 w-5 sm:h-6 sm:w-6' />
           {totalItems > 0 && (
             <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 h-5 w-5 sm:h-6 sm:w-6 rounded-full p-0 flex items-center justify-center text-xs font-bold"
+              variant='destructive'
+              className='absolute -top-1 -right-1 sm:-top-2 sm:-right-2 h-5 w-5 sm:h-6 sm:w-6 rounded-full p-0 flex items-center justify-center text-xs font-bold'
             >
               {totalItems > 99 ? '99+' : totalItems}
             </Badge>
@@ -319,41 +349,43 @@ export function Cart({
           fixed right-0 top-0 h-full w-full sm:w-[90%] md:w-[70%] 
           bg-background border-l border-border transform transition-transform duration-300 z-40
           ${
-            cart.isOpen ? 'translate-x-0 lg:translate-x-0' : 'translate-x-full lg:translate-x-0'
+            cart.isOpen
+              ? 'translate-x-0 lg:translate-x-0'
+              : 'translate-x-full lg:translate-x-0'
           }
         `}
         style={{
           WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain'
+          overscrollBehavior: 'contain',
         }}
       >
-        <div className="flex flex-col h-full">
+        <div className='flex flex-col h-full'>
           {/* Header del carrito */}
-          <div className="flex items-center justify-between p-3 sm:p-4 border-b border-border bg-card">
-            <div className="flex items-center gap-2">
-              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
-              <h2 className="text-base sm:text-lg font-semibold">Orden</h2>
+          <div className='flex items-center justify-between p-3 sm:p-4 border-b border-border bg-card'>
+            <div className='flex items-center gap-2'>
+              <ShoppingCart className='h-4 w-4 sm:h-5 sm:w-5' />
+              <h2 className='text-base sm:text-lg font-semibold'>Orden</h2>
               {totalItems > 0 && (
-                <Badge variant="secondary" className="ml-2 text-xs">
+                <Badge variant='secondary' className='ml-2 text-xs'>
                   {totalItems} {totalItems === 1 ? 'artículo' : 'artículos'}
                 </Badge>
               )}
             </div>
             {/* Botón cerrar - solo en móvil */}
             <Button
-              variant="ghost"
-              size="sm"
+              variant='ghost'
+              size='sm'
               onClick={onToggle}
-              className="h-7 w-7 sm:h-8 sm:w-8 p-0 lg:hidden"
+              className='h-7 w-7 sm:h-8 sm:w-8 p-0 lg:hidden'
             >
-              <X className="h-4 w-4" />
+              <X className='h-4 w-4' />
             </Button>
           </div>
 
           {/* Selector de cliente */}
-          <div className="p-3 sm:p-4 border-b border-border bg-card/50">
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-medium text-muted-foreground">
+          <div className='p-3 sm:p-4 border-b border-border bg-card/50'>
+            <div className='space-y-2'>
+              <label className='text-xs sm:text-sm font-medium text-muted-foreground'>
                 Cliente
               </label>
               <CreateOrSelectClient
@@ -364,26 +396,28 @@ export function Cart({
           </div>
 
           {/* Lista de items en el carrito */}
-          <div className="flex-1 overflow-hidden">
+          <div className='flex-1 overflow-hidden'>
             {cart.items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center p-6 sm:p-8">
-                <div className="text-4xl sm:text-6xl mb-3 sm:mb-4 text-muted-foreground/30">🛒</div>
-                <h3 className="text-base sm:text-lg font-medium text-muted-foreground mb-2">
+              <div className='flex flex-col items-center justify-center h-full text-center p-6 sm:p-8'>
+                <div className='text-4xl sm:text-6xl mb-3 sm:mb-4 text-muted-foreground/30'>
+                  🛒
+                </div>
+                <h3 className='text-base sm:text-lg font-medium text-muted-foreground mb-2'>
                   Carrito vacío
                 </h3>
-                <p className="text-xs sm:text-sm text-muted-foreground mb-4">
+                <p className='text-xs sm:text-sm text-muted-foreground mb-4'>
                   Agrega productos, servicios o eventos para comenzar
                 </p>
                 {/* Mensaje adicional para desktop */}
-                <div className="hidden lg:block">
-                  <p className="text-xs text-muted-foreground/70">
+                <div className='hidden lg:block'>
+                  <p className='text-xs text-muted-foreground/70'>
                     La sección de orden estará siempre visible mientras navegas
                   </p>
                 </div>
               </div>
             ) : (
-              <ScrollArea className="h-full">
-                <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+              <ScrollArea className='h-full'>
+                <div className='p-3 sm:p-4 space-y-2 sm:space-y-3'>
                   {cart.items.map((item) => (
                     <CartItemCard
                       key={item.id}
@@ -400,35 +434,39 @@ export function Cart({
 
           {/* Footer con totales */}
           {cart.items.length > 0 && (
-            <div className="border-t border-border bg-card p-3 sm:p-4 space-y-3">
+            <div className='border-t border-border bg-card p-3 sm:p-4 space-y-3'>
               {/* Resumen de precios */}
-              <div className="space-y-1 sm:space-y-2">
-                <div className="flex justify-between text-xs sm:text-sm">
-                  <span className="text-muted-foreground">Subtotal:</span>
+              <div className='space-y-1 sm:space-y-2'>
+                <div className='flex justify-between text-xs sm:text-sm'>
+                  <span className='text-muted-foreground'>Subtotal:</span>
                   <span>{formatPrice(cart.subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-xs sm:text-sm">
-                  <span className="text-muted-foreground">Impuestos (16%):</span>
+                <div className='flex justify-between text-xs sm:text-sm'>
+                  <span className='text-muted-foreground'>
+                    Impuestos (16%):
+                  </span>
                   <span>{formatPrice(cart.taxes)}</span>
                 </div>
                 <Separator />
-                <div className="flex justify-between text-base sm:text-lg font-semibold">
+                <div className='flex justify-between text-base sm:text-lg font-semibold'>
                   <span>Total:</span>
-                  <span className="text-primary">{formatPrice(cart.total)}</span>
+                  <span className='text-primary'>
+                    {formatPrice(cart.total)}
+                  </span>
                 </div>
               </div>
 
               {/* Botones de acción */}
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <Button
-                  className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium"
+                  className='w-full h-10 sm:h-12 text-sm sm:text-base font-medium'
                   disabled={!cart.selectedClientId}
                 >
                   Procesar Venta
                 </Button>
                 <Button
-                  variant="outline"
-                  className="w-full h-8 sm:h-10 text-sm"
+                  variant='outline'
+                  className='w-full h-8 sm:h-10 text-sm'
                   onClick={onClearCart}
                 >
                   Limpiar Carrito
@@ -437,7 +475,7 @@ export function Cart({
 
               {/* Mensaje de cliente requerido */}
               {!cart.selectedClientId && (
-                <p className="text-xs text-muted-foreground text-center">
+                <p className='text-xs text-muted-foreground text-center'>
                   Selecciona un cliente para continuar
                 </p>
               )}
@@ -449,7 +487,7 @@ export function Cart({
       {/* Overlay - solo en móvil */}
       {cart.isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 z-30 lg:hidden"
+          className='fixed inset-0 bg-black/20 z-30 lg:hidden'
           onClick={onToggle}
         />
       )}
