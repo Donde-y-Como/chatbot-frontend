@@ -1,8 +1,19 @@
 import { Bundle } from '@/features/bundles/types.ts'
 import { Media } from '@/features/chats/ChatTypes.ts'
+import { Service } from '../appointments/types'
 import { EventPrimitives } from '../events/types'
 import { Product, ProductStatus } from '../products/types'
-import { Service } from '../appointments/types'
+
+export type AddCartItemResponse = {
+  success: boolean
+  message: string
+  data?: CartPrimitives
+}
+
+export type ProblemDetails = {
+  title: string
+  detail: string
+}
 
 // Categorías disponibles en el POS
 export type POSCategory =
@@ -20,7 +31,7 @@ export interface Price {
 
 export interface CartItemRequest {
   itemId: string
-  itemType: 'product' | 'service' | 'event' | 'bundle'
+  itemType: CartItemType
   quantity: number
   notes?: string
   eventDate?: string
@@ -35,11 +46,7 @@ export interface UpdateCartItemPriceRequest {
   }
 }
 
-export interface UpdateCartItemQuantityRequest {
-  itemType: CartItemType
-  itemId: string
-  quantity: number
-}
+export type UpdateCartItemQuantityRequest = CartItemRequest & {}
 
 // Cart API Response Types
 export type CartItemType = 'product' | 'service' | 'event' | 'bundle'

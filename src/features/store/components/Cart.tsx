@@ -5,17 +5,18 @@ import { Button } from '@/components/ui/button.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { CartItemCard } from '@/features/store/components/CartItemCard.tsx'
 import { CreateOrSelectClient } from '../../appointments/components/CreateOrSelectClient'
-import { CartState } from '../types'
+import {
+  CartItemRequest,
+  CartState,
+  UpdateCartItemPriceRequest,
+} from '../types'
 
 interface CartProps {
   cart: CartState
   onToggle: () => void
   onRemoveItem: (itemId: string) => void
-  onUpdateQuantity: (itemId: string, quantity: number) => void
-  onUpdatePrice: (
-    itemId: string,
-    newPrice: { amount: number; currency: string }
-  ) => void
+  onUpdateQuantity: (item: CartItemRequest) => void
+  onUpdatePrice: (item: UpdateCartItemPriceRequest) => void
   onClientSelect: (clientId: string) => void
   onClearCart: () => void
   onConvertCart: () => void

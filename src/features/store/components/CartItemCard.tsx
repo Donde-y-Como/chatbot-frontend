@@ -5,16 +5,18 @@ import { Badge } from '@/components/ui/badge.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { Input } from '@/components/ui/input.tsx'
 import {
+  CartItemRequest,
   CartItemType,
   CartItemWithDetails,
   Price,
+  UpdateCartItemPriceRequest,
 } from '@/features/store/types.ts'
 
 interface CartItemCardProps {
   item: CartItemWithDetails
   onRemove: (itemId: string) => void
-  onUpdateQuantity: (itemId: string, quantity: number) => void
-  onUpdatePrice: (itemId: string, newPrice: Price) => void
+  onUpdateQuantity: (item: CartItemRequest) => void
+  onUpdatePrice: (item: UpdateCartItemPriceRequest) => void
 }
 
 export function CartItemCard({
@@ -46,9 +48,13 @@ export function CartItemCard({
       return
     }
 
-    onUpdatePrice(item.itemId, {
-      amount: newAmount,
-      currency: item.effectiveUnitPrice.currency,
+    onUpdatePrice({
+      itemId: item.itemId,
+      newPrice: {
+        amount: newAmount,
+        currency: item.effectiveUnitPrice.currency,
+      },
+      itemType: item.itemType,
     })
 
     setIsEditingPrice(false)
@@ -235,7 +241,15 @@ export function CartItemCard({
               <Button
                 variant='outline'
                 size='sm'
-                onClick={() => onUpdateQuantity(item.itemId, item.quantity - 1)}
+                onClick={() =>
+                  onUpdateQuantity({
+                    itemId: item.itemId,
+                    quantity: item.quantity - 1,
+                    itemType: item.itemType,
+                    notes: item.notes,
+                    eventDate: item.eventMetadata?.selectedDate,
+                  })
+                }
                 className='h-6 w-6 sm:h-7 sm:w-7 p-0'
                 disabled={item.quantity <= 1}
               >
@@ -249,7 +263,15 @@ export function CartItemCard({
               <Button
                 variant='outline'
                 size='sm'
-                onClick={() => onUpdateQuantity(item.itemId, item.quantity + 1)}
+                onClick={() => {
+                  onUpdateQuantity({
+                    itemId: item.itemId,
+                    quantity: item.quantity + 1,
+                    itemType: item.itemType,
+                    notes: item.notes,
+                    eventDate: item.eventMetadata?.selectedDate,
+                  })
+                }}
                 className='h-6 w-6 sm:h-7 sm:w-7 p-0'
               >
                 <Plus className='h-3 w-3' />

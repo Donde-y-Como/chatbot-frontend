@@ -1,9 +1,10 @@
 import { api } from '@/api/axiosInstance.ts'
 import {
+  AddCartItemResponse,
   CartItemRequest,
   GetCartSuccessResponse,
+  ProblemDetails,
   UpdateCartItemPriceRequest,
-  UpdateCartItemQuantityRequest,
 } from '../types'
 
 export const CartAPIService = {
@@ -21,20 +22,28 @@ export const CartAPIService = {
     return response.data
   },
 
-  addCartItem: async (item: CartItemRequest) => {
-    const response = await api.post('/cart/items', item)
+  addCartItem: async (item: CartItemRequest): Promise<AddCartItemResponse> => {
+    const response = await api.post<AddCartItemResponse | ProblemDetails>(
+      '/cart/items',
+      item
+    )
 
     if (response.status !== 200) {
+      if (response.status === 400 && 'title' in response.data) {
+        throw new Error(response.data.title)
+      }
       throw new Error('Error agregando item al carrito')
     }
 
-    return response.data
+    return response.data as AddCartItemResponse
   },
 
-  updateCartItemQuantity: async (request: UpdateCartItemQuantityRequest) => {
+  updateCartItemQuantity: async (request: CartItemRequest) => {
     const response = await api.put(`/cart/items/${request.itemId}/quantity`, {
       itemType: request.itemType,
       quantity: request.quantity,
+      notes: request.notes,
+      eventDate: request.eventDate,
     })
 
     if (response.status !== 200) {

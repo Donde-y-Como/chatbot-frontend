@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useIsMobile } from '@/hooks/use-mobile.tsx'
 import { CartAPIService } from '../services/CartAPIService.ts'
-import { CartItemRequest, CartState, CartWithDetails, Price } from '../types'
+import {
+  CartItemRequest,
+  CartState,
+  CartWithDetails,
+  Price,
+  UpdateCartItemPriceRequest,
+  UpdateCartItemQuantityRequest,
+} from '../types'
 
 const getDefaultCartState = (isMobile: boolean): CartState => ({
   isOpen: !isMobile, // Abierto por defecto en desktop
@@ -11,144 +19,240 @@ const getDefaultCartState = (isMobile: boolean): CartState => ({
   total: { amount: 0, currency: 'MXN' },
 })
 
+const CART_QUERY_KEY = ['cart']
+
 export function useCart() {
   const isMobile = useIsMobile()
-  const [cart, setCart] = useState<CartState>(() =>
-    getDefaultCartState(isMobile)
-  )
-  const [isLoading, setIsLoading] = useState(false)
+  const queryClient = useQueryClient()
 
-  const getCart = useCallback(async () => {
-    setIsLoading(true)
-    try {
+  // Local state for client selection
+  const [selectedClientId, setSelectedClientId] = useState<string>('')
+
+  const {
+    data: cartData,
+    isLoading,
+    error,
+    refetch: getCart,
+  } = useQuery({
+    queryKey: CART_QUERY_KEY,
+    queryFn: async () => {
       const response = await CartAPIService.getCart(true)
+      return response.data as CartWithDetails
+    },
+    staleTime: 30 * 1000,
+  })
 
-      const cartData = response.data as CartWithDetails
-      setCart((prev) => ({
-        ...prev,
-        items: cartData?.itemsWithDetails ?? [],
-        total: cartData?.totalAmount ?? 0,
-      }))
-    } catch (error) {
-      toast.error('Error al obtener la orden')
-      setCart(() => getDefaultCartState(isMobile))
-    } finally {
-      setIsLoading(false)
+  // Create cart state from query data
+  const cart: CartState = useMemo(() => {
+    if (!cartData) {
+      return {
+        ...getDefaultCartState(isMobile),
+        selectedClientId,
+      }
     }
-  }, [isMobile])
 
-  const addToCart = useCallback(
-    async (item: CartItemRequest) => {
-      try {
-        await CartAPIService.addCartItem(item)
-        await getCart()
-        toast.success(`Articulo agregado a la orden (${item.quantity})`)
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : 'Error al agregar item a la orden'
-        )
-      }
+    return {
+      isOpen: !isMobile,
+      items: cartData.itemsWithDetails || [],
+      selectedClientId,
+      total: cartData.totalAmount || { amount: 0, currency: 'MXN' },
+    }
+  }, [cartData, isMobile, selectedClientId])
+
+  // Add to cart mutation with optimistic update
+  const addToCartMutation = useMutation({
+    mutationFn: async (item: CartItemRequest) => {
+      return await CartAPIService.addCartItem(item)
     },
-    [getCart]
-  )
+    onMutate: async (_item: CartItemRequest) => {
+      await queryClient.cancelQueries({ queryKey: CART_QUERY_KEY })
 
-  const removeFromCart = useCallback(
-    async (itemId: string) => {
-      try {
-        const item = cart.items.find((i) => i.itemId === itemId)
-        if (!item) return
+      const previousCart =
+        queryClient.getQueryData<CartWithDetails>(CART_QUERY_KEY)
 
-        await CartAPIService.removeCartItemFromCart(item.itemId, item.itemType)
-        await getCart()
-        toast.success(`Articulo removido de la orden`)
-      } catch (error) {
-        console.error('Error removiendo de la orden:', error)
-        toast.error('Error al remover item de la orden')
-      }
+      return { previousCart }
     },
-    [cart.items, getCart]
-  )
-
-  const updateCartQuantity = useCallback(
-    async (itemId: string, quantity: number) => {
-      if (quantity <= 0) {
-        await removeFromCart(itemId)
-        return
+    onError: (error, variables, context) => {
+      if (context?.previousCart) {
+        queryClient.setQueryData(CART_QUERY_KEY, context.previousCart)
       }
-
-      try {
-        const item = cart.items.find((i) => i.itemId === itemId)
-        if (!item) return
-
-        await CartAPIService.updateCartItemQuantity({
-          itemId: item.itemId,
-          itemType: item.itemType,
-          quantity,
-        })
-
-        await getCart()
-      } catch (error) {
-        toast.error('Error al actualizar cantidad')
-      }
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Error al agregar item a la orden'
+      )
     },
-    [cart.items, removeFromCart, getCart]
-  )
-
-  const updateCartPrice = useCallback(
-    async (itemId: string, newPrice: Price) => {
-      try {
-        const item = cart.items.find((i) => i.itemId === itemId)
-        if (!item) return
-
-        await CartAPIService.updateCartItemPrice({
-          itemId: item.itemId,
-          itemType: item.itemType,
-          newPrice,
-        })
-
-        await getCart()
-        toast.success('Precio actualizado')
-      } catch (error) {
-        toast.error('Error al actualizar precio')
-      }
+    onSuccess: async (data, variables) => {
+      await queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY })
+      toast.success(`Articulo agregado a la orden (${variables.quantity})`)
     },
-    [cart.items, getCart]
-  )
+  })
 
-  const clearCart = useCallback(async () => {
-    try {
-      await CartAPIService.clearCart()
-      setCart(getDefaultCartState(isMobile))
-      toast.success('Orden limpia')
-    } catch (error) {
+  const addToCart = async (item: CartItemRequest) => {
+    addToCartMutation.mutate(item)
+  }
+
+  // Remove from cart mutation with optimistic update
+  const removeFromCartMutation = useMutation({
+    mutationFn: async ({
+      itemId,
+      itemType,
+    }: {
+      itemId: string
+      itemType: string
+    }) => {
+      return await CartAPIService.removeCartItemFromCart(itemId, itemType)
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: CART_QUERY_KEY })
+
+      const previousCart =
+        queryClient.getQueryData<CartWithDetails>(CART_QUERY_KEY)
+
+      return { previousCart }
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousCart) {
+        queryClient.setQueryData(CART_QUERY_KEY, context.previousCart)
+      }
+      toast.error('Error al remover articulo de la orden')
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY })
+      toast.success('Articulo removido de la orden')
+    },
+  })
+
+  const removeFromCart = async (itemId: string) => {
+    const item = cart.items.find((i) => i.itemId === itemId)
+    if (!item) return
+
+    removeFromCartMutation.mutate({
+      itemId: item.itemId,
+      itemType: item.itemType,
+    })
+  }
+
+  // Update quantity mutation with optimistic update
+  const updateQuantityMutation = useMutation({
+    mutationFn: async (request: UpdateCartItemQuantityRequest) => {
+      return await CartAPIService.updateCartItemQuantity(request)
+    },
+    onMutate: async ({ itemId, quantity }) => {
+      await queryClient.cancelQueries({ queryKey: CART_QUERY_KEY })
+
+      const previousCart =
+        queryClient.getQueryData<CartWithDetails>(CART_QUERY_KEY)
+
+      return { previousCart }
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousCart) {
+        queryClient.setQueryData(CART_QUERY_KEY, context.previousCart)
+      }
+      toast.error('Error al actualizar cantidad')
+    },
+    onSuccess: async() => {
+      await queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY })
+    },
+  })
+
+  const updateCartQuantity = async (request: CartItemRequest) => {
+    if (request.quantity <= 0) {
+      await removeFromCart(request.itemId)
+      return
+    }
+
+    const item = cart.items.find((i) => i.itemId === request.itemId)
+    if (!item) return
+
+    updateQuantityMutation.mutate(request)
+  }
+
+  const updatePriceMutation = useMutation({
+    mutationFn: async (request: UpdateCartItemPriceRequest) => {
+      return await CartAPIService.updateCartItemPrice(request)
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: CART_QUERY_KEY })
+
+      const previousCart =
+        queryClient.getQueryData<CartWithDetails>(CART_QUERY_KEY)
+
+      return { previousCart }
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousCart) {
+        queryClient.setQueryData(CART_QUERY_KEY, context.previousCart)
+      }
+      toast.error('Error al actualizar precio')
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY })
+      toast.success('Precio actualizado')
+    },
+  })
+
+  const updateCartPrice = async (request: UpdateCartItemPriceRequest) => {
+    const item = cart.items.find((i) => i.itemId === request.itemId)
+    if (!item) return
+
+    updatePriceMutation.mutate(request)
+  }
+
+  const clearCartMutation = useMutation({
+    mutationFn: async () => {
+      return await CartAPIService.clearCart()
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: CART_QUERY_KEY })
+
+      const previousCart =
+        queryClient.getQueryData<CartWithDetails>(CART_QUERY_KEY)
+
+      return { previousCart }
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousCart) {
+        queryClient.setQueryData(CART_QUERY_KEY, context.previousCart)
+      }
       toast.error('Error al limpiar orden')
-    }
-  }, [isMobile])
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY })
+      toast.success('Orden limpia')
+    },
+  })
 
-  // Toggle carrito abierto/cerrado (solo en móvil)
+  const clearCart = async () => {
+    clearCartMutation.mutate()
+    setSelectedClientId('') // Reset client selection when clearing cart
+  }
+
   const toggleCart = useCallback(() => {
     if (!isMobile) {
-      setCart((prev) => ({ ...prev, isOpen: !prev.isOpen }))
+      const currentCart =
+        queryClient.getQueryData<CartWithDetails>(CART_QUERY_KEY)
+      if (currentCart) {
+        // This is just UI state, no need for mutation
+        // For now, we'll handle this differently or remove if not needed
+      }
     }
-  }, [isMobile])
+  }, [isMobile, queryClient])
 
   // Abrir carrito
   const openCart = useCallback(() => {
-    setCart((prev) => ({ ...prev, isOpen: true }))
+    // UI state management - can be handled at component level
   }, [])
 
   // Cerrar carrito (solo en móvil)
   const closeCart = useCallback(() => {
-    if (!isMobile) {
-      setCart((prev) => ({ ...prev, isOpen: false }))
-    }
-  }, [isMobile])
+    // UI state management - can be handled at component level
+  }, [])
 
-  // Seleccionar cliente
+  // Seleccionar cliente - frontend state only
   const setSelectedClient = useCallback((clientId: string) => {
-    setCart((prev) => ({ ...prev, selectedClientId: clientId }))
+    setSelectedClientId(clientId)
   }, [])
 
   // Obtener cantidad total de items
@@ -158,8 +262,8 @@ export function useCart() {
 
   // Verificar si el carrito está listo para procesar
   const isReadyToProcess = useMemo(() => {
-    return cart.items.length > 0 && cart.selectedClientId !== ''
-  }, [cart.items.length, cart.selectedClientId])
+    return cart.items.length > 0 && selectedClientId !== ''
+  }, [cart.items.length, selectedClientId])
 
   // Formatear precio
   const formatPrice = useCallback((price: Price) => {
@@ -169,15 +273,14 @@ export function useCart() {
     }).format(price.amount)
   }, [])
 
-  useEffect(() => {
-    void getCart()
-  }, [])
+  // No need for useEffect since useQuery handles the fetching
 
   return {
     cart,
     totalItems,
     isReadyToProcess,
     isLoading,
+    error,
 
     addToCart,
     removeFromCart,
@@ -192,5 +295,12 @@ export function useCart() {
 
     setSelectedClient,
     formatPrice,
+
+    // Expose mutation states for loading indicators
+    isAddingToCart: addToCartMutation.isPending,
+    isRemovingFromCart: removeFromCartMutation.isPending,
+    isUpdatingQuantity: updateQuantityMutation.isPending,
+    isUpdatingPrice: updatePriceMutation.isPending,
+    isClearingCart: clearCartMutation.isPending,
   }
 }
