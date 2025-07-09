@@ -18,6 +18,7 @@ interface CartProps {
   ) => void
   onClientSelect: (clientId: string) => void
   onClearCart: () => void
+  onConvertCart: () => void
 }
 
 export function Cart({
@@ -28,6 +29,7 @@ export function Cart({
   onUpdatePrice,
   onClientSelect,
   onClearCart,
+  onConvertCart,
 }: CartProps) {
   const formatPrice = (price: typeof cart.total) => {
     return new Intl.NumberFormat('es-MX', {
@@ -169,6 +171,7 @@ export function Cart({
                 <Button
                   className='w-full h-10 sm:h-12 text-sm sm:text-base font-medium'
                   disabled={!cart.selectedClientId}
+                  onClick={onConvertCart}
                 >
                   Procesar Venta
                 </Button>

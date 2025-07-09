@@ -35,9 +35,6 @@ const authIniciarSesionLazyImport = createFileRoute('/(auth)/iniciar-sesion')()
 const AuthenticatedSettingsRouteLazyImport = createFileRoute(
   '/_authenticated/settings',
 )()
-const AuthenticatedStoreIndexLazyImport = createFileRoute(
-  '/_authenticated/store/',
-)()
 const AuthenticatedSettingsIndexLazyImport = createFileRoute(
   '/_authenticated/settings/',
 )()
@@ -49,6 +46,9 @@ const AuthenticatedProductsIndexLazyImport = createFileRoute(
 )()
 const AuthenticatedPaquetesIndexLazyImport = createFileRoute(
   '/_authenticated/paquetes/',
+)()
+const AuthenticatedOrdenIndexLazyImport = createFileRoute(
+  '/_authenticated/orden/',
 )()
 const AuthenticatedEventosIndexLazyImport = createFileRoute(
   '/_authenticated/eventos/',
@@ -177,15 +177,6 @@ const authOtpRoute = authOtpImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AuthenticatedStoreIndexLazyRoute =
-  AuthenticatedStoreIndexLazyImport.update({
-    id: '/store/',
-    path: '/store/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any).lazy(() =>
-    import('./routes/_authenticated/store/index.lazy').then((d) => d.Route),
-  )
-
 const AuthenticatedSettingsIndexLazyRoute =
   AuthenticatedSettingsIndexLazyImport.update({
     id: '/',
@@ -220,6 +211,15 @@ const AuthenticatedPaquetesIndexLazyRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any).lazy(() =>
     import('./routes/_authenticated/paquetes/index.lazy').then((d) => d.Route),
+  )
+
+const AuthenticatedOrdenIndexLazyRoute =
+  AuthenticatedOrdenIndexLazyImport.update({
+    id: '/orden/',
+    path: '/orden/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/orden/index.lazy').then((d) => d.Route),
   )
 
 const AuthenticatedEventosIndexLazyRoute =
@@ -520,6 +520,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEventosIndexLazyImport
       parentRoute: typeof AuthenticatedRouteImport
     }
+    '/_authenticated/orden/': {
+      id: '/_authenticated/orden/'
+      path: '/orden'
+      fullPath: '/orden'
+      preLoaderRoute: typeof AuthenticatedOrdenIndexLazyImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
     '/_authenticated/paquetes/': {
       id: '/_authenticated/paquetes/'
       path: '/paquetes'
@@ -547,13 +554,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/'
       preLoaderRoute: typeof AuthenticatedSettingsIndexLazyImport
       parentRoute: typeof AuthenticatedSettingsRouteLazyImport
-    }
-    '/_authenticated/store/': {
-      id: '/_authenticated/store/'
-      path: '/store'
-      fullPath: '/store'
-      preLoaderRoute: typeof AuthenticatedStoreIndexLazyImport
-      parentRoute: typeof AuthenticatedRouteImport
     }
   }
 }
@@ -598,10 +598,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClientesIndexLazyRoute: typeof AuthenticatedClientesIndexLazyRoute
   AuthenticatedEmpleadosIndexLazyRoute: typeof AuthenticatedEmpleadosIndexLazyRoute
   AuthenticatedEventosIndexLazyRoute: typeof AuthenticatedEventosIndexLazyRoute
+  AuthenticatedOrdenIndexLazyRoute: typeof AuthenticatedOrdenIndexLazyRoute
   AuthenticatedPaquetesIndexLazyRoute: typeof AuthenticatedPaquetesIndexLazyRoute
   AuthenticatedProductsIndexLazyRoute: typeof AuthenticatedProductsIndexLazyRoute
   AuthenticatedServiciosIndexLazyRoute: typeof AuthenticatedServiciosIndexLazyRoute
-  AuthenticatedStoreIndexLazyRoute: typeof AuthenticatedStoreIndexLazyRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -613,10 +613,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClientesIndexLazyRoute: AuthenticatedClientesIndexLazyRoute,
   AuthenticatedEmpleadosIndexLazyRoute: AuthenticatedEmpleadosIndexLazyRoute,
   AuthenticatedEventosIndexLazyRoute: AuthenticatedEventosIndexLazyRoute,
+  AuthenticatedOrdenIndexLazyRoute: AuthenticatedOrdenIndexLazyRoute,
   AuthenticatedPaquetesIndexLazyRoute: AuthenticatedPaquetesIndexLazyRoute,
   AuthenticatedProductsIndexLazyRoute: AuthenticatedProductsIndexLazyRoute,
   AuthenticatedServiciosIndexLazyRoute: AuthenticatedServiciosIndexLazyRoute,
-  AuthenticatedStoreIndexLazyRoute: AuthenticatedStoreIndexLazyRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -648,11 +648,11 @@ export interface FileRoutesByFullPath {
   '/clientes': typeof AuthenticatedClientesIndexLazyRoute
   '/empleados': typeof AuthenticatedEmpleadosIndexLazyRoute
   '/eventos': typeof AuthenticatedEventosIndexLazyRoute
+  '/orden': typeof AuthenticatedOrdenIndexLazyRoute
   '/paquetes': typeof AuthenticatedPaquetesIndexLazyRoute
   '/products': typeof AuthenticatedProductsIndexLazyRoute
   '/servicios': typeof AuthenticatedServiciosIndexLazyRoute
   '/settings/': typeof AuthenticatedSettingsIndexLazyRoute
-  '/store': typeof AuthenticatedStoreIndexLazyRoute
 }
 
 export interface FileRoutesByTo {
@@ -679,11 +679,11 @@ export interface FileRoutesByTo {
   '/clientes': typeof AuthenticatedClientesIndexLazyRoute
   '/empleados': typeof AuthenticatedEmpleadosIndexLazyRoute
   '/eventos': typeof AuthenticatedEventosIndexLazyRoute
+  '/orden': typeof AuthenticatedOrdenIndexLazyRoute
   '/paquetes': typeof AuthenticatedPaquetesIndexLazyRoute
   '/products': typeof AuthenticatedProductsIndexLazyRoute
   '/servicios': typeof AuthenticatedServiciosIndexLazyRoute
   '/settings': typeof AuthenticatedSettingsIndexLazyRoute
-  '/store': typeof AuthenticatedStoreIndexLazyRoute
 }
 
 export interface FileRoutesById {
@@ -713,11 +713,11 @@ export interface FileRoutesById {
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexLazyRoute
   '/_authenticated/empleados/': typeof AuthenticatedEmpleadosIndexLazyRoute
   '/_authenticated/eventos/': typeof AuthenticatedEventosIndexLazyRoute
+  '/_authenticated/orden/': typeof AuthenticatedOrdenIndexLazyRoute
   '/_authenticated/paquetes/': typeof AuthenticatedPaquetesIndexLazyRoute
   '/_authenticated/products/': typeof AuthenticatedProductsIndexLazyRoute
   '/_authenticated/servicios/': typeof AuthenticatedServiciosIndexLazyRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexLazyRoute
-  '/_authenticated/store/': typeof AuthenticatedStoreIndexLazyRoute
 }
 
 export interface FileRouteTypes {
@@ -748,11 +748,11 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/empleados'
     | '/eventos'
+    | '/orden'
     | '/paquetes'
     | '/products'
     | '/servicios'
     | '/settings/'
-    | '/store'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/otp'
@@ -778,11 +778,11 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/empleados'
     | '/eventos'
+    | '/orden'
     | '/paquetes'
     | '/products'
     | '/servicios'
     | '/settings'
-    | '/store'
   id:
     | '__root__'
     | '/_authenticated'
@@ -810,11 +810,11 @@ export interface FileRouteTypes {
     | '/_authenticated/clientes/'
     | '/_authenticated/empleados/'
     | '/_authenticated/eventos/'
+    | '/_authenticated/orden/'
     | '/_authenticated/paquetes/'
     | '/_authenticated/products/'
     | '/_authenticated/servicios/'
     | '/_authenticated/settings/'
-    | '/_authenticated/store/'
   fileRoutesById: FileRoutesById
 }
 
@@ -882,10 +882,10 @@ export const routeTree = rootRoute
         "/_authenticated/clientes/",
         "/_authenticated/empleados/",
         "/_authenticated/eventos/",
+        "/_authenticated/orden/",
         "/_authenticated/paquetes/",
         "/_authenticated/products/",
-        "/_authenticated/servicios/",
-        "/_authenticated/store/"
+        "/_authenticated/servicios/"
       ]
     },
     "/(auth)/otp": {
@@ -982,6 +982,10 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/eventos/index.lazy.ts",
       "parent": "/_authenticated"
     },
+    "/_authenticated/orden/": {
+      "filePath": "_authenticated/orden/index.lazy.tsx",
+      "parent": "/_authenticated"
+    },
     "/_authenticated/paquetes/": {
       "filePath": "_authenticated/paquetes/index.lazy.tsx",
       "parent": "/_authenticated"
@@ -997,10 +1001,6 @@ export const routeTree = rootRoute
     "/_authenticated/settings/": {
       "filePath": "_authenticated/settings/index.lazy.tsx",
       "parent": "/_authenticated/settings"
-    },
-    "/_authenticated/store/": {
-      "filePath": "_authenticated/store/index.lazy.tsx",
-      "parent": "/_authenticated"
     }
   }
 }

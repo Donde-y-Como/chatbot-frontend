@@ -78,7 +78,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           },
           {
             title: 'Tienda',
-            url: '/store',
+            url: '/orden',
             icon: Store,
           },
           {

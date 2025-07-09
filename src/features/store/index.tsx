@@ -2,16 +2,19 @@ import React, { useEffect, useState } from 'react'
 import { Cart } from '@/features/store/components/Cart.tsx'
 import { POSError } from '@/features/store/components/POSError.tsx'
 import { POSLoading } from '@/features/store/components/POSLoading.tsx'
+import { SelectEventDateDialog } from '@/features/store/components/SelectEventDateDialog.tsx'
+import { CartItemRequest } from '@/features/store/types.ts'
 import { AdvancedFilters } from './components/AdvancedFilters'
 import { StoreHeader } from './components/StoreHeader'
 import { StoreItems } from './components/StoreItems'
 import { StoreLayout } from './components/StoreLayout'
+import { useCart } from './hooks/useCart'
 import { usePOS } from './hooks/usePOS'
-import { CartItemRequest } from '@/features/store/types.ts'
 
 export default function Store() {
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [currentItem, setCurrentItem] = useState<CartItemRequest | null>(null)
 
   // Hook principal del POS
   const {
@@ -21,9 +24,6 @@ export default function Store() {
     // Estados
     isLoading,
     error,
-
-    // Carrito
-    cart,
 
     // Filtros
     filters,
@@ -38,10 +38,8 @@ export default function Store() {
     refetchAll,
   } = usePOS()
 
-  // Inicializar POS al montar el componente
-  useEffect(() => {
-    void cart.getCart()
-  }, [cart.getCart])
+  // Hook del carrito independiente
+  const cart = useCart()
 
   // Detectar scroll para cerrar menú móvil automáticamente
   useEffect(() => {
@@ -56,7 +54,7 @@ export default function Store() {
   }, [isMobileMenuOpen])
 
   // Manejar carga
-  if (isLoading) {
+  if (isLoading || !auxiliaryData) {
     return <POSLoading />
   }
 
@@ -85,6 +83,15 @@ export default function Store() {
   }
 
   const handleAddToCart = async (item: CartItemRequest) => {
+    if (item.itemType === 'event') {
+      setCurrentItem(item)
+      return
+    }
+
+    await cart.addToCart(item)
+  }
+
+  const handleDateSelected = async (item: CartItemRequest) => {
     await cart.addToCart(item)
   }
 
@@ -94,6 +101,10 @@ export default function Store() {
 
   const handleCloseMobileMenu = () => {
     setIsMobileMenuOpen(false)
+  }
+
+  const handleConvertCart = async () => {
+    console.log(cart.cart)
   }
 
   return (
@@ -121,15 +132,28 @@ export default function Store() {
       </div>
 
       {/* Carrito lateral */}
-      <Cart
-        cart={cart.cart}
-        onToggle={cart.toggleCart}
-        onRemoveItem={cart.removeFromCart}
-        onUpdateQuantity={cart.updateCartQuantity}
-        onUpdatePrice={cart.updateCartPrice}
-        onClientSelect={cart.setSelectedClient}
-        onClearCart={cart.clearCart}
-      />
+      {cart.isLoading ? (
+        <>Cargando</>
+      ) : (
+        <Cart
+          cart={cart.cart}
+          onToggle={cart.toggleCart}
+          onRemoveItem={cart.removeFromCart}
+          onUpdateQuantity={cart.updateCartQuantity}
+          onUpdatePrice={cart.updateCartPrice}
+          onClientSelect={cart.setSelectedClient}
+          onClearCart={cart.clearCart}
+          onConvertCart={handleConvertCart}
+        />
+      )}
+
+      {currentItem && (
+        <SelectEventDateDialog
+          item={currentItem}
+          onSubmit={handleDateSelected}
+          onClose={() => setCurrentItem(null)}
+        />
+      )}
 
       {/* Filtros avanzados */}
       <AdvancedFilters

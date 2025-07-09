@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useIsMobile } from '@/hooks/use-mobile.tsx'
 import { CartAPIService } from '../services/CartAPIService.ts'
@@ -26,8 +26,8 @@ export function useCart() {
       const cartData = response.data as CartWithDetails
       setCart((prev) => ({
         ...prev,
-        items: cartData.itemsWithDetails,
-        total: cartData.totalAmount,
+        items: cartData?.itemsWithDetails ?? [],
+        total: cartData?.totalAmount ?? 0,
       }))
     } catch (error) {
       toast.error('Error al obtener la orden')
@@ -167,6 +167,10 @@ export function useCart() {
       style: 'currency',
       currency: price.currency,
     }).format(price.amount)
+  }, [])
+
+  useEffect(() => {
+    void getCart()
   }, [])
 
   return {

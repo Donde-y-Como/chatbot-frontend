@@ -3,11 +3,9 @@ import { useGetBundles } from '@/features/bundles/hooks/useGetBundles.ts'
 import { useGetEvents } from '@/features/events/hooks/useGetEvents.ts'
 import { useGetProducts } from '@/features/products/hooks/useGetProducts.ts'
 import { useGetPOSAuxiliaryData } from '@/features/store/hooks/useGetPOSAuxiliaryData.tsx'
-import { useCart } from './useCart.ts'
 import { usePOSFilters } from './usePOSFilters'
 
 export function usePOS() {
-  const cart = useCart()
 
   // Hook de filtros (inicializamos primero para obtener el estado actual)
   const filtersHook = usePOSFilters({
@@ -35,14 +33,13 @@ export function usePOS() {
   const bundles = bundlesQuery.data || []
   const auxiliaryData = auxiliaryDataQuery.data
 
-  // Estado de carga (incluir loading del carrito)
+  // Estado de carga
   const isLoading =
     productsQuery.isLoading ||
     servicesQuery.isLoading ||
     eventsQuery.isLoading ||
     bundlesQuery.isLoading ||
-    auxiliaryDataQuery.isLoading ||
-    cart.isLoading
+    auxiliaryDataQuery.isLoading
 
   // Errores
   const error =
@@ -64,7 +61,6 @@ export function usePOS() {
     void eventsQuery.refetch()
     void bundlesQuery.refetch()
     void auxiliaryDataQuery.refetch()
-    void cart.getCart()
   }
 
   return {
@@ -78,9 +74,6 @@ export function usePOS() {
     // Estados de carga y error
     isLoading,
     error,
-
-    // Funcionalidad del carrito
-    cart,
 
     // Funcionalidad de filtros
     filters: filtersWithData.filters,
