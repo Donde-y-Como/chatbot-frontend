@@ -114,7 +114,7 @@ export default function Store() {
       onCloseMobileMenu={handleCloseMobileMenu}
     >
       {/* Área principal */}
-      <div className='flex-1 flex flex-col lg:mr-[35%] lg:max-w-[calc(100%-35%)]'>
+      <div className='flex-1 flex flex-col lg:mr-[35%] lg:max-w-[calc(100%-35%)] xl:mr-[30%] xl:max-w-[calc(100%-30%)] relative'>
         <StoreHeader
           filters={filters}
           filterStats={filterStats}
@@ -125,7 +125,7 @@ export default function Store() {
           onCategoryChange={setCategory}
         />
 
-        <div className='flex-1 pb-20 lg:pb-4 lg:overflow-auto'>
+        <div className='flex-1 pb-20 lg:pb-4 overflow-auto'>
           <ItemGrid
             items={filteredItems}
             onAddToCart={handleAddToCart}

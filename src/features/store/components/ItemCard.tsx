@@ -169,7 +169,7 @@ export function ItemCard({
             {!isDisabled && (
               <>
                 {/* Botón de remover (mitad izquierda) */}
-                <div className='absolute left-0 top-0 w-1/2 h-full opacity-0 group-hover/image:opacity-100 md:group-hover/image:opacity-100 transition-opacity duration-200 z-10'>
+                <div className='absolute left-0 top-0 w-1/2 h-full opacity-0 group-hover/image:opacity-100 md:group-hover/image:opacity-100 transition-opacity duration-200 z-[5]'>
                   <button
                     onClick={handleQuickRemove}
                     onTouchStart={(e) => {
@@ -189,7 +189,7 @@ export function ItemCard({
                 </div>
 
                 {/* Botón de agregar (mitad derecha) */}
-                <div className='absolute right-0 top-0 w-1/2 h-full opacity-0 group-hover/image:opacity-100 md:group-hover/image:opacity-100 transition-opacity duration-200 z-10'>
+                <div className='absolute right-0 top-0 w-1/2 h-full opacity-0 group-hover/image:opacity-100 md:group-hover/image:opacity-100 transition-opacity duration-200 z-[5]'>
                   <button
                     onClick={handleQuickAdd}
                     onTouchStart={(e) => {
@@ -241,7 +241,7 @@ export function ItemCard({
               </Badge>
             </div>
 
-            <div className='absolute top-1 right-1 sm:top-2 sm:right-2 z-20'>
+            <div className='absolute top-1 right-1 sm:top-2 sm:right-2 z-[5]'>
               <button
                 onClick={handleShowDetails}
                 className='h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-white hover:bg-gray-50 text-gray-600 hover:text-blue-600 shadow-lg border-2 border-gray-200 transition-all duration-200 flex items-center justify-center'
