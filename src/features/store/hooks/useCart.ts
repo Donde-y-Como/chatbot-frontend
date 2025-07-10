@@ -200,6 +200,24 @@ export function useCart() {
     updatePriceMutation.mutate(request)
   }
 
+  const decreaseQuantity = async (itemId: string) => {
+    const item = cart.items.find((i) => i.itemId === itemId)
+    if (!item) return
+
+    const newQuantity = item.quantity - 1
+    
+    if (newQuantity <= 0) {
+      await removeFromCart(itemId)
+      return
+    }
+
+    updateQuantityMutation.mutate({
+      itemId: item.itemId,
+      itemType: item.itemType,
+      quantity: newQuantity,
+    })
+  }
+
   const clearCartMutation = useMutation({
     mutationFn: async () => {
       return await CartAPIService.clearCart()
@@ -286,6 +304,7 @@ export function useCart() {
     removeFromCart,
     updateCartQuantity,
     updateCartPrice,
+    decreaseQuantity,
     clearCart,
     getCart,
 

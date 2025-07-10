@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { Cart } from '@/features/store/components/Cart.tsx'
+import { ItemGrid } from '@/features/store/components/ItemGrid.tsx'
 import { POSError } from '@/features/store/components/POSError.tsx'
 import { POSLoading } from '@/features/store/components/POSLoading.tsx'
 import { SelectEventDateDialog } from '@/features/store/components/SelectEventDateDialog.tsx'
 import { CartItemRequest, PaymentMethod } from '@/features/store/types.ts'
 import { AdvancedFilters } from './components/AdvancedFilters'
 import { StoreHeader } from './components/StoreHeader'
-import { StoreItems } from './components/StoreItems'
 import { StoreLayout } from './components/StoreLayout'
 import { useCart } from './hooks/useCart'
 import { usePOS } from './hooks/usePOS'
@@ -104,8 +104,6 @@ export default function Store() {
     setIsMobileMenuOpen(false)
   }
 
-
-
   const handleConvertCart = async () => {
     console.log({ ...cart.cart, paymentMethod })
   }
@@ -127,11 +125,13 @@ export default function Store() {
           onCategoryChange={setCategory}
         />
 
-        <StoreItems
-          items={filteredItems}
-          onAddToCart={handleAddToCart}
-          onRemoveFromCart={cart.removeFromCart}
-        />
+        <div className='flex-1 pb-20 lg:pb-4 lg:overflow-auto'>
+          <ItemGrid
+            items={filteredItems}
+            onAddToCart={handleAddToCart}
+            onDecreaseQuantity={cart.decreaseQuantity}
+          />
+        </div>
       </div>
 
       {/* Carrito lateral */}

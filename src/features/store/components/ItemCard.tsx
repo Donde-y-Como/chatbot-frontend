@@ -13,13 +13,13 @@ import { CartItemRequest, POSItem } from '@/features/store/types.ts'
 interface ItemCardProps {
   item: POSItem
   onAddToCart: (item: CartItemRequest) => void
-  onRemoveFromCart: (itemId: string) => void
+  onDecreaseQuantity: (itemId: string) => void
 }
 
 export function ItemCard({
   item,
   onAddToCart,
-  onRemoveFromCart,
+  onDecreaseQuantity,
 }: ItemCardProps) {
   const [showBundleDetails, setShowBundleDetails] = useState(false)
   const [showItemDetails, setShowItemDetails] = useState(false)
@@ -73,7 +73,7 @@ export function ItemCard({
     e.stopPropagation()
     if (isDisabled) return
 
-    onRemoveFromCart(item.itemDetails.id)
+    onDecreaseQuantity(item.itemDetails.id)
   }
 
   const incrementQuantity = () => {
