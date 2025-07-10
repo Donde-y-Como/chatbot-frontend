@@ -19,7 +19,7 @@ const getDefaultCartState = (isMobile: boolean): CartState => ({
   total: { amount: 0, currency: 'MXN' },
 })
 
-const CART_QUERY_KEY = ['cart']
+export const CART_QUERY_KEY = ['cart'] as const
 
 export function useCart() {
   const isMobile = useIsMobile()

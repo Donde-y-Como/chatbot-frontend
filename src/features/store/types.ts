@@ -161,3 +161,60 @@ export interface AuxiliaryData {
   unidadesMedida: Array<{ id: string; name: string; abbreviation: string }>
   statuses: Array<{ id: string; name: string }>
 }
+
+export type SaleWithDetails = SalePrimitives & {
+  totalAmount: Price
+  totalPaidAmount: Price
+  itemCount: number
+  paymentSummary: { [key in PaymentMethod]?: Price }
+}
+
+export type SalePrimitives = {
+  id: string
+  businessId: string
+  clientId: string
+  items: OrderItemPrimitives[]
+  payments: PaymentPrimitives[]
+  notes?: string
+  createdAt: string
+}
+
+export type OrderItemPrimitives = {
+  itemId: string
+  itemType: CartItemType
+  name: string
+  quantity: number
+  unitPrice: Price
+  finalPrice: Price
+  modifiedPrice?: Price
+  notes?: string
+  eventMetadata?: EventMetadata
+}
+
+export type PaymentPrimitives = {
+  id: string
+  amount: Price
+  method: PaymentMethod
+  notes?: string
+  createdAt: string
+}
+
+export type OrderPrimitives = {
+  id: string
+  businessId: string
+  clientId: string
+  items: OrderItemPrimitives[]
+  payments: PaymentPrimitives[]
+  status: 'pending' | 'partial_paid' | 'paid' | 'cancelled'
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type OrderWithDetails = OrderPrimitives & {
+  totalAmount: Price
+  paidAmount: Price
+  remainingAmount: Price
+  itemCount: number
+  isFullyPaid: boolean
+}
