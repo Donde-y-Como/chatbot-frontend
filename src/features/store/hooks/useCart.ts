@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useIsMobile } from '@/hooks/use-mobile.tsx'
@@ -19,14 +19,30 @@ const getDefaultCartState = (isMobile: boolean): CartState => ({
   total: { amount: 0, currency: 'MXN' },
 })
 
-const CART_QUERY_KEY = ['cart']
+export const CART_QUERY_KEY = ['cart'] as const
 
 export function useCart() {
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
 
+  // Cart-specific mobile detection (matches lg: breakpoint at 1024px)
+  const [isCartMobile, setIsCartMobile] = useState<boolean>(false)
+
+  useEffect(() => {
+    const checkCartMobile = () => {
+      setIsCartMobile(window.innerWidth < 1024)
+    }
+    
+    checkCartMobile()
+    window.addEventListener('resize', checkCartMobile)
+    
+    return () => window.removeEventListener('resize', checkCartMobile)
+  }, [])
+
   // Local state for client selection
   const [selectedClientId, setSelectedClientId] = useState<string>('')
+  // Local state for cart visibility (mobile drawer)
+  const [isCartOpen, setIsCartOpen] = useState<boolean>(false)
 
   const {
     data: cartData,
@@ -48,16 +64,17 @@ export function useCart() {
       return {
         ...getDefaultCartState(isMobile),
         selectedClientId,
+        isOpen: isCartMobile ? isCartOpen : true, // Desktop always open, mobile uses state
       }
     }
 
     return {
-      isOpen: !isMobile,
+      isOpen: isCartMobile ? isCartOpen : true, // Desktop always open, mobile uses state
       items: cartData.itemsWithDetails || [],
       selectedClientId,
       total: cartData.totalAmount || { amount: 0, currency: 'MXN' },
     }
-  }, [cartData, isMobile, selectedClientId])
+  }, [cartData, isMobile, selectedClientId, isCartOpen, isCartMobile])
 
   // Add to cart mutation with optimistic update
   const addToCartMutation = useMutation({
@@ -200,6 +217,24 @@ export function useCart() {
     updatePriceMutation.mutate(request)
   }
 
+  const decreaseQuantity = async (itemId: string) => {
+    const item = cart.items.find((i) => i.itemId === itemId)
+    if (!item) return
+
+    const newQuantity = item.quantity - 1
+    
+    if (newQuantity <= 0) {
+      await removeFromCart(itemId)
+      return
+    }
+
+    updateQuantityMutation.mutate({
+      itemId: item.itemId,
+      itemType: item.itemType,
+      quantity: newQuantity,
+    })
+  }
+
   const clearCartMutation = useMutation({
     mutationFn: async () => {
       return await CartAPIService.clearCart()
@@ -230,25 +265,25 @@ export function useCart() {
   }
 
   const toggleCart = useCallback(() => {
-    if (!isMobile) {
-      const currentCart =
-        queryClient.getQueryData<CartWithDetails>(CART_QUERY_KEY)
-      if (currentCart) {
-        // This is just UI state, no need for mutation
-        // For now, we'll handle this differently or remove if not needed
-      }
+    if (isCartMobile) {
+      setIsCartOpen(prev => !prev)
     }
-  }, [isMobile, queryClient])
+    // Desktop cart is always open, no need to toggle
+  }, [isCartMobile])
 
   // Abrir carrito
   const openCart = useCallback(() => {
-    // UI state management - can be handled at component level
-  }, [])
+    if (isCartMobile) {
+      setIsCartOpen(true)
+    }
+  }, [isCartMobile])
 
   // Cerrar carrito (solo en móvil)
   const closeCart = useCallback(() => {
-    // UI state management - can be handled at component level
-  }, [])
+    if (isCartMobile) {
+      setIsCartOpen(false)
+    }
+  }, [isCartMobile])
 
   // Seleccionar cliente - frontend state only
   const setSelectedClient = useCallback((clientId: string) => {
@@ -286,6 +321,7 @@ export function useCart() {
     removeFromCart,
     updateCartQuantity,
     updateCartPrice,
+    decreaseQuantity,
     clearCart,
     getCart,
 

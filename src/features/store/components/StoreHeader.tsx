@@ -30,7 +30,7 @@ export function StoreHeader({
   onCategoryChange,
 }: StoreHeaderProps) {
   return (
-    <div className='border-b border-border bg-card sticky top-0 z-10 lg:static'>
+    <div className='border-b border-border bg-card sticky top-0 z-20 lg:static'>
       {/* Header móvil */}
       <div className='lg:hidden'>
         <div className='flex items-center justify-between p-3'>

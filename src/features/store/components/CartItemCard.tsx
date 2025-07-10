@@ -115,7 +115,7 @@ export function CartItemCard({
   return (
     <div className='flex gap-2 sm:gap-3 p-2 sm:p-3 border border-border rounded-lg bg-card'>
       {/* Imagen miniatura */}
-      <div className='relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted'>
+      <div className='relative w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted'>
         {item.itemDetails?.photos ? (
           <img
             src={item.itemDetails.photos[0]}
@@ -148,7 +148,7 @@ export function CartItemCard({
       {/* Información del item */}
       <div className='flex-1 min-w-0'>
         <div className='flex items-start justify-between gap-1 sm:gap-2'>
-          <h4 className='font-medium text-xs sm:text-sm line-clamp-2 leading-tight'>
+          <h4 className='font-medium text-xs sm:text-sm lg:text-sm line-clamp-2 leading-tight flex-1 min-w-0'>
             {item.itemName === 'Cargando...' ? (
               <span className='text-muted-foreground animate-pulse'>
                 Cargando nombre...
@@ -171,13 +171,13 @@ export function CartItemCard({
           {/* Precio unitario editable */}
           <div className='flex items-center gap-1'>
             {isEditingPrice ? (
-              <div className='flex items-center gap-1 flex-1'>
+              <div className='flex items-center gap-1 flex-1 min-w-0'>
                 <Input
                   type='number'
                   value={tempPrice}
                   onChange={(e) => setTempPrice(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  className='h-6 text-xs flex-1 min-w-0 border-primary'
+                  className='h-6 text-xs flex-1 min-w-[60px] border-primary'
                   step='0.01'
                   min='0'
                   autoFocus
@@ -186,7 +186,7 @@ export function CartItemCard({
                   variant='ghost'
                   size='sm'
                   onClick={handlePriceSubmit}
-                  className='h-6 w-6 p-0 text-green-600 hover:text-green-700'
+                  className='h-6 w-6 p-0 text-green-600 hover:text-green-700 flex-shrink-0'
                 >
                   <Check className='h-3 w-3' />
                 </Button>
@@ -194,22 +194,22 @@ export function CartItemCard({
                   variant='ghost'
                   size='sm'
                   onClick={handlePriceCancel}
-                  className='h-6 w-6 p-0 text-red-600 hover:text-red-700'
+                  className='h-6 w-6 p-0 text-red-600 hover:text-red-700 flex-shrink-0'
                 >
                   <XIcon className='h-3 w-3' />
                 </Button>
               </div>
             ) : (
-              <div className='flex items-center gap-1 flex-1'>
-                <div className='flex flex-col'>
+              <div className='flex items-center gap-1 flex-1 min-w-0'>
+                <div className='flex flex-col flex-1 min-w-0'>
                   {/* Mostrar precio original tachado si existe modifiedPrice */}
                   {item.modifiedPrice && item.unitPrice && (
-                    <span className='text-xs text-muted-foreground line-through'>
+                    <span className='text-xs text-muted-foreground line-through truncate'>
                       {formatPrice(item.unitPrice)} c/u
                     </span>
                   )}
                   {/* Precio actual (modificado o unitario) */}
-                  <span className='text-xs text-muted-foreground'>
+                  <span className='text-xs text-muted-foreground truncate'>
                     {formatPrice(item.effectiveUnitPrice)} c/u
                     {item.modifiedPrice && (
                       <span
@@ -225,7 +225,7 @@ export function CartItemCard({
                   variant='ghost'
                   size='sm'
                   onClick={handlePriceClick}
-                  className='h-5 w-5 p-0 text-muted-foreground hover:text-primary ml-auto'
+                  className='h-5 w-5 p-0 text-muted-foreground hover:text-primary flex-shrink-0'
                   title='Editar precio'
                 >
                   <Edit3 className='h-3 w-3' />
@@ -235,9 +235,9 @@ export function CartItemCard({
           </div>
 
           {/* Controles de cantidad y precio total */}
-          <div className='flex items-center justify-between'>
+          <div className='flex items-center justify-between gap-2'>
             {/* Controles de cantidad */}
-            <div className='flex items-center gap-1 sm:gap-2'>
+            <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
               <Button
                 variant='outline'
                 size='sm'
@@ -279,7 +279,7 @@ export function CartItemCard({
             </div>
 
             {/* Precio total del item */}
-            <span className='font-semibold text-xs sm:text-sm'>
+            <span className='font-semibold text-xs sm:text-sm flex-shrink-0'>
               {formatPrice({
                 amount: totalItemPrice,
                 currency: item.effectiveUnitPrice.currency,

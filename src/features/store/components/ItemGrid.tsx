@@ -5,13 +5,13 @@ import { CartItemRequest, POSItem } from '../types'
 interface ItemGridProps {
   items: POSItem[]
   onAddToCart: (item: CartItemRequest) => void
-  onRemoveFromCart: (itemId: string) => void
+  onDecreaseQuantity: (itemId: string) => void
 }
 
 export function ItemGrid({
   items,
   onAddToCart,
-  onRemoveFromCart,
+  onDecreaseQuantity,
 }: ItemGridProps) {
   return (
     <div className='p-2 sm:p-3 md:p-4'>
@@ -34,7 +34,7 @@ export function ItemGrid({
               key={item.itemDetails.id}
               item={item}
               onAddToCart={onAddToCart}
-              onRemoveFromCart={onRemoveFromCart}
+              onDecreaseQuantity={onDecreaseQuantity}
             />
           ))}
         </div>

@@ -67,7 +67,7 @@ export function Cart({
       <div
         className={`
           /* Desktop: siempre visible, posición fija a la derecha */
-          lg:fixed lg:right-0 lg:top-0 lg:h-full lg:w-[35%] lg:min-w-[400px] lg:max-w-[500px] lg:translate-x-0 lg:shadow-xl lg:border-l-2
+          lg:fixed lg:right-0 lg:top-0 lg:h-full lg:w-[35%] lg:min-w-[380px] lg:max-w-[520px] xl:w-[30%] xl:min-w-[420px] xl:max-w-[580px] lg:translate-x-0 lg:shadow-xl lg:border-l-2
           /* Móvil: panel deslizable */
           fixed right-0 top-0 h-full w-full sm:w-[90%] md:w-[70%] 
           bg-background border-l border-border transform transition-transform duration-300 z-40
