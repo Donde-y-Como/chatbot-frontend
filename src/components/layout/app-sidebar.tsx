@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { IconChecklist, IconMessages, IconPackages, IconUsers } from '@tabler/icons-react'
-import { BookUserIcon, CalendarFold, Command, PanelLeft, ShoppingBag, Store } from 'lucide-react'
+import { BookUserIcon, CalendarFold, Command, PanelLeft, Receipt, ShoppingBag, Store } from 'lucide-react'
 import * as React from 'react'
 import { ComponentProps } from 'react'
 import { useUnreadChats } from './data/useUnreadChats'
@@ -85,6 +85,11 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
             title: 'Paquetes',
             url: '/paquetes',
             icon: IconPackages
+          },
+          {
+            title: 'Historial de Ventas',
+            url: '/ventas',
+            icon: Receipt 
           }
         ],
       },

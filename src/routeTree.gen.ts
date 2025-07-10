@@ -35,6 +35,9 @@ const authIniciarSesionLazyImport = createFileRoute('/(auth)/iniciar-sesion')()
 const AuthenticatedSettingsRouteLazyImport = createFileRoute(
   '/_authenticated/settings',
 )()
+const AuthenticatedVentasIndexLazyImport = createFileRoute(
+  '/_authenticated/ventas/',
+)()
 const AuthenticatedSettingsIndexLazyImport = createFileRoute(
   '/_authenticated/settings/',
 )()
@@ -176,6 +179,15 @@ const authOtpRoute = authOtpImport.update({
   path: '/otp',
   getParentRoute: () => rootRoute,
 } as any)
+
+const AuthenticatedVentasIndexLazyRoute =
+  AuthenticatedVentasIndexLazyImport.update({
+    id: '/ventas/',
+    path: '/ventas/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/ventas/index.lazy').then((d) => d.Route),
+  )
 
 const AuthenticatedSettingsIndexLazyRoute =
   AuthenticatedSettingsIndexLazyImport.update({
@@ -555,6 +567,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsIndexLazyImport
       parentRoute: typeof AuthenticatedSettingsRouteLazyImport
     }
+    '/_authenticated/ventas/': {
+      id: '/_authenticated/ventas/'
+      path: '/ventas'
+      fullPath: '/ventas'
+      preLoaderRoute: typeof AuthenticatedVentasIndexLazyImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
   }
 }
 
@@ -602,6 +621,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPaquetesIndexLazyRoute: typeof AuthenticatedPaquetesIndexLazyRoute
   AuthenticatedProductsIndexLazyRoute: typeof AuthenticatedProductsIndexLazyRoute
   AuthenticatedServiciosIndexLazyRoute: typeof AuthenticatedServiciosIndexLazyRoute
+  AuthenticatedVentasIndexLazyRoute: typeof AuthenticatedVentasIndexLazyRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -617,6 +637,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPaquetesIndexLazyRoute: AuthenticatedPaquetesIndexLazyRoute,
   AuthenticatedProductsIndexLazyRoute: AuthenticatedProductsIndexLazyRoute,
   AuthenticatedServiciosIndexLazyRoute: AuthenticatedServiciosIndexLazyRoute,
+  AuthenticatedVentasIndexLazyRoute: AuthenticatedVentasIndexLazyRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -653,6 +674,7 @@ export interface FileRoutesByFullPath {
   '/products': typeof AuthenticatedProductsIndexLazyRoute
   '/servicios': typeof AuthenticatedServiciosIndexLazyRoute
   '/settings/': typeof AuthenticatedSettingsIndexLazyRoute
+  '/ventas': typeof AuthenticatedVentasIndexLazyRoute
 }
 
 export interface FileRoutesByTo {
@@ -684,6 +706,7 @@ export interface FileRoutesByTo {
   '/products': typeof AuthenticatedProductsIndexLazyRoute
   '/servicios': typeof AuthenticatedServiciosIndexLazyRoute
   '/settings': typeof AuthenticatedSettingsIndexLazyRoute
+  '/ventas': typeof AuthenticatedVentasIndexLazyRoute
 }
 
 export interface FileRoutesById {
@@ -718,6 +741,7 @@ export interface FileRoutesById {
   '/_authenticated/products/': typeof AuthenticatedProductsIndexLazyRoute
   '/_authenticated/servicios/': typeof AuthenticatedServiciosIndexLazyRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexLazyRoute
+  '/_authenticated/ventas/': typeof AuthenticatedVentasIndexLazyRoute
 }
 
 export interface FileRouteTypes {
@@ -753,6 +777,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/servicios'
     | '/settings/'
+    | '/ventas'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/otp'
@@ -783,6 +808,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/servicios'
     | '/settings'
+    | '/ventas'
   id:
     | '__root__'
     | '/_authenticated'
@@ -815,6 +841,7 @@ export interface FileRouteTypes {
     | '/_authenticated/products/'
     | '/_authenticated/servicios/'
     | '/_authenticated/settings/'
+    | '/_authenticated/ventas/'
   fileRoutesById: FileRoutesById
 }
 
@@ -885,7 +912,8 @@ export const routeTree = rootRoute
         "/_authenticated/orden/",
         "/_authenticated/paquetes/",
         "/_authenticated/products/",
-        "/_authenticated/servicios/"
+        "/_authenticated/servicios/",
+        "/_authenticated/ventas/"
       ]
     },
     "/(auth)/otp": {
@@ -1001,6 +1029,10 @@ export const routeTree = rootRoute
     "/_authenticated/settings/": {
       "filePath": "_authenticated/settings/index.lazy.tsx",
       "parent": "/_authenticated/settings"
+    },
+    "/_authenticated/ventas/": {
+      "filePath": "_authenticated/ventas/index.lazy.tsx",
+      "parent": "/_authenticated"
     }
   }
 }
