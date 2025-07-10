@@ -138,6 +138,7 @@ export function ChatBarUnlimited({
                         chat={chat}
                         isSelected={selectedChatId === chat.id}
                         onClick={() => handleSelectChat(chat.id)}
+                        
                       />
                       <Separator className='mx-3' />
                     </Fragment>

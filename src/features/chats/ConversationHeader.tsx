@@ -32,6 +32,7 @@ import { ConnectClient } from '@/features/chats/ConnectCLient.tsx'
 import { useClients } from '@/features/clients/context/clients-context'
 import { Client } from '../clients/types'
 
+
 // Declarar la interfaz Window para acceder a openAppointmentDialog
 declare global {
   interface Window {
@@ -303,6 +304,9 @@ export function ConversationHeader({
             onConnectionError={handleConnectionError}
             onEmitSocketEvent={emit}
           />
+
+
+
         </div>
 
         {/* Primary Actions Group - Appointments & Events */}

@@ -14,6 +14,8 @@ import {
   ConversationHeaderSkeleton,
 } from '@/features/chats/ConversationHeader.tsx'
 import { useWhatsApp } from '@/features/settings/whatsappWeb/useWhatsApp'
+import React, { useContext } from 'react'; 
+import DialogStateProvider from '../appointments/contexts/DialogStateContext'
 
 interface ChatContentProps {
   isLoading: boolean
@@ -36,6 +38,7 @@ export function ChatContent({
   isMobileVisible,
   onBackClick,
 }: ChatContentProps) {
+ 
   const { whatsappData } = useWhatsApp()
 
   const canSendMessages = useMemo(() => {

@@ -41,13 +41,13 @@ interface ConnectClientProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   currentClientData?: {
-    id: string
-    name: string
-    platformName: string
-    platformId: string
-    platformIdentities: PlatformIdentity[]
+    id?: string
+    name?: string
+    platformName?: string
+    platformId?: string
+    platformIdentities?: PlatformIdentity[]
   }
-  conversationId?: string
+  conversationId?: string | null
   onConnectionSuccess?: (linkedClient: Client) => void
   onConnectionError?: (error: Error) => void
   onEmitSocketEvent?: (event: string, data: any) => void
@@ -192,7 +192,7 @@ export function ConnectClient({
     if (!clients) return []
 
     let platformFilteredClients = clients
-    
+
     // First filter by excludePlatform if provided
     if (excludePlatform) {
       platformFilteredClients = clients.filter((client) => {
@@ -201,12 +201,16 @@ export function ConnectClient({
         )
       })
     }
-    
+
     // Advanced filter: exclude clients that have ANY of the same platforms as current client
-    if (currentClientData && currentClientData.platformIdentities.length > 0) {
+    if (
+      currentClientData &&
+      currentClientData.platformIdentities &&
+      currentClientData.platformIdentities.length > 0
+    ) {
       platformFilteredClients = platformFilteredClients.filter((client) => {
         // Check if this client has any platform that the current client already has
-        const hasAnySharedPlatform = currentClientData.platformIdentities.some(
+        const hasAnySharedPlatform = currentClientData.platformIdentities?.some(
           (currentIdentity) =>
             client.platformIdentities.some(
               (clientIdentity) =>
@@ -227,9 +231,10 @@ export function ConnectClient({
         (client.name
           .toLowerCase()
           .includes(debouncedSearchQuery.toLowerCase()) ||
-          client.email
-            .toLowerCase()
-            .includes(debouncedSearchQuery.toLowerCase()) ||
+          (client.email &&
+            client.email
+              .toLowerCase()
+              .includes(debouncedSearchQuery.toLowerCase())) ||
           client.platformIdentities.some((platform) =>
             platform.profileName
               .toLowerCase()
@@ -319,6 +324,15 @@ export function ConnectClient({
     }
 
     try {
+      if (!currentClientData.id) {
+        toast({
+          title: 'Error de validación',
+          description: 'No se pudo identificar el cliente actual.',
+          variant: 'destructive',
+        })
+        return
+      }
+
       await updateClientPlatformIdentities.mutateAsync({
         clientId: currentClientData.id,
         newPlatformIdentities: [],
@@ -490,10 +504,9 @@ export function ConnectClient({
                 No hay clientes disponibles
               </p>
               <p className='text-xs text-muted-foreground text-center'>
-                {currentClientData 
+                {currentClientData
                   ? 'No hay clientes con plataformas diferentes'
-                  : 'Crea un cliente primero'
-                }
+                  : 'Crea un cliente primero'}
               </p>
             </div>
           ) : (
@@ -586,10 +599,9 @@ export function ConnectClient({
                   No hay clientes disponibles
                 </p>
                 <p className='text-xs text-muted-foreground text-center max-w-64'>
-                  {currentClientData 
+                  {currentClientData
                     ? 'No hay clientes con plataformas complementarias disponibles'
-                    : 'Crea un cliente primero'
-                  }
+                    : 'Crea un cliente primero'}
                 </p>
               </div>
             ) : (
@@ -702,7 +714,7 @@ export function ConnectClient({
                         <div className='text-muted-foreground'>
                           <p className='text-xs mb-1'>Plataformas:</p>
                           <div className='flex flex-wrap gap-1'>
-                            {currentClientData.platformIdentities.map(
+                            {currentClientData.platformIdentities?.map(
                               (identity, index) => {
                                 const PlatformIcon =
                                   {
@@ -807,7 +819,7 @@ export function ConnectClient({
                           Identidades a transferir:
                         </p>
                         <div className='space-y-1.5'>
-                          {currentClientData.platformIdentities.map(
+                          {currentClientData.platformIdentities?.map(
                             (identity, index) => {
                               const alreadyExists =
                                 selectedClientForConnection.platformIdentities.some(
@@ -904,14 +916,14 @@ export function ConnectClient({
             ) : (
               (() => {
                 const newIdentitiesCount =
-                  currentClientData.platformIdentities.filter(
+                  currentClientData.platformIdentities?.filter(
                     (identity) =>
                       !selectedClientForConnection.platformIdentities.some(
                         (existing) =>
                           existing.platformId === identity.platformId &&
                           existing.platformName === identity.platformName
                       )
-                  ).length
+                  ).length || 0
 
                 if (newIdentitiesCount === 0) {
                   return `${selectedClientForConnection.name} ya está actualizado`
