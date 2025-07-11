@@ -47,14 +47,17 @@ export function ItemCard({
 
   const handleAddToCart = () => {
     if (isDisabled) return
+    
+    const quantityToAdd = quantity === 0 ? 1 : quantity
+    
     const itemToAdd = {
       itemId: item.itemDetails.id,
       itemType: item.type,
-      quantity,
+      quantity: quantityToAdd,
     } satisfies CartItemRequest
 
     onAddToCart(itemToAdd)
-    setQuantity(1)
+    setQuantity(1) 
   }
 
   const handleQuickAdd = (e: React.MouseEvent) => {
@@ -92,12 +95,21 @@ export function ItemCard({
   }
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value) || 1
-    const maxStock =
-      'stock' in item.itemDetails ? item.itemDetails.stock : Infinity
-
-    if (value >= 1 && value <= maxStock) {
-      setQuantity(value)
+    const value = e.target.value
+    
+    if (value === '') {
+      setQuantity(0) 
+      return
+    }
+    
+    const numValue = parseInt(value)
+    
+    if (!isNaN(numValue) && numValue > 0) {
+      const maxStock = 'stock' in item.itemDetails ? item.itemDetails.stock : Infinity
+      
+      if (numValue <= maxStock) {
+        setQuantity(numValue)
+      }
     }
   }
 
@@ -290,8 +302,9 @@ export function ItemCard({
                     </Button>
                     <Input
                       type='number'
-                      value={quantity}
+                      value={quantity === 0 ? '' : quantity}
                       onChange={handleQuantityChange}
+                      placeholder='1'
                       className='h-6 w-12 text-center text-xs p-1'
                       min='1'
                       max={
@@ -319,7 +332,7 @@ export function ItemCard({
                   disabled={isDisabled}
                 >
                   <Plus className='h-3 w-3 mr-1' />
-                  Agregar {quantity > 1 ? `(${quantity})` : ''}
+                  Agregar {(quantity > 1 && quantity !== 0) ? `(${quantity})` : ''}
                 </Button>
               </div>
             )}
