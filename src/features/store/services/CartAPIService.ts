@@ -23,19 +23,31 @@ export const CartAPIService = {
   },
 
   addCartItem: async (item: CartItemRequest): Promise<AddCartItemResponse> => {
-    const response = await api.post<AddCartItemResponse | ProblemDetails>(
-      '/cart/items',
-      item
-    )
+    try {
+      const response = await api.post<AddCartItemResponse | ProblemDetails>(
+        '/cart/items',
+        item
+      )
 
-    if (response.status !== 200) {
-      if (response.status === 400 && 'title' in response.data) {
-        throw new Error(response.data.title)
+      if (response.status !== 200) {
+        if ((response.status === 400 || response.status === 409) && 'title' in response.data) {
+          throw new Error(response.data.title)
+        }
+        throw new Error('Error agregando item al carrito')
       }
+
+      return response.data as AddCartItemResponse
+    } catch (error: any) {
+      if (error.response && error.response.data) {
+        const errorData = error.response.data
+        
+        if (errorData.title) {
+          throw new Error(errorData.title)
+        }
+      }
+      
       throw new Error('Error agregando item al carrito')
     }
-
-    return response.data as AddCartItemResponse
   },
 
   updateCartItemQuantity: async (request: CartItemRequest) => {

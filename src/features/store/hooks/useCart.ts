@@ -167,7 +167,7 @@ export function useCart() {
       if (context?.previousCart) {
         queryClient.setQueryData(CART_QUERY_KEY, context.previousCart)
       }
-      toast.error('Error al actualizar cantidad')
+      toast.error('Sin stock suficiente')
     },
     onSuccess: async() => {
       await queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY })
