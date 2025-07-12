@@ -119,7 +119,7 @@ const formatCurrency = (amount: number, currency: string = 'MXN') => {
   }).format(amount)
 }
 
-export const createColumns = (onPayment?: (order: OrderWithDetails) => void): ColumnDef<OrderWithDetails>[] => [
+export const createColumns = (onPayment?: (order: OrderWithDetails) => void, onEdit?: (order: OrderWithDetails) => void, onDelete?: (order: OrderWithDetails) => void): ColumnDef<OrderWithDetails>[] => [
   {
     accessorKey: 'id',
     header: ({ column }) => (
@@ -439,7 +439,7 @@ export const createColumns = (onPayment?: (order: OrderWithDetails) => void): Co
     enableHiding: false,
     cell: ({ row }) => {
       if (!onPayment) return null
-      return <OrderRowActions row={row} onPayment={onPayment} />
+      return <OrderRowActions row={row} onPayment={onPayment} onEdit={onEdit} onDelete={onDelete} />
     },
   },
 ]

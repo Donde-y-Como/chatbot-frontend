@@ -1,5 +1,5 @@
 import { api } from '@/api/axiosInstance.ts'
-import { OrdersResponse, OrdersFilters } from "./types"
+import { OrdersResponse, OrdersFilters, EditOrderRequest } from "./types"
 
 export const OrdersService = {
   getOrders: async (filters?: OrdersFilters): Promise<OrdersResponse> => {
@@ -15,5 +15,14 @@ export const OrdersService = {
 
     const response = await api.get<OrdersResponse>(`/orders?${params.toString()}`)
     return response.data
+  },
+
+  deleteOrder: async (orderId: string): Promise<void> => {
+    await api.delete(`/orders/${orderId}`)
+  },
+
+  editOrder: async (request: EditOrderRequest): Promise<void> => {
+    const { orderId, ...body } = request
+    await api.put(`/orders/${orderId}`, body)
   }
 }
