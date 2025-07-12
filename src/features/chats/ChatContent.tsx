@@ -36,6 +36,7 @@ export function ChatContent({
   isMobileVisible,
   onBackClick,
 }: ChatContentProps) {
+ 
   const { whatsappData } = useWhatsApp()
 
   const canSendMessages = useMemo(() => {

@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input.tsx'
 import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
+import { useDialogState } from '@/features/appointments/contexts/DialogStateContext.tsx'
 import { Chat, ChatMessages, ChatResponse } from '@/features/chats/ChatTypes'
 import { AddTagsModal } from './components/AddTagsModal'
 import { useChatMutations } from './hooks/useChatMutations'
@@ -38,6 +39,11 @@ interface ChatListItemProps {
 }
 
 export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
+  const {
+    isOpenConnectionClient,
+    openConnectionClient,
+    closeConnectionClient,
+  } = useDialogState()
   const { emit } = useWebSocket()
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState(chat.client?.name || 'Unknown')
@@ -363,6 +369,24 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                         }}
                       >
                         Agregar etiqueta
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const clientData = {
+                            id: chat.client?.id,
+                            name: chat.client?.name,
+                            platformName: chat.platformName,
+                            platformId: chat.client?.platformIdentities.find(
+                              (i) => i.platformName === chat.platformName
+                            )?.platformId,
+                            platformIdentities: chat.client?.platformIdentities,
+                            conversationId: chat.id,
+                          }
+                          openConnectionClient(clientData)
+                        }}
+                      >
+                        Vincular
                       </DropdownMenuItem>
                     </>
                   ) : (
