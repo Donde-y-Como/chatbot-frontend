@@ -39,11 +39,7 @@ interface ChatListItemProps {
 }
 
 export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
-  const {
-    isOpenConnectionClient,
-    openConnectionClient,
-    closeConnectionClient,
-  } = useDialogState()
+  const { openConnectionClient } = useDialogState()
   const { emit } = useWebSocket()
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState(chat.client?.name || 'Unknown')

@@ -31,7 +31,7 @@ import { Separator } from '@/components/ui/separator'
 import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
 import { useGetClients } from '../clients/hooks/useGetClients'
 import { useUpdateClientPlatformIdentities } from '../clients/hooks/useUpdateClientPlatformIdentities'
-import { Client, PlatformName, PlatformIdentity } from './ChatTypes'
+import { Client, PlatformIdentity, PlatformName } from './ChatTypes'
 
 interface ConnectClientProps {
   value?: string

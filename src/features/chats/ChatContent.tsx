@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { differenceInHours } from 'date-fns'
-import { cn } from '@/lib/utils'
 import { AlertCircle, ArrowLeft } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   ChatConversation,
@@ -36,14 +36,16 @@ export function ChatContent({
   isMobileVisible,
   onBackClick,
 }: ChatContentProps) {
- 
   const { whatsappData } = useWhatsApp()
 
   const canSendMessages = useMemo(() => {
     if (!chatData) return false
 
     if (chatData.platformName === 'whatsappWeb') {
-      return whatsappData?.instanceStatus === "ready" || whatsappData?.instanceStatus === "authenticated"
+      return (
+        whatsappData?.instanceStatus === 'ready' ||
+        whatsappData?.instanceStatus === 'authenticated'
+      )
     }
 
     const userMessages = chatData.messages.filter(
@@ -72,16 +74,16 @@ export function ChatContent({
 
   // Error state component
   const ChatErrorState = () => (
-    <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-      <AlertCircle className="h-16 w-16 text-destructive/60 mb-4" />
-      <h3 className="font-semibold text-lg mb-2">Chat no encontrado</h3>
-      <p className="text-muted-foreground text-sm mb-6 max-w-md">
-        {error?.response?.status === 404 
+    <div className='flex flex-1 flex-col items-center justify-center p-8 text-center'>
+      <AlertCircle className='h-16 w-16 text-destructive/60 mb-4' />
+      <h3 className='font-semibold text-lg mb-2'>Chat no encontrado</h3>
+      <p className='text-muted-foreground text-sm mb-6 max-w-md'>
+        {error?.response?.status === 404
           ? 'Este chat ya no existe o ha sido eliminado.'
           : 'Hubo un error al cargar el chat. Intenta nuevamente.'}
       </p>
-      <Button variant="outline" onClick={onBackClick} className="gap-2">
-        <ArrowLeft className="h-4 w-4" />
+      <Button variant='outline' onClick={onBackClick} className='gap-2'>
+        <ArrowLeft className='h-4 w-4' />
         Volver a la lista
       </Button>
     </div>
@@ -96,9 +98,13 @@ export function ChatContent({
     >
       {/* Header Section */}
       {isError ? (
-        <div className="flex-shrink-0 border-b p-4">
-          <Button variant="ghost" onClick={onBackClick} className="gap-2 text-muted-foreground">
-            <ArrowLeft className="h-4 w-4" />
+        <div className='flex-shrink-0 border-b p-4'>
+          <Button
+            variant='ghost'
+            onClick={onBackClick}
+            className='gap-2 text-muted-foreground'
+          >
+            <ArrowLeft className='h-4 w-4' />
             Volver
           </Button>
         </div>

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
+  IconAffiliate,
   IconArrowLeft,
   IconBrandFacebook,
   IconBrandInstagram,
   IconBrandWhatsapp,
   IconChecklist,
   IconDotsVertical,
-  IconAffiliate,
   IconUser,
 } from '@tabler/icons-react'
 import { CalendarFold } from 'lucide-react'
@@ -24,14 +24,13 @@ import {
 } from '@/components/ui/tooltip'
 import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
 import { MakeAppointmentDialog } from '@/features/appointments/components/MakeAppointmentDialog.tsx'
-import { ChatMessages } from '@/features/chats/ChatTypes.ts'
-import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
-import { AddClientFromChats } from '@/features/events/addClientFromChats.tsx'
 import { chatService } from '@/features/chats/ChatService.ts'
+import { ChatMessages } from '@/features/chats/ChatTypes.ts'
 import { ConnectClient } from '@/features/chats/ConnectClient.tsx'
+import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
 import { useClients } from '@/features/clients/context/clients-context'
+import { AddClientFromChats } from '@/features/events/addClientFromChats.tsx'
 import { Client } from '../clients/types'
-
 
 // Declarar la interfaz Window para acceder a openAppointmentDialog
 declare global {
@@ -112,8 +111,6 @@ export function ConversationHeader({
 
     return identity?.platformId || ''
   }, [chatData])
-
-
 
   const handleConnectionClick = () => {
     setConnectionDialogOpen(true)
@@ -304,9 +301,6 @@ export function ConversationHeader({
             onConnectionError={handleConnectionError}
             onEmitSocketEvent={emit}
           />
-
-
-
         </div>
 
         {/* Primary Actions Group - Appointments & Events */}

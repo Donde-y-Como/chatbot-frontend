@@ -13,7 +13,6 @@ import { useGetTags } from '../clients/hooks/useGetTags'
 import { MessagesFound } from './MessagesFound'
 import { usePaginatedChats } from './hooks/usePaginatedChats'
 
-
 interface ChatBarProps {
   selectedChatId: string | null
   setSelectedChatId: (id: string) => void
@@ -138,7 +137,6 @@ export function ChatBarUnlimited({
                         chat={chat}
                         isSelected={selectedChatId === chat.id}
                         onClick={() => handleSelectChat(chat.id)}
-                        
                       />
                       <Separator className='mx-3' />
                     </Fragment>

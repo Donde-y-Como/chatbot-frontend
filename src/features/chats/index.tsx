@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
-import { useMemo } from 'react'
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useWebSocket } from '@/hooks/use-web-socket'
 import { Main } from '@/components/layout/main'
-import { DialogStateProvider, useDialogState } from '@/features/appointments/contexts/DialogStateContext.tsx'
+import {
+  DialogStateProvider,
+  useDialogState,
+} from '@/features/appointments/contexts/DialogStateContext.tsx'
 import { ChatContent } from '@/features/chats/ChatContent'
 import { chatService } from '@/features/chats/ChatService.ts'
 import { ConnectClient } from '@/features/chats/ConnectClient.tsx'
@@ -13,10 +15,8 @@ import EmptyChatSelectedState from '@/features/chats/EmptyChatSelectedState'
 import { ChatMessages, Client } from './ChatTypes'
 import { ChatBarUnlimited } from './chatBarUnlimited'
 import { usePaginatedChats } from './hooks/usePaginatedChats'
-import { useWebSocket } from '@/hooks/use-web-socket'
 
 const route = getRouteApi('/_authenticated/chats/')
-
 
 function ChatsInner() {
   const { emit } = useWebSocket()
@@ -31,7 +31,8 @@ function ChatsInner() {
     string | null
   >(null)
 
-  const { isOpenConnectionClient, closeConnectionClient, selectedClientData } = useDialogState()
+  const { isOpenConnectionClient, closeConnectionClient, selectedClientData } =
+    useDialogState()
 
   // Fetch all chats
   const { chats } = usePaginatedChats()
@@ -99,14 +100,20 @@ function ChatsInner() {
   }, [chatMessages])
 
   const currentClientData = useMemo(
-    () => selectedClientData || ({
-      id: chatMessages?.client.id,
-      name: chatMessages?.client.name,
-      platformName: chatMessages?.platformName,
-      platformId: platformId || '',
-      platformIdentities: chatMessages?.client.platformIdentities,
-    }),
-    [selectedClientData, chatMessages?.client, chatMessages?.platformName, platformId]
+    () =>
+      selectedClientData || {
+        id: chatMessages?.client.id,
+        name: chatMessages?.client.name,
+        platformName: chatMessages?.platformName,
+        platformId: platformId || '',
+        platformIdentities: chatMessages?.client.platformIdentities,
+      },
+    [
+      selectedClientData,
+      chatMessages?.client,
+      chatMessages?.platformName,
+      platformId,
+    ]
   )
 
   const handleConnectionSuccess = async (linkedClient: Client) => {
@@ -136,7 +143,7 @@ function ChatsInner() {
       // You might want to show a toast or handle this error differently
     }
   }
-    const handleConnectionError = (error: Error) => {
+  const handleConnectionError = (error: Error) => {
     console.error('Connection error:', error)
     // Additional error handling if needed
   }
@@ -167,7 +174,7 @@ function ChatsInner() {
           onBackClick={handleBackClick}
         />
       )}
-      
+
       <ConnectClient
         isDialog={true}
         open={isOpenConnectionClient}
