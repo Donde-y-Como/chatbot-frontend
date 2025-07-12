@@ -1,5 +1,21 @@
-import { NavGroup } from '@/components/layout/nav-group'
-import { NavUser } from '@/components/layout/nav-user'
+import * as React from 'react'
+import { ComponentProps } from 'react'
+import {
+  IconChecklist,
+  IconMessages,
+  IconPackages,
+  IconUsers,
+} from '@tabler/icons-react'
+import {
+  BookUserIcon,
+  CalendarFold,
+  Command,
+  PanelLeft,
+  Receipt,
+  ShoppingBag,
+  Store,
+  WrenchIcon,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button.tsx'
 import {
   Sidebar,
@@ -13,18 +29,16 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
-import { IconChecklist, IconMessages, IconPackages, IconUsers } from '@tabler/icons-react'
-import { BookUserIcon, CalendarFold, Command, PanelLeft, Receipt, ShoppingBag, Store } from 'lucide-react'
-import * as React from 'react'
-import { ComponentProps } from 'react'
+import { NavGroup } from '@/components/layout/nav-group'
+import { NavUser } from '@/components/layout/nav-user'
 import { useUnreadChats } from './data/useUnreadChats'
-import { SidebarData, NavItem } from './types'
 import { useGetUser } from './hooks/useGetUser'
+import { SidebarData } from './types'
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const { data: user } = useGetUser()
 
-  const { count: unreadCount, isLoading } = useUnreadChats();
+  const { count: unreadCount, isLoading } = useUnreadChats()
 
   const { toggleSidebar } = useSidebar()
 
@@ -59,7 +73,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           {
             title: 'Servicios',
             url: '/servicios',
-            icon: IconPackages,
+            icon: WrenchIcon,
           },
           {
             title: 'Empleados',
@@ -74,23 +88,23 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           {
             title: 'Productos',
             url: '/products',
-            icon: ShoppingBag ,
+            icon: ShoppingBag,
           },
           {
-            title: 'Tienda',
+            title: 'Orden',
             url: '/orden',
             icon: Store,
           },
           {
             title: 'Paquetes',
             url: '/paquetes',
-            icon: IconPackages
+            icon: IconPackages,
           },
           {
             title: 'Historial de Ventas',
             url: '/ventas',
-            icon: Receipt 
-          }
+            icon: Receipt,
+          },
         ],
       },
     ],
@@ -98,32 +112,34 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 
   React.useEffect(() => {
     if (unreadCount !== undefined) {
-      setData(prev => {
+      setData((prev) => {
         // Crear copias superficiales para mantener la inmutabilidad sin perder referencias a componentes
-        const newData = { ...prev };
-        newData.navGroups = [...prev.navGroups];
-        
+        const newData = { ...prev }
+        newData.navGroups = [...prev.navGroups]
+
         // Crear copia del primer grupo de navegación
         newData.navGroups[0] = {
           ...newData.navGroups[0],
           items: [...newData.navGroups[0].items],
-        };
-        
+        }
+
         // Encontrar el índice del elemento Chats
-        const chatItemIndex = newData.navGroups[0].items.findIndex(item => item.title === 'Chats');
-        
+        const chatItemIndex = newData.navGroups[0].items.findIndex(
+          (item) => item.title === 'Chats'
+        )
+
         // Si se encuentra, actualizar solo ese elemento manteniendo todas sus propiedades
         if (chatItemIndex !== -1) {
           newData.navGroups[0].items[chatItemIndex] = {
             ...newData.navGroups[0].items[chatItemIndex],
             badge: unreadCount.toString(),
-          };
+          }
         }
-        
-        return newData;
-      });
+
+        return newData
+      })
     }
-  }, [unreadCount]);
+  }, [unreadCount])
 
   return (
     <Sidebar collapsible='icon' {...props}>
