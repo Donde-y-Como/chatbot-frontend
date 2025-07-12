@@ -28,7 +28,7 @@ export default function Orders() {
   
   // Separate queries for stats and filtered data
   const { data: statsResponse, isLoading: isStatsLoading, error: statsError } = useGetOrdersForStats()
-  const { data: filteredResponse, isLoading: isTableLoading, error: tableError, refetch } = useGetOrdersFiltered(filters)
+  const { data: filteredResponse, isLoading: isTableLoading, error: tableError } = useGetOrdersFiltered(filters)
   const addPaymentMutation = useAddPaymentToOrder()
 
   // Use filtered data if available, otherwise use stats data
@@ -75,9 +75,7 @@ export default function Orders() {
         changeAmount: data.changeAmount,
       })
       
-      // Refresh the orders list
-      await refetch()
-      // Close modal
+
       setIsPaymentModalOpen(false)
       setSelectedOrder(null)
     } catch (error) {

@@ -90,8 +90,8 @@ export const useConvertToSale = () => {
       void queryClient.invalidateQueries({
         queryKey: CART_QUERY_KEY,
       })
+      void queryClient.invalidateQueries({ queryKey: ['orders'] })
     },
-
     onError: () => {
       toast.error('No se pudo guardar la venta, intenta mas tarde')
     },
@@ -107,6 +107,7 @@ export const useConvertToOrder = () => {
       void queryClient.invalidateQueries({
         queryKey: CART_QUERY_KEY,
       })
+      void queryClient.invalidateQueries({ queryKey: ['orders'] })
     },
     onError: () => {
       toast.error('No se pudo guardar la orden, intenta mas tarde')
@@ -120,10 +121,7 @@ export const useAddPaymentToOrder = () => {
     mutationFn: addPaymentToOrder,
     onSuccess: () => {
       toast.success('Pago abonado exitosamente')
-      // Invalidate orders queries to refresh the data
-      void queryClient.invalidateQueries({
-        queryKey: ["orders"],
-      })
+      void queryClient.invalidateQueries({ queryKey: ['orders'] })
     },
     onError: () => {
       toast.error('No se pudo abonar a la orden, intenta mas tarde')
