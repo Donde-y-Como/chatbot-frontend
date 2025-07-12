@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useNavigate } from '@tanstack/react-router'
 import { Cart } from '@/features/store/components/Cart.tsx'
 import { CheckoutModal } from '@/features/store/components/CheckoutModal.tsx'
 import { ItemGrid } from '@/features/store/components/ItemGrid.tsx'
@@ -49,6 +50,7 @@ export default function Store() {
   // Hook del carrito independiente
   const cart = useCart()
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
+  const navigate = useNavigate()
 
   // Payment mutations
   const convertToSaleMutation = useConvertToSale()
@@ -119,6 +121,10 @@ export default function Store() {
 
   const handleConvertCart = async () => {
     setIsCheckoutModalOpen(true)
+  }
+
+  const handleHistorialClick = () => {
+    navigate({ to: '/orden/historial' })
   }
 
   const handleProcessSale = async (paymentData: {
@@ -221,6 +227,7 @@ export default function Store() {
           onPaymentMethodSelect={setPaymentMethod}
           onClearCart={cart.clearCart}
           onConvertCart={handleConvertCart}
+          onHistorialClick={handleHistorialClick}
         />
       )}
 

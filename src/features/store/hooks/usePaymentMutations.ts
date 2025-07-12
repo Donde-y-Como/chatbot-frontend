@@ -115,10 +115,15 @@ export const useConvertToOrder = () => {
 }
 
 export const useAddPaymentToOrder = () => {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: addPaymentToOrder,
     onSuccess: () => {
       toast.success('Pago abonado exitosamente')
+      // Invalidate orders queries to refresh the data
+      void queryClient.invalidateQueries({
+        queryKey: ["orders"],
+      })
     },
     onError: () => {
       toast.error('No se pudo abonar a la orden, intenta mas tarde')

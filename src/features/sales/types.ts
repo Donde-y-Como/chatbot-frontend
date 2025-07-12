@@ -1,11 +1,5 @@
 import { z } from "zod"
-
-export enum PaymentMethod {
-  EFECTIVO = "EFECTIVO",
-  TARJETA = "TARJETA",
-  TRANSFERENCIA = "TRANSFERENCIA",
-  CHEQUE = "CHEQUE"
-}
+import { PaymentMethod } from "@/features/store/types"
 
 export interface Price {
   amount: number
@@ -62,7 +56,7 @@ export const salesFiltersSchema = z.object({
   clientId: z.string().optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
-  paymentMethod: z.nativeEnum(PaymentMethod).optional(),
+  paymentMethod: z.enum(['cash', 'credit_card', 'debit_card']).optional(),
   limit: z.number().positive().optional(),
   offset: z.number().min(0).optional()
 })

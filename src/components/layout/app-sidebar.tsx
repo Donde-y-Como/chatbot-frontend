@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { ComponentProps } from 'react'
 import {
-  IconChecklist,
+  IconChecklist, IconClipboardList,
   IconMessages,
   IconPackages,
   IconUsers,
@@ -104,6 +104,11 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
             title: 'Historial de Ventas',
             url: '/ventas',
             icon: Receipt,
+          },
+          {
+            title: 'Historial de Órdenes',
+            url: '/orden/historial',
+            icon: IconClipboardList,
           },
         ],
       },

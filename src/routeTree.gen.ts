@@ -83,6 +83,9 @@ const AuthenticatedSettingsCategoriesLazyImport = createFileRoute(
 const AuthenticatedSettingsAccountLazyImport = createFileRoute(
   '/_authenticated/settings/account',
 )()
+const AuthenticatedOrdenHistorialLazyImport = createFileRoute(
+  '/_authenticated/orden/historial',
+)()
 
 // Create/Update Routes
 
@@ -338,6 +341,15 @@ const AuthenticatedSettingsAccountLazyRoute =
     ),
   )
 
+const AuthenticatedOrdenHistorialLazyRoute =
+  AuthenticatedOrdenHistorialLazyImport.update({
+    id: '/orden/historial',
+    path: '/orden/historial',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/orden/historial.lazy').then((d) => d.Route),
+  )
+
 const authRestablecerContrasenaTokenRoute =
   authRestablecerContrasenaTokenImport.update({
     id: '/(auth)/restablecer-contrasena/$token',
@@ -454,6 +466,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/restablecer-contrasena/$token'
       preLoaderRoute: typeof authRestablecerContrasenaTokenImport
       parentRoute: typeof rootRoute
+    }
+    '/_authenticated/orden/historial': {
+      id: '/_authenticated/orden/historial'
+      path: '/orden/historial'
+      fullPath: '/orden/historial'
+      preLoaderRoute: typeof AuthenticatedOrdenHistorialLazyImport
+      parentRoute: typeof AuthenticatedRouteImport
     }
     '/_authenticated/settings/account': {
       id: '/_authenticated/settings/account'
@@ -612,6 +631,7 @@ const AuthenticatedSettingsRouteLazyRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRouteLazyRoute: typeof AuthenticatedSettingsRouteLazyRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedOrdenHistorialLazyRoute: typeof AuthenticatedOrdenHistorialLazyRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
   AuthenticatedCitasIndexLazyRoute: typeof AuthenticatedCitasIndexLazyRoute
   AuthenticatedClientesIndexLazyRoute: typeof AuthenticatedClientesIndexLazyRoute
@@ -628,6 +648,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRouteLazyRoute:
     AuthenticatedSettingsRouteLazyRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedOrdenHistorialLazyRoute: AuthenticatedOrdenHistorialLazyRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
   AuthenticatedCitasIndexLazyRoute: AuthenticatedCitasIndexLazyRoute,
   AuthenticatedClientesIndexLazyRoute: AuthenticatedClientesIndexLazyRoute,
@@ -658,6 +679,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
+  '/orden/historial': typeof AuthenticatedOrdenHistorialLazyRoute
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
@@ -690,6 +712,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
+  '/orden/historial': typeof AuthenticatedOrdenHistorialLazyRoute
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
@@ -725,6 +748,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/(auth)/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/(auth)/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
+  '/_authenticated/orden/historial': typeof AuthenticatedOrdenHistorialLazyRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/_authenticated/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/_authenticated/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
@@ -761,6 +785,7 @@ export interface FileRouteTypes {
     | '/'
     | '/link-iniciar-sesion/$token'
     | '/restablecer-contrasena/$token'
+    | '/orden/historial'
     | '/settings/account'
     | '/settings/categories'
     | '/settings/quick-responses'
@@ -792,6 +817,7 @@ export interface FileRouteTypes {
     | '/'
     | '/link-iniciar-sesion/$token'
     | '/restablecer-contrasena/$token'
+    | '/orden/historial'
     | '/settings/account'
     | '/settings/categories'
     | '/settings/quick-responses'
@@ -825,6 +851,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/(auth)/link-iniciar-sesion/$token'
     | '/(auth)/restablecer-contrasena/$token'
+    | '/_authenticated/orden/historial'
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/categories'
     | '/_authenticated/settings/quick-responses'
@@ -904,6 +931,7 @@ export const routeTree = rootRoute
       "children": [
         "/_authenticated/settings",
         "/_authenticated/",
+        "/_authenticated/orden/historial",
         "/_authenticated/chats/",
         "/_authenticated/citas/",
         "/_authenticated/clientes/",
@@ -965,6 +993,10 @@ export const routeTree = rootRoute
     },
     "/(auth)/restablecer-contrasena/$token": {
       "filePath": "(auth)/restablecer-contrasena.$token.tsx"
+    },
+    "/_authenticated/orden/historial": {
+      "filePath": "_authenticated/orden/historial.lazy.tsx",
+      "parent": "/_authenticated"
     },
     "/_authenticated/settings/account": {
       "filePath": "_authenticated/settings/account.lazy.tsx",

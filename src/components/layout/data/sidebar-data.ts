@@ -1,4 +1,4 @@
-import { IconChecklist, IconMessages, IconPackages, IconUsers } from '@tabler/icons-react'
+import { IconChecklist, IconMessages, IconPackages, IconUsers, IconClipboardList } from '@tabler/icons-react'
 import { BookUserIcon, CalendarFold, Command } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -48,6 +48,11 @@ export const sidebarData: SidebarData = {
           title: 'Clientes',
           url: '/clientes',
           icon: BookUserIcon,
+        },
+        {
+          title: 'Historial de Órdenes',
+          url: '/orden/historial',
+          icon: IconClipboardList,
         },
       ],
     },

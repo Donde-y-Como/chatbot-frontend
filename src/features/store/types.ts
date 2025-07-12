@@ -205,11 +205,13 @@ export type OrderPrimitives = {
   clientId: string
   items: OrderItemPrimitives[]
   payments: PaymentPrimitives[]
-  status: 'pending' | 'partial_paid' | 'paid' | 'cancelled'
+  status: OrderStatus
   notes?: string
   createdAt: string
   updatedAt: string
 }
+
+export type OrderStatus = 'pending' | 'partial_paid' | 'paid' | 'cancelled'
 
 export type OrderWithDetails = OrderPrimitives & {
   totalAmount: Price

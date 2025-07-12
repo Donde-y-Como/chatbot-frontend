@@ -5,8 +5,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ColumnDef, FilterFn } from '@tanstack/react-table'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale/es'
-import { CreditCard, Banknote, ArrowRightLeft, FileText } from 'lucide-react'
-import { Sale, PaymentMethod } from '../types'
+import { CreditCard, Banknote } from 'lucide-react'
+import { PaymentMethod } from '@/features/store/types'
+import { Sale } from '../types'
 
 // Global filter function
 export const globalFilterFn: FilterFn<Sale> = (row, columnId, value) => {
@@ -27,14 +28,11 @@ export const globalFilterFn: FilterFn<Sale> = (row, columnId, value) => {
 // Payment method icons and colors
 const getPaymentMethodIcon = (method: PaymentMethod) => {
   switch (method) {
-    case PaymentMethod.EFECTIVO:
+    case 'cash':
       return <Banknote className="h-3 w-3" />
-    case PaymentMethod.TARJETA:
+    case 'credit_card':
+    case 'debit_card':
       return <CreditCard className="h-3 w-3" />
-    case PaymentMethod.TRANSFERENCIA:
-      return <ArrowRightLeft className="h-3 w-3" />
-    case PaymentMethod.CHEQUE:
-      return <FileText className="h-3 w-3" />
     default:
       return <Banknote className="h-3 w-3" />
   }
@@ -42,16 +40,27 @@ const getPaymentMethodIcon = (method: PaymentMethod) => {
 
 const getPaymentMethodVariant = (method: PaymentMethod): 'default' | 'secondary' | 'destructive' | 'outline' => {
   switch (method) {
-    case PaymentMethod.EFECTIVO:
+    case 'cash':
       return 'default'
-    case PaymentMethod.TARJETA:
+    case 'credit_card':
       return 'secondary'
-    case PaymentMethod.TRANSFERENCIA:
+    case 'debit_card':
       return 'outline'
-    case PaymentMethod.CHEQUE:
-      return 'destructive'
     default:
       return 'outline'
+  }
+}
+
+const getPaymentMethodLabel = (method: PaymentMethod) => {
+  switch (method) {
+    case 'cash':
+      return 'Efectivo'
+    case 'credit_card':
+      return 'Tarjeta de Crédito'
+    case 'debit_card':
+      return 'Tarjeta de Débito'
+    default:
+      return method
   }
 }
 
@@ -139,6 +148,30 @@ export const createColumns = (): ColumnDef<Sale>[] => [
   },
 
   {
+    accessorKey: 'totalPaidAmount',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Pagado' />
+    ),
+    cell: ({ row }) => {
+      const paid = row.getValue('totalPaidAmount') as { amount: number; currency: string }
+      const total = row.original.totalAmount
+      const isFullyPaid = paid.amount >= total.amount
+      
+      return (
+        <div className={`font-medium ${isFullyPaid ? 'text-green-600' : 'text-orange-600'}`}>
+          {formatCurrency(paid.amount, paid.currency)}
+          {paid.amount < total.amount && (
+            <div className="text-xs text-muted-foreground">
+              de {formatCurrency(total.amount, total.currency)}
+            </div>
+          )}
+        </div>
+      )
+    },
+    enableSorting: true,
+  },
+
+  {
     accessorKey: 'itemCount',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Artículos' />
@@ -173,7 +206,7 @@ export const createColumns = (): ColumnDef<Sale>[] => [
         return (
           <Badge variant={getPaymentMethodVariant(method as PaymentMethod)} className="text-xs">
             {getPaymentMethodIcon(method as PaymentMethod)}
-            <span className="ml-1">{method}</span>
+            <span className="ml-1">{getPaymentMethodLabel(method as PaymentMethod)}</span>
           </Badge>
         )
       }
@@ -202,7 +235,7 @@ export const createColumns = (): ColumnDef<Sale>[] => [
                     <div key={method} className="flex items-center justify-between gap-2 text-xs">
                       <div className="flex items-center gap-1">
                         {getPaymentMethodIcon(method as PaymentMethod)}
-                        <span>{method}</span>
+                        <span>{getPaymentMethodLabel(method as PaymentMethod)}</span>
                       </div>
                       <span className="font-mono">
                         {amount && formatCurrency(amount.amount, amount.currency)}

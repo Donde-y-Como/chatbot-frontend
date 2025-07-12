@@ -8,7 +8,8 @@ import { Separator } from '@/components/ui/separator.tsx'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet.tsx'
 import { CalendarDays, Filter, RotateCcw } from 'lucide-react'
 import { useState } from 'react'
-import { PaymentMethod, SalesFilters } from '../types'
+import { SalesFilters } from '../types'
+import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 
 interface SalesFiltersComponentProps {
   onFiltersChange: (filters: SalesFilters) => void
@@ -21,7 +22,7 @@ export function SalesFiltersComponent({ onFiltersChange, currentFilters }: Sales
 
   const handleFilterChange = (key: keyof SalesFilters, value: any) => {
     const newFilters = { ...filters }
-    if (value === '' || value === null || value === undefined) {
+    if (value === '' || value === null || value === undefined || value === 'all') {
       delete newFilters[key]
     } else {
       newFilters[key] = value
@@ -56,7 +57,7 @@ export function SalesFiltersComponent({ onFiltersChange, currentFilters }: Sales
         </Button>
       </SheetTrigger>
       
-      <SheetContent className="w-full sm:max-w-md">
+      <SheetContent className="w-full sm:max-w-md flex flex-col">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
@@ -67,7 +68,8 @@ export function SalesFiltersComponent({ onFiltersChange, currentFilters }: Sales
           </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-6 mt-6">
+        <ScrollArea className="h-full pr-4">
+          <div className="space-y-6 mt-6 pb-4">
           {/* Cliente ID */}
           <div className="space-y-2">
             <Label htmlFor="clientId">ID del Cliente</Label>
@@ -121,11 +123,10 @@ export function SalesFiltersComponent({ onFiltersChange, currentFilters }: Sales
                 <SelectValue placeholder="Seleccionar método de pago" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los métodos</SelectItem>
-                <SelectItem value={PaymentMethod.EFECTIVO}>💵 Efectivo</SelectItem>
-                <SelectItem value={PaymentMethod.TARJETA}>💳 Tarjeta</SelectItem>
-                <SelectItem value={PaymentMethod.TRANSFERENCIA}>🔄 Transferencia</SelectItem>
-                <SelectItem value={PaymentMethod.CHEQUE}>📄 Cheque</SelectItem>
+                <SelectItem value="all">Todos los métodos</SelectItem>
+                <SelectItem value="cash">💵 Efectivo</SelectItem>
+                <SelectItem value="credit_card">💳 Tarjeta de Crédito</SelectItem>
+                <SelectItem value="debit_card">💳 Tarjeta de Débito</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -167,16 +168,18 @@ export function SalesFiltersComponent({ onFiltersChange, currentFilters }: Sales
             </CardContent>
           </Card>
 
-          {/* Botones de Acción */}
-          <div className="flex gap-2 pt-4">
-            <Button onClick={applyFilters} className="flex-1">
-              Aplicar Filtros
-            </Button>
-            <Button variant="outline" onClick={clearFilters}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Limpiar
-            </Button>
           </div>
+        </ScrollArea>
+
+        {/* Botones de Acción */}
+        <div className="flex gap-2 pt-4 border-t mt-4">
+          <Button onClick={applyFilters} className="flex-1">
+            Aplicar Filtros
+          </Button>
+          <Button variant="outline" onClick={clearFilters}>
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Limpiar
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

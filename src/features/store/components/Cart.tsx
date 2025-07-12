@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, X } from 'lucide-react';
+import { ShoppingCart, X, History } from 'lucide-react';
 import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { ScrollArea } from '@/components/ui/scroll-area.tsx';
@@ -19,6 +19,7 @@ interface CartProps {
   onPaymentMethodSelect: (method: PaymentMethod) => void
   onClearCart: () => void
   onConvertCart: () => void
+  onHistorialClick: () => void
 }
 
 export function Cart({
@@ -31,6 +32,7 @@ export function Cart({
   onClearCart,
   onConvertCart,
   onPaymentMethodSelect,
+  onHistorialClick,
 }: CartProps) {
   const formatPrice = (price: typeof cart.total) => {
     return new Intl.NumberFormat('es-MX', {
@@ -94,15 +96,27 @@ export function Cart({
                 </Badge>
               )}
             </div>
-            {/* Botón cerrar - solo en móvil */}
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={onToggle}
-              className='h-7 w-7 sm:h-8 sm:w-8 p-0 lg:hidden'
-            >
-              <X className='h-4 w-4' />
-            </Button>
+            <div className='flex items-center gap-2'>
+              {/* Botón Historial */}
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={onHistorialClick}
+                className='h-7 w-7 sm:h-8 sm:w-8 p-0'
+                title='Historial'
+              >
+                <History className='h-4 w-4' />
+              </Button>
+              {/* Botón cerrar - solo en móvil */}
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={onToggle}
+                className='h-7 w-7 sm:h-8 sm:w-8 p-0 lg:hidden'
+              >
+                <X className='h-4 w-4' />
+              </Button>
+            </div>
           </div>
 
           {/* Selector de cliente */}

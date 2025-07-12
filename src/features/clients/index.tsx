@@ -24,7 +24,7 @@ export default function Clients() {
   }
 
   return (
-    <Main fixed>
+    <Main>
       <section className='p-2'>
         <div
           className="mb-2 w-full flex sm:items-center flex-col sm:flex-row  sm:justify-between">
