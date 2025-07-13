@@ -177,6 +177,7 @@ export type SalePrimitives = {
   payments: PaymentPrimitives[]
   notes?: string
   createdAt: string
+  superReceiptId?: string
 }
 
 export type OrderItemPrimitives = {
@@ -220,3 +221,100 @@ export type OrderWithDetails = OrderPrimitives & {
   itemCount: number
   isFullyPaid: boolean
 }
+
+// Receipt Types
+export interface PaymentReceiptData {
+  id: string
+  orderId: string
+  businessId: string
+  clientId: string
+  receiptNumber: string
+  type: 'PAYMENT_RECEIPT'
+  businessSnapshot: {
+    name: string
+    logo?: string
+    address?: string
+    phone?: string
+    email?: string
+  }
+  clientSnapshot: {
+    name: string
+    email: string
+    address: string
+  }
+  orderSnapshot: {
+    totalAmount: Price
+    paidAmount: Price
+    remainingAmount: Price
+    items: OrderItemReceiptData[]
+    notes?: string
+    orderCreatedAt: string
+  }
+  paymentData: {
+    amount: Price
+    method: string
+    notes?: string
+    paymentDate: string
+    sequence: number
+  }
+  createdAt: string
+}
+
+export interface SuperReceiptData {
+  id: string
+  orderId: string
+  businessId: string
+  clientId: string
+  receiptNumber: string
+  type: 'SUPER_RECEIPT'
+  businessSnapshot: {
+    name: string
+    logo?: string
+    address?: string
+    phone?: string
+    email?: string
+  }
+  clientSnapshot: {
+    name: string
+    email: string
+    address: string
+  }
+  orderSnapshot: {
+    totalAmount: Price
+    paidAmount: Price
+    remainingAmount: Price
+    items: OrderItemReceiptData[]
+    notes?: string
+    orderCreatedAt: string
+  }
+  paymentHistory: Array<{
+    amount: Price
+    method: string
+    notes?: string
+    paymentDate: string
+    sequence: number
+  }>
+  createdAt: string
+}
+
+export interface OrderItemReceiptData {
+  itemId: string
+  itemType: CartItemType
+  name: string
+  quantity: number
+  unitPrice: Price
+  totalPrice: Price
+  notes?: string
+  scheduledCount?: number
+  pendingCount?: number
+  appointmentIds?: string[]
+}
+
+export interface GetOrderReceiptsResponse {
+  success: boolean
+  data: PaymentReceiptData[]
+  total: number
+  message: string
+}
+
+export type GetReceiptResponse = PaymentReceiptData | SuperReceiptData

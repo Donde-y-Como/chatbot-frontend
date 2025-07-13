@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { OrdersService } from './OrdersService'
-import { OrdersFilters, EditOrderRequest } from './types'
+import { EditOrderRequest, OrdersFilters } from './types'
 
 // Hook for unfiltered data (for stats)
 export const useGetOrdersForStats = () => {
@@ -19,13 +19,13 @@ export const useGetOrdersFiltered = (filters: OrdersFilters) => {
     queryFn: () => OrdersService.getOrders(filters),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: true,
-   })
+  })
 }
 
 // Hook for deleting an order
 export const useDeleteOrder = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (orderId: string) => OrdersService.deleteOrder(orderId),
     onSuccess: () => {
@@ -38,12 +38,22 @@ export const useDeleteOrder = () => {
 // Hook for editing an order
 export const useEditOrder = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (request: EditOrderRequest) => OrdersService.editOrder(request),
     onSuccess: () => {
       // Invalidate both stats and filtered queries to refresh the data
       void queryClient.invalidateQueries({ queryKey: ['orders'] })
     },
+  })
+}
+
+// Hook for getting a single order by ID
+export const useGetOrder = (orderId: string | null) => {
+  return useQuery({
+    queryKey: ['orders', 'detail', orderId],
+    queryFn: () => OrdersService.getOrder(orderId!),
+    enabled: !!orderId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }

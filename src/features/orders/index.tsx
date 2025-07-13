@@ -6,29 +6,44 @@ import { TableSkeleton } from '@/components/TableSkeleton.tsx'
 import { Main } from '@/components/layout/main'
 import { CustomTable } from '@/components/tables/custom-table.tsx'
 import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx'
+import { useAddPaymentToOrder } from '@/features/store/hooks/usePaymentMutations'
+import { OrderWithDetails, PaymentMethod } from '@/features/store/types'
+import { OrderDeleteDialog } from './components/order-delete-dialog'
+import { OrderDetailsDialog } from './components/order-details-dialog'
+import { OrderEditDialog } from './components/order-edit-dialog'
+import { OrderPaymentModal } from './components/order-payment-modal'
 import { createColumns, globalFilterFn } from './components/orders-columns'
 import { OrdersFiltersComponent } from './components/orders-filters'
 import { OrdersStats } from './components/orders-stats'
-import { OrderPaymentModal } from './components/order-payment-modal'
-import { OrderDeleteDialog } from './components/order-delete-dialog'
-import { OrderEditDialog } from './components/order-edit-dialog'
-import { useGetOrdersForStats, useGetOrdersFiltered, useDeleteOrder } from './hooks'
-import { useAddPaymentToOrder } from '@/features/store/hooks/usePaymentMutations'
-import { OrderWithDetails, PaymentMethod } from '@/features/store/types'
+import { useGetOrdersFiltered, useGetOrdersForStats } from './hooks'
 import { OrdersFilters } from './types'
 
 export default function Orders() {
   const [filters, setFilters] = useState<OrdersFilters>({})
-  const [selectedOrder, setSelectedOrder] = useState<OrderWithDetails | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<OrderWithDetails | null>(
+    null
+  )
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
-  const [orderToDelete, setOrderToDelete] = useState<OrderWithDetails | null>(null)
+  const [orderToDelete, setOrderToDelete] = useState<OrderWithDetails | null>(
+    null
+  )
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [orderToEdit, setOrderToEdit] = useState<OrderWithDetails | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  
+  const [orderToView, setOrderToView] = useState<OrderWithDetails | null>(null)
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+
   // Separate queries for stats and filtered data
-  const { data: statsResponse, isLoading: isStatsLoading, error: statsError } = useGetOrdersForStats()
-  const { data: filteredResponse, isLoading: isTableLoading, error: tableError } = useGetOrdersFiltered(filters)
+  const {
+    data: statsResponse,
+    isLoading: isStatsLoading,
+    error: statsError,
+  } = useGetOrdersForStats()
+  const {
+    data: filteredResponse,
+    isLoading: isTableLoading,
+    error: tableError,
+  } = useGetOrdersFiltered(filters)
   const addPaymentMutation = useAddPaymentToOrder()
 
   // Use filtered data if available, otherwise use stats data
@@ -37,7 +52,7 @@ export default function Orders() {
   const orders = ordersResponse?.data || []
   const isLoading = hasFilters ? isTableLoading : isStatsLoading
   const error = hasFilters ? tableError : statsError
-  
+
   // Stats always use unfiltered data
   const statsOrders = statsResponse?.data || []
 
@@ -56,6 +71,11 @@ export default function Orders() {
     setIsDeleteDialogOpen(true)
   }
 
+  const handleViewDetails = (order: OrderWithDetails) => {
+    setOrderToView(order)
+    setIsViewDialogOpen(true)
+  }
+
   const handleProcessPayment = async (data: {
     orderId: string
     amountToPay: number
@@ -67,14 +87,13 @@ export default function Orders() {
       await addPaymentMutation.mutateAsync({
         orderId: data.orderId,
         paymentMethod: data.paymentMethod,
-        amount: { 
-          amount: data.amountToPay, 
-          currency: selectedOrder?.totalAmount.currency || 'MXN' 
+        amount: {
+          amount: data.amountToPay,
+          currency: selectedOrder?.totalAmount.currency || 'MXN',
         },
         cashReceived: data.cashReceived,
         changeAmount: data.changeAmount,
       })
-      
 
       setIsPaymentModalOpen(false)
       setSelectedOrder(null)
@@ -84,7 +103,11 @@ export default function Orders() {
     }
   }
 
-  const columns = useMemo(() => createColumns(handlePayment, handleEdit, handleDelete), [])
+  const columns = useMemo(
+    () =>
+      createColumns(handlePayment, handleEdit, handleDelete, handleViewDetails),
+    []
+  )
 
   const handleFiltersChange = (newFilters: OrdersFilters) => {
     setFilters(newFilters)
@@ -105,7 +128,8 @@ export default function Orders() {
                 Error al cargar las órdenes
               </h2>
               <p className='text-muted-foreground'>
-                No se pudieron cargar las órdenes. Por favor, intenta nuevamente.
+                No se pudieron cargar las órdenes. Por favor, intenta
+                nuevamente.
               </p>
             </div>
           </div>
@@ -138,12 +162,12 @@ export default function Orders() {
         </div>
 
         {/* Estadísticas */}
-        <div className="mb-6">
+        <div className='mb-6'>
           {isStatsLoading ? (
-            <div className="animate-pulse space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {Array.from({length: 4}).map((_, i) => (
-                  <div key={i} className="h-24 bg-muted rounded-lg"></div>
+            <div className='animate-pulse space-y-4'>
+              <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className='h-24 bg-muted rounded-lg'></div>
                 ))}
               </div>
             </div>
@@ -188,7 +212,8 @@ export default function Orders() {
         {ordersResponse && (
           <div className='flex justify-between items-center text-sm text-muted-foreground'>
             <span>
-              Mostrando {orders.length} {orders.length === 1 ? 'orden' : 'órdenes'}
+              Mostrando {orders.length}{' '}
+              {orders.length === 1 ? 'orden' : 'órdenes'}
               {ordersResponse.count !== orders.length &&
                 ` de ${ordersResponse.count} total`}
             </span>
@@ -240,6 +265,16 @@ export default function Orders() {
             currentRow={orderToDelete}
           />
         )}
+
+        {/* Order Details Dialog */}
+        <OrderDetailsDialog
+          isOpen={isViewDialogOpen}
+          onClose={() => {
+            setIsViewDialogOpen(false)
+            setOrderToView(null)
+          }}
+          orderId={orderToView?.id || null}
+        />
       </section>
     </Main>
   )

@@ -1,12 +1,13 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { IconAlertTriangle } from '@tabler/icons-react'
-import { toast } from 'sonner'
-import { api } from '@/api/axiosInstance.ts'
-import { ConfirmDialog } from '@/components/confirm-dialog'
-import { Service } from '@/features/appointments/types.ts'
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { IconAlertTriangle } from '@tabler/icons-react';
+import { toast } from 'sonner';
+import { api } from '@/api/axiosInstance.ts';
+import { ConfirmDialog } from '@/components/confirm-dialog';
+import { Service } from '@/features/appointments/types.ts';
+
 
 interface Props {
   open: boolean
@@ -14,19 +15,15 @@ interface Props {
   currentRow: Service
 }
 
-export function ServicesDeleteDialog({
-  open,
-  onOpenChange,
-  currentRow,
-}: Props) {
+export function ServicesDeleteDialog({ open, onOpenChange, currentRow }: Props) {
   const [isLoading, setIsLoading] = useState(false)
   const queryClient = useQueryClient()
-  
+
   const deleteServiceMutation = useMutation({
     mutationKey: ['delete-service'],
     async mutationFn() {
-      const res = await api.delete(`/services/${currentRow.id}`);
-      if(res.status !== 200) throw new Error('Error deleting service')
+      const res = await api.delete(`/services/${currentRow.id}`)
+      if (res.status !== 200) throw new Error('Error deleting service')
     },
     onSuccess: () => {
       toast.success(
@@ -42,7 +39,7 @@ export function ServicesDeleteDialog({
     onError: () => {
       toast.error('Hubo un error al eliminar el servicio ' + currentRow.name)
       setIsLoading(false)
-    }
+    },
   })
 
   const handleDelete = () => {

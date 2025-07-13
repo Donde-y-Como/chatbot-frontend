@@ -7,6 +7,8 @@ import { ItemGrid } from '@/features/store/components/ItemGrid.tsx'
 import { POSError } from '@/features/store/components/POSError.tsx'
 import { POSLoading } from '@/features/store/components/POSLoading.tsx'
 import { SelectEventDateDialog } from '@/features/store/components/SelectEventDateDialog.tsx'
+import { ReceiptDialog } from '@/features/receipts/components/receipt-dialog'
+import { useGetOrderReceipts } from '@/features/receipts/hooks'
 import { CartItemRequest, PaymentMethod } from '@/features/store/types.ts'
 import { AdvancedFilters } from './components/AdvancedFilters'
 import { StoreHeader } from './components/StoreHeader'
@@ -24,6 +26,11 @@ export default function Store() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [currentItem, setCurrentItem] = useState<CartItemRequest | null>(null)
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false)
+  const [lastTransactionId, setLastTransactionId] = useState<string | null>(null)
+  const [lastTransactionType, setLastTransactionType] = useState<'order' | 'sale' | null>(null)
+  const [lastReceiptId, setLastReceiptId] = useState<string | null>(null)
+  const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false)
+  const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null)
 
   // Hook principal del POS
   const {
@@ -56,6 +63,11 @@ export default function Store() {
   const convertToSaleMutation = useConvertToSale()
   const convertToOrderMutation = useConvertToOrder()
   const addPaymentToOrderMutation = useAddPaymentToOrder()
+
+  // Receipt fetching
+  const { data: receiptsResponse } = useGetOrderReceipts(
+    lastTransactionType === 'order' ? lastTransactionId : null
+  )
 
   // Detectar scroll para cerrar menú móvil automáticamente
   useEffect(() => {
@@ -127,6 +139,26 @@ export default function Store() {
     navigate({ to: '/orden/historial' })
   }
 
+  const handleViewLatestReceipt = () => {
+    if (lastTransactionType === 'sale' && lastReceiptId) {
+      // For sales, use the superReceiptId from the sale response
+      setSelectedReceiptId(lastReceiptId)
+      setIsReceiptDialogOpen(true)
+    } else if (lastTransactionType === 'order' && receiptsResponse?.data && receiptsResponse.data.length > 0) {
+      // For orders, get the latest payment receipt
+      const latestReceipt = receiptsResponse.data.sort((a, b) => 
+        b.paymentData.sequence - a.paymentData.sequence
+      )[0]
+      setSelectedReceiptId(latestReceipt.id)
+      setIsReceiptDialogOpen(true)
+    }
+  }
+
+  const handleCloseReceiptDialog = () => {
+    setIsReceiptDialogOpen(false)
+    setSelectedReceiptId(null)
+  }
+
   const handleProcessSale = async (paymentData: {
     amountToPay: number
     cashReceived: number
@@ -137,29 +169,39 @@ export default function Store() {
     const { amountToPay, cashReceived, changeAmount } = paymentData
 
     try {
+      let transactionId: string | undefined
+      let transactionType: 'order' | 'sale' | null = null
+
       // Case 1: User is paying 0 (not paying) -> convert to order
       if (amountToPay === 0) {
-        await convertToOrderMutation.mutateAsync({
+        const orderResult = await convertToOrderMutation.mutateAsync({
           cart: cart.cart,
           paymentMethod,
         })
-        return
+        transactionId = orderResult.id
+        transactionType = 'order'
       }
 
       // Case 2: User is paying the total amount -> convert to sale
-      if (amountToPay === cart.cart.total.amount) {
-        await convertToSaleMutation.mutateAsync({
+      else if (amountToPay === cart.cart.total.amount) {
+        const saleResult = await convertToSaleMutation.mutateAsync({
           cart: cart.cart,
           paymentMethod,
           amountToPay,
           cashReceived,
           changeAmount,
         })
-        return
+        transactionId = saleResult.id
+        transactionType = 'sale'
+        
+        // For sales, also capture the superReceiptId for receipt viewing
+        if (saleResult.superReceiptId) {
+          setLastReceiptId(saleResult.superReceiptId)
+        }
       }
 
       // Case 3: User is paying partial amount (>0 and < total) -> convert to order first, then add payment
-      if (amountToPay > 0 && amountToPay < cart.cart.total.amount) {
+      else if (amountToPay > 0 && amountToPay < cart.cart.total.amount) {
         // First convert cart to order
         const orderResult = await convertToOrderMutation.mutateAsync({
           cart: cart.cart,
@@ -175,11 +217,18 @@ export default function Store() {
             cashReceived,
             changeAmount,
           })
+          transactionId = orderResult.id
+          transactionType = 'order'
         }
-
-        cart.setSelectedClient('')
-        return
       }
+
+      // Set the transaction ID and type for receipt fetching (only if payment > 0)
+      if (transactionId && amountToPay > 0) {
+        setLastTransactionId(transactionId)
+        setLastTransactionType(transactionType)
+      }
+
+      cart.setSelectedClient('')
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'No se pudo procesar la venta'
@@ -246,6 +295,7 @@ export default function Store() {
         cart={cart.cart}
         paymentMethod={paymentMethod}
         onProcessSale={handleProcessSale}
+        onViewReceipt={handleViewLatestReceipt}
       />
 
       {/* Filtros avanzados */}
@@ -256,6 +306,13 @@ export default function Store() {
         onFiltersChange={handleFiltersApply}
         onResetFilters={handleFiltersReset}
         auxiliaryData={auxiliaryData}
+      />
+
+      {/* Receipt Dialog */}
+      <ReceiptDialog
+        isOpen={isReceiptDialogOpen}
+        onClose={handleCloseReceiptDialog}
+        receiptId={selectedReceiptId}
       />
     </StoreLayout>
   )

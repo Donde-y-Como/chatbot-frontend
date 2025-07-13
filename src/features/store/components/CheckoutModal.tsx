@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { CheckCircle, Receipt } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -26,6 +27,7 @@ interface CheckoutModalProps {
     remainingBalance: number
     isPartialPayment: boolean
   }) => void
+  onViewReceipt?: () => void
 }
 
 export function CheckoutModal({
@@ -34,17 +36,25 @@ export function CheckoutModal({
   cart,
   paymentMethod,
   onProcessSale,
+  onViewReceipt,
 }: CheckoutModalProps) {
   const [paymentAmount, setPaymentAmount] = useState(
     cart.total.amount.toString()
   )
   const [cashReceived, setCashReceived] = useState('')
   const [error, setError] = useState('')
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [successPaymentData, setSuccessPaymentData] = useState<{
+    amountPaid: number
+    changeAmount: number
+  } | null>(null)
 
   const resetFields = () => {
     setPaymentAmount(cart.total.amount.toString())
     setCashReceived('')
     setError('')
+    setShowSuccessDialog(false)
+    setSuccessPaymentData(null)
   }
 
   const formatPrice = (price: typeof cart.total) => {
@@ -144,6 +154,15 @@ export function CheckoutModal({
     const remainingBalance = cart.total.amount - amountToPay
     const isPartialPayment = amountToPay < cart.total.amount
 
+    // Show success dialog if payment > 0
+    if (amountToPay > 0) {
+      setSuccessPaymentData({
+        amountPaid: amountToPay,
+        changeAmount: changeAmount,
+      })
+      setShowSuccessDialog(true)
+    }
+
     onProcessSale({
       amountToPay,
       cashReceived: cashReceivedAmount,
@@ -151,8 +170,12 @@ export function CheckoutModal({
       remainingBalance,
       isPartialPayment,
     })
-    resetFields()
-    onClose()
+
+    // If payment is 0, close immediately, otherwise let success dialog handle closing
+    if (amountToPay === 0) {
+      resetFields()
+      onClose()
+    }
   }
 
   const isValidPayment = () => {
@@ -184,6 +207,13 @@ export function CheckoutModal({
   }
 
   const handleClose = () => {
+    resetFields()
+    onClose()
+  }
+
+  const handleSuccessDialogClose = () => {
+    setShowSuccessDialog(false)
+    setSuccessPaymentData(null)
     resetFields()
     onClose()
   }
@@ -404,6 +434,75 @@ export function CheckoutModal({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={handleSuccessDialogClose}>
+        <DialogContent className='max-w-md'>
+          <DialogHeader>
+            <div className='flex items-center gap-3'>
+              <div className='flex items-center justify-center w-12 h-12 bg-green-100 rounded-full'>
+                <CheckCircle className='w-6 h-6 text-green-600' />
+              </div>
+              <div>
+                <DialogTitle className='text-green-800'>
+                  ¡Pago Exitoso!
+                </DialogTitle>
+                <DialogDescription>
+                  El pago se ha procesado correctamente
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {successPaymentData && (
+            <div className='space-y-3 mt-4'>
+              <div className='bg-green-50 p-4 rounded-lg space-y-2'>
+                <div className='flex justify-between text-sm'>
+                  <span className='text-green-700'>Monto pagado:</span>
+                  <span className='font-medium text-green-800'>
+                    {formatPrice({
+                      amount: successPaymentData.amountPaid,
+                      currency: cart.total.currency,
+                    })}
+                  </span>
+                </div>
+                {successPaymentData.changeAmount > 0 && (
+                  <div className='flex justify-between text-sm'>
+                    <span className='text-green-700'>Cambio:</span>
+                    <span className='font-medium text-green-800'>
+                      {formatPrice({
+                        amount: successPaymentData.changeAmount,
+                        currency: cart.total.currency,
+                      })}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className='flex flex-col gap-2 mt-6'>
+            <div className='flex gap-2'>
+              {onViewReceipt && (
+                <Button
+                  variant='outline'
+                  onClick={() => {
+                    onViewReceipt()
+                    handleSuccessDialogClose()
+                  }}
+                  className='flex-1 gap-2'
+                >
+                  <Receipt className='w-4 h-4' />
+                  Ver Recibo
+                </Button>
+              )}
+            </div>
+            <Button onClick={handleSuccessDialogClose} className='w-full'>
+              Continuar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }
