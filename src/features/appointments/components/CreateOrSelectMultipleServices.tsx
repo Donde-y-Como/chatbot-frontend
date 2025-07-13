@@ -1,12 +1,27 @@
 import { KeyboardEvent, useMemo, useRef, useState } from 'react'
-import { Check, ChevronDown, ChevronUp, Clock, CreditCard, Loader2, Plus, Search, X } from 'lucide-react'
+import {
+  Check,
+  Clock,
+  CreditCard,
+  Loader2,
+  Plus,
+  Search,
+  X,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import { Input } from '@/components/ui/input'
 import { useCreateService } from '../hooks/useCreateService'
 import { useGetServices } from '../hooks/useGetServices'
 
@@ -88,14 +103,18 @@ export function CreateOrSelectMultipleServices({
   )
 
   const totalSelectedPrice = useMemo(() => {
-    return selectedServices.reduce((total, service) => total + service.price.amount, 0)
+    return selectedServices.reduce(
+      (total, service) => total + service.price.amount,
+      0
+    )
   }, [selectedServices])
 
   const totalSelectedDuration = useMemo(() => {
     return selectedServices.reduce((total, service) => {
-      const durationInMinutes = service.duration.unit === 'hours' 
-        ? service.duration.value * 60 
-        : service.duration.value
+      const durationInMinutes =
+        service.duration.unit === 'hours'
+          ? service.duration.value * 60
+          : service.duration.value
       return total + durationInMinutes
     }, 0)
   }, [selectedServices])
@@ -141,7 +160,9 @@ export function CreateOrSelectMultipleServices({
               />
               <Button
                 onClick={handleCreateService}
-                disabled={createServiceMutation.isPending || !newServiceName.trim()}
+                disabled={
+                  createServiceMutation.isPending || !newServiceName.trim()
+                }
                 className='flex-shrink-0'
               >
                 {createServiceMutation.isPending ? (
@@ -178,34 +199,41 @@ export function CreateOrSelectMultipleServices({
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-3'>
               <div className='flex items-center gap-2'>
-                <Search className='h-4 w-4 text-muted-foreground' />
-                <span className='text-sm font-medium'>
-                  {selectedIds.length > 0 
-                    ? `${selectedIds.length} servicio${selectedIds.length > 1 ? 's' : ''} seleccionado${selectedIds.length > 1 ? 's' : ''}`
-                    : 'Seleccionar servicios'
-                  }
-                </span>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className='text-xs h-8 px-2'
+                  type='button'
+                >
+                  <Search className='h-4 w-4 text-muted-foreground' />
+                  <span className='text-sm font-medium'>
+                    {selectedIds.length > 0
+                      ? `${selectedIds.length} servicio${selectedIds.length > 1 ? 's' : ''} seleccionado${selectedIds.length > 1 ? 's' : ''}`
+                      : 'Seleccionar servicios'}
+                  </span>
+                </Button>
               </div>
-              
+
               {selectedIds.length > 0 && (
                 <div className='flex items-center gap-2 text-xs text-muted-foreground'>
                   <Badge variant='secondary' className='text-xs'>
-                    {totalSelectedDuration >= 60 
+                    {totalSelectedDuration >= 60
                       ? `${Math.floor(totalSelectedDuration / 60)}h ${totalSelectedDuration % 60 > 0 ? `${totalSelectedDuration % 60}min` : ''}`.trim()
-                      : `${totalSelectedDuration}min`
-                    }
+                      : `${totalSelectedDuration}min`}
                   </Badge>
                   <Badge variant='secondary' className='text-xs'>
-                    {totalSelectedPrice.toLocaleString('es-MX')} {selectedServices[0]?.price.currency || 'MXN'}
+                    {totalSelectedPrice.toLocaleString('es-MX')}{' '}
+                    {selectedServices[0]?.price.currency || 'MXN'}
                   </Badge>
                 </div>
               )}
             </div>
-            
+
             <div className='flex items-center gap-2'>
               {selectedIds.length > 0 && (
                 <Button
-                  type="button"
+                  type='button'
                   variant='ghost'
                   size='sm'
                   onClick={() => onChange([])}
@@ -215,29 +243,9 @@ export function CreateOrSelectMultipleServices({
                   Limpiar
                 </Button>
               )}
-              
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => setIsExpanded(!isExpanded)}
-                className='text-xs h-8 px-2'
-                type="button"
-              >
-                {isExpanded ? (
-                  <>
-                    <ChevronUp className='h-3 w-3 mr-1' />
-                    Colapsar
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className='h-3 w-3 mr-1' />
-                    Expandir
-                  </>
-                )}
-              </Button>
             </div>
           </div>
-          
+
           {/* Selected Services Preview (when collapsed) */}
           {selectedIds.length > 0 && !isExpanded && (
             <div className='mt-3 pt-3 border-t border-border/50'>
@@ -309,7 +317,7 @@ export function CreateOrSelectMultipleServices({
                     {services.length > 0 && (
                       <div className='flex items-center justify-between px-3 py-2 border-b bg-muted/20'>
                         <div className='flex items-center'>
-                          <Checkbox 
+                          <Checkbox
                             checked={selectedIds.length === services.length}
                             onCheckedChange={handleSelectAll}
                             className='mr-2 h-3 w-3'
@@ -327,7 +335,10 @@ export function CreateOrSelectMultipleServices({
                         </div>
                         {selectedIds.length > 0 && (
                           <div className='flex items-center gap-2 text-xs font-medium text-muted-foreground'>
-                            <Badge variant='secondary' className='text-xs px-2 py-0.5'>
+                            <Badge
+                              variant='secondary'
+                              className='text-xs px-2 py-0.5'
+                            >
                               {selectedIds.length} de {services.length}
                             </Badge>
                           </div>
@@ -359,19 +370,25 @@ export function CreateOrSelectMultipleServices({
                     <CommandGroup>
                       {filteredServices.map((service) => {
                         const isSelected = selectedIds.includes(service.id)
-                        const durationText = service.duration.unit === 'hours' 
-                          ? `${service.duration.value}h`
-                          : `${service.duration.value}min`
-                        
+                        const durationText =
+                          service.duration.unit === 'hours'
+                            ? `${service.duration.value}h`
+                            : `${service.duration.value}min`
+
                         return (
                           <CommandItem
                             key={service.id}
                             onSelect={() => onToggle(service.id)}
                             className={`flex items-center justify-between cursor-pointer p-3 transition-colors ${
-                              isSelected ? 'bg-primary/5 border-l-2 border-primary' : 'hover:bg-muted/50'
+                              isSelected
+                                ? 'bg-primary/5 border-l-2 border-primary'
+                                : 'hover:bg-muted/50'
                             }`}
                           >
-                            <div className='flex items-center space-x-3 flex-1' onClick={(e) => e.stopPropagation()}>
+                            <div
+                              className='flex items-center space-x-3 flex-1'
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <Checkbox
                                 id={`service-${service.id}`}
                                 checked={isSelected}
@@ -379,7 +396,10 @@ export function CreateOrSelectMultipleServices({
                                 className='h-4 w-4'
                                 onClick={(e) => e.stopPropagation()}
                               />
-                              <div className='flex-1 min-w-0' onClick={() => onToggle(service.id)}>
+                              <div
+                                className='flex-1 min-w-0'
+                                onClick={() => onToggle(service.id)}
+                              >
                                 <label
                                   htmlFor={`service-${service.id}`}
                                   className={`block text-sm font-medium cursor-pointer truncate ${
@@ -396,7 +416,10 @@ export function CreateOrSelectMultipleServices({
                                   </div>
                                   <div className='flex items-center gap-1 text-xs text-muted-foreground'>
                                     <CreditCard className='h-3 w-3' />
-                                    {service.price.amount.toLocaleString('es-MX')} {service.price.currency}
+                                    {service.price.amount.toLocaleString(
+                                      'es-MX'
+                                    )}{' '}
+                                    {service.price.currency}
                                   </div>
                                 </div>
                               </div>
