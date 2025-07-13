@@ -1,13 +1,10 @@
 import {
   Banknote,
-  CheckCircle,
-  CircleDollarSign,
   Clock,
   CreditCard,
   DollarSign,
   Package,
   TrendingUp,
-  XCircle,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge.tsx'
 import {
@@ -16,11 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card.tsx'
-import {
-  OrderStatus,
-  OrderWithDetails,
-  PaymentMethod,
-} from '@/features/store/types'
+import { OrderWithDetails, PaymentMethod } from '@/features/store/types'
 
 interface OrdersStatsProps {
   orders: OrderWithDetails[]
@@ -105,46 +98,6 @@ export function OrdersStats({ orders }: OrdersStatsProps) {
         return 'Tarjeta de Débito'
       default:
         return method
-    }
-  }
-
-  // Iconos y colores para estados
-  const getStatusIcon = (status: OrderStatus) => {
-    switch (status) {
-      case 'pending':
-        return <Clock className='h-4 w-4' />
-      case 'partial_paid':
-        return <CircleDollarSign className='h-4 w-4' />
-      case 'paid':
-        return <CheckCircle className='h-4 w-4' />
-      case 'cancelled':
-        return <XCircle className='h-4 w-4' />
-    }
-  }
-
-  const getStatusColor = (status: OrderStatus) => {
-    switch (status) {
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-50'
-      case 'partial_paid':
-        return 'text-orange-600 bg-orange-50'
-      case 'paid':
-        return 'text-green-600 bg-green-50'
-      case 'cancelled':
-        return 'text-red-600 bg-red-50'
-    }
-  }
-
-  const getStatusLabel = (status: OrderStatus) => {
-    switch (status) {
-      case 'pending':
-        return 'Pendientes'
-      case 'partial_paid':
-        return 'Parcialmente Pagadas'
-      case 'paid':
-        return 'Pagadas'
-      case 'cancelled':
-        return 'Canceladas'
     }
   }
 
