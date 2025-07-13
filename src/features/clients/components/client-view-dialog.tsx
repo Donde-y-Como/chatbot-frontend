@@ -47,8 +47,10 @@ import { PlatformName } from '@/features/chats/ChatTypes'
 import { useGetTags } from '@/features/clients/hooks/useGetTags.ts'
 import { useClientAppointments } from '../hooks/useClientAppointments'
 import { useClientEvents } from '../hooks/useClientEvents'
+import { usePendingServices } from '../hooks/usePendingServices'
 import { ClientPrimitives } from '../types'
 import { PlatformChatButton } from './platform-chat-button'
+import { PendingServicesTab } from './pending-services-tab'
 
 interface ClientViewDialogProps {
   currentClient: ClientPrimitives
@@ -73,6 +75,10 @@ export function ClientViewDialog({
     isError: isErrorEvents,
     error: eventsError,
   } = useClientEvents(currentClient.id, open)
+
+  const { data: pendingServicesResponse } = usePendingServices(currentClient.id, open)
+  // Count only services that still have pending appointments (pendingCount > 0)
+  const pendingServicesCount = pendingServicesResponse?.data?.filter(service => service.serviceItem.pendingCount > 0).length || 0
 
   // Memoize some stats for the client summary
   const latestEvent = clientEvents.length > 0 ? clientEvents[0].event : null
@@ -137,9 +143,17 @@ export function ClientViewDialog({
             className='w-full mt-2'
             orientation='horizontal'
           >
-            <TabsList className='grid w-full grid-cols-4 mb-4'>
+            <TabsList className='grid w-full grid-cols-5 mb-4'>
               <TabsTrigger value='details'>Detalles</TabsTrigger>
               <TabsTrigger value='resumen'>Resumen</TabsTrigger>
+              <TabsTrigger value='pending-services' className='relative'>
+                Servicios Pendientes
+                {pendingServicesCount > 0 && (
+                  <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 text-xs">
+                    {pendingServicesCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
               <TabsTrigger value='annexes'>Anexos</TabsTrigger>
               <TabsTrigger value='notes'>Notas</TabsTrigger>
             </TabsList>
@@ -679,6 +693,13 @@ export function ClientViewDialog({
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value='pending-services'>
+              <PendingServicesTab 
+                clientId={currentClient.id}
+                clientName={currentClient.name}
+              />
             </TabsContent>
           </Tabs>
         </ScrollArea>

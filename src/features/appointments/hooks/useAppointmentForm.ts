@@ -15,14 +15,16 @@ export function useAppointmentForm(
   onSuccess?: () => void,
   appointment?: Appointment,
   defaultDate?: Date, // Fecha prellenada (desde calendario)
-  defaultTimeRange?: MinutesTimeRange // Hora prellenada (desde clic en hora)
+  defaultTimeRange?: MinutesTimeRange, // Hora prellenada (desde clic en hora)
+  defaultServiceIds?: string[], // Servicios pre-seleccionados
+  onAppointmentCreated?: (appointmentId: string) => void // Callback cuando se crea la cita
 ) {
   const [activeStep, setActiveStep] = useState(1)
   const [clientId, setClientId] = useState(
     appointment ? appointment.clientId : ''
   )
   const [serviceIds, setServiceIds] = useState<string[]>(
-    appointment ? appointment.serviceIds : []
+    appointment ? appointment.serviceIds : (defaultServiceIds || [])
   )
   const [date, setDate] = useState<Date>(
     appointment ? new Date(appointment.date) : (defaultDate || new Date())
@@ -70,6 +72,19 @@ export function useAppointmentForm(
       }
     }
   }, [clients, defaultClientName, clientId])
+
+  // Update serviceIds when defaultServiceIds changes (for preselection)
+  useEffect(() => {
+    if (!appointment) {
+      if (defaultServiceIds && defaultServiceIds.length > 0) {
+        setServiceIds(defaultServiceIds)
+      } else if (defaultServiceIds && defaultServiceIds.length === 0) {
+        // Handle case where we explicitly want to clear selections
+        setServiceIds([])
+      }
+    }
+  }, [defaultServiceIds, appointment])
+  
   const { data: services } = useGetServices()
   const queryClient = useQueryClient()
 
@@ -236,6 +251,11 @@ export function useAppointmentForm(
         await queryClient.invalidateQueries({
           queryKey: [UseGetAppointmentsQueryKey],
         })
+
+        // Call the appointment created callback if provided (only for new appointments)
+        if (!appointment && onAppointmentCreated) {
+          onAppointmentCreated(result.id)
+        }
 
         if (onSuccess) onSuccess()
       } else {

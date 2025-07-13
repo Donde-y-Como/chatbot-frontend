@@ -28,6 +28,8 @@ interface MakeAppointmentDialogProps {
   defaultClientName?: string;
   defaultDate?: Date; // Para pre-llenar fecha cuando se hace clic en calendario
   defaultTimeRange?: MinutesTimeRange; // Para pre-llenar hora cuando se hace clic en hora específica
+  defaultServiceIds?: string[]; // Para pre-seleccionar servicios
+  onAppointmentCreated?: (appointmentId: string) => void; // Callback cuando se crea la cita
 }
 
 export function MakeAppointmentDialog({
@@ -35,7 +37,9 @@ export function MakeAppointmentDialog({
   onOpenChange,
   defaultClientName,
   defaultDate,
-  defaultTimeRange
+  defaultTimeRange,
+  defaultServiceIds,
+  onAppointmentCreated
 }: MakeAppointmentDialogProps = {}) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
   const { openDialog, closeDialog } = useDialogState()
@@ -73,14 +77,22 @@ export function MakeAppointmentDialog({
     resetForm,
     handleSubmit,
     hasFilledFields,
-  } = useAppointmentForm(defaultClientName, () => {
-    // Usar la función de cambio externa si está disponible, o la interna si no
-    if (onOpenChange) {
-      onOpenChange(false);
-    } else {
-      setInternalOpen(false);
-    }
-  }, undefined, defaultDate, defaultTimeRange)
+  } = useAppointmentForm(
+    defaultClientName, 
+    () => {
+      // Usar la función de cambio externa si está disponible, o la interna si no
+      if (onOpenChange) {
+        onOpenChange(false);
+      } else {
+        setInternalOpen(false);
+      }
+    }, 
+    undefined, 
+    defaultDate, 
+    defaultTimeRange,
+    defaultServiceIds,
+    onAppointmentCreated
+  )
 
   // Determinar si se usa el control externo o interno
   const open = onOpenChange ? defaultOpen : internalOpen;
@@ -117,19 +129,6 @@ export function MakeAppointmentDialog({
   const handleDialogClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevenir que clicks dentro del dialog se propaguen
   }
-  
-  // Actualizar el estado cuando cambia defaultOpen (control externo)
-  useEffect(() => {
-    if (onOpenChange) {
-      // Solo actualizar si hay control externo
-      setInternalOpen(defaultOpen);
-      if (defaultOpen) {
-        openDialog();
-      } else {
-        closeDialog();
-      }
-    }
-  }, [defaultOpen, onOpenChange, openDialog, closeDialog]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

@@ -7,12 +7,13 @@ import {
   Service,
 } from '@/features/appointments/types.ts'
 import { ClientPrimitives } from '../clients/types'
+import { isValid } from 'date-fns'
 
 export const appointmentService = {
   cancelAppointment: async (appointmentId: string) => {
     // En lugar de eliminar, cambiar el estado a cancelada
     const response = await api.put(`/appointments/${appointmentId}`, {
-      status: 'cancelada'
+      status: 'cancelada',
     })
     return response.data
   },
@@ -32,7 +33,8 @@ export const appointmentService = {
 
   getAppointments: async (startDate: string, endDate: string) => {
     let endpoint = '/appointments'
-    if (startDate && endDate) {
+
+    if (startDate.length > 0 && endDate.length > 0) {
       endpoint += `?startDate=${startDate}&endDate=${endDate}`
     }
     const response = await api.get<Appointment[]>(endpoint)
@@ -54,17 +56,17 @@ export const appointmentService = {
     return response.data
   },
 
-  checkAvailability: async (
-    serviceId: string,
-    date: Date
-  ) => {
+  checkAvailability: async (serviceId: string, date: Date) => {
     const response = await api.get<AvailabilityResult>(
-      `/appointments/availability`, {
-      params: {
-        serviceId, date: date.toISOString()
+      `/appointments/availability`,
+      {
+        params: {
+          serviceId,
+          date: date.toISOString(),
+        },
       }
-    })
+    )
 
     return response.data
-  }
+  },
 }

@@ -85,12 +85,15 @@ export const useConvertToSale = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: convertCartToSale,
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success('Venta guardada exitosamente')
       void queryClient.invalidateQueries({
         queryKey: CART_QUERY_KEY,
       })
       void queryClient.invalidateQueries({ queryKey: ['orders'] })
+      void queryClient.invalidateQueries({
+        queryKey: ['clients', data.clientId, 'pendingServices'],
+      })
     },
     onError: () => {
       toast.error('No se pudo guardar la venta, intenta mas tarde')
@@ -102,12 +105,15 @@ export const useConvertToOrder = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: convertCartToOrder,
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success('Orden guardada exitosamente')
       void queryClient.invalidateQueries({
         queryKey: CART_QUERY_KEY,
       })
       void queryClient.invalidateQueries({ queryKey: ['orders'] })
+      void queryClient.invalidateQueries({
+        queryKey: ['clients', data.clientId, 'pendingServices'],
+      })
     },
     onError: () => {
       toast.error('No se pudo guardar la orden, intenta mas tarde')

@@ -1,5 +1,10 @@
 import { api } from '@/api/axiosInstance.ts'
-import { ClientPrimitives } from "./types"
+import { 
+    ClientPrimitives, 
+    GetPendingServicesResponse, 
+    ScheduleClientServicesRequest, 
+    ScheduleClientServicesResponse 
+} from "./types"
 
 export const ClientApiService = {
     findAll: async () => {
@@ -36,5 +41,21 @@ export const ClientApiService = {
         if (response.status !== 200) {
             throw new Error("Error al eliminar el cliente")
         }
+    },
+    
+    getPendingServices: async (clientId: string): Promise<GetPendingServicesResponse> => {
+        const response = await api.get<GetPendingServicesResponse>(`/orders/pending-services/${clientId}`)
+        if (response.status !== 200) {
+            throw new Error("Error al obtener los servicios pendientes")
+        }
+        return response.data
+    },
+    
+    scheduleClientServices: async (clientId: string, request: ScheduleClientServicesRequest): Promise<ScheduleClientServicesResponse> => {
+        const response = await api.put<ScheduleClientServicesResponse>(`/clients/${clientId}/schedule-services`, request)
+        if (response.status !== 200) {
+            throw new Error("Error al agendar los servicios")
+        }
+        return response.data
     }
 }

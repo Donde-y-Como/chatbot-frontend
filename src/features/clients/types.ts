@@ -76,3 +76,52 @@ export type CreateTagForm = z.infer<typeof createTagSchema>
 export type Client = ClientPrimitives;
 
 export { PlatformName };
+
+// Pending Services API Types
+export interface PricePrimitives {
+  amount: number;
+  currency: string;
+}
+
+export interface ServiceItem {
+  itemId: string;
+  name: string;
+  quantity: number;
+  unitPrice: PricePrimitives;
+  finalPrice: PricePrimitives;
+  notes?: string;
+  // New fields for appointment tracking
+  scheduledCount: number;        // Number of scheduled appointments
+  pendingCount: number;          // Number still needing appointments  
+  appointmentIds: string[];      // Array of appointment IDs
+}
+
+export interface PendingServiceInfo {
+  orderId: string;
+  orderCreatedAt: string;
+  clientId: string;
+  businessId: string;
+  serviceItem: ServiceItem;
+}
+
+export interface ServiceSelection {
+  orderId: string;
+  serviceItemIds: string[];
+}
+
+export interface GetPendingServicesResponse {
+  success: boolean;
+  data: PendingServiceInfo[];
+  message: string;
+  total: number;
+}
+
+export interface ScheduleClientServicesRequest {
+  serviceSelections: ServiceSelection[];
+  appointmentId: string;
+}
+
+export interface ScheduleClientServicesResponse {
+  success: boolean;
+  message: string;
+}
