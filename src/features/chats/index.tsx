@@ -12,6 +12,7 @@ import { ChatContent } from '@/features/chats/ChatContent'
 import { chatService } from '@/features/chats/ChatService.ts'
 import { ConnectClient } from '@/features/chats/ConnectClient.tsx'
 import EmptyChatSelectedState from '@/features/chats/EmptyChatSelectedState'
+import ClientsProvider from '@/features/clients/context/clients-context.tsx'
 import { ChatMessages, Client } from './ChatTypes'
 import { ChatBarUnlimited } from './chatBarUnlimited'
 import { usePaginatedChats } from './hooks/usePaginatedChats'
@@ -193,7 +194,9 @@ export default function Chats() {
   return (
     <Main fixed>
       <DialogStateProvider>
-        <ChatsInner />
+        <ClientsProvider>
+          <ChatsInner />
+        </ClientsProvider>
       </DialogStateProvider>
     </Main>
   )
