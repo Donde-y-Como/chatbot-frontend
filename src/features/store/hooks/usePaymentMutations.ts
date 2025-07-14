@@ -70,7 +70,7 @@ const addPaymentToOrder = async (data: AddPaymentToOrderData) => {
     type: 'sale' | 'order'
   }>(`/orders/${data.orderId}/payments`, {
     amount: data.amount,
-    paymentMethod: data.paymentMethod,
+    method: data.paymentMethod,
   })
 
   if (response.data.type === 'sale') {
