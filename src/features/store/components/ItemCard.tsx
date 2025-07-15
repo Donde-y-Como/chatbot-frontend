@@ -24,6 +24,7 @@ export function ItemCard({
   const [showBundleDetails, setShowBundleDetails] = useState(false)
   const [showItemDetails, setShowItemDetails] = useState(false)
   const [quantity, setQuantity] = useState(1)
+  const [isLoading, setIsLoading] = useState(false)
 
   // Verificar si el producto está sin stock
   const isOutOfStock =
@@ -39,44 +40,60 @@ export function ItemCard({
     ('productInfo' in item.itemDetails &&
       item.itemDetails.productInfo.status === ProductStatus.INACTIVO)
 
-  const isDisabled = isOutOfStock || hasNoStock
+  const isDisabled = isOutOfStock || hasNoStock || isLoading
 
   if (isInactive) {
     return null
   }
 
-  const handleAddToCart = () => {
-    if (isDisabled) return
+  const handleAddToCart = async () => {
+    if (isDisabled || isLoading) return
     
-    const quantityToAdd = quantity === 0 ? 1 : quantity
-    
-    const itemToAdd = {
-      itemId: item.itemDetails.id,
-      itemType: item.type,
-      quantity: quantityToAdd,
-    } satisfies CartItemRequest
+    setIsLoading(true)
+    try {
+      const quantityToAdd = quantity === 0 ? 1 : quantity
+      
+      const itemToAdd = {
+        itemId: item.itemDetails.id,
+        itemType: item.type,
+        quantity: quantityToAdd,
+      } satisfies CartItemRequest
 
-    onAddToCart(itemToAdd)
-    setQuantity(1) 
+      await onAddToCart(itemToAdd)
+      setQuantity(1)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleQuickAdd = (e: React.MouseEvent) => {
+  const handleQuickAdd = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (isDisabled) return
-    onAddToCart({
-      itemId: item.itemDetails.id,
-      itemType: item.type,
-      quantity: 1,
-    })
+    if (isDisabled || isLoading) return
+    
+    setIsLoading(true)
+    try {
+      await onAddToCart({
+        itemId: item.itemDetails.id,
+        itemType: item.type,
+        quantity: 1,
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleQuickRemove = (e: React.MouseEvent) => {
+  const handleQuickRemove = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (isDisabled) return
+    if (isDisabled || isLoading) return
 
-    onDecreaseQuantity(item.itemDetails.id)
+    setIsLoading(true)
+    try {
+      await onDecreaseQuantity(item.itemDetails.id)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const incrementQuantity = () => {
@@ -150,8 +167,10 @@ export function ItemCard({
     <>
       <Card
         className={`group relative overflow-hidden border-2 transition-all duration-200 ${
-          isDisabled
+          (isOutOfStock || hasNoStock)
             ? 'border-red-200 bg-gray-50 opacity-60'
+            : isLoading
+            ? 'border-primary/30 bg-primary/5'
             : 'border-transparent hover:border-primary/20 hover:shadow-lg'
         }`}
       >
@@ -163,7 +182,7 @@ export function ItemCard({
                 src={item.itemDetails.photos[0]}
                 alt={item.itemDetails.name}
                 className={`w-full h-full object-cover transition-transform duration-200 ${
-                  isDisabled ? 'grayscale' : 'group-hover:scale-105'
+                  (isOutOfStock || hasNoStock) ? 'grayscale' : 'group-hover:scale-105'
                 }`}
               />
             ) : (
@@ -178,7 +197,7 @@ export function ItemCard({
             )}
 
             {/* Botones de quick add/remove en hover - ocupan mitades de la imagen */}
-            {!isDisabled && (
+            {!(isOutOfStock || hasNoStock || isLoading) && (
               <>
                 {/* Botón de remover (mitad izquierda) */}
                 <div className='absolute left-0 top-0 w-1/2 h-full opacity-0 group-hover/image:opacity-100 md:group-hover/image:opacity-100 transition-opacity duration-200 z-[5]'>
@@ -223,11 +242,20 @@ export function ItemCard({
             )}
 
             {/* Superposición para productos sin stock */}
-            {isDisabled && (
+            {(isOutOfStock || hasNoStock) && !isLoading && (
               <div className='absolute inset-0 bg-red-500/20 flex items-center justify-center'>
                 <div className='bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold flex items-center gap-1'>
                   <AlertTriangle className='h-3 w-3' />
                   Sin Stock
+                </div>
+              </div>
+            )}
+            
+            {isLoading && (
+              <div className='absolute inset-0 bg-primary/10 flex items-center justify-center backdrop-blur-sm'>
+                <div className='bg-primary text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2'>
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Agregando...
                 </div>
               </div>
             )}
@@ -274,7 +302,7 @@ export function ItemCard({
             <div className='flex items-center justify-between gap-2'>
               <span
                 className={`text-sm sm:text-base md:text-lg font-bold truncate ${
-                  isDisabled
+                  isOutOfStock || hasNoStock
                     ? 'text-muted-foreground line-through'
                     : 'text-primary'
                 }`}
@@ -283,8 +311,8 @@ export function ItemCard({
               </span>
             </div>
 
-            {/* Control de cantidad */}
-            {!isDisabled && (
+            {/* Control de cantidad - solo se muestra si no hay problemas de stock y no está cargando */}
+            {!(isOutOfStock || hasNoStock || isLoading) && (
               <div className='space-y-2'>
                 <div className='flex items-center gap-2'>
                   <span className='text-xs text-muted-foreground'>
@@ -331,14 +359,18 @@ export function ItemCard({
                   className='w-full h-8 text-xs'
                   disabled={isDisabled}
                 >
-                  <Plus className='h-3 w-3 mr-1' />
-                  Agregar {(quantity > 1 && quantity !== 0) ? `(${quantity})` : ''}
+                  {isLoading ? (
+                    <div className="h-3 w-3 mr-1 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <Plus className='h-3 w-3 mr-1' />
+                  )}
+                  {isLoading ? 'Agregando...' : `Agregar ${(quantity > 1 && quantity !== 0) ? `(${quantity})` : ''}`}
                 </Button>
               </div>
             )}
 
             {/* Mensaje para productos deshabilitados */}
-            {isDisabled && (
+            {(isOutOfStock || hasNoStock) && (
               <div className='text-center py-2'>
                 <span className='text-xs text-muted-foreground'>
                   No disponible

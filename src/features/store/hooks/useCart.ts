@@ -106,7 +106,17 @@ export function useCart() {
   })
 
   const addToCart = async (item: CartItemRequest) => {
-    addToCartMutation.mutate(item)
+    // Evitar múltiples requests concurrentes
+    if (addToCartMutation.isPending) {
+      return
+    }
+    
+    return new Promise((resolve, reject) => {
+      addToCartMutation.mutate(item, {
+        onSuccess: (data) => resolve(data),
+        onError: (error) => reject(error)
+      })
+    })
   }
 
   // Remove from cart mutation with optimistic update
@@ -175,6 +185,11 @@ export function useCart() {
   })
 
   const updateCartQuantity = async (request: CartItemRequest) => {
+    // Evitar múltiples requests concurrentes
+    if (updateQuantityMutation.isPending) {
+      return
+    }
+
     if (request.quantity <= 0) {
       await removeFromCart(request.itemId)
       return
@@ -183,7 +198,12 @@ export function useCart() {
     const item = cart.items.find((i) => i.itemId === request.itemId)
     if (!item) return
 
-    updateQuantityMutation.mutate(request)
+    return new Promise((resolve, reject) => {
+      updateQuantityMutation.mutate(request, {
+        onSuccess: (data) => resolve(data),
+        onError: (error) => reject(error)
+      })
+    })
   }
 
   const updatePriceMutation = useMutation({
@@ -218,20 +238,29 @@ export function useCart() {
   }
 
   const decreaseQuantity = async (itemId: string) => {
+    // Evitar múltiples requests concurrentes
+    if (updateQuantityMutation.isPending || removeFromCartMutation.isPending) {
+      return
+    }
+
     const item = cart.items.find((i) => i.itemId === itemId)
     if (!item) return
 
     const newQuantity = item.quantity - 1
     
     if (newQuantity <= 0) {
-      await removeFromCart(itemId)
-      return
+      return removeFromCart(itemId)
     }
 
-    updateQuantityMutation.mutate({
-      itemId: item.itemId,
-      itemType: item.itemType,
-      quantity: newQuantity,
+    return new Promise((resolve, reject) => {
+      updateQuantityMutation.mutate({
+        itemId: item.itemId,
+        itemType: item.itemType,
+        quantity: newQuantity,
+      }, {
+        onSuccess: (data) => resolve(data),
+        onError: (error) => reject(error)
+      })
     })
   }
 
