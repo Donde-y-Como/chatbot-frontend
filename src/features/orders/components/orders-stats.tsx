@@ -206,13 +206,13 @@ export function OrdersStats({ orders }: OrdersStatsProps) {
                       <div className='flex gap-1 flex-wrap'>
                         <Badge
                           variant='outline'
-                          className='text-xs px-1.5 py-0.5'
+                          className='text-xs px-1.5 py-0.5 text-black'
                         >
                           {stats.count} pagos
                         </Badge>
                         <Badge
                           variant='outline'
-                          className='text-xs px-1.5 py-0.5'
+                          className='text-xs px-1.5 py-0.5 text-black'
                         >
                           {((stats.total / totalPaid) * 100).toFixed(1)}%
                         </Badge>

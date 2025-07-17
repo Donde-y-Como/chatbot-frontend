@@ -13,10 +13,18 @@ import { Sale, SalesFilters } from './types'
 
 export default function SalesHistory() {
   const [filters, setFilters] = useState<SalesFilters>({})
-  
+
   // Separate queries for stats and filtered data
-  const { data: statsResponse, isLoading: isStatsLoading, error: statsError } = useGetSalesForStats()
-  const { data: filteredResponse, isLoading: isTableLoading, error: tableError } = useGetSalesFiltered(filters)
+  const {
+    data: statsResponse,
+    isLoading: isStatsLoading,
+    error: statsError,
+  } = useGetSalesForStats()
+  const {
+    data: filteredResponse,
+    isLoading: isTableLoading,
+    error: tableError,
+  } = useGetSalesFiltered(filters)
   const columns = useMemo(() => createColumns(), [])
 
   // Use filtered data if available, otherwise use stats data
@@ -25,7 +33,7 @@ export default function SalesHistory() {
   const sales = salesResponse?.data || []
   const isLoading = hasFilters ? isTableLoading : isStatsLoading
   const error = hasFilters ? tableError : statsError
-  
+
   // Stats always use unfiltered data
   const statsSales = statsResponse?.data || []
 
@@ -40,7 +48,7 @@ export default function SalesHistory() {
 
   if (error) {
     return (
-      <Main fixed>
+      <Main>
         <section className='p-2'>
           <div className='flex items-center justify-center h-64'>
             <div className='text-center'>
@@ -58,7 +66,7 @@ export default function SalesHistory() {
   }
 
   return (
-    <Main fixed>
+    <Main>
       <section className='p-2 space-y-6'>
         {/* Header */}
         <div className='mb-2 w-full flex sm:items-center flex-col sm:flex-row sm:justify-between'>
@@ -82,10 +90,10 @@ export default function SalesHistory() {
 
         {/* Estadísticas */}
         {isStatsLoading ? (
-          <div className="animate-pulse space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {Array.from({length: 4}).map((_, i) => (
-                <div key={i} className="h-24 bg-muted rounded-lg"></div>
+          <div className='animate-pulse space-y-4'>
+            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className='h-24 bg-muted rounded-lg'></div>
               ))}
             </div>
           </div>

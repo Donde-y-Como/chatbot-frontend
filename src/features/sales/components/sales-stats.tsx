@@ -192,13 +192,13 @@ export function SalesStats({ sales }: SalesStatsProps) {
                     <div className='flex gap-1 flex-wrap'>
                       <Badge
                         variant='outline'
-                        className='text-xs px-1.5 py-0.5'
+                        className='text-xs px-1.5 py-0.5 text-black'
                       >
                         {stats.count} ventas
                       </Badge>
                       <Badge
                         variant='outline'
-                        className='text-xs px-1.5 py-0.5'
+                        className='text-xs px-1.5 py-0.5 text-black'
                       >
                         {((stats.total / totalRevenue) * 100).toFixed(1)}%
                       </Badge>
