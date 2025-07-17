@@ -28,6 +28,7 @@ import { Input } from '@/components/ui/input.tsx'
 import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
 import { useDialogState } from '@/features/appointments/contexts/DialogStateContext.tsx'
 import { Chat, ChatMessages, ChatResponse } from '@/features/chats/ChatTypes'
+import { useClients } from '@/features/clients/context/clients-context.tsx'
 import { AddTagsModal } from './components/AddTagsModal'
 import { useChatMutations } from './hooks/useChatMutations'
 import { useUpdateClientTags } from './hooks/useUpdateClientTags'
@@ -46,6 +47,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
   const { markAsUnread } = useChatMutations()
+  const { setOpen, setCurrentRow } = useClients()
   const updateProfileNameMutation = useMutation({
     mutationKey: ['set-profile-name'],
     async mutationFn(data: { clientId: string; profileName: string }) {
@@ -383,6 +385,32 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                         }}
                       >
                         Vincular
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (!chat.client) {
+                            return
+                          }
+                          setCurrentRow({
+                            id: chat.client.id,
+                            businessId: chat.client.businessId,
+                            name: chat.client.name,
+                            platformIdentities: chat.client.platformIdentities,
+                            tagIds: chat.client.tagIds,
+                            annexes: chat.client.annexes,
+                            photo: chat.client.photo,
+                            notes: chat.client.notes,
+                            email: chat.client.email,
+                            address: chat.client.address,
+                            birthdate: chat.client.birthdate,
+                            createdAt: chat.client.createdAt,
+                            updatedAt: chat.client.updatedAt,
+                          })
+                          setOpen('view')
+                        }}
+                      >
+                        Ver perfil
                       </DropdownMenuItem>
                     </>
                   ) : (
