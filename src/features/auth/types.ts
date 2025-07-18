@@ -15,6 +15,7 @@ export interface UserData {
   id: string
   logo: string
   name: string
+  phone: string
   plan: BillingPlan
   assistantConfig: {
     id: string

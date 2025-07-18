@@ -6,7 +6,7 @@ export function useWhatsApp() {
     const { data: whatsappData, isLoading } = useWhatsAppData();
 
     useEffect(() => {
-        if (whatsappData?.instanceStatus === "ready") {
+        if (whatsappData?.isConnected) {
             setIsConnected(true);
         } else {
             setIsConnected(false);

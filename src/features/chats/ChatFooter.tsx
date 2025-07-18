@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { toast } from 'sonner'
 import {
   InfiniteData,
   useMutation,
@@ -42,6 +43,7 @@ const ChatFooter = memo(
   }) => {
     const queryClient = useQueryClient()
     const [newMessage, setNewMessage] = useState('')
+    const [isSending, setIsSending] = useState(false)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const {
       isDropdownOpen,
@@ -77,7 +79,16 @@ const ChatFooter = memo(
     const sendMessageMutation = useMutation({
       mutationKey: ['send-message'],
       async mutationFn(data: { conversationId: string; message: Message }) {
-        sendToWebSocket(data)
+        try {
+          sendToWebSocket(data)
+          return data
+        } catch (error) {
+          console.error('Failed to send message:', error)
+          throw error
+        }
+      },
+      onMutate: () => {
+        setIsSending(true)
       },
       onSuccess: async (_data, variables) => {
         queryClient.setQueryData<ChatMessages>(
@@ -123,35 +134,68 @@ const ChatFooter = memo(
           }
         )
       },
+      onError: (error, variables) => {
+        console.error('Message send error:', error)
+        toast.error('Error al enviar mensaje. Inténtalo de nuevo.')
+        
+        // Restore the message in the input on error
+        setNewMessage(variables.message.content)
+        
+        // Remove the optimistically added message from cache
+        queryClient.setQueryData<ChatMessages>(
+          ['chat', selectedChatId],
+          (oldChats) => {
+            if (oldChats === undefined) return oldChats
+            return {
+              ...oldChats,
+              messages: oldChats.messages.filter(msg => msg.id !== variables.message.id),
+            }
+          }
+        )
+      },
+      onSettled: () => {
+        setIsSending(false)
+      },
     })
 
-    const handleSendMessage = useCallback(
-      (e: FormEvent) => {
-        e.preventDefault()
-        if (!newMessage.trim()) return
+    const handleSendMessage = useCallback((e: FormEvent) => {
+      e.preventDefault()
+      
+      const trimmedMessage = newMessage.trim()
+      if (!trimmedMessage || isSending) return
 
-        const newMsg: Message = {
-          id: uid(),
-          content: newMessage.trim(),
-          role: 'business',
-          timestamp: Date.now(),
-          media: null,
-        }
+      const newMsg: Message = {
+        id: uid(),
+        content: trimmedMessage,
+        role: 'business',
+        timestamp: Date.now(),
+        media: null,
+      }
 
-        setNewMessage('')
-        sendMessageMutation.mutate({
-          conversationId: selectedChatId,
-          message: newMsg,
-        })
-      },
-      [newMessage, selectedChatId, sendMessageMutation]
-    )
+      // Clear input immediately for better UX
+      setNewMessage('')
+      
+      // Reset textarea height
+      if (textareaRef.current) {
+        textareaRef.current.style.height = '32px'
+      }
+
+      sendMessageMutation.mutate({
+        conversationId: selectedChatId,
+        message: newMsg,
+      })
+    }, [newMessage, isSending, selectedChatId, sendMessageMutation.mutate])
 
     const handleMediaSend = useCallback(
       (media: {
         type: 'image' | 'video' | 'audio' | 'document'
         url: string
       }) => {
+        if (isSending) {
+          toast.error('Espera a que se envíe el mensaje anterior')
+          return
+        }
+
         const newMsg: Message = {
           id: uid(),
           content: '',
@@ -168,7 +212,7 @@ const ChatFooter = memo(
           message: newMsg,
         })
       },
-      [selectedChatId, sendMessageMutation]
+      [selectedChatId, sendMessageMutation.mutate, isSending]
     )
 
     const handleInputChange = useCallback(
@@ -242,7 +286,7 @@ const ChatFooter = memo(
     )
 
     const handleEmojiSelect = useCallback(
-      (emoji) => {
+      (emoji: { emoji: string }) => {
         setNewMessage((prev) => prev + emoji.emoji)
         if (textareaRef.current) {
           adjustTextareaHeight(textareaRef.current)
@@ -270,10 +314,11 @@ const ChatFooter = memo(
                   ref={textareaRef}
                   rows={1}
                   placeholder='Escribe tu mensaje o usa "/" para respuestas rápidas'
-                  className='h-8 min-h-8 max-h-32 w-full bg-inherit resize-none overflow-y-auto md:pt-1.5 pt-1 focus-visible:outline-none'
+                  className='h-8 min-h-8 max-h-32 w-full bg-inherit resize-none overflow-y-auto md:pt-1.5 pt-1 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed'
                   value={newMessage}
                   onKeyDown={handleKeyDown}
                   onChange={handleInputChange}
+                  disabled={isSending}
                 />
 
                 <QuickResponseDropdown
@@ -295,8 +340,13 @@ const ChatFooter = memo(
                   size='icon'
                   className='hidden sm:inline-flex'
                   type='submit'
+                  disabled={!newMessage.trim() || isSending}
                 >
-                  <IconSend size={20} />
+                  {isSending ? (
+                    <div className='animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full' />
+                  ) : (
+                    <IconSend size={20} />
+                  )}
                 </Button>
               </div>
             </>
@@ -322,8 +372,16 @@ const ChatFooter = memo(
             </div>
           )}
         </div>
-        <Button className='self-start h-10 sm:hidden' type='submit'>
-          <IconSend size={18} />
+        <Button 
+          className='self-start h-10 sm:hidden' 
+          type='submit'
+          disabled={!newMessage.trim() || isSending}
+        >
+          {isSending ? (
+            <div className='animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full' />
+          ) : (
+            <IconSend size={18} />
+          )}
         </Button>
       </form>
     )

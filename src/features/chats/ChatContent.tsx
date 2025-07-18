@@ -42,10 +42,7 @@ export function ChatContent({
     if (!chatData) return false
 
     if (chatData.platformName === 'whatsappWeb') {
-      return (
-        whatsappData?.instanceStatus === 'ready' ||
-        whatsappData?.instanceStatus === 'authenticated'
-      )
+      return whatsappData?.isConnected || false;
     }
 
     const userMessages = chatData.messages.filter(
@@ -58,7 +55,7 @@ export function ChatContent({
     const lastTimestamp = lastUserMessage.timestamp
 
     return differenceInHours(Date.now(), lastTimestamp) < 24
-  }, [chatData, whatsappData?.instanceStatus])
+  }, [chatData, whatsappData?.isConnected])
 
   const isWhatsAppChat = useMemo(() => {
     if (!chatData) return false

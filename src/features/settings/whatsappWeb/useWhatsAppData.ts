@@ -1,13 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { getInstanceId } from '@/lib/utils'
+import { api } from '@/api/axiosInstance.ts'
 import { useGetUser } from '@/components/layout/hooks/useGetUser'
-import { WaapiClientStatus, waapiService } from './waapi-service'
 
 export const WHATSAPP_QUERY_KEY = ['whatsapp'] as const
-
-export type WhatsAppData = WaapiClientStatus & {
-  qr: string
-}
 
 export function useWhatsAppData() {
   const { data: user } = useGetUser()
@@ -17,19 +12,16 @@ export function useWhatsAppData() {
     queryFn: async () => {
       if (!user) throw Error('User not found')
 
-      const instanceId = getInstanceId(user)
-      if (!instanceId) {
-        return { instanceStatus: 'disconnected' as const, qr: '' }
+      const data = await api.get<{ isConnected: boolean }>(
+        '/whatsapp-web/status'
+      )
+
+      if (!data.data.isConnected) {
+        const qr = await api.get<{ qrCode: string }>('whatsapp-web/qr')
+        return { isConnected: data.data.isConnected, qr: qr.data.qrCode }
       }
 
-      const data = await waapiService.clientStatus(instanceId)
-
-      if (data.instanceStatus === 'qr') {
-        const qr = await waapiService.qr(instanceId)
-        return { ...data, qr: qr.data.qr_code }
-      }
-
-      return { ...data, qr: '' }
+      return { isConnected: data.data.isConnected, qr: '' }
     },
     staleTime: Infinity,
     enabled: !!user,
