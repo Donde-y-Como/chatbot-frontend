@@ -38,6 +38,9 @@ const AuthenticatedSettingsRouteLazyImport = createFileRoute(
 const AuthenticatedVentasIndexLazyImport = createFileRoute(
   '/_authenticated/ventas/',
 )()
+const AuthenticatedToolsIndexLazyImport = createFileRoute(
+  '/_authenticated/tools/',
+)()
 const AuthenticatedSettingsIndexLazyImport = createFileRoute(
   '/_authenticated/settings/',
 )()
@@ -190,6 +193,15 @@ const AuthenticatedVentasIndexLazyRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any).lazy(() =>
     import('./routes/_authenticated/ventas/index.lazy').then((d) => d.Route),
+  )
+
+const AuthenticatedToolsIndexLazyRoute =
+  AuthenticatedToolsIndexLazyImport.update({
+    id: '/tools/',
+    path: '/tools/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/tools/index.lazy').then((d) => d.Route),
   )
 
 const AuthenticatedSettingsIndexLazyRoute =
@@ -586,6 +598,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsIndexLazyImport
       parentRoute: typeof AuthenticatedSettingsRouteLazyImport
     }
+    '/_authenticated/tools/': {
+      id: '/_authenticated/tools/'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof AuthenticatedToolsIndexLazyImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
     '/_authenticated/ventas/': {
       id: '/_authenticated/ventas/'
       path: '/ventas'
@@ -641,6 +660,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPaquetesIndexLazyRoute: typeof AuthenticatedPaquetesIndexLazyRoute
   AuthenticatedProductsIndexLazyRoute: typeof AuthenticatedProductsIndexLazyRoute
   AuthenticatedServiciosIndexLazyRoute: typeof AuthenticatedServiciosIndexLazyRoute
+  AuthenticatedToolsIndexLazyRoute: typeof AuthenticatedToolsIndexLazyRoute
   AuthenticatedVentasIndexLazyRoute: typeof AuthenticatedVentasIndexLazyRoute
 }
 
@@ -658,6 +678,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPaquetesIndexLazyRoute: AuthenticatedPaquetesIndexLazyRoute,
   AuthenticatedProductsIndexLazyRoute: AuthenticatedProductsIndexLazyRoute,
   AuthenticatedServiciosIndexLazyRoute: AuthenticatedServiciosIndexLazyRoute,
+  AuthenticatedToolsIndexLazyRoute: AuthenticatedToolsIndexLazyRoute,
   AuthenticatedVentasIndexLazyRoute: AuthenticatedVentasIndexLazyRoute,
 }
 
@@ -696,6 +717,7 @@ export interface FileRoutesByFullPath {
   '/products': typeof AuthenticatedProductsIndexLazyRoute
   '/servicios': typeof AuthenticatedServiciosIndexLazyRoute
   '/settings/': typeof AuthenticatedSettingsIndexLazyRoute
+  '/tools': typeof AuthenticatedToolsIndexLazyRoute
   '/ventas': typeof AuthenticatedVentasIndexLazyRoute
 }
 
@@ -729,6 +751,7 @@ export interface FileRoutesByTo {
   '/products': typeof AuthenticatedProductsIndexLazyRoute
   '/servicios': typeof AuthenticatedServiciosIndexLazyRoute
   '/settings': typeof AuthenticatedSettingsIndexLazyRoute
+  '/tools': typeof AuthenticatedToolsIndexLazyRoute
   '/ventas': typeof AuthenticatedVentasIndexLazyRoute
 }
 
@@ -765,6 +788,7 @@ export interface FileRoutesById {
   '/_authenticated/products/': typeof AuthenticatedProductsIndexLazyRoute
   '/_authenticated/servicios/': typeof AuthenticatedServiciosIndexLazyRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexLazyRoute
+  '/_authenticated/tools/': typeof AuthenticatedToolsIndexLazyRoute
   '/_authenticated/ventas/': typeof AuthenticatedVentasIndexLazyRoute
 }
 
@@ -802,6 +826,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/servicios'
     | '/settings/'
+    | '/tools'
     | '/ventas'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -834,6 +859,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/servicios'
     | '/settings'
+    | '/tools'
     | '/ventas'
   id:
     | '__root__'
@@ -868,6 +894,7 @@ export interface FileRouteTypes {
     | '/_authenticated/products/'
     | '/_authenticated/servicios/'
     | '/_authenticated/settings/'
+    | '/_authenticated/tools/'
     | '/_authenticated/ventas/'
   fileRoutesById: FileRoutesById
 }
@@ -941,6 +968,7 @@ export const routeTree = rootRoute
         "/_authenticated/paquetes/",
         "/_authenticated/products/",
         "/_authenticated/servicios/",
+        "/_authenticated/tools/",
         "/_authenticated/ventas/"
       ]
     },
@@ -1061,6 +1089,10 @@ export const routeTree = rootRoute
     "/_authenticated/settings/": {
       "filePath": "_authenticated/settings/index.lazy.tsx",
       "parent": "/_authenticated/settings"
+    },
+    "/_authenticated/tools/": {
+      "filePath": "_authenticated/tools/index.lazy.tsx",
+      "parent": "/_authenticated"
     },
     "/_authenticated/ventas/": {
       "filePath": "_authenticated/ventas/index.lazy.tsx",
