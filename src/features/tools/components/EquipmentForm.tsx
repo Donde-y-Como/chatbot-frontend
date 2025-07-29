@@ -75,8 +75,8 @@ export const EquipmentForm: React.FC<EquipmentFormProps> = ({
       serialNumber: equipment.serialNumber || '',
       model: equipment.model || '',
       brand: equipment.brand || '',
-      purchaseDate: equipment.purchaseDate ? equipment.purchaseDate.split('T')[0] : '',
-      lastMaintenanceDate: equipment.lastMaintenanceDate ? equipment.lastMaintenanceDate.split('T')[0] : '',
+      purchaseDate: equipment.purchaseDate ? new Date(equipment.purchaseDate).toISOString().split('T')[0] : '',
+      lastMaintenanceDate: equipment.lastMaintenanceDate ? new Date(equipment.lastMaintenanceDate).toISOString().split('T')[0] : '',
     } : {
       status: EquipmentStatus.ACTIVE
     }

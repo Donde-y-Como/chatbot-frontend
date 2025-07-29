@@ -21,11 +21,23 @@ export const EquipmentService = {
   },
 
   update: async (id: string, data: UpdateEquipmentData): Promise<Equipment> => {
-    const response = await api.put<Equipment>(`/equipment/${id}`, data);
-    if (response.status !== 200) {
-      throw new Error('Error updating equipment');
+    try {
+      // Filtrar campos undefined/null antes de enviar
+      const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined && value !== null && value !== '')
+      );
+      
+      console.log('Updating equipment with data:', cleanData);
+      
+      const response = await api.put<Equipment>(`/equipment/${id}`, cleanData);
+      if (response.status !== 200 && response.status !== 201) {
+        throw new Error('Error updating equipment');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Equipment update error:', error);
+      throw error;
     }
-    return response.data;
   },
 
   delete: async (id: string): Promise<void> => {

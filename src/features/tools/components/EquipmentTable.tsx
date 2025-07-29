@@ -29,11 +29,15 @@ export const EquipmentTable: React.FC<EquipmentTableProps> = ({
   const [statusFilter, setStatusFilter] = useState<EquipmentStatus | 'ALL'>('ALL');
 
   const filteredEquipment = equipment.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.brand?.toLowerCase().includes(searchTerm.toLowerCase());
+    // Verificación segura para búsqueda
+    const nameMatch = item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    const categoryMatch = item.category ? item.category.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const brandMatch = item.brand ? item.brand.toLowerCase().includes(searchTerm.toLowerCase()) : false;
     
-    const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
+    const matchesSearch = nameMatch || categoryMatch || brandMatch;
+    
+    const itemStatus = item.status || EquipmentStatus.INACTIVE;
+    const matchesStatus = statusFilter === 'ALL' || itemStatus === statusFilter;
     
     return matchesSearch && matchesStatus;
   });

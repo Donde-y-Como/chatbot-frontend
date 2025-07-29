@@ -28,9 +28,11 @@ export const ConsumableTable: React.FC<ConsumableTableProps> = ({
   const [stockFilter, setStockFilter] = useState<'ALL' | 'LOW' | 'OUT'>('ALL');
 
   const filteredConsumables = consumables.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.brand?.toLowerCase().includes(searchTerm.toLowerCase());
+    const nameMatch = item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    const categoryMatch = item.category ? item.category.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const brandMatch = item.brand ? item.brand.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    
+    const matchesSearch = nameMatch || categoryMatch || brandMatch;
     
     let matchesStock = true;
     if (stockFilter === 'LOW') {

@@ -24,7 +24,9 @@ export const useEquipment = () => {
     try {
       setError(null);
       const newEquipment = await EquipmentService.create(data);
-      setEquipment(prev => [...prev, newEquipment]);
+      
+      await fetchEquipment();
+      
       return newEquipment;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error creating equipment');
@@ -36,9 +38,9 @@ export const useEquipment = () => {
     try {
       setError(null);
       const updatedEquipment = await EquipmentService.update(id, data);
-      setEquipment(prev => 
-        prev.map(item => item.id === id ? updatedEquipment : item)
-      );
+      
+      await fetchEquipment();
+      
       return updatedEquipment;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error updating equipment');
@@ -50,7 +52,9 @@ export const useEquipment = () => {
     try {
       setError(null);
       await EquipmentService.delete(id);
-      setEquipment(prev => prev.filter(item => item.id !== id));
+      
+      await fetchEquipment();
+      
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error deleting equipment');
