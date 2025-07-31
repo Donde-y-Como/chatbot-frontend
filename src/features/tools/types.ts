@@ -10,7 +10,7 @@ export interface Equipment {
   status: EquipmentStatus;
   category?: string | null;
   description?: string | null;
-  photo?: string | null;
+  photos?: string[] | null;
   serialNumber?: string | null;
   model?: string | null;
   brand?: string | null;
@@ -25,7 +25,7 @@ export interface CreateEquipmentData {
   status?: EquipmentStatus;
   category?: string;
   description?: string;
-  photo?: string;
+  photos?: string[];
   serialNumber?: string;
   model?: string;
   brand?: string;
@@ -38,7 +38,7 @@ export interface UpdateEquipmentData {
   status?: EquipmentStatus;
   category?: string;
   description?: string;
-  photo?: string;
+  photos?: string[];
   serialNumber?: string;
   model?: string;
   brand?: string;

@@ -27,8 +27,6 @@ export const EquipmentService = {
         Object.entries(data).filter(([_, value]) => value !== undefined && value !== null && value !== '')
       );
       
-      console.log('Updating equipment with data:', cleanData);
-      
       const response = await api.put<Equipment>(`/equipment/${id}`, cleanData);
       if (response.status !== 200 && response.status !== 201) {
         throw new Error('Error updating equipment');

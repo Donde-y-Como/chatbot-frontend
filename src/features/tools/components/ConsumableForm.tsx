@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,6 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PackageIcon, ImageIcon } from 'lucide-react';
+import { FileUpload } from '@/components/file-upload';
+import { useUploadMedia } from '@/features/chats/hooks/useUploadMedia';
+import { toast } from 'sonner';
 
 const consumableSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -50,10 +53,13 @@ export const ConsumableForm: React.FC<ConsumableFormProps> = ({
 }) => {
   const isEditing = !!consumable;
   const schema = isEditing ? consumableUpdateSchema : consumableSchema;
+  const [photos, setPhotos] = useState<File[]>([]);
+  const { uploadFile, validateFile, isUploading } = useUploadMedia();
   
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors }
   } = useForm<ConsumableFormData | ConsumableUpdateFormData>({
     resolver: zodResolver(schema),
@@ -76,6 +82,35 @@ export const ConsumableForm: React.FC<ConsumableFormProps> = ({
     return 'text-green-600';
   };
 
+  // Handle image upload
+  const handleImageUpload = async (file: File) => {
+    const { isValid } = validateFile(file);
+    if (!isValid) {
+      toast.error('El archivo no es válido');
+      return;
+    }
+
+    try {
+      const url = await uploadFile(file);
+      setValue('photo', url);
+      toast.success('Imagen subida exitosamente');
+    } catch (error) {
+      toast.error('Hubo un error al subir la imagen');
+    }
+  };
+
+  // Handle form submission with photo upload
+  const handleFormSubmit = async (data: ConsumableFormData | ConsumableUpdateFormData) => {
+    // Upload photos if any
+    if (photos.length > 0) {
+      for (const photo of photos) {
+        await handleImageUpload(photo);
+      }
+    }
+    
+    onSubmit(data);
+  };
+
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
@@ -85,7 +120,7 @@ export const ConsumableForm: React.FC<ConsumableFormProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -168,34 +203,52 @@ export const ConsumableForm: React.FC<ConsumableFormProps> = ({
             />
           </div>
 
-          {/* Photo URL */}
+          {/* Photo Upload */}
           <div className="space-y-2">
-            <Label htmlFor="photo" className="flex items-center gap-2">
+            <Label className="flex items-center gap-2">
               <ImageIcon size={16} />
-              URL de la Foto
+              Foto del Consumible
             </Label>
-            <Input
-              id="photo"
-              {...register('photo')}
-              placeholder="https://ejemplo.com/foto.jpg"
+            <FileUpload
+              maxFiles={1}
+              maxSize={10 * 1024 * 1024}
+              value={photos}
+              onChange={setPhotos}
+              accept={{
+                'image/*': ['.png', '.jpg', '.jpeg', '.gif']
+              }}
             />
+            {/* Show current photo URL if editing */}
+            {consumable?.photo && (
+              <div className="text-sm text-gray-600">
+                <p>Imagen actual:</p>
+                <img 
+                  src={consumable.photo} 
+                  alt="Imagen actual" 
+                  className="w-20 h-20 object-cover rounded border mt-1"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Actions */}
           <div className="flex gap-4 pt-4">
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isUploading}
               className="flex-1"
             >
-              {isLoading ? 'Guardando...' : (submitText || (isEditing ? 'Actualizar' : 'Crear'))}
+              {isLoading || isUploading ? 'Guardando...' : (submitText || (isEditing ? 'Actualizar' : 'Crear'))}
             </Button>
             {onCancel && (
               <Button
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                disabled={isLoading}
+                disabled={isLoading || isUploading}
                 className="flex-1"
               >
                 Cancelar

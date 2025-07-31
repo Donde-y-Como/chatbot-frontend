@@ -9,7 +9,7 @@ import { ConsumableTable } from './components/ConsumableTable';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Plus, Settings, Package, AlertCircle, CheckCircle, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -289,6 +289,9 @@ export default function Tools() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Crear Nuevo Equipo</DialogTitle>
+            <DialogDescription>
+              Complete el formulario para agregar un nuevo equipo o insumo al inventario.
+            </DialogDescription>
           </DialogHeader>
           <EquipmentForm
             onSubmit={handleCreateEquipment}
@@ -301,6 +304,9 @@ export default function Tools() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Equipo</DialogTitle>
+            <DialogDescription>
+              Modifique la información del equipo seleccionado.
+            </DialogDescription>
           </DialogHeader>
           {editingEquipment && (
             <EquipmentForm
@@ -317,6 +323,9 @@ export default function Tools() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Crear Nuevo Consumible</DialogTitle>
+            <DialogDescription>
+              Complete el formulario para agregar un nuevo consumible al inventario.
+            </DialogDescription>
           </DialogHeader>
           <ConsumableForm
             onSubmit={handleCreateConsumable}
@@ -329,6 +338,9 @@ export default function Tools() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Consumible</DialogTitle>
+            <DialogDescription>
+              Modifique la información del consumible seleccionado.
+            </DialogDescription>
           </DialogHeader>
           {editingConsumable && (
             <ConsumableForm
@@ -345,6 +357,9 @@ export default function Tools() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Detalles del Equipo</DialogTitle>
+            <DialogDescription>
+              Información detallada del equipo seleccionado.
+            </DialogDescription>
           </DialogHeader>
           {viewingEquipment && (
             <div className="space-y-4">
@@ -389,6 +404,9 @@ export default function Tools() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Detalles del Consumible</DialogTitle>
+            <DialogDescription>
+              Información detallada del consumible seleccionado.
+            </DialogDescription>
           </DialogHeader>
           {viewingConsumable && (
             <div className="space-y-4">

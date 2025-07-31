@@ -54,16 +54,26 @@ export const EquipmentDetails: React.FC<EquipmentDetailsProps> = ({ equipment })
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-6">
-            {equipment.photo && (
+            {equipment.photos && equipment.photos.length > 0 && (
               <div className="flex-shrink-0">
-                <img 
-                  src={equipment.photo} 
-                  alt={equipment.name}
-                  className="w-32 h-32 object-cover rounded-lg border"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  {equipment.photos.slice(0, 4).map((photo, index) => (
+                    <img 
+                      key={index}
+                      src={photo} 
+                      alt={`${equipment.name} - Imagen ${index + 1}`}
+                      className="w-16 h-16 object-cover rounded-lg border"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ))}
+                </div>
+                {equipment.photos.length > 4 && (
+                  <p className="text-sm text-gray-500 mt-2 text-center">
+                    +{equipment.photos.length - 4} más
+                  </p>
+                )}
               </div>
             )}
             <div className="flex-1 space-y-4">
