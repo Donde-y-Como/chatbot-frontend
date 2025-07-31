@@ -63,7 +63,7 @@ export const EquipmentTable: React.FC<EquipmentTableProps> = ({
   };
 
   const formatDate = (dateString?: string | null) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('es-ES');
   };
 
@@ -143,13 +143,13 @@ export const EquipmentTable: React.FC<EquipmentTableProps> = ({
                     </TableCell>
                     <TableCell>{getStatusBadge(item.status)}</TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {item.category || 'N/A'}
+                      {item.category || '-'}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      {item.brand || 'N/A'}
+                      {item.brand || '-'}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      {item.model || 'N/A'}
+                      {item.model || '-'}
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
                       <div className="flex items-center gap-1">

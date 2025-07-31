@@ -25,10 +25,11 @@ export const useConsumables = () => {
       setError(null);
       const newConsumable = await ConsumableService.create(data);
       
-      await fetchConsumables();
+      setConsumables(prev => [...prev, newConsumable]);
       
       return newConsumable;
     } catch (err) {
+      console.error('Create consumable error:', err);
       setError(err instanceof Error ? err.message : 'Error creating consumable');
       return null;
     }
@@ -39,10 +40,11 @@ export const useConsumables = () => {
       setError(null);
       const updatedConsumable = await ConsumableService.update(id, data);
       
-      await fetchConsumables();
+      setConsumables(prev => prev.map(c => c.id === id ? updatedConsumable : c));
       
       return updatedConsumable;
     } catch (err) {
+      console.error('Update consumable error:', err);
       setError(err instanceof Error ? err.message : 'Error updating consumable');
       return null;
     }
@@ -53,10 +55,11 @@ export const useConsumables = () => {
       setError(null);
       await ConsumableService.delete(id);
       
-      await fetchConsumables();
+      setConsumables(prev => prev.filter(c => c.id !== id));
       
       return true;
     } catch (err) {
+      console.error('Delete consumable error:', err);
       setError(err instanceof Error ? err.message : 'Error deleting consumable');
       return false;
     }

@@ -39,9 +39,14 @@ export const EquipmentService = {
   },
 
   delete: async (id: string): Promise<void> => {
-    const response = await api.delete(`/equipment/${id}`);
-    if (response.status !== 200) {
-      throw new Error('Error deleting equipment');
+    try {
+      const response = await api.delete(`/equipment/${id}`);
+      if (response.status !== 200 && response.status !== 201 && response.status !== 204) {
+        throw new Error('Error deleting equipment');
+      }
+    } catch (error) {
+      console.error('Equipment delete error:', error);
+      throw error;
     }
   },
 };

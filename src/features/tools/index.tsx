@@ -2,25 +2,32 @@ import React, { useState } from 'react';
 import { TabType, Equipment, Consumable, CreateEquipmentData, UpdateEquipmentData, CreateConsumableData, UpdateConsumableData, EquipmentStatus } from './types';
 import { useEquipment } from './hooks/useEquipment';
 import { useConsumables } from './hooks/useConsumables';
-import { EquipmentForm } from './components/EquipmentForm';
-import { ConsumableForm } from './components/ConsumableForm';
+import { EquipmentEditDialog } from './components/equipment/EquipmentEditDialog';
+import { EquipmentViewDialog } from './components/equipment/EquipmentViewDialog';
+import { ConsumableEditDialog } from './components/consumable/ConsumableEditDialog';
+import { ConsumableViewDialog } from './components/consumable/ConsumableViewDialog';
 import { EquipmentTable } from './components/EquipmentTable';
 import { ConsumableTable } from './components/ConsumableTable';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Plus, Settings, Package, AlertCircle, CheckCircle, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function Tools() {
   const [activeTab, setActiveTab] = useState<TabType>('equipment');
+  
+  // Equipment dialogs
   const [showEquipmentForm, setShowEquipmentForm] = useState(false);
-  const [showConsumableForm, setShowConsumableForm] = useState(false);
+  const [showEquipmentView, setShowEquipmentView] = useState(false);
   const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
-  const [editingConsumable, setEditingConsumable] = useState<Consumable | null>(null);
   const [viewingEquipment, setViewingEquipment] = useState<Equipment | null>(null);
+  
+  // Consumable dialogs
+  const [showConsumableForm, setShowConsumableForm] = useState(false);
+  const [showConsumableView, setShowConsumableView] = useState(false);
+  const [editingConsumable, setEditingConsumable] = useState<Consumable | null>(null);
   const [viewingConsumable, setViewingConsumable] = useState<Consumable | null>(null);
 
   const {
@@ -42,21 +49,19 @@ export default function Tools() {
   } = useConsumables();
 
   // Equipment handlers
-  const handleCreateEquipment = async (data: CreateEquipmentData | UpdateEquipmentData) => {
-    const result = await createEquipment(data as CreateEquipmentData);
+  const handleCreateEquipment = async (data: CreateEquipmentData) => {
+    const result = await createEquipment(data);
     if (result) {
       setShowEquipmentForm(false);
-      toast(`${(data as CreateEquipmentData).name} ha sido creado exitosamente.`);
+      toast.success(`${data.name} ha sido creado exitosamente.`);
     }
   };
 
-  const handleUpdateEquipment = async (data: CreateEquipmentData | UpdateEquipmentData) => {
-    if (!editingEquipment) return;
-    
-    const result = await updateEquipment(editingEquipment.id, data as UpdateEquipmentData);
+  const handleUpdateEquipment = async (equipment: Equipment, data: UpdateEquipmentData) => {
+    const result = await updateEquipment(equipment.id, data);
     if (result) {
       setEditingEquipment(null);
-      toast('Los cambios han sido guardados exitosamente.');
+      toast.success('Los cambios han sido guardados exitosamente.');
     }
   };
 
@@ -64,7 +69,7 @@ export default function Tools() {
     const equipmentToDelete = equipment.find(e => e.id === id);
     const success = await deleteEquipment(id);
     if (success && equipmentToDelete) {
-      toast(`${equipmentToDelete.name} ha sido eliminado.`);
+      toast.success(`${equipmentToDelete.name} ha sido eliminado.`);
     }
   };
 
@@ -74,24 +79,23 @@ export default function Tools() {
 
   const handleViewEquipment = (equipment: Equipment) => {
     setViewingEquipment(equipment);
+    setShowEquipmentView(true);
   };
 
   // Consumable handlers
-  const handleCreateConsumable = async (data: CreateConsumableData | UpdateConsumableData) => {
-    const result = await createConsumable(data as CreateConsumableData);
+  const handleCreateConsumable = async (data: CreateConsumableData) => {
+    const result = await createConsumable(data);
     if (result) {
       setShowConsumableForm(false);
-      toast(`${(data as CreateConsumableData).name} ha sido creado exitosamente.`);
+      toast.success(`${data.name} ha sido creado exitosamente.`);
     }
   };
 
-  const handleUpdateConsumable = async (data: CreateConsumableData | UpdateConsumableData) => {
-    if (!editingConsumable) return;
-    
-    const result = await updateConsumable(editingConsumable.id, data as UpdateConsumableData);
+  const handleUpdateConsumable = async (consumable: Consumable, data: UpdateConsumableData) => {
+    const result = await updateConsumable(consumable.id, data);
     if (result) {
       setEditingConsumable(null);
-      toast('Los cambios han sido guardados exitosamente.');
+      toast.success('Los cambios han sido guardados exitosamente.');
     }
   };
 
@@ -99,7 +103,7 @@ export default function Tools() {
     const consumableToDelete = consumables.find(c => c.id === id);
     const success = await deleteConsumable(id);
     if (success && consumableToDelete) {
-      toast(`${consumableToDelete.name} ha sido eliminado.`);
+      toast.success(`${consumableToDelete.name} ha sido eliminado.`);
     }
   };
 
@@ -109,6 +113,7 @@ export default function Tools() {
 
   const handleViewConsumable = (consumable: Consumable) => {
     setViewingConsumable(consumable);
+    setShowConsumableView(true);
   };
 
   // Get stats
@@ -250,7 +255,7 @@ export default function Tools() {
             <Alert className="border-red-200 bg-red-50">
               <AlertCircle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800">
-                Error al cargar equipos: {equipmentError}
+                {equipmentError}
               </AlertDescription>
             </Alert>
           )}
@@ -269,7 +274,7 @@ export default function Tools() {
             <Alert className="border-red-200 bg-red-50">
               <AlertCircle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800">
-                Error al cargar consumibles: {consumablesError}
+                {consumablesError}
               </AlertDescription>
             </Alert>
           )}
@@ -285,163 +290,68 @@ export default function Tools() {
       </Tabs>
 
       {/* Equipment Dialogs */}
-      <Dialog open={showEquipmentForm} onOpenChange={setShowEquipmentForm}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Crear Nuevo Equipo</DialogTitle>
-            <DialogDescription>
-              Complete el formulario para agregar un nuevo equipo o insumo al inventario.
-            </DialogDescription>
-          </DialogHeader>
-          <EquipmentForm
-            onSubmit={handleCreateEquipment}
-            onCancel={() => setShowEquipmentForm(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <EquipmentEditDialog
+        equipment={null}
+        isOpen={showEquipmentForm}
+        onClose={() => setShowEquipmentForm(false)}
+        onSubmit={handleUpdateEquipment}
+        onCreate={handleCreateEquipment}
+        mode="create"
+      />
 
-      <Dialog open={!!editingEquipment} onOpenChange={() => setEditingEquipment(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Equipo</DialogTitle>
-            <DialogDescription>
-              Modifique la información del equipo seleccionado.
-            </DialogDescription>
-          </DialogHeader>
-          {editingEquipment && (
-            <EquipmentForm
-              equipment={editingEquipment}
-              onSubmit={handleUpdateEquipment}
-              onCancel={() => setEditingEquipment(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <EquipmentEditDialog
+        equipment={editingEquipment}
+        isOpen={!!editingEquipment}
+        onClose={() => setEditingEquipment(null)}
+        onSubmit={handleUpdateEquipment}
+        mode="edit"
+      />
+
+      <EquipmentViewDialog
+        equipment={viewingEquipment}
+        isOpen={showEquipmentView}
+        onClose={() => {
+          setShowEquipmentView(false);
+          setViewingEquipment(null);
+        }}
+        onEdit={(equipment) => {
+          setShowEquipmentView(false);
+          setViewingEquipment(null);
+          setEditingEquipment(equipment);
+        }}
+      />
 
       {/* Consumable Dialogs */}
-      <Dialog open={showConsumableForm} onOpenChange={setShowConsumableForm}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Crear Nuevo Consumible</DialogTitle>
-            <DialogDescription>
-              Complete el formulario para agregar un nuevo consumible al inventario.
-            </DialogDescription>
-          </DialogHeader>
-          <ConsumableForm
-            onSubmit={handleCreateConsumable}
-            onCancel={() => setShowConsumableForm(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <ConsumableEditDialog
+        consumable={null}
+        isOpen={showConsumableForm}
+        onClose={() => setShowConsumableForm(false)}
+        onSubmit={handleUpdateConsumable}
+        onCreate={handleCreateConsumable}
+        mode="create"
+      />
 
-      <Dialog open={!!editingConsumable} onOpenChange={() => setEditingConsumable(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Consumible</DialogTitle>
-            <DialogDescription>
-              Modifique la información del consumible seleccionado.
-            </DialogDescription>
-          </DialogHeader>
-          {editingConsumable && (
-            <ConsumableForm
-              consumable={editingConsumable}
-              onSubmit={handleUpdateConsumable}
-              onCancel={() => setEditingConsumable(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <ConsumableEditDialog
+        consumable={editingConsumable}
+        isOpen={!!editingConsumable}
+        onClose={() => setEditingConsumable(null)}
+        onSubmit={handleUpdateConsumable}
+        mode="edit"
+      />
 
-      {/* View Dialogs */}
-      <Dialog open={!!viewingEquipment} onOpenChange={() => setViewingEquipment(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Detalles del Equipo</DialogTitle>
-            <DialogDescription>
-              Información detallada del equipo seleccionado.
-            </DialogDescription>
-          </DialogHeader>
-          {viewingEquipment && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="font-semibold">Nombre:</p>
-                  <p>{viewingEquipment.name}</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Estado:</p>
-                  <p>{viewingEquipment.status}</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Categoría:</p>
-                  <p>{viewingEquipment.category || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Marca:</p>
-                  <p>{viewingEquipment.brand || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Modelo:</p>
-                  <p>{viewingEquipment.model || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Número de Serie:</p>
-                  <p>{viewingEquipment.serialNumber || 'N/A'}</p>
-                </div>
-              </div>
-              {viewingEquipment.description && (
-                <div>
-                  <p className="font-semibold">Descripción:</p>
-                  <p>{viewingEquipment.description}</p>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!viewingConsumable} onOpenChange={() => setViewingConsumable(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Detalles del Consumible</DialogTitle>
-            <DialogDescription>
-              Información detallada del consumible seleccionado.
-            </DialogDescription>
-          </DialogHeader>
-          {viewingConsumable && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="font-semibold">Nombre:</p>
-                  <p>{viewingConsumable.name}</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Stock:</p>
-                  <p>{viewingConsumable.stock} unidades</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Categoría:</p>
-                  <p>{viewingConsumable.category || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Marca:</p>
-                  <p>{viewingConsumable.brand || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Modelo:</p>
-                  <p>{viewingConsumable.model || 'N/A'}</p>
-                </div>
-              </div>
-              {viewingConsumable.description && (
-                <div>
-                  <p className="font-semibold">Descripción:</p>
-                  <p>{viewingConsumable.description}</p>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ConsumableViewDialog
+        consumable={viewingConsumable}
+        isOpen={showConsumableView}
+        onClose={() => {
+          setShowConsumableView(false);
+          setViewingConsumable(null);
+        }}
+        onEdit={(consumable) => {
+          setShowConsumableView(false);
+          setViewingConsumable(null);
+          setEditingConsumable(consumable);
+        }}
+      />
     </div>
   );
 }

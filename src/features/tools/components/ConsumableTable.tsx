@@ -156,13 +156,13 @@ export const ConsumableTable: React.FC<ConsumableTableProps> = ({
                     </TableCell>
                     <TableCell>{getStockBadge(item.stock)}</TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {item.category || 'N/A'}
+                      {item.category || '-'}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      {item.brand || 'N/A'}
+                      {item.brand || '-'}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      {item.model || 'N/A'}
+                      {item.model || '-'}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

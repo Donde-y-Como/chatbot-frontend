@@ -34,9 +34,14 @@ export const ConsumableService = {
   },
 
   delete: async (id: string): Promise<void> => {
-    const response = await api.delete(`/consumables/${id}`);
-    if (response.status !== 200) {
-      throw new Error('Error deleting consumable');
+    try {
+      const response = await api.delete(`/consumables/${id}`);
+      if (response.status !== 200 && response.status !== 201 && response.status !== 204) {
+        throw new Error('Error deleting consumable');
+      }
+    } catch (error) {
+      console.error('Consumable delete error:', error);
+      throw error;
     }
   },
 };

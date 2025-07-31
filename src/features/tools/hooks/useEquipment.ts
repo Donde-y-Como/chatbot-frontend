@@ -14,7 +14,11 @@ export const useEquipment = () => {
       const data = await EquipmentService.getAll();
       setEquipment(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error fetching equipment');
+      const errorMessage = err instanceof Error ? err.message : 'Error fetching equipment';
+      console.error('Fetch equipment error:', err);
+      setError(errorMessage);
+      
+      setTimeout(() => setError(null), 5000);
     } finally {
       setLoading(false);
     }
@@ -25,10 +29,11 @@ export const useEquipment = () => {
       setError(null);
       const newEquipment = await EquipmentService.create(data);
       
-      await fetchEquipment();
+      setEquipment(prev => [...prev, newEquipment]);
       
       return newEquipment;
     } catch (err) {
+      console.error('Create equipment error:', err);
       setError(err instanceof Error ? err.message : 'Error creating equipment');
       return null;
     }
@@ -39,10 +44,11 @@ export const useEquipment = () => {
       setError(null);
       const updatedEquipment = await EquipmentService.update(id, data);
       
-      await fetchEquipment();
+      setEquipment(prev => prev.map(eq => eq.id === id ? updatedEquipment : eq));
       
       return updatedEquipment;
     } catch (err) {
+      console.error('Update equipment error:', err);
       setError(err instanceof Error ? err.message : 'Error updating equipment');
       return null;
     }
@@ -53,10 +59,11 @@ export const useEquipment = () => {
       setError(null);
       await EquipmentService.delete(id);
       
-      await fetchEquipment();
+      setEquipment(prev => prev.filter(eq => eq.id !== id));
       
       return true;
     } catch (err) {
+      console.error('Delete equipment error:', err);
       setError(err instanceof Error ? err.message : 'Error deleting equipment');
       return false;
     }
