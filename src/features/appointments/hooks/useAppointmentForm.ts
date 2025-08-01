@@ -6,7 +6,7 @@ import { appointmentService } from '@/features/appointments/appointmentService.t
 import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
-import { Appointment, MinutesTimeRange, AppointmentStatus, PaymentStatus, Deposit } from '@/features/appointments/types.ts'
+import { Appointment, MinutesTimeRange, AppointmentStatus, PaymentStatus, Deposit, ConsumableUsage } from '@/features/appointments/types.ts'
 import { isValidAppointmentDate, getPastDateErrorMessage, canChangeDateTo } from '@/features/appointments/utils/formatters'
 import { useCheckAvailability } from './useCheckAvailability'
 
@@ -54,6 +54,14 @@ export function useAppointmentForm(
   )
   const [notes, setNotes] = useState<string>(
     appointment?.notes || ''
+  )
+  
+  // Nuevos estados para equipos y consumibles
+  const [selectedEquipmentIds, setSelectedEquipmentIds] = useState<string[]>(
+    appointment?.equipmentIds || []
+  )
+  const [consumableUsages, setConsumableUsages] = useState<ConsumableUsage[]>(
+    appointment?.consumableUsages || []
   )
   
   const [loading, setLoading] = useState(false)
@@ -179,6 +187,8 @@ export function useAppointmentForm(
       setPaymentStatus(appointment.paymentStatus || 'pendiente')
       setDeposit(appointment.deposit || null)
       setNotes(appointment.notes || '')
+      setSelectedEquipmentIds(appointment.equipmentIds || [])
+      setConsumableUsages(appointment.consumableUsages || [])
     } else {
       setClientId('')
       setServiceIds([])
@@ -197,6 +207,8 @@ export function useAppointmentForm(
       setPaymentStatus('pendiente')
       setDeposit(null)
       setNotes('')
+      setSelectedEquipmentIds([])
+      setConsumableUsages([])
     }
 
     setActiveStep(1)
@@ -233,6 +245,8 @@ export function useAppointmentForm(
       status,
       paymentStatus,
       deposit,
+      equipmentIds: selectedEquipmentIds,
+      consumableUsages,
     } satisfies Partial<Appointment>
 
     try {
@@ -311,6 +325,32 @@ export function useAppointmentForm(
     )
   }
 
+  const toggleEquipmentSelection = (equipmentId: string) => {
+    setSelectedEquipmentIds((prev) =>
+      prev.includes(equipmentId)
+        ? prev.filter((id) => id !== equipmentId)
+        : [...prev, equipmentId]
+    )
+  }
+
+  const updateConsumableUsage = (consumableId: string, quantity: number) => {
+    setConsumableUsages((prev) => {
+      const existingIndex = prev.findIndex(usage => usage.consumableId === consumableId)
+      
+      if (quantity === 0) {
+        return prev.filter(usage => usage.consumableId !== consumableId)
+      }
+      
+      if (existingIndex !== -1) {
+        const updated = [...prev]
+        updated[existingIndex] = { consumableId, quantity }
+        return updated
+      } else {
+        return [...prev, { consumableId, quantity }]
+      }
+    })
+  }
+
   const hasFilledFields = () => {
     return clientId !== '' || serviceIds.length > 0
   }
@@ -335,6 +375,12 @@ export function useAppointmentForm(
     setDeposit,
     setNotes,
 
+    // Campos de equipos y consumibles
+    selectedEquipmentIds,
+    consumableUsages,
+    setSelectedEquipmentIds,
+    setConsumableUsages,
+
     clients,
     services,
     selectedClient,
@@ -349,6 +395,8 @@ export function useAppointmentForm(
     setDate,
     setTimeRange,
     toggleEmployeeSelection,
+    toggleEquipmentSelection,
+    updateConsumableUsage,
     resetForm,
     handleSubmit,
     hasFilledFields,

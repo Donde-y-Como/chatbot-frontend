@@ -64,6 +64,11 @@ export interface Deposit {
   currency: string
 }
 
+export interface ConsumableUsage {
+  consumableId: string
+  quantity: number
+}
+
 
 export type EmployeeAvailable = Pick<
   Employee,
@@ -89,6 +94,11 @@ export const appointmentCreated = z.object({
     amount: z.number(),
     currency: z.string(),
   }).nullable().optional(),
+  equipmentIds: z.array(z.string()).optional(),
+  consumableUsages: z.array(z.object({
+    consumableId: z.string(),
+    quantity: z.number(),
+  })).optional(),
 })
 
 export type AppointmentCreated = z.infer<typeof appointmentCreated>
@@ -115,6 +125,11 @@ export const appointment = z.object({
     amount: z.number(),
     currency: z.string(),
   }).nullable().default(null),
+  equipmentIds: z.array(z.string()).default([]),
+  consumableUsages: z.array(z.object({
+    consumableId: z.string(),
+    quantity: z.number(),
+  })).default([]),
 })
 
 export type Appointment = z.infer<typeof appointment>

@@ -1,7 +1,7 @@
 import React from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
-import { CalendarIcon, DollarSignIcon, Scissors, User, CreditCard, FileText, CheckCircle } from 'lucide-react'
+import { CalendarIcon, DollarSignIcon, Scissors, User, CreditCard, FileText, CheckCircle, Wrench, Package } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,7 +19,9 @@ import {
 } from '@/components/ui/hover-card.tsx'
 import { ClientPrimitives } from '@/features/clients/types'
 import { useGetEmployees } from '../../hooks/useGetEmployees'
-import { MinutesTimeRange, Service, AppointmentStatus, PaymentStatus, Deposit } from '../../types'
+import { useEquipment } from '@/features/tools/hooks/useEquipment'
+import { useConsumables } from '@/features/tools/hooks/useConsumables'
+import { MinutesTimeRange, Service, AppointmentStatus, PaymentStatus, Deposit, ConsumableUsage } from '../../types'
 import { formatSlotHour } from '../../utils/formatters'
 import { AppointmentStatusBadge, PaymentStatusBadge } from '../StatusBadges'
 
@@ -34,6 +36,9 @@ interface ConfirmationStepProps {
   paymentStatus: PaymentStatus
   deposit: Deposit | null
   notes: string
+  // Nuevos campos para equipos y consumibles
+  selectedEquipmentIds?: string[]
+  consumableUsages?: ConsumableUsage[]
   loading: boolean
   onSubmit: () => void
   onBack: () => void
@@ -53,6 +58,8 @@ export function ConfirmationStep({
   paymentStatus,
   deposit,
   notes,
+  selectedEquipmentIds = [],
+  consumableUsages = [],
   loading,
   onSubmit,
   onBack,
@@ -60,8 +67,22 @@ export function ConfirmationStep({
 }: ConfirmationStepProps) {
   const formattedTimeRange = `${formatSlotHour(timeRange.startAt)} - ${formatSlotHour(timeRange.endAt)}`
   const { data: employees } = useGetEmployees()
+  const { equipment } = useEquipment()
+  const { consumables } = useConsumables()
+  
   const selectedEmployees = employees
     ? employees.filter((emp) => selectedEmployeeIds.includes(emp.id))
+    : []
+    
+  const selectedEquipment = equipment
+    ? equipment.filter((eq) => selectedEquipmentIds.includes(eq.id))
+    : []
+    
+  const selectedConsumables = consumables
+    ? consumableUsages.map(usage => {
+        const consumable = consumables.find(c => c.id === usage.consumableId)
+        return consumable ? { ...consumable, quantity: usage.quantity } : null
+      }).filter(Boolean)
     : []
 
   return (
@@ -166,6 +187,50 @@ export function ConfirmationStep({
                 <p className='text-sm text-muted-foreground'>Notas</p>
                 <div className='mt-1 p-2 bg-muted/50 rounded-md'>
                   <p className='text-sm'>{notes}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Equipos */}
+          {selectedEquipment.length > 0 && (
+            <div className='flex items-start gap-2'>
+              <Wrench className='h-5 w-5 text-primary mt-1' />
+              <div>
+                <p className='text-sm text-muted-foreground'>Equipos</p>
+                <div className='space-y-1 mt-1'>
+                  {selectedEquipment.map((eq) => (
+                    <div key={eq.id} className='flex items-center gap-2'>
+                      <Badge variant='outline' className='text-xs'>
+                        {eq.name}
+                      </Badge>
+                      {eq.category && (
+                        <span className='text-xs text-muted-foreground'>({eq.category})</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Consumibles */}
+          {selectedConsumables.length > 0 && (
+            <div className='flex items-start gap-2'>
+              <Package className='h-5 w-5 text-primary mt-1' />
+              <div>
+                <p className='text-sm text-muted-foreground'>Consumibles</p>
+                <div className='space-y-1 mt-1'>
+                  {selectedConsumables.map((consumable: any) => (
+                    <div key={consumable.id} className='flex items-center gap-2'>
+                      <Badge variant='outline' className='text-xs'>
+                        {consumable.name} x{consumable.quantity}
+                      </Badge>
+                      {consumable.category && (
+                        <span className='text-xs text-muted-foreground'>({consumable.category})</span>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
