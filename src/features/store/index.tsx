@@ -116,7 +116,7 @@ export default function Store() {
       return
     }
 
-    await cart.addToCart(item)
+    void cart.addToCart(item)
   }
 
   const handleDateSelected = async (item: CartItemRequest) => {
