@@ -6,6 +6,7 @@ import {
   Info,
   Package,
   Users,
+  Wrench,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +24,8 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Service } from '@/features/appointments/types'
 import { ProductStatus } from '@/features/products/types.ts'
+import { useEquipment } from '@/features/tools/hooks/useEquipment'
+import { useConsumables } from '@/features/tools/hooks/useConsumables'
 
 interface Props {
   currentService?: Service
@@ -55,6 +58,19 @@ export function ServiceViewDialog({
   open,
   onOpenChange,
 }: Props) {
+  const { equipment } = useEquipment()
+  const { consumables } = useConsumables()
+
+  // Obtener equipos asignados
+  const assignedEquipment = equipment.filter(eq => 
+    currentService?.equipmentIds?.includes(eq.id)
+  )
+
+  // Obtener consumibles asignados con su información completa
+  const assignedConsumables = currentService?.consumableUsages?.map(usage => {
+    const consumable = consumables.find(c => c.id === usage.consumableId)
+    return consumable ? { ...consumable, quantity: usage.quantity } : null
+  }).filter((item): item is NonNullable<typeof item> => item !== null) || []
   return (
     <Dialog
       open={open}
@@ -224,6 +240,98 @@ export function ServiceViewDialog({
                     </p>
                   </CardContent>
                 </Card>
+
+                {/* Equipment Section */}
+                {assignedEquipment.length > 0 && (
+                  <Card className='md:col-span-2'>
+                    <CardContent className='p-4'>
+                      <div className='flex items-center gap-2 mb-2'>
+                        <Wrench className='h-5 w-5 text-muted-foreground' />
+                        <h3 className='font-medium'>Equipos Requeridos</h3>
+                        <Badge variant='outline' className='ml-2'>
+                          {assignedEquipment.length}
+                        </Badge>
+                      </div>
+                      <Separator className='mb-3' />
+                      <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                        {assignedEquipment.map((eq) => (
+                          <div
+                            key={eq.id}
+                            className='flex items-center gap-3 p-2 rounded-lg border border-border/50 bg-primary/5'
+                          >
+                            <div className='flex items-center justify-center w-8 h-8 rounded-md bg-muted'>
+                              <Wrench className='h-4 w-4 text-muted-foreground' />
+                            </div>
+                            <div className='flex-1 min-w-0'>
+                              <h4 className='font-medium text-sm'>{eq.name}</h4>
+                              <div className='flex gap-2 text-xs text-muted-foreground mt-0.5'>
+                                {eq.category && (
+                                  <span>{eq.category}</span>
+                                )}
+                                {eq.brand && (
+                                  <>
+                                    {eq.category && <span>•</span>}
+                                    <span>{eq.brand}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <Badge variant='outline' className='text-xs'>
+                              {eq.status}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Consumables Section */}
+                {assignedConsumables.length > 0 && (
+                  <Card className='md:col-span-2'>
+                    <CardContent className='p-4'>
+                      <div className='flex items-center gap-2 mb-2'>
+                        <Package className='h-5 w-5 text-muted-foreground' />
+                        <h3 className='font-medium'>Consumibles Requeridos</h3>
+                        <Badge variant='outline' className='ml-2'>
+                          {assignedConsumables.reduce((total, consumable) => total + consumable.quantity, 0)}
+                        </Badge>
+                      </div>
+                      <Separator className='mb-3' />
+                      <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                        {assignedConsumables.map((consumable) => (
+                          <div
+                            key={consumable.id}
+                            className='flex items-center gap-3 p-2 rounded-lg border border-border/50 bg-primary/5'
+                          >
+                            <div className='flex items-center justify-center w-8 h-8 rounded-md bg-muted'>
+                              <Package className='h-4 w-4 text-muted-foreground' />
+                            </div>
+                            <div className='flex-1 min-w-0'>
+                              <h4 className='font-medium text-sm'>{consumable.name}</h4>
+                              <div className='flex gap-2 text-xs text-muted-foreground mt-0.5'>
+                                {consumable.category && (
+                                  <span>{consumable.category}</span>
+                                )}
+                                {consumable.brand && (
+                                  <>
+                                    {consumable.category && <span>•</span>}
+                                    <span>{consumable.brand}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div className='flex items-center gap-2'>
+                              <Badge variant='outline' className='text-xs'>
+                                Cantidad: {consumable.quantity}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Photos */}
                 {currentService.photos && currentService.photos.length > 0 && (

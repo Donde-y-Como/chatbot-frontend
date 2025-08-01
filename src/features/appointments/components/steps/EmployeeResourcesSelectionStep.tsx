@@ -67,16 +67,28 @@ export function EmployeeResourcesSelectionStep({
     return equipment.filter((eq) => eq.status === EquipmentStatus.ACTIVE)
   }, [equipment])
 
+  // Obtener equipos seleccionados (incluye los que están en la cita pero ya no están activos)
+  const selectedEquipmentItems = useMemo(() => {
+    return equipment.filter(eq => selectedEquipmentIds.includes(eq.id))
+  }, [equipment, selectedEquipmentIds])
+
+  // Combinar equipos activos con equipos ya seleccionados para mostrar
+  const equipmentToShow = useMemo(() => {
+    const activeIds = new Set(activeEquipment.map(eq => eq.id))
+    const selectedNotActive = selectedEquipmentItems.filter(eq => !activeIds.has(eq.id))
+    return [...activeEquipment, ...selectedNotActive]
+  }, [activeEquipment, selectedEquipmentItems])
+
   // Filtrar equipos por búsqueda
   const filteredEquipment = useMemo(() => {
-    if (!equipmentSearchQuery.trim()) return activeEquipment
+    if (!equipmentSearchQuery.trim()) return equipmentToShow
 
-    return activeEquipment.filter((eq) =>
+    return equipmentToShow.filter((eq) =>
       eq.name.toLowerCase().includes(equipmentSearchQuery.toLowerCase()) ||
       eq.category?.toLowerCase().includes(equipmentSearchQuery.toLowerCase()) ||
       eq.brand?.toLowerCase().includes(equipmentSearchQuery.toLowerCase())
     )
-  }, [activeEquipment, equipmentSearchQuery])
+  }, [equipmentToShow, equipmentSearchQuery])
 
   // Filtrar consumibles por búsqueda
   const filteredConsumables = useMemo(() => {
@@ -314,6 +326,11 @@ export function EmployeeResourcesSelectionStep({
                             <div className='flex items-center gap-2'>
                               <Wrench className='h-4 w-4 text-muted-foreground' />
                               <p className='text-sm font-medium'>{eq.name}</p>
+                              {eq.status !== EquipmentStatus.ACTIVE && (
+                                <Badge variant='secondary' className='text-xs'>
+                                  {eq.status}
+                                </Badge>
+                              )}
                             </div>
                             {eq.category && (
                               <p className='text-xs text-muted-foreground mt-1'>

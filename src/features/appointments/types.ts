@@ -24,6 +24,9 @@ export interface Service {
   codigoBarras: number
   unidadMedida: Unit
   photos: string[]
+  // Campos de equipos y consumibles
+  equipmentIds?: string[]
+  consumableUsages?: ConsumableUsage[]
 }
 
 export interface Schedule {

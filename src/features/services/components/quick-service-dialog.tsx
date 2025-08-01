@@ -113,6 +113,9 @@ export function QuickServiceDialog({ open, onOpenChange }: Props) {
       },
       codigoBarras: Date.now(), // Código de barras automático
       photos: [],
+      // Campos de equipos y consumibles (vacíos para servicios rápidos)
+      equipmentIds: [],
+      consumableUsages: [],
     }
 
     createService.mutate(completeServiceData)
