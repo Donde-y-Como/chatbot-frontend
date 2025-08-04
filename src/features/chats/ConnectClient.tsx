@@ -26,6 +26,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
@@ -176,6 +186,7 @@ export function ConnectClient({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [selectedClientForConnection, setSelectedClientForConnection] =
     useState<Client | null>(null)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -299,7 +310,12 @@ export function ConnectClient({
     }
   }, [filteredClients.length, searchQueryInput.length, isDialog])
 
+  const handleConnectionButtonClick = useCallback(() => {
+    setShowConfirmDialog(true)
+  }, [])
+
   const handleConfirmConnection = useCallback(async () => {
+    setShowConfirmDialog(false)
     if (!selectedClientForConnection || !currentClientData) {
       toast({
         title: 'Error de validación',
@@ -437,6 +453,10 @@ export function ConnectClient({
     setSelectedClientForConnection(null)
     setSearchQueryInput('')
   }, [onOpenChange])
+
+  const handleCancelConfirmDialog = useCallback(() => {
+    setShowConfirmDialog(false)
+  }, [])
 
   useEffect(() => {
     if (!open) {
@@ -894,7 +914,7 @@ export function ConnectClient({
             Cancelar
           </Button>
           <Button
-            onClick={handleConfirmConnection}
+            onClick={handleConnectionButtonClick}
             disabled={
               !selectedClientForConnection ||
               updateClientPlatformIdentities.isPending
@@ -935,6 +955,82 @@ export function ConnectClient({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Confirmation Alert Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Confirmar vinculación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedClientForConnection && currentClientData && (
+                <div className='space-y-4'>
+                  <p>
+                    Estás a punto de vincular la conversación actual con el cliente{' '}
+                    <strong>{selectedClientForConnection.name}</strong>.
+                  </p>
+                  
+                  <div className='space-y-3'>
+                    <div>
+                      <h4 className='font-semibold text-sm mb-2'>Lo que va a suceder:</h4>
+                      <ul className='text-sm space-y-1 list-disc list-inside ml-2'>
+                        <li>
+                          Las identidades de plataforma de <strong>{currentClientData.name}</strong> se transferirán a <strong>{selectedClientForConnection.name}</strong>
+                        </li>
+                        <li>
+                          <strong>{currentClientData.name}</strong> perderá sus identidades de plataforma actuales
+                        </li>
+                        <li>
+                          Esta conversación quedará vinculada a <strong>{selectedClientForConnection.name}</strong>
+                        </li>
+                        <li>
+                          <strong>{selectedClientForConnection.name}</strong> tendrá acceso a todas las plataformas combinadas
+                        </li>
+                      </ul>
+                    </div>
+
+                    {currentClientData.platformIdentities && (
+                      <div>
+                        <h4 className='font-semibold text-sm mb-2'>Identidades que se transferirán:</h4>
+                        <div className='flex flex-wrap gap-1'>
+                          {currentClientData.platformIdentities.map((identity, index) => {
+                            const alreadyExists = selectedClientForConnection.platformIdentities.some(
+                              (existing) =>
+                                existing.platformId === identity.platformId &&
+                                existing.platformName === identity.platformName
+                            )
+                            return (
+                              <Badge
+                                key={index}
+                                variant={alreadyExists ? 'secondary' : 'default'}
+                                className='text-xs'
+                              >
+                                {getPlatformDisplayName(identity.platformName)}
+                                {alreadyExists && ' (ya existe)'}
+                              </Badge>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <p className='text-xs text-muted-foreground font-medium'>
+                    ⚠️ Esta acción no se puede deshacer
+                  </p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelConfirmDialog}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmConnection}>
+              Sí, vincular cliente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   )
 }

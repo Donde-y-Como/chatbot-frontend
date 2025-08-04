@@ -139,6 +139,23 @@ export default function Store() {
     navigate({ to: '/orden/historial' })
   }
 
+  const handleSavePendingOrder = async () => {
+    try {
+      const orderResult = await convertToOrderMutation.mutateAsync({
+        cart: cart.cart,
+        paymentMethod: 'cash', // Default payment method for pending orders
+      })
+      
+      // Clear cart after saving pending order
+      cart.setSelectedClient('')
+      toast.success('Orden pendiente guardada exitosamente')
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'No se pudo guardar la orden pendiente'
+      )
+    }
+  }
+
   const handleViewLatestReceipt = () => {
     if (lastTransactionType === 'sale' && lastReceiptId) {
       // For sales, use the superReceiptId from the sale response
@@ -277,6 +294,7 @@ export default function Store() {
           onClearCart={cart.clearCart}
           onConvertCart={handleConvertCart}
           onHistorialClick={handleHistorialClick}
+          onSavePendingOrder={handleSavePendingOrder}
         />
       )}
 

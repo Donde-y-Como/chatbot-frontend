@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, X, History } from 'lucide-react';
+import { ShoppingCart, X, History, BookmarkPlus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { ScrollArea } from '@/components/ui/scroll-area.tsx';
@@ -20,6 +20,7 @@ interface CartProps {
   onClearCart: () => void
   onConvertCart: () => void
   onHistorialClick: () => void
+  onSavePendingOrder: () => void
 }
 
 export function Cart({
@@ -33,6 +34,7 @@ export function Cart({
   onConvertCart,
   onPaymentMethodSelect,
   onHistorialClick,
+  onSavePendingOrder,
 }: CartProps) {
   const formatPrice = (price: typeof cart.total) => {
     return new Intl.NumberFormat('es-MX', {
@@ -197,6 +199,15 @@ export function Cart({
                   onClick={onConvertCart}
                 >
                   Procesar Venta
+                </Button>
+                <Button
+                  variant='secondary'
+                  className='w-full h-8 sm:h-10 text-sm flex items-center gap-2'
+                  disabled={!cart.selectedClientId}
+                  onClick={onSavePendingOrder}
+                >
+                  <BookmarkPlus className='h-4 w-4' />
+                  Guardar Orden Pendiente
                 </Button>
                 <Button
                   variant='outline'
