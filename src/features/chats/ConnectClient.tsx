@@ -41,6 +41,7 @@ import { Separator } from '@/components/ui/separator'
 import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
 import { useGetClients } from '../clients/hooks/useGetClients'
 import { useUpdateClientPlatformIdentities } from '../clients/hooks/useUpdateClientPlatformIdentities'
+import { appointmentService } from '../appointments/appointmentService'
 import { Client, PlatformIdentity, PlatformName } from './ChatTypes'
 
 interface ConnectClientProps {
@@ -384,9 +385,20 @@ export function ConnectClient({
         })
         .join(', ')
 
+      // Actualizar citas del cliente anterior al nuevo cliente
+      try {
+        await appointmentService.updateAppointmentsClientId(
+          currentClientData.id,
+          selectedClientForConnection.id
+        )
+      } catch (appointmentError) {
+        console.warn('Error updating appointments:', appointmentError)
+        // No mostramos error al usuario ya que la transferencia principal fue exitosa
+      }
+
       toast({
         title: '\u00a1Cliente vinculado exitosamente!',
-        description: `Se ${addedCount === 1 ? 'transfirió' : 'transfirieron'} ${addedCount} ${addedCount === 1 ? 'identidad' : 'identidades'} de plataforma (${platformNames}) de ${currentClientData.name} a ${selectedClientForConnection.name}.`,
+        description: `Se ${addedCount === 1 ? 'transfirió' : 'transfirieron'} ${addedCount} ${addedCount === 1 ? 'identidad' : 'identidades'} de plataforma (${platformNames}) de ${currentClientData.name} a ${selectedClientForConnection.name}. Las citas también fueron transferidas.`,
         variant: 'default',
       })
 
