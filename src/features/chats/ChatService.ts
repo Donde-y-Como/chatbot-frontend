@@ -20,6 +20,18 @@ export const chatService = {
     return response.data.conversations
   },
 
+  getChatsByClientId: async (clientId: string, platformName?: string) => {
+    const params: any = {};
+    if (platformName) {
+      params.platformName = platformName;
+    }
+    
+    const response = await api.get<{ conversations: Chat[] }>(`/clients/${clientId}/chats`, {
+      params
+    });
+    return response.data.conversations;
+  },
+
   getChatById: async (id: string) => {
     const response = await api.get<ChatMessages>(`/chats/${id}`)
     return response.data
