@@ -65,25 +65,40 @@ export function QuickAppointmentDialog({
 
   // Default values for quick appointment
   const defaultValues = useMemo(() => {
-    const hasTimeRange = defaultStartTime !== undefined && defaultEndTime !== undefined
+    const hasValidTimeRange = defaultStartTime !== undefined && defaultEndTime !== undefined
+    const baseDefaults = getDefaultQuickAppointment()
+    
+    // Use provided time range if available, otherwise fall back to base defaults
+    const finalStartTime = hasValidTimeRange ? defaultStartTime! : baseDefaults.startAt!
+    const finalEndTime = hasValidTimeRange ? defaultEndTime! : baseDefaults.endAt!
+    
     console.log('QuickAppointmentDialog defaultValues:', {
       defaultStartTime,
       defaultEndTime,
-      hasTimeRange
+      hasValidTimeRange,
+      finalStartTime,
+      finalEndTime
     })
+    
     return {
-      ...getDefaultQuickAppointment(),
+      ...baseDefaults,
       clientId: initialClientId || '',
       serviceIds: initialServiceId ? [initialServiceId] : [],
       date: defaultDate || new Date(),
-      startAt: defaultStartTime ?? 540, // 9:00 AM if not provided
-      endAt: defaultEndTime ?? 600,     // 10:00 AM if not provided
+      startAt: finalStartTime,
+      endAt: finalEndTime,
     }
   }, [initialClientId, initialServiceId, defaultDate, defaultStartTime, defaultEndTime])
 
   // Check if we have a pre-selected time range
   useEffect(() => {
-    setHasPreSelectedTime(defaultStartTime !== undefined && defaultEndTime !== undefined)
+    const hasValidTimeRange = defaultStartTime !== undefined && defaultEndTime !== undefined
+    setHasPreSelectedTime(hasValidTimeRange)
+    console.log('QuickAppointmentDialog - Time range check:', {
+      defaultStartTime,
+      defaultEndTime,
+      hasValidTimeRange
+    })
   }, [defaultStartTime, defaultEndTime])
 
   const form = useForm<QuickAppointmentFormValues>({
@@ -109,12 +124,34 @@ export function QuickAppointmentDialog({
   React.useEffect(() => {
     if (open) {
       openDialog()
-      reset(defaultValues)
-      setUserModifiedTime(false) // Reset user modification flag
+      
+      // Create fresh form values to ensure proper time range handling
+      const formValues = {
+        ...getDefaultQuickAppointment(),
+        clientId: initialClientId || '',
+        serviceIds: initialServiceId ? [initialServiceId] : [],
+        date: defaultDate || new Date(),
+        // Robust time value handling with validation
+        startAt: (typeof defaultStartTime === 'number' && !isNaN(defaultStartTime) && defaultStartTime >= 0) 
+          ? defaultStartTime 
+          : getDefaultQuickAppointment().startAt!,
+        endAt: (typeof defaultEndTime === 'number' && !isNaN(defaultEndTime) && defaultEndTime >= 0) 
+          ? defaultEndTime 
+          : getDefaultQuickAppointment().endAt!,
+      }
+      
+      console.log('QuickAppointmentDialog - Setting form values:', {
+        providedTimes: { defaultStartTime, defaultEndTime },
+        resolvedTimes: { startAt: formValues.startAt, endAt: formValues.endAt },
+        isTimeRangeValid: formValues.startAt !== getDefaultQuickAppointment().startAt
+      })
+      
+      reset(formValues)
+      setUserModifiedTime(false)
     } else {
       closeDialog()
     }
-  }, [open, reset, defaultValues, openDialog, closeDialog])
+  }, [open, reset, initialClientId, initialServiceId, defaultDate, defaultStartTime, defaultEndTime, openDialog, closeDialog])
 
   const handleSuccess = useCallback(async () => {
     reset()
@@ -176,13 +213,14 @@ export function QuickAppointmentDialog({
     }, 0)
   }, [selectedServiceIds, services])
 
-  // Auto-update end time when start time or services change
+  // Auto-update end time when start time or services change (only if user hasn't manually set a time range)
   React.useEffect(() => {
     const startAt = form.getValues('startAt')
-    if (startAt !== undefined) {
+    // Only auto-update if we don't have a pre-selected time range AND user hasn't manually modified time
+    if (startAt !== undefined && !hasPreSelectedTime && !userModifiedTime) {
       form.setValue('endAt', startAt + totalDuration)
     }
-  }, [totalDuration, form])
+  }, [totalDuration, form, hasPreSelectedTime, userModifiedTime])
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -330,10 +368,9 @@ export function QuickAppointmentDialog({
                                 setUserModifiedTime(true)
                                 
                                 // Auto-update end time logic:
-                                // 1. If no pre-selected time range, always auto-update
-                                // 2. If pre-selected time range but user has services selected, auto-update
-                                // 3. If pre-selected time range and no services, preserve the time range
-                                if (!hasPreSelectedTime || (hasPreSelectedTime && selectedServiceIds.length > 0)) {
+                                // Only auto-update if we don't have a pre-selected time range
+                                // When user has manually selected a time range, preserve it
+                                if (!hasPreSelectedTime) {
                                   form.setValue('endAt', minutes + totalDuration)
                                 }
                               }}
