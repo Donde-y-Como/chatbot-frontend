@@ -33,12 +33,12 @@ export interface Price {
   currency: Currency
 }
 
-// Interfaz principal del servicio con los nuevos atributos
+// Interfaz principal del servicio con campos opcionales
 export interface Service {
   id: string
   businessId: string
   name: string
-  description: string
+  description?: string
   duration: Duration
   price: Price
   maxConcurrentBooks: number
@@ -46,7 +46,7 @@ export interface Service {
   schedule: Record<string, MinutesTimeRange>
   // Nuevos atributos
   productInfo: ProductInfo
-  codigoBarras: number
+  codigoBarras?: number
   photos: string[]
   // Campos de equipos y consumibles
   equipmentIds?: string[]
@@ -77,10 +77,10 @@ export const unitSchema = z.object({
   updatedAt: z.string().optional(),
 })
 
-// Schema de validación para servicios con los nuevos campos
+// Schema de validación para servicios - campos opcionales según backend
 export const creatableServiceSchema = z.object({
+  // CAMPOS OBLIGATORIOS
   name: z.string().min(1, { message: 'El nombre del servicio es obligatorio' }),
-  description: z.string().min(1, { message: 'La descripción es obligatoria' }),
   duration: durationSchema,
   price: priceSchema,
   maxConcurrentBooks: z.number().min(1, { message: 'Debe permitir al menos 1 reserva' }),
@@ -89,28 +89,30 @@ export const creatableServiceSchema = z.object({
     startAt: z.number(),
     endAt: z.number(),
   })),
-  // Nuevos campos
-  productInfo: productInfoSchema,
+  
+  // CAMPOS OPCIONALES
+  description: z.string().optional(),
+  productInfo: productInfoSchema.optional(),
   codigoBarras: z.coerce
     .number()
     .int('El código de barras debe ser un número entero')
-    .positive('El código de barras debe ser positivo'),
-  photos: z.array(z.string()),
+    .positive('El código de barras debe ser positivo')
+    .optional(),
+  photos: z.array(z.string()).optional(),
   // Campos de equipos y consumibles (opcionales)
-  equipmentIds: z.array(z.string()).default([]),
+  equipmentIds: z.array(z.string()).default([]).optional(),
   consumableUsages: z.array(z.object({
     consumableId: z.string(),
     quantity: z.number().min(1, 'La cantidad debe ser al menos 1'),
-  })).default([]),
+  })).default([]).optional(),
 })
 
 // Tipos inferidos
 export type ServiceFormValues = z.infer<typeof creatableServiceSchema>
 
-// Valores por defecto para un nuevo servicio
+// Valores por defecto para un nuevo servicio (solo campos obligatorios)
 export const getDefaultService = (): Partial<CreatableService> => ({
   name: '',
-  description: '',
   duration: {
     value: 30,
     unit: DurationUnit.MINUTES,
@@ -128,10 +130,7 @@ export const getDefaultService = (): Partial<CreatableService> => ({
     THURSDAY: { startAt: 480, endAt: 1020 },
     FRIDAY: { startAt: 480, endAt: 1020 },
   },
-  productInfo: getDefaultProductInfo(),
-  codigoBarras: 0,
   photos: [],
-  // Nuevos campos
   equipmentIds: [],
   consumableUsages: [],
 })

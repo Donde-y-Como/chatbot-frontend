@@ -49,12 +49,12 @@ import {
 } from './service-mutations'
 import { ConsumableUsage } from '../types'
 
-// Form validation schema actualizado con los nuevos campos
+// Form validation schema - campos opcionales según backend
 const formSchema = z.object({
+  // CAMPOS OBLIGATORIOS
   name: z
     .string()
     .min(1, { message: 'El nombre del servicio es obligatorio.' }),
-  description: z.string().min(1, { message: 'La descripción es obligatoria.' }),
   durationValue: z.coerce
     .number()
     .min(1, { message: 'La duración debe ser al menos 1.' }),
@@ -70,56 +70,53 @@ const formSchema = z.object({
     message: 'El tiempo mínimo de anticipación debe ser de al menos 0 horas.',
   }),
   schedule: scheduleSchema,
-  // Nuevos campos
+  
+  // CAMPOS OPCIONALES
+  description: z.string().optional(),
   productInfo: z.object({
-    sku: z.string().min(1, 'El SKU es requerido'),
+    sku: z.string().optional(),
     discountPercentage: z.preprocess(
       (val) => {
         if (val === '' || val === null || val === undefined) return 0
         const num = Number(val)
-        return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
+        return isNaN(num) ? 0 : Math.floor(num)
       },
-      z
-        .number()
-        .min(0, 'El descuento no puede ser negativo')
-        .max(100, 'El descuento no puede exceder 100%')
-    ),
-    categoryIds: z.array(z.string()).default([]),
-    subcategoryIds: z.array(z.string()).default([]),
-    status: z.nativeEnum(ProductStatus),
-    tagIds: z.array(z.string()).default([]),
+      z.number().min(0, 'El descuento no puede ser negativo').max(100, 'El descuento no puede exceder 100%')
+    ).default(0).optional(),
+    categoryIds: z.array(z.string()).default([]).optional(),
+    subcategoryIds: z.array(z.string()).default([]).optional(),
+    status: z.nativeEnum(ProductStatus).default(ProductStatus.ACTIVO).optional(),
+    tagIds: z.array(z.string()).default([]).optional(),
     taxPercentage: z.preprocess(
       (val) => {
         if (val === '' || val === null || val === undefined) return 0
         const num = Number(val)
-        return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
+        return isNaN(num) ? 0 : Math.floor(num)
       },
       z.number().min(0, 'El impuesto no puede ser negativo')
-    ),
-    notes: z
-      .string()
-      .max(500, 'Las notas no pueden exceder 500 caracteres')
-      .default(''),
+    ).default(0).optional(),
+    notes: z.string().max(500, 'Las notas no pueden exceder 500 caracteres').default('').optional(),
     cost: z.object({
       amount: z.number().min(0, 'El costo no puede ser negativo'),
       currency: z.string().min(1, 'La moneda es requerida'),
-    }),
+    }).optional(),
     precioModificado: z.object({
       amount: z.number().min(0, 'El precio modificado no puede ser negativo'),
       currency: z.string().min(1, 'La moneda es requerida'),
-    }),
-  }),
+    }).optional(),
+  }).optional(),
   codigoBarras: z.coerce
     .number()
     .int('El código de barras debe ser un número entero')
-    .positive('El código de barras debe ser positivo'),
-  photos: z.array(z.string()),
+    .positive('El código de barras debe ser positivo')
+    .optional(),
+  photos: z.array(z.string()).optional(),
   // Campos de equipos y consumibles (opcionales)
-  equipmentIds: z.array(z.string()).default([]),
+  equipmentIds: z.array(z.string()).default([]).optional(),
   consumableUsages: z.array(z.object({
     consumableId: z.string(),
     quantity: z.number().min(1, 'La cantidad debe ser al menos 1'),
-  })).default([]),
+  })).default([]).optional(),
 })
 
 type ServiceForm = z.infer<typeof formSchema>
@@ -231,7 +228,6 @@ export function ServiceActionDialog({
         }
       : {
           name: '',
-          description: '',
           durationValue: 30,
           durationUnit: 'minutes' as const,
           priceAmount: 0,
@@ -239,18 +235,6 @@ export function ServiceActionDialog({
           maxConcurrentBooks: 1,
           minBookingLeadHours: 0,
           schedule: getInitialSchedule(),
-          productInfo: {
-            ...getDefaultProductInfo(),
-            sku: '',
-            categoryIds: [],
-            subcategoryIds: [],
-            tagIds: [],
-            notes: '',
-          },
-          codigoBarras: 0,
-          photos: [],
-          equipmentIds: [],
-          consumableUsages: [],
         }
   }, [currentService, getInitialSchedule, isEdit])
 
@@ -297,11 +281,21 @@ export function ServiceActionDialog({
         priceCurrency: currentService.price.currency,
         schedule: currentService.schedule,
         productInfo: currentService.productInfo,
-        codigoBarras: Number(currentService.codigoBarras) || 0,
+        codigoBarras: Number(currentService.codigoBarras) || undefined,
         photos: currentService.photos || [],
         equipmentIds: currentService.equipmentIds || [],
         consumableUsages: currentService.consumableUsages || [],
-      } : defaultValues
+      } : {
+        name: '',
+        durationValue: 30,
+        durationUnit: 'minutes' as const,
+        priceAmount: 0,
+        priceCurrency: 'MXN',
+        maxConcurrentBooks: 1,
+        minBookingLeadHours: 0,
+        schedule: getInitialSchedule(),
+        // Campos opcionales omitidos
+      }
       
       reset(currentDefaults)
       setPhotos([])
@@ -417,7 +411,7 @@ export function ServiceActionDialog({
 
       try {
         const url = await uploadFile(file)
-        form.setValue('photos', [...form.getValues('photos'), url])
+        form.setValue('photos', [...(form.getValues('photos') ?? []), url])
       } catch (error) {
         toast.error('Hubo un error al subir la imagen')
       }

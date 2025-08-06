@@ -27,7 +27,7 @@ export const productCostSchema = z.object({
   currency: z.string().min(1, 'La moneda es requerida'),
 })
 
-// Schema de validación para ProductInfo
+// Schema de validación para ProductInfo (completamente opcional)
 export const productInfoSchema = z.object({
   sku: z
     .string()
@@ -36,7 +36,7 @@ export const productInfoSchema = z.object({
     .regex(
       /^[A-Za-z0-9_-]+$/,
       'El SKU solo puede contener letras, números, guiones y guiones bajos'
-    ),
+    ).optional(),
   discountPercentage: z.preprocess(
     (val) => {
       if (val === '' || val === null || val === undefined) return 0
@@ -47,13 +47,11 @@ export const productInfoSchema = z.object({
       .number()
       .min(0, 'El descuento no puede ser negativo')
       .max(100, 'El descuento no puede ser mayor al 100%')
-  ),
-  categoryIds: z
-    .array(z.string())
-    .min(1, 'Debe seleccionar al menos una categoría'),
-  subcategoryIds: z.array(z.string()),
-  status: z.nativeEnum(ProductStatus),
-  tagIds: z.array(z.string()),
+  ).default(0).optional(),
+  categoryIds: z.array(z.string()).default([]).optional(),
+  subcategoryIds: z.array(z.string()).default([]).optional(),
+  status: z.nativeEnum(ProductStatus).default(ProductStatus.ACTIVO).optional(),
+  tagIds: z.array(z.string()).default([]).optional(),
   taxPercentage: z.preprocess(
     (val) => {
       if (val === '' || val === null || val === undefined) return 0
@@ -61,10 +59,10 @@ export const productInfoSchema = z.object({
       return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
     },
     z.number().min(0, 'El impuesto no puede ser negativo')
-  ),
-  notes: z.string().max(500, 'Las notas no pueden exceder 500 caracteres'),
-  cost: productCostSchema,
-  precioModificado: productCostSchema,
+  ).default(0).optional(),
+  notes: z.string().max(500, 'Las notas no pueden exceder 500 caracteres').default('').optional(),
+  cost: productCostSchema.optional(),
+  precioModificado: productCostSchema.optional(),
 })
 
 // Tipo inferido del schema
