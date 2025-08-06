@@ -419,9 +419,15 @@ export function CreateOrSelectClient({
                           <span className='text-sm text-muted-foreground'>Cargando más...</span>
                         </div>
                       ) : (
-                        <div className='text-sm text-muted-foreground'>
-                          Scroll para cargar más clientes
-                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={loadMore}
+                          disabled={isLoadingMore}
+                          className='text-sm'
+                        >
+                          Cargar más
+                        </Button>
                       )}
                     </div>
                   )}

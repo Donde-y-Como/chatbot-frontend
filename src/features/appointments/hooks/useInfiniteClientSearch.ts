@@ -26,40 +26,16 @@ export function useInfiniteClientSearch({
   const [isDefaultList, setIsDefaultList] = useState(false)
   
   const currentSearchRef = useRef<string>('')
-  const initializedRef = useRef<boolean>(false)
   const clientSearchService = useMemo(() => ClientSearchService.getInstance(), [])
 
-  // Initialize with default clients when first loaded
+  // Reset when search query or clients change
   useEffect(() => {
-    if (!clients || initializedRef.current) return
-
-    initializedRef.current = true
-    const searchQueryTrimmed = searchQuery.trim()
-    currentSearchRef.current = searchQueryTrimmed
-    
-    const initialResult = clientSearchService.searchClients(clients, searchQueryTrimmed, {
-      maxResults,
-      defaultResults,
-      excludeClientId: selectedClientId,
-      offset: 0,
-      limit: searchQueryTrimmed ? pageSize : defaultResults
-    })
-
-    setAllLoadedClients(initialResult.clients)
-    setHasMore(initialResult.hasMore)
-    setTotalCount(initialResult.totalCount)
-    setIsDefaultList(initialResult.isDefaultList)
-    setIsLoadingMore(false)
-  }, [clients])
-
-  // Reset when search query changes
-  useEffect(() => {
-    if (!clients || !initializedRef.current) return
+    if (!clients) return
 
     const searchQueryTrimmed = searchQuery.trim()
     
-    // Only reset when search query actually changes
-    if (currentSearchRef.current !== searchQueryTrimmed) {
+    // Always load initial results when clients change or search query changes
+    if (currentSearchRef.current !== searchQueryTrimmed || allLoadedClients.length === 0) {
       currentSearchRef.current = searchQueryTrimmed
       
       const initialResult = clientSearchService.searchClients(clients, searchQueryTrimmed, {
@@ -67,7 +43,7 @@ export function useInfiniteClientSearch({
         defaultResults,
         excludeClientId: selectedClientId,
         offset: 0,
-        limit: searchQueryTrimmed ? pageSize : defaultResults
+        limit: searchQueryTrimmed ? pageSize : defaultResults // Use defaultResults for initial load when no search
       })
 
       setAllLoadedClients(initialResult.clients)
@@ -76,7 +52,7 @@ export function useInfiniteClientSearch({
       setIsDefaultList(initialResult.isDefaultList)
       setIsLoadingMore(false)
     }
-  }, [searchQuery, selectedClientId, clientSearchService, defaultResults, maxResults, pageSize])
+  }, [clients, searchQuery, selectedClientId, clientSearchService, defaultResults, maxResults, pageSize, allLoadedClients.length])
 
   const loadMore = useCallback(async () => {
     if (!clients || isLoadingMore || !hasMore) return
@@ -108,7 +84,6 @@ export function useInfiniteClientSearch({
   // Reset function for external use
   const reset = useCallback(() => {
     currentSearchRef.current = ''
-    initializedRef.current = false
     setAllLoadedClients([])
     setIsLoadingMore(false)
     setHasMore(true)
