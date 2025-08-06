@@ -226,7 +226,7 @@ export function useAppointmentForm(
       clientId,
       serviceIds,
       employeeIds: selectedEmployeeIds,
-      date: date.toUTCString(),
+      date: date.toISOString(),
       timeRange,
       notes,
       // Nuevos campos
