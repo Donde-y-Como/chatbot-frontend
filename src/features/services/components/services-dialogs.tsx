@@ -12,14 +12,14 @@ export function ServicesDialogs() {
       <QuickServiceDialog
         key='quick-service-add'
         open={open === 'quick-add'}
-        onOpenChange={() => setOpen('quick-add')}
+        onOpenChange={(isOpen) => setOpen(isOpen ? 'quick-add' : null)}
       />
 
       {/* Diálogo para servicio completo */}
       <ServiceActionDialog
         key='user-add'
         open={open === 'add'}
-        onOpenChange={() => setOpen('add')}
+        onOpenChange={(isOpen) => setOpen(isOpen ? 'add' : null)}
       />
 
       {currentRow && (
@@ -27,11 +27,13 @@ export function ServicesDialogs() {
           <ServiceViewDialog
             key={`user-view-${currentRow.id}`}
             open={open === 'view'}
-            onOpenChange={() => {
-              setOpen('view')
-              setTimeout(() => {
-                setCurrentRow(null)
-              }, 500)
+            onOpenChange={(isOpen) => {
+              if (!isOpen) {
+                setOpen(null)
+                setTimeout(() => {
+                  setCurrentRow(null)
+                }, 500)
+              }
             }}
             currentService={currentRow}
           />
@@ -39,11 +41,13 @@ export function ServicesDialogs() {
           <ServiceActionDialog
             key={`user-edit-${currentRow.id}`}
             open={open === 'edit'}
-            onOpenChange={() => {
-              setOpen('edit')
-              setTimeout(() => {
-                setCurrentRow(null)
-              }, 500)
+            onOpenChange={(isOpen) => {
+              if (!isOpen) {
+                setOpen(null)
+                setTimeout(() => {
+                  setCurrentRow(null)
+                }, 500)
+              }
             }}
             currentService={currentRow}
           />
@@ -51,11 +55,13 @@ export function ServicesDialogs() {
           <ServicesDeleteDialog
             key={`user-delete-${currentRow.id}`}
             open={open === 'delete'}
-            onOpenChange={() => {
-              setOpen('delete')
-              setTimeout(() => {
-                setCurrentRow(null)
-              }, 500)
+            onOpenChange={(isOpen) => {
+              if (!isOpen) {
+                setOpen(null)
+                setTimeout(() => {
+                  setCurrentRow(null)
+                }, 500)
+              }
             }}
             currentRow={currentRow}
           />
