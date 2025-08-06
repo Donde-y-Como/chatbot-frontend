@@ -17,6 +17,8 @@ import { PlatformName } from '@/features/chats/ChatTypes'
 import { type Client } from '@/features/clients/types'
 import { useCreateClient } from '../hooks/useCreateClient'
 import { useGetClients } from '../hooks/useGetClients'
+import { useInfiniteClientSearch } from '../hooks/useInfiniteClientSearch'
+import { useIntersectionObserver } from '../hooks/useIntersectionObserver'
 
 interface CreateOrSelectClientProps {
   value: string // Selected client ID
@@ -25,9 +27,11 @@ interface CreateOrSelectClientProps {
 
 // Performance constants
 const MAX_RESULTS = 50
-const MIN_SEARCH_LENGTH = 2
+const DEFAULT_RESULTS = 20 // Show 20 clients by default
+const PAGE_SIZE = 15 // Load 15 more clients at a time
+const MIN_SEARCH_LENGTH = 1 // Allow search with 1 character
 const ITEM_HEIGHT = 64 // Height of each list item
-const MAX_LIST_HEIGHT = 240 // Max height of dropdown
+const MAX_LIST_HEIGHT = 240 // Reduced height for better UX
 
 // Memoized Client List Item
 interface ClientListItemProps {
@@ -65,23 +69,26 @@ const ClientListItem = React.memo(function ClientListItem({
 
   return (
     <div
-      className='flex items-center gap-3 p-3 hover:bg-accent cursor-pointer'
+      className='flex items-center gap-3 p-3 hover:bg-accent cursor-pointer transition-colors duration-150 border-b border-border/30 last:border-b-0'
       onClick={handleSelect}
     >
-      <Avatar className='h-8 w-8'>
+      <Avatar className='h-10 w-10 ring-2 ring-transparent hover:ring-primary/20 transition-all'>
         <AvatarImage
           src={client.photo}
           alt={client.name}
           className='object-cover'
         />
-        <AvatarFallback className='bg-primary/10 text-primary'>
+        <AvatarFallback className='bg-gradient-to-br from-primary/10 to-primary/20 text-primary font-semibold'>
           {client.name.charAt(0).toUpperCase()}
         </AvatarFallback>
       </Avatar>
       <div className='flex flex-col min-w-0 flex-1'>
-        <span className='font-medium text-sm truncate'>{client.name}</span>
+        <span className='font-medium text-sm truncate text-foreground'>{client.name}</span>
         {phoneNumber && (
-          <span className='text-xs text-muted-foreground'>{phoneNumber}</span>
+          <span className='text-xs text-muted-foreground flex items-center gap-1'>
+            <span className='inline-block w-1 h-1 bg-muted-foreground rounded-full'></span>
+            {phoneNumber}
+          </span>
         )}
       </div>
     </div>
@@ -102,6 +109,27 @@ export function CreateOrSelectClient({
   const { data: clients, isLoading: isLoadingClients } = useGetClients()
   const createClientMutation = useCreateClient()
   const debouncedSearchQuery = useDebounce(searchQueryInput, 200) // Faster debounce
+  
+  const {
+    clients: infiniteClients,
+    loadMore,
+    isLoadingMore,
+    hasMore,
+    totalCount,
+    isDefaultList
+  } = useInfiniteClientSearch({
+    clients,
+    searchQuery: debouncedSearchQuery,
+    selectedClientId: value,
+    defaultResults: DEFAULT_RESULTS,
+    maxResults: MAX_RESULTS,
+    pageSize: PAGE_SIZE
+  })
+  
+  const { targetRef } = useIntersectionObserver({
+    onIntersect: loadMore,
+    enabled: hasMore && !isLoadingMore && !isLoadingClients
+  })
 
   // Phone number formatting functions
   const formatPhoneNumber = useCallback((value: string): string => {
@@ -128,84 +156,9 @@ export function CreateOrSelectClient({
     return clients?.find((client) => client.id === value)
   }, [clients, value])
 
-  // Helper function to extract phone digits for search
-  const extractPhoneDigits = useCallback((platformId: string): string => {
-    const phoneMatch = platformId.match(/^(\d+)@s\.whatsapp\.net$/)
-    if (!phoneMatch) return ''
 
-    const phoneNumber = phoneMatch[1]
-    // For 521XXXXXXXXX, return the last 10 digits (the actual phone number without country code)
-    if (phoneNumber.startsWith('521') && phoneNumber.length === 13) {
-      return phoneNumber.slice(3) // Remove 521 prefix, return 10 digits
-    }
-    return phoneNumber
-  }, [])
-
-  const filteredClients = useMemo(() => {
-    if (!clients) return []
-
-    // If no search query, don't show any results to avoid rendering 5000 items
-    if (!debouncedSearchQuery) {
-      return []
-    }
-
-    // Only start searching after minimum characters to improve performance
-    if (debouncedSearchQuery.length < MIN_SEARCH_LENGTH) {
-      return []
-    }
-
-    const searchValue = debouncedSearchQuery.toLowerCase()
-    const results: Client[] = []
-
-    // Use for loop for better performance than filter + early exit
-    for (let i = 0; i < clients.length && results.length < MAX_RESULTS; i++) {
-      const client = clients[i]
-
-      if (client.id === value) continue // Don't show already selected client
-
-      let isMatch = false
-
-      // Search in name first (most common case)
-      if (client.name.toLowerCase().includes(searchValue)) {
-        isMatch = true
-      } else if (
-        client.platformIdentities &&
-        client.platformIdentities.length > 0
-      ) {
-        // Only search in platform IDs if name doesn't match
-        for (const identity of client.platformIdentities) {
-          // Search in original platform ID
-          if (identity.platformId.toLowerCase().includes(searchValue)) {
-            isMatch = true
-            break
-          }
-
-          // For WhatsApp Web, also search in formatted phone and raw digits
-          if (identity.platformName === PlatformName.WhatsappWeb) {
-            const rawDigits = extractPhoneDigits(identity.platformId)
-            if (rawDigits.includes(searchValue)) {
-              isMatch = true
-              break
-            }
-
-            const formattedPhone = formatWhatsAppPhone(
-              identity.platformId
-            ).toLowerCase()
-            if (formattedPhone.includes(searchValue)) {
-              isMatch = true
-              break
-            }
-          }
-        }
-      }
-
-      if (isMatch) {
-        results.push(client)
-      }
-    }
-
-    return results
-  }, [clients, debouncedSearchQuery, value, extractPhoneDigits])
+  // Use infinite scroll clients
+  const filteredClients = infiniteClients
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
     if (
@@ -282,20 +235,16 @@ export function CreateOrSelectClient({
     (e: ChangeEvent<HTMLInputElement>) => {
       const query = e.target.value
       setSearchQueryInput(query)
-      if (query.length >= MIN_SEARCH_LENGTH) {
-        setIsDropdownOpen(true)
-      } else {
-        setIsDropdownOpen(false)
-      }
+      // Always keep dropdown open for better UX when there's focus
+      setIsDropdownOpen(true)
     },
     []
   )
 
   const handleSearchInputFocus = useCallback(() => {
-    if (searchQueryInput.length >= MIN_SEARCH_LENGTH) {
-      setIsDropdownOpen(true)
-    }
-  }, [searchQueryInput.length])
+    // Always show dropdown on focus for better UX
+    setIsDropdownOpen(true)
+  }, [])
 
   const handlePhoneInputChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -377,7 +326,7 @@ export function CreateOrSelectClient({
             placeholder={
               selectedClient
                 ? selectedClient.name
-                : `Buscar por nombre o teléfono (mín. ${MIN_SEARCH_LENGTH} caracteres)...`
+                : 'Buscar cliente por nombre o teléfono...'
             }
             value={searchQueryInput}
             onChange={handleSearchInputChange}
@@ -392,36 +341,100 @@ export function CreateOrSelectClient({
         </div>
         {isDropdownOpen && (
           <div
-            className='absolute z-50 mt-1 w-full bg-popover rounded-md border border-border shadow-md'
-            style={{ maxHeight: MAX_LIST_HEIGHT + 32 }} // Extra space for padding
+            className='absolute z-50 mt-1 w-full bg-popover rounded-md border border-border shadow-lg'
+            style={{ maxHeight: MAX_LIST_HEIGHT + 40 }} // Extra space for header and footer
           >
             {isLoadingClients ? (
-              <div className='p-4 text-center text-muted-foreground'>
-                Cargando clientes...
-              </div>
-            ) : debouncedSearchQuery.length < MIN_SEARCH_LENGTH ? (
-              <div className='p-4 text-center text-muted-foreground'>
-                Escribe al menos {MIN_SEARCH_LENGTH} caracteres para buscar
+              <div className='p-6 text-center'>
+                <div className='flex flex-col items-center gap-2'>
+                  <div className='animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full'></div>
+                  <span className='text-sm text-muted-foreground'>Cargando clientes...</span>
+                </div>
               </div>
             ) : filteredClients.length === 0 ? (
-              <div className='p-4 text-center text-muted-foreground'>
-                No se encontraron clientes "{debouncedSearchQuery}"
+              <div className='p-6 text-center'>
+                <div className='flex flex-col items-center gap-2'>
+                  <Search className='h-8 w-8 text-muted-foreground/50' />
+                  <div className='text-sm text-muted-foreground'>
+                    {debouncedSearchQuery 
+                      ? `No se encontraron clientes con "${debouncedSearchQuery}"` 
+                      : 'No hay clientes disponibles'
+                    }
+                  </div>
+                  {debouncedSearchQuery && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        setIsCreatingNew(true)
+                        setNewClientName(debouncedSearchQuery)
+                        setIsDropdownOpen(false)
+                      }}
+                      className='mt-2'
+                    >
+                      <Plus className='h-4 w-4 mr-1' />
+                      Crear "{debouncedSearchQuery}"
+                    </Button>
+                  )}
+                </div>
               </div>
             ) : (
-              <div className='max-h-60 overflow-y-auto'>
-                {filteredClients.length >= MAX_RESULTS && (
-                  <div className='p-2 text-xs text-muted-foreground bg-popover border-b sticky top-0 z-10 shadow-sm'>
-                    Mostrando primeros {MAX_RESULTS} resultados. Refina tu
-                    búsqueda para mejores resultados.
+              <div className='max-h-60 overflow-y-auto' style={{ maxHeight: MAX_LIST_HEIGHT }}>
+                {/* Header with count and context - improved styling */}
+                <div className='p-3 bg-background border-b sticky top-0 z-20 shadow-sm backdrop-blur-sm'>
+                  <div className='flex items-center justify-between text-xs'>
+                    <span className='font-medium text-foreground'>
+                      {isDefaultList 
+                        ? `${filteredClients.length} de ${totalCount} clientes recientes`
+                        : `${filteredClients.length} resultados para "${debouncedSearchQuery}"`
+                      }
+                    </span>
+                    {hasMore && (
+                      <span className='text-primary font-medium'>
+                        {isDefaultList ? 'Scroll para más' : 'Más resultados'}
+                      </span>
+                    )}
                   </div>
-                )}
-                {filteredClients.map((client) => (
-                  <ClientListItem
-                    key={client.id}
-                    client={client}
-                    onSelect={handleSelectClient}
-                  />
-                ))}
+                </div>
+                
+                {/* Client list with infinite scroll */}
+                <div>
+                  {filteredClients.map((client) => (
+                    <ClientListItem
+                      key={client.id}
+                      client={client}
+                      onSelect={handleSelectClient}
+                    />
+                  ))}
+                  
+                  {/* Infinite scroll trigger */}
+                  {hasMore && (
+                    <div
+                      ref={targetRef}
+                      className='p-4 text-center border-t bg-muted/20'
+                    >
+                      {isLoadingMore ? (
+                        <div className='flex items-center justify-center gap-2'>
+                          <div className='animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full'></div>
+                          <span className='text-sm text-muted-foreground'>Cargando más...</span>
+                        </div>
+                      ) : (
+                        <div className='text-sm text-muted-foreground'>
+                          Scroll para cargar más clientes
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* End of results indicator */}
+                  {!hasMore && filteredClients.length > DEFAULT_RESULTS && (
+                    <div className='p-3 text-center border-t bg-muted/20'>
+                      <span className='text-xs text-muted-foreground'>
+                        {isDefaultList ? 'Todos los clientes mostrados' : 'Fin de resultados'}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
