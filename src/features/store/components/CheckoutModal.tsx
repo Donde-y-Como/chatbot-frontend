@@ -61,7 +61,7 @@ export function CheckoutModal({
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
       currency: price.currency,
-    }).format(price.amount)
+    }).format(Math.round(price.amount * 100) / 100)
   }
 
   const getPaymentMethodLabel = (method: PaymentMethod) => {
@@ -150,8 +150,8 @@ export function CheckoutModal({
     }
 
     const rawChangeAmount = cashReceivedAmount - amountToPay
-    const changeAmount = rawChangeAmount < 1 ? 0 : rawChangeAmount
-    const remainingBalance = cart.total.amount - amountToPay
+    const changeAmount = rawChangeAmount < 1 ? 0 : Math.round(rawChangeAmount * 100) / 100
+    const remainingBalance = Math.round((cart.total.amount - amountToPay) * 100) / 100
     const isPartialPayment = amountToPay < cart.total.amount
 
     // Show success dialog if payment > 0
@@ -203,7 +203,7 @@ export function CheckoutModal({
     const paymentAmountNum = parseFloat(paymentAmount)
     const change = cashReceivedAmount - paymentAmountNum
     // Treat change less than 1 as zero (no cents change)
-    return change < 1 ? 0 : change
+    return change < 1 ? 0 : Math.round(change * 100) / 100
   }
 
   const handleClose = () => {

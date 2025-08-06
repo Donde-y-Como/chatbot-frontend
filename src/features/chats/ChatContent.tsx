@@ -25,6 +25,7 @@ interface ChatContentProps {
   isMobileVisible: boolean
   onBackClick: () => void
 }
+const IS_DEVELOPMENT_ENV= import.meta.env.VITE_APP_DEBUG === "true"
 
 export function ChatContent({
   isLoading,
@@ -39,6 +40,9 @@ export function ChatContent({
   const { whatsappData } = useWhatsApp()
 
   const canSendMessages = useMemo(() => {
+
+    if(IS_DEVELOPMENT_ENV) return true;
+
     if (!chatData) return false
 
     if (chatData.platformName === 'whatsappWeb') {
