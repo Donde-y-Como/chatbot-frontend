@@ -2,6 +2,12 @@ import { z } from 'zod'
 import { ProductInfo, productInfoSchema, getDefaultProductInfo } from '@/types'
 import { MinutesTimeRange } from '../appointments/types'
 
+// Interfaz para uso de consumibles en servicios
+export interface ConsumableUsage {
+  consumableId: string
+  quantity: number
+}
+
 // Enum para tipos de duración
 export enum DurationUnit {
   MINUTES = 'minutes',
@@ -42,6 +48,9 @@ export interface Service {
   productInfo: ProductInfo
   codigoBarras: number
   photos: string[]
+  // Campos de equipos y consumibles
+  equipmentIds?: string[]
+  consumableUsages?: ConsumableUsage[]
 }
 
 // Tipo para crear un servicio (sin id y businessId)
@@ -87,6 +96,12 @@ export const creatableServiceSchema = z.object({
     .int('El código de barras debe ser un número entero')
     .positive('El código de barras debe ser positivo'),
   photos: z.array(z.string()),
+  // Campos de equipos y consumibles (opcionales)
+  equipmentIds: z.array(z.string()).default([]),
+  consumableUsages: z.array(z.object({
+    consumableId: z.string(),
+    quantity: z.number().min(1, 'La cantidad debe ser al menos 1'),
+  })).default([]),
 })
 
 // Tipos inferidos
@@ -116,4 +131,7 @@ export const getDefaultService = (): Partial<CreatableService> => ({
   productInfo: getDefaultProductInfo(),
   codigoBarras: 0,
   photos: [],
+  // Nuevos campos
+  equipmentIds: [],
+  consumableUsages: [],
 })

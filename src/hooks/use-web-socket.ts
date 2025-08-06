@@ -59,6 +59,9 @@ socket.on('creditsUpdated', async () => {
   })
 })
 
+socket.on('productStockUpdated', () => {
+})
+
 export const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false)
 

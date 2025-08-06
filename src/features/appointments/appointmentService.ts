@@ -69,4 +69,12 @@ export const appointmentService = {
 
     return response.data
   },
+
+  updateAppointmentsClientId: async (oldClientId: string, newClientId: string) => {
+    const response = await api.patch('/appointments/update-client', {
+      oldClientId,
+      newClientId,
+    })
+    return response.data
+  },
 }

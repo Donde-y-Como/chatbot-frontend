@@ -11,6 +11,8 @@ import {
   Trash2,
   User,
   Users,
+  Wrench,
+  Package,
 } from 'lucide-react'
 import { cn } from '@/lib/utils.ts'
 import {
@@ -46,6 +48,8 @@ import { ClientPrimitives } from '../clients/types'
 import { Employee } from '../employees/types'
 import { ClientChatButton } from './components/client-chat-button'
 import { AppointmentStatusBadge, PaymentStatusBadge } from './components/StatusBadges'
+import { useEquipment } from '@/features/tools/hooks/useEquipment'
+import { useConsumables } from '@/features/tools/hooks/useConsumables'
 import type { Appointment, Service } from './types'
 
 interface AppointmentBlockProps {
@@ -87,6 +91,8 @@ export function AppointmentBlock({
 
   const appointmentDate = new Date(appointment.date)
   const { openDialog, closeDialog } = useDialogState()
+  const { equipment } = useEquipment()
+  const { consumables } = useConsumables()
   const isUpcoming = isBefore(
     new Date(Date.now()),
     setMinutes(appointmentDate, appointment.timeRange.startAt)
@@ -138,6 +144,22 @@ export function AppointmentBlock({
   }
 
   const statusBadge = getStatusBadge()
+
+  // Obtener equipos asignados
+  const assignedEquipment = (equipment && equipment.length > 0 && appointment.equipmentIds && appointment.equipmentIds.length > 0) 
+    ? equipment.filter(eq => {
+        const isAssigned = appointment.equipmentIds?.includes(eq.id)
+        return isAssigned
+      })
+    : []
+
+  // Obtener consumibles asignados con su información completa
+  const assignedConsumables = (consumables && consumables.length > 0 && appointment.consumableUsages && appointment.consumableUsages.length > 0)
+    ? appointment.consumableUsages.map(usage => {
+        const consumable = consumables.find(c => c.id === usage.consumableId)
+        return consumable ? { ...consumable, quantity: usage.quantity } : null
+      }).filter((item): item is NonNullable<typeof item> => item !== null)
+    : []
 
   return (
     <Dialog onOpenChange={(open) => {
@@ -466,6 +488,86 @@ export function AppointmentBlock({
                 )}
               </div>
             </div>
+
+            {/* Equipment Section */}
+            {assignedEquipment.length > 0 && (
+              <div>
+                <h3 className='text-sm font-medium mb-2 flex items-center text-muted-foreground'>
+                  <Wrench className='h-4 w-4 mr-2' />
+                  Equipos Asignados
+                </h3>
+                <div className='space-y-2'>
+                  {assignedEquipment.map((eq) => (
+                    <div
+                      key={eq.id}
+                      className='flex items-center gap-3 p-2 rounded-lg border border-border/50 bg-primary/5'
+                    >
+                      <div className='flex items-center justify-center w-8 h-8 rounded-md bg-muted'>
+                        <Wrench className='h-4 w-4 text-muted-foreground' />
+                      </div>
+                      <div className='flex-1 min-w-0'>
+                        <h4 className='font-medium text-sm'>{eq.name}</h4>
+                        <div className='flex gap-2 text-xs text-muted-foreground mt-0.5'>
+                          {eq.category && (
+                            <span>{eq.category}</span>
+                          )}
+                          {eq.brand && (
+                            <>
+                              {eq.category && <span>•</span>}
+                              <span>{eq.brand}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <Badge variant='outline' className='text-xs'>
+                        {eq.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Consumables Section */}
+            {assignedConsumables.length > 0 && (
+              <div>
+                <h3 className='text-sm font-medium mb-2 flex items-center text-muted-foreground'>
+                  <Package className='h-4 w-4 mr-2' />
+                  Consumibles Utilizados
+                </h3>
+                <div className='space-y-2'>
+                  {assignedConsumables.map((consumable) => (
+                    <div
+                      key={consumable?.id}
+                      className='flex items-center gap-3 p-2 rounded-lg border border-border/50 bg-primary/5'
+                    >
+                      <div className='flex items-center justify-center w-8 h-8 rounded-md bg-muted'>
+                        <Package className='h-4 w-4 text-muted-foreground' />
+                      </div>
+                      <div className='flex-1 min-w-0'>
+                        <h4 className='font-medium text-sm'>{consumable?.name}</h4>
+                        <div className='flex gap-2 text-xs text-muted-foreground mt-0.5'>
+                          {consumable?.category && (
+                            <span>{consumable.category}</span>
+                          )}
+                          {consumable?.brand && (
+                            <>
+                              {consumable?.category && <span>•</span>}
+                              <span>{consumable?.brand}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <Badge variant='outline' className='text-xs'>
+                          Cantidad: {consumable?.quantity}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Date and Time Details - Expanded & Detailed */}
             <div>

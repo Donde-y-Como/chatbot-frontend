@@ -94,6 +94,9 @@ export const useConvertToSale = () => {
       void queryClient.invalidateQueries({
         queryKey: ['clients', data.clientId, 'pendingServices'],
       })
+      void queryClient.invalidateQueries({
+        queryKey: ['products'],
+      })
     },
     onError: () => {
       toast.error('No se pudo guardar la venta, intenta mas tarde')

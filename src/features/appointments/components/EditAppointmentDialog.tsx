@@ -25,7 +25,7 @@ import {
   ClientServiceStep,
   ConfirmationStep,
   DateTimeStep,
-  EmployeeSelectionStep,
+  EmployeeResourcesSelectionStep,
   NotesStep,
   StatusAndPaymentStep,
 } from './steps'
@@ -80,6 +80,10 @@ export function EditAppointmentDialog({
     setDeposit,
     setNotes,
 
+    // Campos de equipos y consumibles
+    selectedEquipmentIds,
+    consumableUsages,
+
     setActiveStep,
     setClientId,
     setServiceIds,
@@ -87,6 +91,8 @@ export function EditAppointmentDialog({
     setDate,
     setTimeRange,
     toggleEmployeeSelection,
+    toggleEquipmentSelection,
+    updateConsumableUsage,
     resetForm,
     handleSubmit,
     hasFilledFields,
@@ -195,13 +201,17 @@ export function EditAppointmentDialog({
               />
             </TabsContent>
 
-            {/* Step 3: Employee Selection (Optional) */}
+            {/* Step 3: Employee, Equipment and Consumables Selection (Optional) */}
             <TabsContent value='3'>
-              <EmployeeSelectionStep
+              <EmployeeResourcesSelectionStep
                 availableEmployees={availableEmployees}
-                selectedEmployeeIds={selectedEmployeeIds}
                 loadingEmployees={loadingEmployees}
+                selectedEmployeeIds={selectedEmployeeIds}
                 onEmployeeToggle={toggleEmployeeSelection}
+                selectedEquipmentIds={selectedEquipmentIds}
+                consumableUsages={consumableUsages}
+                onEquipmentToggle={toggleEquipmentSelection}
+                onConsumableUsageUpdate={updateConsumableUsage}
                 onNext={() => setActiveStep(4)}
                 onBack={() => setActiveStep(2)}
                 onCancel={handleCancel}
@@ -242,6 +252,8 @@ export function EditAppointmentDialog({
                 selectedClient={selectedClient}
                 selectedServices={selectedServices}
                 selectedEmployeeIds={selectedEmployeeIds}
+                selectedEquipmentIds={selectedEquipmentIds}
+                consumableUsages={consumableUsages}
                 status={status}
                 paymentStatus={paymentStatus}
                 deposit={deposit}

@@ -44,6 +44,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
   const { emit } = useWebSocket()
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState(chat.client?.name || 'Unknown')
+  const [shouldHighlight, setShouldHighlight] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
   const { markAsUnread } = useChatMutations()
@@ -170,6 +171,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
 
   const handleBlur = () => {
     void handleNameChange(tempName)
+    setShouldHighlight(false)
   }
 
   const handleMarkAsUnread = () => {
@@ -265,7 +267,16 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
           )}
         </div>
         <div className='font-medium w-full grid grid-cols-5 gap-y-0.5'>
-          <span className='col-span-4'>
+          <span 
+            className={cn('col-span-4', shouldHighlight && !isEditing && 'ring-2 ring-blue-500 ring-opacity-75 rounded px-1 animate-pulse')}
+            onClick={(e) => {
+              if (shouldHighlight && !isEditing) {
+                e.stopPropagation()
+                setIsEditing(true)
+                setShouldHighlight(false)
+              }
+            }}
+          >
             {isEditing ? (
               <div onClick={(e) => e.stopPropagation()}>
                 <Input
@@ -347,7 +358,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation()
-                          setIsEditing(true)
+                          setShouldHighlight(true)
                         }}
                       >
                         Cambiar nombre

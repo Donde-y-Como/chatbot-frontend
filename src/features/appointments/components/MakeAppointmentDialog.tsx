@@ -16,7 +16,7 @@ import { AppointmentStepIndicator } from './AppointmentStepIndicator'
 import {
   ClientServiceStep,
   DateTimeStep,
-  EmployeeSelectionStep,
+  EmployeeResourcesSelectionStep,
   NotesStep,
   StatusAndPaymentStep,
   ConfirmationStep,
@@ -67,6 +67,10 @@ export function MakeAppointmentDialog({
     setDeposit,
     setNotes,
 
+    // Campos de equipos y consumibles
+    selectedEquipmentIds,
+    consumableUsages,
+
     setActiveStep,
     setClientId,
     setServiceIds,
@@ -74,6 +78,8 @@ export function MakeAppointmentDialog({
     setDate,
     setTimeRange,
     toggleEmployeeSelection,
+    toggleEquipmentSelection,
+    updateConsumableUsage,
     resetForm,
     handleSubmit,
     hasFilledFields,
@@ -183,13 +189,17 @@ export function MakeAppointmentDialog({
                 />
               </TabsContent>
 
-              {/* Step 3: Employee Selection (Optional) */}
+              {/* Step 3: Employee, Equipment and Consumables Selection (Optional) */}
               <TabsContent value='3' className='flex flex-col h-full'>
-                <EmployeeSelectionStep
-                  loadingEmployees={loadingEmployees}
+                <EmployeeResourcesSelectionStep
                   availableEmployees={availableEmployees}
+                  loadingEmployees={loadingEmployees}
                   selectedEmployeeIds={selectedEmployeeIds}
                   onEmployeeToggle={toggleEmployeeSelection}
+                  selectedEquipmentIds={selectedEquipmentIds}
+                  consumableUsages={consumableUsages}
+                  onEquipmentToggle={toggleEquipmentSelection}
+                  onConsumableUsageUpdate={updateConsumableUsage}
                   onNext={() => setActiveStep(4)}
                   onBack={() => { setActiveStep(2); setSelectedEmployeeIds([]) }}
                   onCancel={handleCancel}
@@ -230,6 +240,8 @@ export function MakeAppointmentDialog({
                   selectedClient={selectedClient}
                   selectedServices={selectedServices}
                   selectedEmployeeIds={selectedEmployeeIds}
+                  selectedEquipmentIds={selectedEquipmentIds}
+                  consumableUsages={consumableUsages}
                   status={status}
                   paymentStatus={paymentStatus}
                   deposit={deposit}

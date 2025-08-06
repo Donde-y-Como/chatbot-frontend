@@ -4,9 +4,12 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
+import { CheckCircle, Search, X, Package, Wrench, Plus, Minus, AlertCircle } from 'lucide-react'
 import { getDefaultProductInfo } from '@/types'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -26,12 +29,16 @@ import {
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
 import { FileUpload } from '@/components/file-upload'
 import { ProductInfoStep } from '@/components/product-info'
 import { SelectDropdown } from '@/components/select-dropdown'
 import { MinutesTimeRange, Service } from '@/features/appointments/types'
 import { ProductStatus } from '@/features/products/types.ts'
 import { ScheduleService } from '@/features/settings/profile/ProfileService.ts'
+import { useEquipment } from '@/features/tools/hooks/useEquipment'
+import { useConsumables } from '@/features/tools/hooks/useConsumables'
+import { Equipment, EquipmentStatus, Consumable } from '@/features/tools/types'
 import { useUploadMedia } from '../../chats/hooks/useUploadMedia'
 import { ScheduleSection } from '../../employees/components/form/schedule-section'
 import { scheduleSchema } from '../../employees/types'
@@ -40,6 +47,7 @@ import {
   useCreateService,
   useUpdateService,
 } from './service-mutations'
+import { ConsumableUsage } from '../types'
 
 // Form validation schema actualizado con los nuevos campos
 const formSchema = z.object({
@@ -106,6 +114,12 @@ const formSchema = z.object({
     .int('El código de barras debe ser un número entero')
     .positive('El código de barras debe ser positivo'),
   photos: z.array(z.string()),
+  // Campos de equipos y consumibles (opcionales)
+  equipmentIds: z.array(z.string()).default([]),
+  consumableUsages: z.array(z.object({
+    consumableId: z.string(),
+    quantity: z.number().min(1, 'La cantidad debe ser al menos 1'),
+  })).default([]),
 })
 
 type ServiceForm = z.infer<typeof formSchema>
@@ -124,8 +138,17 @@ export function ServiceActionDialog({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [photos, setPhotos] = React.useState<File[]>([])
   const [_, setFormSubmitError] = React.useState<string | null>(null)
+  
+  // Estados para equipos y consumibles
+  const [selectedEquipmentIds, setSelectedEquipmentIds] = useState<string[]>([])
+  const [consumableUsages, setConsumableUsages] = useState<ConsumableUsage[]>([])
+  const [equipmentSearchQuery, setEquipmentSearchQuery] = useState('')
+  const [consumablesSearchQuery, setConsumablesSearchQuery] = useState('')
+  
   const isEdit = !!currentService
   const { uploadFile, validateFile, isUploading } = useUploadMedia()
+  const { equipment, loading: loadingEquipment } = useEquipment()
+  const { consumables, loading: loadingConsumables } = useConsumables()
 
   const userScheduleQuery = useQuery({
     queryKey: ['user-schedule'],
@@ -203,6 +226,8 @@ export function ServiceActionDialog({
           productInfo: currentService.productInfo,
           codigoBarras: Number(currentService.codigoBarras) || 0,
           photos: currentService.photos || [],
+          equipmentIds: currentService.equipmentIds || [],
+          consumableUsages: currentService.consumableUsages || [],
         }
       : {
           name: '',
@@ -224,6 +249,8 @@ export function ServiceActionDialog({
           },
           codigoBarras: 0,
           photos: [],
+          equipmentIds: [],
+          consumableUsages: [],
         }
   }, [currentService, getInitialSchedule, isEdit])
 
@@ -249,6 +276,10 @@ export function ServiceActionDialog({
         reset()
         setPhotos([])
         setFormSubmitError(null)
+        setSelectedEquipmentIds([])
+        setConsumableUsages([])
+        setEquipmentSearchQuery('')
+        setConsumablesSearchQuery('')
       }
       onOpenChange(state)
     },
@@ -261,8 +292,91 @@ export function ServiceActionDialog({
       reset(defaultValues)
       setPhotos([])
       setFormSubmitError(null)
+      // Sincronizar estados con valores por defecto
+      if (isEdit && currentService) {
+        setSelectedEquipmentIds(currentService.equipmentIds || [])
+        setConsumableUsages(currentService.consumableUsages || [])
+      } else {
+        setSelectedEquipmentIds([])
+        setConsumableUsages([])
+      }
     }
-  }, [open, reset, defaultValues])
+  }, [open, reset, defaultValues, isEdit, currentService])
+
+  // Funciones para manejar equipos
+  const toggleEquipmentSelection = (equipmentId: string) => {
+    setSelectedEquipmentIds(prev => {
+      const newIds = prev.includes(equipmentId)
+        ? prev.filter(id => id !== equipmentId)
+        : [...prev, equipmentId]
+      
+      // Actualizar el formulario
+      form.setValue('equipmentIds', newIds)
+      return newIds
+    })
+  }
+
+  // Funciones para manejar consumibles
+  const updateConsumableUsage = (consumableId: string, quantity: number) => {
+    setConsumableUsages(prev => {
+      const newUsages = quantity === 0
+        ? prev.filter(usage => usage.consumableId !== consumableId)
+        : prev.find(usage => usage.consumableId === consumableId)
+          ? prev.map(usage => 
+              usage.consumableId === consumableId 
+                ? { ...usage, quantity }
+                : usage
+            )
+          : [...prev, { consumableId, quantity }]
+      
+      // Actualizar el formulario
+      form.setValue('consumableUsages', newUsages)
+      return newUsages
+    })
+  }
+
+  const getConsumableUsage = (consumableId: string): number => {
+    const usage = consumableUsages.find(u => u.consumableId === consumableId)
+    return usage?.quantity || 0
+  }
+
+  // Funciones de utilidad para consumibles
+  const incrementConsumable = (consumable: Consumable) => {
+    const currentUsage = getConsumableUsage(consumable.id)
+    if (currentUsage < consumable.stock) {
+      updateConsumableUsage(consumable.id, currentUsage + 1)
+    }
+  }
+
+  const decrementConsumable = (consumable: Consumable) => {
+    const currentUsage = getConsumableUsage(consumable.id)
+    if (currentUsage > 0) {
+      updateConsumableUsage(consumable.id, currentUsage - 1)
+    }
+  }
+
+  // Filtros para equipos y consumibles
+  const activeEquipment = useMemo(() => {
+    return equipment.filter((eq) => eq.status === EquipmentStatus.ACTIVE)
+  }, [equipment])
+
+  const filteredEquipment = useMemo(() => {
+    if (!equipmentSearchQuery.trim()) return activeEquipment
+    return activeEquipment.filter((eq) =>
+      eq.name.toLowerCase().includes(equipmentSearchQuery.toLowerCase()) ||
+      eq.category?.toLowerCase().includes(equipmentSearchQuery.toLowerCase()) ||
+      eq.brand?.toLowerCase().includes(equipmentSearchQuery.toLowerCase())
+    )
+  }, [activeEquipment, equipmentSearchQuery])
+
+  const filteredConsumables = useMemo(() => {
+    if (!consumablesSearchQuery.trim()) return consumables
+    return consumables.filter((consumable) =>
+      consumable.name.toLowerCase().includes(consumablesSearchQuery.toLowerCase()) ||
+      consumable.category?.toLowerCase().includes(consumablesSearchQuery.toLowerCase()) ||
+      consumable.brand?.toLowerCase().includes(consumablesSearchQuery.toLowerCase())
+    )
+  }, [consumables, consumablesSearchQuery])
 
   // Handler for form submission success
   const handleSuccess = useCallback(() => {
@@ -320,7 +434,7 @@ export function ServiceActionDialog({
       }
     }
 
-    const formData = { ...form.getValues() }
+    const formData = { ...form.getValues(), equipmentIds: selectedEquipmentIds, consumableUsages }
 
     if (isEdit && currentService) {
       updateService.mutate({
@@ -374,7 +488,9 @@ export function ServiceActionDialog({
       productInfo?.discountPercentage !== 0 ||
       productInfo?.taxPercentage !== 0 ||
       productInfo?.cost.amount !== 0 ||
-      productInfo?.notes !== ''
+      productInfo?.notes !== '' ||
+      selectedEquipmentIds.length > 0 ||
+      consumableUsages.length > 0
     )
   }, [form, photos])
 
@@ -419,10 +535,11 @@ export function ServiceActionDialog({
             </DialogHeader>
 
             <Tabs defaultValue='general' className='w-full mt-4'>
-              <TabsList className='grid w-full grid-cols-5'>
+              <TabsList className='grid w-full grid-cols-6'>
                 <TabsTrigger value='general'>General</TabsTrigger>
                 <TabsTrigger value='pricing'>Precio</TabsTrigger>
                 <TabsTrigger value='product'>Detalles</TabsTrigger>
+                <TabsTrigger value='resources'>Recursos</TabsTrigger>
                 <TabsTrigger value='schedule'>Horario</TabsTrigger>
                 <TabsTrigger value='photos'>Fotos</TabsTrigger>
               </TabsList>
@@ -670,6 +787,241 @@ export function ServiceActionDialog({
               <TabsContent value='product' className='space-y-4 pt-4'>
                 <ScrollArea className='h-[400px] pr-4'>
                   <ProductInfoStep type='service' />
+                </ScrollArea>
+              </TabsContent>
+
+              {/* Resources Tab */}
+              <TabsContent value='resources' className='space-y-4 pt-4'>
+                <ScrollArea className='h-[400px] pr-4'>
+                  <div className='space-y-6'>
+                    <div>
+                      <h3 className='text-lg font-medium mb-4 flex items-center'>
+                        <Wrench className='h-5 w-5 mr-2' />
+                        Equipos Requeridos
+                        {selectedEquipmentIds.length > 0 && (
+                          <Badge variant='secondary' className='ml-2'>
+                            {selectedEquipmentIds.length}
+                          </Badge>
+                        )}
+                      </h3>
+                      
+                      {/* Búsqueda de equipos */}
+                      <div className='relative mb-4'>
+                        <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+                          <Search className='h-4 w-4 text-muted-foreground' />
+                        </div>
+                        <Input
+                          type='text'
+                          placeholder='Buscar equipo por nombre, categoría o marca...'
+                          value={equipmentSearchQuery}
+                          onChange={(e) => setEquipmentSearchQuery(e.target.value)}
+                          className='pl-10 pr-10'
+                        />
+                        {equipmentSearchQuery && (
+                          <Button
+                            type="button"
+                            variant='ghost'
+                            size='sm'
+                            className='absolute inset-y-0 right-0 flex items-center pr-3 h-full'
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              setEquipmentSearchQuery('')
+                            }}
+                          >
+                            <X className='h-4 w-4' />
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Lista de equipos */}
+                      {loadingEquipment ? (
+                        <div className='flex justify-center py-8'>
+                          <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-primary'></div>
+                        </div>
+                      ) : filteredEquipment.length > 0 ? (
+                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto'>
+                          {filteredEquipment.map((eq) => (
+                            <Card
+                              key={eq.id}
+                              className={cn(
+                                'cursor-pointer hover:border-primary transition-all',
+                                selectedEquipmentIds.includes(eq.id) && 'border-primary bg-primary/5'
+                              )}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                toggleEquipmentSelection(eq.id)
+                              }}
+                            >
+                              <CardContent className='p-3'>
+                                <div className='flex items-center justify-between'>
+                                  <div className='flex-1'>
+                                    <div className='flex items-center gap-2'>
+                                      <Wrench className='h-4 w-4 text-muted-foreground' />
+                                      <p className='text-sm font-medium'>{eq.name}</p>
+                                    </div>
+                                    {eq.category && (
+                                      <p className='text-xs text-muted-foreground mt-1'>
+                                        {eq.category}
+                                      </p>
+                                    )}
+                                    {eq.brand && (
+                                      <p className='text-xs text-muted-foreground'>
+                                        {eq.brand}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {selectedEquipmentIds.includes(eq.id) && (
+                                    <CheckCircle className='h-5 w-5 text-primary flex-shrink-0' />
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className='text-center py-8 text-muted-foreground'>
+                          <Wrench className='h-8 w-8 mx-auto mb-2' />
+                          <p>{equipmentSearchQuery ? 'No se encontraron equipos' : 'No hay equipos disponibles'}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <h3 className='text-lg font-medium mb-4 flex items-center'>
+                        <Package className='h-5 w-5 mr-2' />
+                        Consumibles Requeridos
+                        {consumableUsages.length > 0 && (
+                          <Badge variant='secondary' className='ml-2'>
+                            {consumableUsages.reduce((total, usage) => total + usage.quantity, 0)}
+                          </Badge>
+                        )}
+                      </h3>
+                      
+                      {/* Búsqueda de consumibles */}
+                      <div className='relative mb-4'>
+                        <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+                          <Search className='h-4 w-4 text-muted-foreground' />
+                        </div>
+                        <Input
+                          type='text'
+                          placeholder='Buscar consumible por nombre, categoría o marca...'
+                          value={consumablesSearchQuery}
+                          onChange={(e) => setConsumablesSearchQuery(e.target.value)}
+                          className='pl-10 pr-10'
+                        />
+                        {consumablesSearchQuery && (
+                          <Button
+                            type="button"
+                            variant='ghost'
+                            size='sm'
+                            className='absolute inset-y-0 right-0 flex items-center pr-3 h-full'
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              setConsumablesSearchQuery('')
+                            }}
+                          >
+                            <X className='h-4 w-4' />
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Lista de consumibles */}
+                      {loadingConsumables ? (
+                        <div className='flex justify-center py-8'>
+                          <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-primary'></div>
+                        </div>
+                      ) : filteredConsumables.length > 0 ? (
+                        <div className='space-y-3 max-h-48 overflow-y-auto'>
+                          {filteredConsumables.map((consumable) => {
+                            const currentUsage = getConsumableUsage(consumable.id)
+                            const canIncrement = currentUsage < consumable.stock
+                            const canDecrement = currentUsage > 0
+
+                            return (
+                              <Card key={consumable.id} className={cn(
+                                'transition-all',
+                                currentUsage > 0 && 'border-primary bg-primary/5'
+                              )}>
+                                <CardContent className='p-3'>
+                                  <div className='flex items-center justify-between'>
+                                    <div className='flex-1'>
+                                      <div className='flex items-center gap-2'>
+                                        <Package className='h-4 w-4 text-muted-foreground' />
+                                        <p className='text-sm font-medium'>{consumable.name}</p>
+                                      </div>
+                                      <div className='flex items-center gap-4 mt-1'>
+                                        {consumable.category && (
+                                          <p className='text-xs text-muted-foreground'>
+                                            {consumable.category}
+                                          </p>
+                                        )}
+                                        <div className='flex items-center gap-1'>
+                                          <p className='text-xs text-muted-foreground'>
+                                            Stock: {consumable.stock}
+                                          </p>
+                                          {consumable.stock === 0 && (
+                                            <AlertCircle className='h-3 w-3 text-red-500' />
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className='flex items-center gap-2'>
+                                      <Button
+                                        type="button"
+                                        variant='outline'
+                                        size='sm'
+                                        className='h-8 w-8 p-0'
+                                        onClick={(e) => {
+                                          e.preventDefault()
+                                          e.stopPropagation()
+                                          decrementConsumable(consumable)
+                                        }}
+                                        disabled={!canDecrement}
+                                      >
+                                        <Minus className='h-4 w-4' />
+                                      </Button>
+                                      <span className='text-sm font-medium w-8 text-center'>
+                                        {currentUsage}
+                                      </span>
+                                      <Button
+                                        type="button"
+                                        variant='outline'
+                                        size='sm'
+                                        className='h-8 w-8 p-0'
+                                        onClick={(e) => {
+                                          e.preventDefault()
+                                          e.stopPropagation()
+                                          incrementConsumable(consumable)
+                                        }}
+                                        disabled={!canIncrement || consumable.stock === 0}
+                                      >
+                                        <Plus className='h-4 w-4' />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  {consumable.stock === 0 && (
+                                    <div className='mt-2 p-2 bg-red-50 rounded-md border border-red-200'>
+                                      <p className='text-xs text-red-600'>
+                                        Sin stock disponible
+                                      </p>
+                                    </div>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <div className='text-center py-8 text-muted-foreground'>
+                          <Package className='h-8 w-8 mx-auto mb-2' />
+                          <p>{consumablesSearchQuery ? 'No se encontraron consumibles' : 'No hay consumibles disponibles'}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </ScrollArea>
               </TabsContent>
 

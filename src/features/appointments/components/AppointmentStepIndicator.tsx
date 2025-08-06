@@ -35,7 +35,7 @@ export function AppointmentStepIndicator({ activeStep }: AppointmentStepIndicato
             <span className="text-xs hidden sm:block text-center">
               {step === 1 && "Información"}
               {step === 2 && "Fecha y Hora"}
-              {step === 3 && "Empleados"}
+              {step === 3 && "Recursos"}
               {step === 4 && "Notas"}
               {step === 5 && "Estado y Pago"}
               {step === 6 && "Confirmación"}

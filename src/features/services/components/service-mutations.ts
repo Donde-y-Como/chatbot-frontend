@@ -20,6 +20,12 @@ export interface ServiceFormData {
   productInfo: ProductInfo
   codigoBarras: number
   photos: string[]
+  // Campos de equipos y consumibles
+  equipmentIds: string[]
+  consumableUsages: Array<{
+    consumableId: string
+    quantity: number
+  }>
 }
 
 /**
@@ -48,6 +54,10 @@ const transformFormToApiData = (formData: ServiceFormData) => {
     productInfo: formData.productInfo,
     codigoBarras: formData.codigoBarras,
     photos: formData.photos,
+    
+    // Campos de equipos y consumibles
+    equipmentIds: formData.equipmentIds,
+    consumableUsages: formData.consumableUsages,
   }
   
   return transformed
@@ -72,9 +82,18 @@ export const useCreateService = (options?: {
       return res.data
     },
     onSuccess: () => {
+      // Invalidar todas las queries relacionadas con servicios
       queryClient.invalidateQueries({
         queryKey: ['services']
       })
+      // También invalidar queries específicas si las hay
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          return query.queryKey[0] === 'services' || 
+                 (Array.isArray(query.queryKey) && query.queryKey.includes('services'))
+        }
+      })
+      
       toast.success('Servicio creado con éxito')
       options?.onSuccess?.()
     },
@@ -104,15 +123,25 @@ export const useUpdateService = (options?: {
       const body = transformFormToApiData(formData)
       
       const res = await api.put(`/services/${id}`, body)
+      
       if (res.status !== 200) {
         throw new Error('Error al actualizar servicio')
       }
       return res.data
     },
     onSuccess: () => {
+      // Invalidar todas las queries relacionadas con servicios
       queryClient.invalidateQueries({
         queryKey: ['services']
       })
+      // También invalidar queries específicas si las hay
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          return query.queryKey[0] === 'services' || 
+                 (Array.isArray(query.queryKey) && query.queryKey.includes('services'))
+        }
+      })
+      
       toast.success('Servicio actualizado con éxito')
       options?.onSuccess?.()
     },
