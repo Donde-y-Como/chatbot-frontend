@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils.ts'
+import { Paperclip } from 'lucide-react'
 import {
   Command,
   CommandEmpty,
@@ -10,6 +11,7 @@ import {
 } from '@/components/ui/command'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
+import { Badge } from '@/components/ui/badge'
 import { ChatMessage } from '@/features/chats/ChatMessage.tsx'
 import { Message } from '@/features/chats/ChatTypes'
 import { useGetQuickResponses } from '@/features/settings/quickResponse/hooks/useQuickResponses'
@@ -28,7 +30,7 @@ interface ChatConversationProps {
 interface QuickResponseDropdownProps {
   isOpen: boolean
   onClose: () => void
-  onSelectResponse: (message: string) => void
+  onSelectResponse: (message: string, quickResponse?: QuickResponse) => void
   searchTerm: string
   selectedIndex?: number | null
   responses?: QuickResponse[]
@@ -113,7 +115,7 @@ export function QuickResponseDropdown({
                           if (onSelectionChange) {
                             onSelectionChange(index)
                           }
-                          onSelectResponse(response.content)
+                          onSelectResponse(response.content, response)
                         }}
                         className={cn(
                           'flex flex-col items-start gap-1 py-3',
@@ -135,7 +137,15 @@ export function QuickResponseDropdown({
                         // This avoids the flickering effect when moving between items
                         ref={isSelected ? selectedItemRef : null}
                       >
-                        <div className='font-medium'>{response.title}</div>
+                        <div className='flex items-center justify-between w-full'>
+                          <div className='font-medium'>{response.title}</div>
+                          {response.medias && response.medias.length > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Paperclip className="h-3 w-3 mr-1" />
+                              {response.medias.length}
+                            </Badge>
+                          )}
+                        </div>
                         <div className='text-sm text-muted-foreground truncate w-full'>
                           {response.content}
                         </div>

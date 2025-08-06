@@ -28,6 +28,9 @@ import { EmojiPickerButton } from '@/features/chats/components/EmojiPickerButton
 import { QuickResponseDropdown } from './ChatConversation.tsx'
 import ExpiredChatTemplates from './ExpiredChatTemplates'
 import { useQuickResponsesForChat } from './hooks/useQuickResponsesForChat'
+import { QuickResponsePreview } from '@/features/chats/components/QuickResponsePreview'
+import { useQuickResponseStash } from '@/features/chats/hooks/useQuickResponseStash'
+import { DefaultMessageSenderService } from '@/features/chats/services/MessageSenderService'
 
 const ChatFooter = memo(
   ({
@@ -57,6 +60,16 @@ const ChatFooter = memo(
       getSelectedResponse,
       setSelectedResponseIndex,
     } = useQuickResponsesForChat()
+
+    const {
+      quickResponse: stashedQuickResponse,
+      isStashed,
+      stashQuickResponse,
+      clearStash,
+      getStashedBatch,
+    } = useQuickResponseStash()
+
+    const messageSenderService = new DefaultMessageSenderService()
 
     const adjustTextareaHeight = useCallback((element: HTMLTextAreaElement) => {
       element.style.height = '0'
@@ -164,13 +177,7 @@ const ChatFooter = memo(
       const trimmedMessage = newMessage.trim()
       if (!trimmedMessage || isSending) return
 
-      const newMsg: Message = {
-        id: uid(),
-        content: trimmedMessage,
-        role: 'business',
-        timestamp: Date.now(),
-        media: null,
-      }
+      const newMsg = messageSenderService.createTextMessage(trimmedMessage)
 
       // Clear input immediately for better UX
       setNewMessage('')
@@ -184,7 +191,7 @@ const ChatFooter = memo(
         conversationId: selectedChatId,
         message: newMsg,
       })
-    }, [newMessage, isSending, selectedChatId, sendMessageMutation.mutate])
+    }, [newMessage, isSending, selectedChatId, sendMessageMutation.mutate, messageSenderService])
 
     const handleMediaSend = useCallback(
       (media: {
@@ -196,23 +203,19 @@ const ChatFooter = memo(
           return
         }
 
-        const newMsg: Message = {
-          id: uid(),
-          content: '',
-          role: 'business',
-          timestamp: Date.now(),
-          media: {
-            type: media.type,
-            url: media.url,
-          },
+        const mediaObject = {
+          type: media.type,
+          url: media.url,
         }
+        
+        const newMsg = messageSenderService.createMediaMessage(mediaObject)
 
         sendMessageMutation.mutate({
           conversationId: selectedChatId,
           message: newMsg,
         })
       },
-      [selectedChatId, sendMessageMutation.mutate, isSending]
+      [selectedChatId, sendMessageMutation.mutate, isSending, messageSenderService]
     )
 
     const handleInputChange = useCallback(
@@ -226,17 +229,58 @@ const ChatFooter = memo(
     )
 
     const handleSelectQuickResponse = useCallback(
-      (message: string) => {
-        setNewMessage(message)
-        closeDropdown()
+      (message: string, quickResponse?: any) => {
+        // If the quick response has media, stash it for preview
+        if (quickResponse && quickResponse.medias && quickResponse.medias.length > 0) {
+          stashQuickResponse(quickResponse)
+          closeDropdown()
+          setNewMessage('')
+          if (textareaRef.current) {
+            textareaRef.current.style.height = '32px'
+          }
+        } else {
+          // Normal text-only quick response
+          setNewMessage(message)
+          closeDropdown()
 
-        if (textareaRef.current) {
-          textareaRef.current.focus()
-          adjustTextareaHeight(textareaRef.current)
+          if (textareaRef.current) {
+            textareaRef.current.focus()
+            adjustTextareaHeight(textareaRef.current)
+          }
         }
       },
-      [closeDropdown, adjustTextareaHeight]
+      [closeDropdown, adjustTextareaHeight, stashQuickResponse]
     )
+
+    const handleSendQuickResponseBatch = useCallback(async () => {
+      const batch = getStashedBatch()
+      if (!batch || batch.messages.length === 0 || isSending) return
+
+      try {
+        // Send messages sequentially to maintain order
+        for (const message of batch.messages) {
+          await new Promise<void>((resolve, reject) => {
+            sendMessageMutation.mutate(
+              {
+                conversationId: selectedChatId,
+                message,
+              },
+              {
+                onSuccess: () => resolve(),
+                onError: (error) => reject(error),
+              }
+            )
+          })
+          // Small delay between messages to ensure proper ordering
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
+        
+        clearStash()
+      } catch (error) {
+        console.error('Failed to send quick response batch:', error)
+        toast.error('Error al enviar la respuesta rápida')
+      }
+    }, [getStashedBatch, isSending, sendMessageMutation, selectedChatId, clearStash])
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -252,9 +296,9 @@ const ChatFooter = memo(
             const selectedResponse = getSelectedResponse()
 
             if (selectedResponse) {
-              handleSelectQuickResponse(selectedResponse.content)
+              handleSelectQuickResponse(selectedResponse.content, selectedResponse)
             } else if (filteredResponses.length > 0 && selectedIndex === null) {
-              handleSelectQuickResponse(filteredResponses[0].content)
+              handleSelectQuickResponse(filteredResponses[0].content, filteredResponses[0])
             }
             return
           }
@@ -297,10 +341,21 @@ const ChatFooter = memo(
     )
 
     return (
-      <form
-        onSubmit={handleSendMessage}
-        className='flex w-full flex-none gap-2'
-      >
+      <div className='flex w-full flex-none flex-col gap-2'>
+        {/* Quick Response Preview */}
+        {isStashed && stashedQuickResponse && (
+          <QuickResponsePreview
+            quickResponse={stashedQuickResponse}
+            onSend={handleSendQuickResponseBatch}
+            onCancel={clearStash}
+            isLoading={isSending}
+          />
+        )}
+        
+        <form
+          onSubmit={handleSendMessage}
+          className='flex w-full gap-2'
+        >
         <div className='flex flex-1 items-start gap-2 rounded-md border border-input px-2 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring lg:gap-4'>
           {canSendMessage ? (
             <>
@@ -383,7 +438,8 @@ const ChatFooter = memo(
             <IconSend size={18} />
           )}
         </Button>
-      </form>
+        </form>
+      </div>
     )
   }
 )
