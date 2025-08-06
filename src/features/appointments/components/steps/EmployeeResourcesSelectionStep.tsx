@@ -338,7 +338,7 @@ export function EmployeeResourcesSelectionStep({
                           {
                             'border-primary bg-primary/5':
                               selectedEquipmentIds.includes(eq.id),
-                            'border-blue-300 bg-blue-50': isInherited && !selectedEquipmentIds.includes(eq.id), // Estilo para heredados
+                            'border-blue-500 bg-blue-50 dark:bg-blue-950 dark:border-blue-400': isInherited && !selectedEquipmentIds.includes(eq.id), // Estilo para heredados
                           }
                         )}
                         onClick={() => onEquipmentToggle(eq.id)}
@@ -350,7 +350,7 @@ export function EmployeeResourcesSelectionStep({
                                 <Wrench className='h-4 w-4 text-muted-foreground' />
                                 <p className='text-sm font-medium'>{eq.name}</p>
                                 {isInherited && (
-                                  <Badge variant='outline' className='text-xs bg-blue-100 border-blue-300'>
+                                  <Badge variant='outline' className='text-xs bg-blue-100 border-blue-400 dark:bg-blue-900 dark:border-blue-500 dark:text-blue-300'>
                                     Del servicio
                                   </Badge>
                                 )}
@@ -443,7 +443,7 @@ export function EmployeeResourcesSelectionStep({
                       <Card key={consumable.id} className={cn(
                         'transition-all',
                         currentUsage > 0 && 'border-primary bg-primary/5',
-                        isInherited && currentUsage === inheritedUsage && 'border-blue-300 bg-blue-50' // Estilo para heredados sin cambios
+                        isInherited && currentUsage === inheritedUsage && 'border-blue-500 bg-blue-50 dark:bg-blue-950 dark:border-blue-400' // Estilo para heredados sin cambios
                       )}>
                         <CardContent className='p-3'>
                           <div className='flex items-center justify-between'>
@@ -452,7 +452,7 @@ export function EmployeeResourcesSelectionStep({
                                 <Package className='h-4 w-4 text-muted-foreground' />
                                 <p className='text-sm font-medium'>{consumable.name}</p>
                                 {isInherited && (
-                                  <Badge variant='outline' className='text-xs bg-blue-100 border-blue-300'>
+                                  <Badge variant='outline' className='text-xs bg-blue-100 border-blue-400 dark:bg-blue-900 dark:border-blue-500 dark:text-blue-300'>
                                     Del servicio: {inheritedUsage}
                                   </Badge>
                                 )}
