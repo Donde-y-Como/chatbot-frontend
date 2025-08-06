@@ -23,6 +23,19 @@ import { QuickAppointmentDialog } from '@/features/appointments/components/Quick
 import { useDialogState } from '@/features/appointments/contexts/DialogStateContext'
 import type { Appointment } from './types'
 
+// Simple constants
+const TIME_SLOT_HEIGHT = 64
+const MINUTES_PER_HOUR = 60
+const DEFAULT_DURATION = 60 // 1 hour
+const MIN_DURATION = 15 // 15 minutes
+const SNAP_MINUTES = 15
+
+// Time block type
+type TimeBlock = {
+  startAt: number
+  endAt: number
+}
+
 export function DayView({
   appointments,
   date,
@@ -30,33 +43,22 @@ export function DayView({
   appointments: Appointment[]
   date: Date
 }) {
-  const { workHours, isLoading: isWorkHoursLoading } =
-    useGetWorkSchedule(date)
-  const { data: allEmployees = [], isLoading: isEmployeesLoading } =
-    useGetEmployees()
-  const { data: allServices = [], isLoading: isServicesLoading } =
-    useGetServices()
+  const { workHours, isLoading: isWorkHoursLoading } = useGetWorkSchedule(date)
+  const { data: allEmployees = [], isLoading: isEmployeesLoading } = useGetEmployees()
+  const { data: allServices = [], isLoading: isServicesLoading } = useGetServices()
   const { data: clients = [], isLoading: isClientsLoading } = useGetClients()
 
-  const [selectedService, setSelectedService] =
-    useState<ServiceFilterProps['selectedService']>('all')
+  const [selectedService, setSelectedService] = useState<ServiceFilterProps['selectedService']>('all')
   const [currentTime, setCurrentTime] = useState(date)
   
-  // Time slot selection state for Google Calendar-style appointment creation
-  const [isSelecting, setIsSelecting] = useState(false)
-  const [selectedTimeRange, setSelectedTimeRange] = useState<{
-    startAt: number
-    endAt: number
-  } | null>(null)
+  // Simple time block state
+  const [timeBlock, setTimeBlock] = useState<TimeBlock | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragHandle, setDragHandle] = useState<'top' | 'bottom' | null>(null)
   const [isQuickDialogOpen, setIsQuickDialogOpen] = useState(false)
-  const [dialogTimeRange, setDialogTimeRange] = useState<{
-    startAt: number
-    endAt: number
-  } | null>(null)
-  const isDragging = useRef(false)
-  const startY = useRef(0)
+  const [dialogTimeRange, setDialogTimeRange] = useState<TimeBlock | null>(null)
+  
   const timeSlotAreaRef = useRef<HTMLDivElement>(null)
-
   const queryClient = useQueryClient()
   const { hasOpenDialogs } = useDialogState()
 
@@ -76,15 +78,174 @@ export function DayView({
     return () => clearInterval(interval)
   }, [])
 
-  // Removed click detection utility - no longer needed since day clicking is disabled
+  // Utility functions
+  const getTimeFromY = useCallback((clientY: number): number => {
+    if (!workHours || !timeSlotAreaRef.current) return workHours?.startAt || 540
 
-  const getCurrentTimePosition = () => {
-    if (!workHours) return -100 // Position off-screen
+    const rect = timeSlotAreaRef.current.getBoundingClientRect()
+    const relativeY = Math.max(0, clientY - rect.top)
+    const minutesFromStart = (relativeY / TIME_SLOT_HEIGHT) * MINUTES_PER_HOUR
+    const snappedMinutes = Math.round(minutesFromStart / SNAP_MINUTES) * SNAP_MINUTES
+    
+    return Math.max(
+      workHours.startAt,
+      Math.min(workHours.endAt - MIN_DURATION, snappedMinutes + workHours.startAt)
+    )
+  }, [workHours])
 
-    const startMinutes = currentTime.getHours() * 60 + currentTime.getMinutes()
-    const startMinutesRelative = startMinutes - workHours.startAt
-    return (startMinutesRelative * 64) / 60
+  const formatTime = (minutes: number): string => {
+    const hours = Math.floor(minutes / MINUTES_PER_HOUR)
+    const mins = minutes % MINUTES_PER_HOUR
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
   }
+
+  const formatDuration = (startAt: number, endAt: number): string => {
+    const duration = endAt - startAt
+    const hours = Math.floor(duration / MINUTES_PER_HOUR)
+    const minutes = duration % MINUTES_PER_HOUR
+    
+    if (hours === 0) return `${minutes}min`
+    if (minutes === 0) return `${hours}h`
+    return `${hours}h ${minutes}m`
+  }
+
+  const getBlockPosition = (block: TimeBlock) => {
+    if (!workHours) return { top: 0, height: TIME_SLOT_HEIGHT }
+    
+    const top = ((block.startAt - workHours.startAt) / MINUTES_PER_HOUR) * TIME_SLOT_HEIGHT
+    const height = ((block.endAt - block.startAt) / MINUTES_PER_HOUR) * TIME_SLOT_HEIGHT
+    
+    return { top: Math.max(0, top), height: Math.max(TIME_SLOT_HEIGHT * 0.25, height) }
+  }
+
+  // Event handlers
+  const handleTimeSlotClick = useCallback((e: React.MouseEvent) => {
+    if (e.target !== e.currentTarget || hasOpenDialogs) return
+    
+    const clickTime = getTimeFromY(e.clientY)
+    
+    if (timeBlock) {
+      // Clear existing block
+      setTimeBlock(null)
+      return
+    }
+
+    // Create new block
+    if (!workHours) return
+    
+    let startAt = clickTime
+    let endAt = clickTime + DEFAULT_DURATION
+    
+    // Ensure block fits within work hours
+    if (endAt > workHours.endAt) {
+      endAt = workHours.endAt
+      startAt = Math.max(workHours.startAt, endAt - DEFAULT_DURATION)
+    }
+    
+    if (startAt < workHours.startAt) {
+      startAt = workHours.startAt
+      endAt = Math.min(workHours.endAt, startAt + DEFAULT_DURATION)
+    }
+
+    setTimeBlock({ startAt, endAt })
+  }, [hasOpenDialogs, timeBlock, getTimeFromY, workHours])
+
+  const handleResizeStart = useCallback((handle: 'top' | 'bottom', e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsDragging(true)
+    setDragHandle(handle)
+    document.body.style.cursor = 'ns-resize'
+  }, [])
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging || !timeBlock || !dragHandle || !workHours || !timeSlotAreaRef.current) return
+
+    // Calculate the time from mouse position directly here to avoid stale closure issues
+    const rect = timeSlotAreaRef.current.getBoundingClientRect()
+    const relativeY = Math.max(0, e.clientY - rect.top)
+    const minutesFromStart = (relativeY / TIME_SLOT_HEIGHT) * MINUTES_PER_HOUR
+    const snappedMinutes = Math.round(minutesFromStart / SNAP_MINUTES) * SNAP_MINUTES
+    const currentTime = Math.max(
+      workHours.startAt,
+      Math.min(workHours.endAt - MIN_DURATION, snappedMinutes + workHours.startAt)
+    )
+
+    console.log('Dragging:', {
+      clientY: e.clientY,
+      rectTop: rect.top,
+      relativeY,
+      minutesFromStart,
+      snappedMinutes,
+      currentTime,
+      dragHandle,
+      workHours
+    })
+    
+    if (dragHandle === 'top') {
+      const newStartAt = Math.max(
+        workHours.startAt,
+        Math.min(currentTime, timeBlock.endAt - MIN_DURATION)
+      )
+      setTimeBlock({ startAt: newStartAt, endAt: timeBlock.endAt })
+    } else {
+      const newEndAt = Math.min(
+        workHours.endAt,
+        Math.max(currentTime, timeBlock.startAt + MIN_DURATION)
+      )
+      setTimeBlock({ startAt: timeBlock.startAt, endAt: newEndAt })
+    }
+  }, [isDragging, timeBlock, dragHandle, workHours])
+
+  const handleMouseUp = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(false)
+      setDragHandle(null)
+      document.body.style.cursor = ''
+    }
+  }, [isDragging])
+
+  // Global mouse events for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp])
+
+  const handleConfirmBlock = useCallback(() => {
+    if (!timeBlock) return
+    
+    setDialogTimeRange({ ...timeBlock })
+    setTimeBlock(null)
+    setIsQuickDialogOpen(true)
+  }, [timeBlock])
+
+  const handleClearBlock = useCallback(() => {
+    setTimeBlock(null)
+    setDialogTimeRange(null)
+    setIsDragging(false)
+    setDragHandle(null)
+    document.body.style.cursor = ''
+  }, [])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && timeBlock) {
+        handleClearBlock()
+      } else if (e.key === 'Enter' && timeBlock) {
+        handleConfirmBlock()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [timeBlock, handleClearBlock, handleConfirmBlock])
 
   const handleCancel = async (id: string) => {
     try {
@@ -98,105 +259,14 @@ export function DayView({
     }
   }
 
-  // Google Calendar-style time slot selection logic
-  const getTimeFromY = useCallback((y: number): number => {
-    if (!workHours || !timeSlotAreaRef.current) return 0
-    
-    const rect = timeSlotAreaRef.current.getBoundingClientRect()
-    const relativeY = y - rect.top
-    const minutesFromStart = Math.round((relativeY / 64) * 60)
-    const snapToMinutes = 15 // Snap to 15-minute intervals
-    const snappedMinutes = Math.round(minutesFromStart / snapToMinutes) * snapToMinutes
-    
-    return Math.max(0, Math.min(workHours.endAt - workHours.startAt, snappedMinutes)) + workHours.startAt
-  }, [workHours])
+  const getCurrentTimePosition = () => {
+    if (!workHours) return -100
+    const startMinutes = currentTime.getHours() * 60 + currentTime.getMinutes()
+    const startMinutesRelative = startMinutes - workHours.startAt
+    return (startMinutesRelative * TIME_SLOT_HEIGHT) / 60
+  }
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    // Don't start selection if modals are open or if clicking on an appointment
-    if (hasOpenDialogs || e.target !== e.currentTarget) return
-    
-    const startTime = getTimeFromY(e.clientY)
-    const minDuration = 30 // Minimum 30 minutes
-    
-    setSelectedTimeRange({
-      startAt: startTime,
-      endAt: startTime + minDuration
-    })
-    setIsSelecting(true)
-    isDragging.current = true
-    startY.current = e.clientY
-    
-    e.preventDefault()
-  }, [hasOpenDialogs, getTimeFromY])
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging.current || !selectedTimeRange) return
-    
-    const currentTime = getTimeFromY(e.clientY)
-    const minDuration = 30
-    
-    if (currentTime >= selectedTimeRange.startAt) {
-      // Dragging down - extend end time
-      setSelectedTimeRange(prev => prev ? {
-        ...prev,
-        endAt: Math.max(currentTime, prev.startAt + minDuration)
-      } : null)
-    } else {
-      // Dragging up - adjust start time
-      setSelectedTimeRange(prev => prev ? {
-        startAt: currentTime,
-        endAt: Math.max(prev.endAt, currentTime + minDuration)
-      } : null)
-    }
-  }, [selectedTimeRange, getTimeFromY])
-
-  const handleMouseUp = useCallback(() => {
-    if (!isDragging.current || !selectedTimeRange) return
-    
-    isDragging.current = false
-    setIsSelecting(false)
-    
-    // Capture the current time range for the dialog
-    setDialogTimeRange({ ...selectedTimeRange })
-    
-    // Clear the visual selection immediately
-    setSelectedTimeRange(null)
-    
-    // Open appointment creation dialog with pre-filled time
-    setIsQuickDialogOpen(true)
-  }, [selectedTimeRange])
-
-  const handleClearSelection = useCallback(() => {
-    setSelectedTimeRange(null)
-    setIsSelecting(false)
-    setDialogTimeRange(null)
-    isDragging.current = false
-  }, [])
-
-  // Clear selection when clicking elsewhere or on appointments
-  const handleTimeSlotAreaClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && !isDragging.current) {
-      handleClearSelection()
-    }
-  }, [handleClearSelection])
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && selectedTimeRange) {
-        handleClearSelection()
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [selectedTimeRange, handleClearSelection])
-
-  const isLoading =
-    isWorkHoursLoading ||
-    isEmployeesLoading ||
-    isServicesLoading ||
-    isClientsLoading
+  const isLoading = isWorkHoursLoading || isEmployeesLoading || isServicesLoading || isClientsLoading
 
   if (isLoading) {
     return (
@@ -245,8 +315,7 @@ export function DayView({
     )
   }
 
-  // Calculate the total height needed for the schedule
-  const totalHeight = ((workHours.endAt - workHours.startAt) / 60) * 64
+  const totalHeight = ((workHours.endAt - workHours.startAt) / 60) * TIME_SLOT_HEIGHT
 
   return (
     <div className='flex flex-col space-y-4 h-full'>
@@ -267,12 +336,12 @@ export function DayView({
 
             <div
               ref={timeSlotAreaRef}
-              className={`flex-1 relative transition-colors ${
+              className={`flex-1 relative ${
                 hasOpenDialogs 
                   ? 'cursor-not-allowed opacity-60' 
-                  : isSelecting 
-                    ? 'cursor-ns-resize' 
-                    : 'cursor-crosshair hover:bg-primary/5'
+                  : isDragging
+                    ? 'cursor-ns-resize'
+                    : 'cursor-pointer hover:bg-primary/5'
               }`}
               style={{
                 backgroundImage: `repeating-linear-gradient(
@@ -286,17 +355,13 @@ export function DayView({
                 height: `${totalHeight}px`,
                 minHeight: `${totalHeight}px`,
               }}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onClick={handleTimeSlotAreaClick}
+              onClick={handleTimeSlotClick}
             >
+              {/* Current time indicator */}
               {isSameDay(currentTime, date) &&
                 workHours &&
-                currentTime.getHours() * 60 + currentTime.getMinutes() >=
-                  workHours.startAt &&
-                currentTime.getHours() * 60 + currentTime.getMinutes() <=
-                  workHours.endAt && (
+                currentTime.getHours() * 60 + currentTime.getMinutes() >= workHours.startAt &&
+                currentTime.getHours() * 60 + currentTime.getMinutes() <= workHours.endAt && (
                   <div
                     className='absolute left-0 right-0 z-10 border-t-2 border-red-500'
                     style={{ top: `${getCurrentTimePosition()}px` }}
@@ -310,46 +375,42 @@ export function DayView({
                   </div>
                 )}
 
-              {/* Time selection overlay - Google Calendar style */}
-              {selectedTimeRange && workHours && (
+              {/* Simple Time Block */}
+              {timeBlock && (
                 <div
-                  className={`absolute left-0 right-0 z-20 bg-primary/20 border-2 border-primary rounded-md transition-all duration-200 ${
-                    isSelecting ? 'shadow-lg' : 'shadow-md hover:shadow-lg'
-                  }`}
-                  style={{
-                    top: `${((selectedTimeRange.startAt - workHours.startAt) / 60) * 64}px`,
-                    height: `${((selectedTimeRange.endAt - selectedTimeRange.startAt) / 60) * 64}px`,
-                  }}
+                  className='absolute left-0 right-0 z-20 bg-blue-500/20 border-2 border-blue-500 rounded-lg shadow-lg'
+                  style={getBlockPosition(timeBlock)}
                 >
-                  {/* Background pattern */}
-                  <div className='absolute inset-0 opacity-30 bg-gradient-to-r from-primary/10 to-primary/30 rounded-md' />
-                  
-                  {/* Time display */}
-                  <div className='absolute inset-0 flex items-center justify-center'>
-                    <div className='bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm font-medium shadow-lg transform transition-transform hover:scale-105'>
-                      {Math.floor(selectedTimeRange.startAt / 60)}:
-                      {String(selectedTimeRange.startAt % 60).padStart(2, '0')} -{' '}
-                      {Math.floor(selectedTimeRange.endAt / 60)}:
-                      {String(selectedTimeRange.endAt % 60).padStart(2, '0')}
-                      {isSelecting && (
-                        <span className='ml-2 text-xs'>
-                          ({Math.round((selectedTimeRange.endAt - selectedTimeRange.startAt) / 60 * 10) / 10}h)
-                        </span>
-                      )}
+                  {/* Duration label and confirm button */}
+                  <div className='absolute inset-0 flex items-center justify-center gap-2'>
+                    <div className='bg-white/95 text-blue-900 px-3 py-1 rounded text-sm font-medium'>
+                      {formatDuration(timeBlock.startAt, timeBlock.endAt)}
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleConfirmBlock()
+                      }}
+                      className='bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors shadow-sm'
+                    >
+                      Crear Cita
+                    </button>
                   </div>
                   
-                  {/* Selection handles */}
-                  <div className='absolute -top-1.5 left-1/2 transform -translate-x-1/2 w-8 h-3 bg-primary rounded-full cursor-ns-resize opacity-80 hover:opacity-100 transition-opacity shadow-sm' />
-                  <div className='absolute -bottom-1.5 left-1/2 transform -translate-x-1/2 w-8 h-3 bg-primary rounded-full cursor-ns-resize opacity-80 hover:opacity-100 transition-opacity shadow-sm' />
-                  
-                  {/* Side indicators */}
-                  <div className='absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-md' />
-                  <div className='absolute right-0 top-0 bottom-0 w-1 bg-primary rounded-r-md' />
+                  {/* Resize handles */}
+                  <div 
+                    className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-16 h-2 bg-blue-500 rounded-full cursor-ns-resize hover:bg-blue-600'
+                    onMouseDown={(e) => handleResizeStart('top', e)}
+                  />
+                  <div 
+                    className='absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-16 h-2 bg-blue-500 rounded-full cursor-ns-resize hover:bg-blue-600'
+                    onMouseDown={(e) => handleResizeStart('bottom', e)}
+                  />
                 </div>
               )}
 
-              {positionedEvents.length === 0 ? (
+              {/* Empty state */}
+              {positionedEvents.length === 0 && !timeBlock && (
                 <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
                   <div className='text-center p-6'>
                     <Clock className='h-12 w-12 text-muted-foreground mx-auto mb-4' />
@@ -358,40 +419,37 @@ export function DayView({
                     </p>
                     {!hasOpenDialogs && (
                       <p className='text-sm text-muted-foreground/70'>
-                        Haz clic y arrastra para crear una nueva cita
+                        Haz clic en cualquier horario para crear una nueva cita
                       </p>
                     )}
                   </div>
                 </div>
-              ) : (
-                positionedEvents.map(
-                  ({ appointment, column, totalColumns }) => {
-                    const employees = allEmployees.filter((emp) =>
-                      appointment.employeeIds.includes(emp.id)
-                    )
-
-                    const services = allServices.filter((a) =>
-                      appointment.serviceIds.includes(a.id)
-                    )
-
-                    return (
-                      <AppointmentBlock
-                        cancelAppointment={handleCancel}
-                        key={appointment.id}
-                        appointment={appointment}
-                        client={
-                          clients.find((c) => c.id === appointment.clientId)!
-                        }
-                        employees={employees}
-                        services={services}
-                        column={column}
-                        totalColumns={totalColumns}
-                        workHours={workHours}
-                      />
-                    )
-                  }
-                )
               )}
+              
+              {/* Existing appointments */}
+              {positionedEvents.map(({ appointment, column, totalColumns }) => {
+                const employees = allEmployees.filter((emp) =>
+                  appointment.employeeIds.includes(emp.id)
+                )
+
+                const services = allServices.filter((a) =>
+                  appointment.serviceIds.includes(a.id)
+                )
+
+                return (
+                  <AppointmentBlock
+                    cancelAppointment={handleCancel}
+                    key={appointment.id}
+                    appointment={appointment}
+                    client={clients.find((c) => c.id === appointment.clientId)!}
+                    employees={employees}
+                    services={services}
+                    column={column}
+                    totalColumns={totalColumns}
+                    workHours={workHours}
+                  />
+                )
+              })}
             </div>
           </div>
           <ScrollBar orientation='vertical' />
@@ -402,29 +460,20 @@ export function DayView({
       <QuickAppointmentDialog
         open={isQuickDialogOpen}
         onOpenChange={(open) => {
-          console.log('DayView opening dialog with:', {
-            open,
-            selectedTimeRange,
-            dialogTimeRange,
-            startAt: dialogTimeRange?.startAt,
-            endAt: dialogTimeRange?.endAt
-          })
           setIsQuickDialogOpen(open)
           if (!open) {
-            // Clear selection when dialog closes
-            handleClearSelection()
+            handleClearBlock()
           }
         }}
         defaultDate={date}
         defaultStartTime={dialogTimeRange?.startAt}
         defaultEndTime={dialogTimeRange?.endAt}
         onSuccess={() => {
-          // Refresh appointments after successful creation
           void queryClient.invalidateQueries({
             queryKey: [UseGetAppointmentsQueryKey, date.toISOString()],
           })
           setIsQuickDialogOpen(false)
-          handleClearSelection()
+          handleClearBlock()
         }}
       />
     </div>
