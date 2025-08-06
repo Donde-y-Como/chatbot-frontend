@@ -70,6 +70,8 @@ export function MakeAppointmentDialog({
     // Campos de equipos y consumibles
     selectedEquipmentIds,
     consumableUsages,
+    inheritedEquipmentIds,
+    inheritedConsumableUsages,
 
     setActiveStep,
     setClientId,
@@ -198,6 +200,8 @@ export function MakeAppointmentDialog({
                   onEmployeeToggle={toggleEmployeeSelection}
                   selectedEquipmentIds={selectedEquipmentIds}
                   consumableUsages={consumableUsages}
+                  inheritedEquipmentIds={inheritedEquipmentIds}
+                  inheritedConsumableUsages={inheritedConsumableUsages}
                   onEquipmentToggle={toggleEquipmentSelection}
                   onConsumableUsageUpdate={updateConsumableUsage}
                   onNext={() => setActiveStep(4)}
