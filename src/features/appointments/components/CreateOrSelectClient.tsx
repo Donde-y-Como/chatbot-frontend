@@ -235,14 +235,18 @@ export function CreateOrSelectClient({
     (e: ChangeEvent<HTMLInputElement>) => {
       const query = e.target.value
       setSearchQueryInput(query)
-      // Always keep dropdown open for better UX when there's focus
-      setIsDropdownOpen(true)
+      // Only open dropdown when user starts typing
+      if (query.trim()) {
+        setIsDropdownOpen(true)
+      } else {
+        setIsDropdownOpen(false)
+      }
     },
     []
   )
 
   const handleSearchInputFocus = useCallback(() => {
-    // Always show dropdown on focus for better UX
+    // Show dropdown when clicking/focusing the input
     setIsDropdownOpen(true)
   }, [])
 
