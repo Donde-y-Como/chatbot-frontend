@@ -46,10 +46,10 @@ interface ConversationHeaderProps {
 }
 
 export function ConversationHeader({
-  selectedChatId,
-  onBackClick,
-  chatData,
-}: ConversationHeaderProps) {
+                                     selectedChatId,
+                                     onBackClick,
+                                     chatData,
+                                   }: ConversationHeaderProps) {
   const { emit } = useWebSocket()
   const queryClient = useQueryClient()
   const { setOpen, setCurrentRow } = useClients()
@@ -237,13 +237,13 @@ export function ConversationHeader({
                 className={cn(
                   'w-3.5 h-3.5',
                   chatData.platformName.toLowerCase() === 'whatsappweb' &&
-                    'text-green-700',
+                  'text-green-700',
                   chatData.platformName.toLowerCase() === 'whatsapp' &&
-                    'text-green-500',
+                  'text-green-500',
                   chatData.platformName.toLowerCase() === 'facebook' &&
-                    'text-blue-500',
+                  'text-blue-500',
                   chatData.platformName.toLowerCase() === 'instagram' &&
-                    'text-pink-500'
+                  'text-pink-500'
                 )}
               />
             </div>
@@ -422,7 +422,7 @@ export function ConversationHeader({
         <MakeAppointmentDialog
           defaultOpen={appointmentDialogOpen}
           onOpenChange={setAppointmentDialogOpen}
-          defaultClientName={chatData.client.name}
+          defaultClientName={chatData.client.id}
         />
       </div>
     </div>

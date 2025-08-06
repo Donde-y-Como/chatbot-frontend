@@ -41,7 +41,7 @@ export function useAppointmentForm(
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>(
     appointment?.employeeIds || []
   )
-  
+
   // Nuevos estados para estados y pago
   const [status, setStatus] = useState<AppointmentStatus>(
     appointment?.status || 'pendiente'
@@ -55,18 +55,18 @@ export function useAppointmentForm(
   const [notes, setNotes] = useState<string>(
     appointment?.notes || ''
   )
-  
+
   const [loading, setLoading] = useState(false)
   const { data: clients } = useGetClients()
-  
+
   // Si se proporciona defaultClientName, buscar el cliente por nombre al cargar clientes
   useEffect(() => {
     if (defaultClientName && clients && clients.length > 0 && !clientId) {
       // Buscar cliente por nombre
-      const matchingClient = clients.find(client => 
-        client.name && client.name.toLowerCase().includes(defaultClientName.toLowerCase())
+      const matchingClient = clients.find(client =>
+        client.id && client.id === defaultClientName
       )
-      
+
       if (matchingClient) {
         setClientId(matchingClient.id)
       }
@@ -84,7 +84,7 @@ export function useAppointmentForm(
       }
     }
   }, [defaultServiceIds, appointment])
-  
+
   const { data: services } = useGetServices()
   const queryClient = useQueryClient()
 
