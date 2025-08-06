@@ -6,12 +6,13 @@ import { DayView } from '@/features/appointments/DayView.tsx'
 import { useGetAppointments } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
 import { SidebarTrigger } from '../../components/ui/sidebar'
+import { format } from 'date-fns'
 
 export function Calendar() {
   const { data: employees } = useGetEmployees()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [view, setView] = useState<'day' | 'week'>('day')
-  const { data: appointments } = useGetAppointments(selectedDate.toISOString())
+  const { data: appointments } = useGetAppointments(format(selectedDate, "yyyy-MM-dd"))
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(
     new Set()
   )
