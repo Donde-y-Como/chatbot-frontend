@@ -1,15 +1,17 @@
-import { useState } from 'react'
-import { AxiosError } from 'axios'
+import { ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
+import { playNotification } from '@/lib/audio.ts'
+import { routeTree } from '@/routeTree.gen.ts'
+import { useAuthStore } from '@/stores/authStore.ts'
+import { handleServerError } from '@/utils/handle-server-error.ts'
 import { QueryCache, QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
-import { routeTree } from '@/routeTree.gen.ts'
+import { AxiosError } from 'axios'
+import { useState } from 'react'
 import { io } from 'socket.io-client'
 import { toast } from 'sonner'
-import { useAuthStore } from '@/stores/authStore.ts'
-import { playNotification } from '@/lib/audio.ts'
-import { handleServerError } from '@/utils/handle-server-error.ts'
-import { ChatMessages, Message } from '@/features/chats/ChatTypes.ts'
 import { UserQueryKey } from '../components/layout/hooks/useGetUser'
+import { UseGetAppointmentsQueryKey } from '../features/appointments/hooks/useGetAppointments'
+import { AppointmentCreated } from '../features/appointments/types'
 
 export const socket = io(import.meta.env.VITE_WS_URL || 'http://localhost:3000')
 
@@ -45,11 +47,14 @@ socket.on('newEventBooked', () => {
   toast.success('Un nuevo evento ha sido reservado.')
 })
 
-socket.on('newAppointmentCreated', () => {
+socket.on('newAppointmentCreated', async ({ appointment }: { appointment: AppointmentCreated }) => {
   toast.success('Una nueva cita ha sido creada.')
+  await queryClient.invalidateQueries({
+    queryKey: [UseGetAppointmentsQueryKey, appointment.date, appointment.date],
+  })
 })
 
-socket.on('serverMessage', (data: {error:boolean, message:string}) => {
+socket.on('serverMessage', (data: { error: boolean, message: string }) => {
   console.log(data.message)
 })
 
