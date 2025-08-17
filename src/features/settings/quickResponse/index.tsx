@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Loader2, Plus } from 'lucide-react'
+import { Loader2, Plus, Bell, BellOff } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { ViewQuickResponseDialog } from '@/features/settings/quickResponse/components/view-quick-response-dialog.tsx'
 import ContentSection from '../components/content-section'
 import { DeleteQuickResponseDialog } from './components/delete-quick-response-dialog'
@@ -14,6 +16,8 @@ import {
   useDeleteQuickResponse,
 } from './hooks/useQuickResponses'
 import { QuickResponse, QuickResponseFormValues } from './types'
+import { useToggleNotifications } from '@/hooks/useNotifications'
+import { useAuth } from '@/stores/authStore'
 
 export default function QuickResponsesSection() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
@@ -23,6 +27,9 @@ export default function QuickResponsesSection() {
   const [selectedQuickResponse, setSelectedQuickResponse] = useState<
     QuickResponse | undefined
   >(undefined)
+
+  const { user } = useAuth()
+  const { mutateAsync: toggleNotifications, isPending: isTogglingNotifications } = useToggleNotifications()
 
   const {
     data: quickResponses,
@@ -77,12 +84,45 @@ export default function QuickResponsesSection() {
     setIsViewDialogOpen(true)
   }
 
+  const handleToggleNotifications = async (enabled: boolean) => {
+    await toggleNotifications(enabled)
+  }
+
   return (
     <ContentSection
       title='Respuestas Rápidas'
       desc='Administra tus respuestas rápidas para agilizar la comunicación con tus clientes'
     >
       <div className='space-y-6'>
+        {/* Sección de notificaciones */}
+        <div className='border rounded-lg p-4 bg-card'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center space-x-3'>
+              {user?.notificationsEnabled ? (
+                <Bell className='h-5 w-5 text-green-600' />
+              ) : (
+                <BellOff className='h-5 w-5 text-red-600' />
+              )}
+              <div>
+                <Label htmlFor='notifications-toggle' className='text-sm font-medium'>
+                  Envío de mensajes automáticos
+                </Label>
+                <p className='text-sm text-muted-foreground'>
+                  {user?.notificationsEnabled 
+                    ? 'Los mensajes de citas se envían automáticamente'
+                    : 'Los mensajes de citas están deshabilitados'
+                  }
+                </p>
+              </div>
+            </div>
+            <Switch
+              id='notifications-toggle'
+              checked={user?.notificationsEnabled ?? true}
+              onCheckedChange={handleToggleNotifications}
+              disabled={isTogglingNotifications}
+            />
+          </div>
+        </div>
         <div className='flex justify-between items-center'>
           <h3 className='text-lg font-medium'>Tus respuestas rápidas</h3>
           <Button onClick={() => setIsCreateDialogOpen(true)}>

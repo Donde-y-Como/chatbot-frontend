@@ -49,5 +49,10 @@ export const authService = {
   verifyLoginLink: async (token: string): Promise<{ token: string }> => {
     const response = await api.get<{ token: string }>(`/auth/verify-login-link/${token}`);
     return response.data;
+  },
+
+  toggleNotifications: async (enabled: boolean): Promise<{ message: string; notificationsEnabled: boolean }> => {
+    const response = await api.post<{ message: string; notificationsEnabled: boolean }>('/business/notifications/toggle', { enabled });
+    return response.data;
   }
 }

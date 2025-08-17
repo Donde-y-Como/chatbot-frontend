@@ -22,6 +22,7 @@ export interface UserData {
     enabled: boolean
   }
   socialPlatforms: PlatformConfig[]
+  notificationsEnabled?: boolean
 }
 
 export interface BillingPlan {
