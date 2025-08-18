@@ -77,6 +77,9 @@ const AuthenticatedSettingsUnitsLazyImport = createFileRoute(
 const AuthenticatedSettingsTagsLazyImport = createFileRoute(
   '/_authenticated/settings/tags',
 )()
+const AuthenticatedSettingsRolesLazyImport = createFileRoute(
+  '/_authenticated/settings/roles',
+)()
 const AuthenticatedSettingsQuickResponsesLazyImport = createFileRoute(
   '/_authenticated/settings/quick-responses',
 )()
@@ -320,6 +323,15 @@ const AuthenticatedSettingsTagsLazyRoute =
     import('./routes/_authenticated/settings/tags.lazy').then((d) => d.Route),
   )
 
+const AuthenticatedSettingsRolesLazyRoute =
+  AuthenticatedSettingsRolesLazyImport.update({
+    id: '/roles',
+    path: '/roles',
+    getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/settings/roles.lazy').then((d) => d.Route),
+  )
+
 const AuthenticatedSettingsQuickResponsesLazyRoute =
   AuthenticatedSettingsQuickResponsesLazyImport.update({
     id: '/quick-responses',
@@ -507,6 +519,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsQuickResponsesLazyImport
       parentRoute: typeof AuthenticatedSettingsRouteLazyImport
     }
+    '/_authenticated/settings/roles': {
+      id: '/_authenticated/settings/roles'
+      path: '/roles'
+      fullPath: '/settings/roles'
+      preLoaderRoute: typeof AuthenticatedSettingsRolesLazyImport
+      parentRoute: typeof AuthenticatedSettingsRouteLazyImport
+    }
     '/_authenticated/settings/tags': {
       id: '/_authenticated/settings/tags'
       path: '/tags'
@@ -621,6 +640,7 @@ interface AuthenticatedSettingsRouteLazyRouteChildren {
   AuthenticatedSettingsAccountLazyRoute: typeof AuthenticatedSettingsAccountLazyRoute
   AuthenticatedSettingsCategoriesLazyRoute: typeof AuthenticatedSettingsCategoriesLazyRoute
   AuthenticatedSettingsQuickResponsesLazyRoute: typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  AuthenticatedSettingsRolesLazyRoute: typeof AuthenticatedSettingsRolesLazyRoute
   AuthenticatedSettingsTagsLazyRoute: typeof AuthenticatedSettingsTagsLazyRoute
   AuthenticatedSettingsUnitsLazyRoute: typeof AuthenticatedSettingsUnitsLazyRoute
   AuthenticatedSettingsWhatsappLazyRoute: typeof AuthenticatedSettingsWhatsappLazyRoute
@@ -635,6 +655,7 @@ const AuthenticatedSettingsRouteLazyRouteChildren: AuthenticatedSettingsRouteLaz
       AuthenticatedSettingsCategoriesLazyRoute,
     AuthenticatedSettingsQuickResponsesLazyRoute:
       AuthenticatedSettingsQuickResponsesLazyRoute,
+    AuthenticatedSettingsRolesLazyRoute: AuthenticatedSettingsRolesLazyRoute,
     AuthenticatedSettingsTagsLazyRoute: AuthenticatedSettingsTagsLazyRoute,
     AuthenticatedSettingsUnitsLazyRoute: AuthenticatedSettingsUnitsLazyRoute,
     AuthenticatedSettingsWhatsappLazyRoute:
@@ -704,6 +725,7 @@ export interface FileRoutesByFullPath {
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  '/settings/roles': typeof AuthenticatedSettingsRolesLazyRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappLazyRoute
@@ -738,6 +760,7 @@ export interface FileRoutesByTo {
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  '/settings/roles': typeof AuthenticatedSettingsRolesLazyRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappLazyRoute
@@ -775,6 +798,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/_authenticated/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/_authenticated/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  '/_authenticated/settings/roles': typeof AuthenticatedSettingsRolesLazyRoute
   '/_authenticated/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/_authenticated/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
   '/_authenticated/settings/whatsapp': typeof AuthenticatedSettingsWhatsappLazyRoute
@@ -813,6 +837,7 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/settings/categories'
     | '/settings/quick-responses'
+    | '/settings/roles'
     | '/settings/tags'
     | '/settings/units'
     | '/settings/whatsapp'
@@ -846,6 +871,7 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/settings/categories'
     | '/settings/quick-responses'
+    | '/settings/roles'
     | '/settings/tags'
     | '/settings/units'
     | '/settings/whatsapp'
@@ -881,6 +907,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/categories'
     | '/_authenticated/settings/quick-responses'
+    | '/_authenticated/settings/roles'
     | '/_authenticated/settings/tags'
     | '/_authenticated/settings/units'
     | '/_authenticated/settings/whatsapp'
@@ -982,6 +1009,7 @@ export const routeTree = rootRoute
         "/_authenticated/settings/account",
         "/_authenticated/settings/categories",
         "/_authenticated/settings/quick-responses",
+        "/_authenticated/settings/roles",
         "/_authenticated/settings/tags",
         "/_authenticated/settings/units",
         "/_authenticated/settings/whatsapp",
@@ -1036,6 +1064,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/settings/quick-responses": {
       "filePath": "_authenticated/settings/quick-responses.lazy.tsx",
+      "parent": "/_authenticated/settings"
+    },
+    "/_authenticated/settings/roles": {
+      "filePath": "_authenticated/settings/roles.lazy.tsx",
       "parent": "/_authenticated/settings"
     },
     "/_authenticated/settings/tags": {

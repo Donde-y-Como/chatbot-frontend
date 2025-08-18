@@ -47,7 +47,6 @@ export function EmployeeActionDialog({
   const { uploadFile, validateFile, isUploading } = useUploadMedia()
   const isMobile = useMediaQuery({ maxWidth: 768 })
   const queryClient = useQueryClient()
-
   const userScheduleQuery = useQuery({
     queryKey: ['user-schedule'],
     queryFn: async () => {
@@ -102,7 +101,7 @@ export function EmployeeActionDialog({
     defaultValues: isEdit
       ? {
           name: currentEmployee.name,
-          role: currentEmployee.role,
+          roleIds: currentEmployee.roleIds,
           email: currentEmployee.email,
           password: '',
           birthDate: currentEmployee.birthDate,
@@ -111,7 +110,7 @@ export function EmployeeActionDialog({
         }
       : {
           name: '',
-          role: '',
+          roleIds: [],
           email: '',
           password: '',
           address: '',
@@ -155,12 +154,12 @@ export function EmployeeActionDialog({
   }
 
   // Función para verificar si ha rellenado algún campo
+  const values = form.getValues()
   const hasFilledFields = useCallback(() => {
-    const values = form.getValues()
     const defaultValues = isEdit
       ? {
           name: currentEmployee?.name || '',
-          role: currentEmployee?.role || '',
+          roleIds: currentEmployee?.roleIds || [],
           email: currentEmployee?.email || '',
           password: '',
           birthDate: currentEmployee?.birthDate || '',
@@ -168,7 +167,7 @@ export function EmployeeActionDialog({
         }
       : {
           name: '',
-          role: '',
+          roleIds: [],
           email: '',
           password: '',
           address: '',
@@ -176,13 +175,25 @@ export function EmployeeActionDialog({
 
     // Comparar valores actuales con valores por defecto
     if (values.name !== defaultValues.name) return true
-    if (values.role !== defaultValues.role) return true
+    if (
+      JSON.stringify(values.roleIds) !== JSON.stringify(defaultValues.roleIds)
+    )
+      return true
     if (values.email !== defaultValues.email) return true
     if (values.password !== defaultValues.password) return true
     if (values.address !== defaultValues.address) return true
     if (values.birthDate !== defaultValues.birthDate) return true
     return photos.length > 0
-  }, [form, isEdit, currentEmployee?.name, currentEmployee?.role, currentEmployee?.email, currentEmployee?.birthDate, currentEmployee?.address, photos.length])
+  }, [
+    values,
+    isEdit,
+    currentEmployee?.name,
+    currentEmployee?.roleIds,
+    currentEmployee?.email,
+    currentEmployee?.birthDate,
+    currentEmployee?.address,
+    photos.length,
+  ])
 
   const isLoadingSchedule = !isEdit && userScheduleQuery.isLoading
 

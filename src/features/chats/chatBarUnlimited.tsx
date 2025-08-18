@@ -3,7 +3,7 @@ import { SearchChatParams } from '@/routes/_authenticated/chats'
 import { Loader2 } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { useGetUser } from '@/components/layout/hooks/useGetUser.ts'
+import { useGetBusiness, useGetUser } from '@/components/layout/hooks/useGetUser.ts'
 import { ChatBarHeader } from '@/features/chats/ChatBarHeader.tsx'
 import { ChatListItem } from '@/features/chats/ChatListItem.tsx'
 import { ChatListItemSkeleton } from '@/features/chats/ChatListItemSkeleton.tsx'
@@ -31,7 +31,7 @@ export function ChatBarUnlimited({
 }: ChatBarProps) {
   const [search, setSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
-  const { data: user } = useGetUser()
+  const { data: user } = useGetBusiness()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const loadingRef = useRef<HTMLDivElement>(null)
   const toggleAllIaMutation = useToggleAllAIMutation()

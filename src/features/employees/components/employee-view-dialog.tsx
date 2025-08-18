@@ -82,7 +82,7 @@ export function EmployeeViewDialog({ currentEmployee, open, onOpenChange }: Empl
                     <h2 className="text-xl font-semibold">{currentEmployee.name}</h2>
                     <div className="flex flex-wrap justify-center md:justify-start gap-2">
                       <Badge variant="secondary" className="text-xs px-2 py-0.5">
-                        {currentEmployee.role || "Sin Rol"}
+                        {currentEmployee.roleNames.join(", ")|| "Sin Roles"}
                       </Badge>
                     </div>
                   </div>
@@ -149,7 +149,7 @@ export function EmployeeViewDialog({ currentEmployee, open, onOpenChange }: Empl
                     <div className="flex items-center gap-2">
                       <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">Rol:</span>
-                      <span className="text-sm font-medium">{currentEmployee.role || "-"}</span>
+                      <span className="text-sm font-medium">{currentEmployee.roleNames.join(", ") || "-"}</span>
                     </div>
                   </div>
                 </div>

@@ -5,24 +5,76 @@ export interface LoginData {
   password: string
 }
 
+export interface LoginResponse {
+  token: string
+  userId: string
+  user: UserData
+}
+
+export interface UpdateCredentialsData {
+  currentPassword: string
+  email?: string
+  newPassword?: string
+}
+
+export interface Role {
+  id: string
+  businessId: string
+  name: string
+  description: string
+  permissions: string[]
+  createdAt: string
+}
+
+export interface CreateRoleData {
+  name: string
+  description: string
+  permissions: string[]
+}
+
+export interface UpdateRoleData {
+  name: string
+  description: string
+  permissions: string[]
+}
+
+export interface PermissionsResponse {
+  permissions: string[]
+}
+
 export type PlatformConfig = {
   platformId: string
   token: string
   platformName: PlatformName
+  displayName?: string
+  extra?: any
 }
 
 export interface UserData {
   id: string
-  logo: string
+  email: string
+  isOwner: boolean
+  businessId: string
+  roleIds: string[]
+}
+
+export interface BusinessData {
+  id: string
   name: string
-  phone: string
+  logo?: string
+  phone?: string
+  email?: string
+  address?: string
   plan: BillingPlan
   assistantConfig: {
     id: string
+    name: string
+    prompt: string
+    vectorStorageId: string
     enabled: boolean
   }
   socialPlatforms: PlatformConfig[]
-  notificationsEnabled?: boolean
+  notificationsEnabled: boolean
 }
 
 export interface BillingPlan {

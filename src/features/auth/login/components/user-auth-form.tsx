@@ -51,12 +51,7 @@ export function UserAuthForm({ emailOnly = false }: UserAuthFormProps) {
     mutationFn: authService.login,
     onSuccess: async (data) => {
       setAccessToken(data.token)
-      const user = await queryClient.fetchQuery({
-        queryKey: ['user'],
-        queryFn: authService.getMe,
-      })
-
-      setUser(user)
+      setUser(data.user)
       router.navigate({ to: '/', replace: true })
     },
     onError: () => {

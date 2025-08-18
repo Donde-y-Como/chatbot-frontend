@@ -17,8 +17,8 @@ import { authService } from '@/features/auth/AuthService.ts'
 
 export function ProfileDropdown() {
   const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: authService.getMe,
+    queryKey: ['business'],
+    queryFn: authService.getMyBusiness,
   })
 
   return (

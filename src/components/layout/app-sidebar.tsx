@@ -33,11 +33,11 @@ import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { NavGroup } from '@/components/layout/nav-group'
 import { NavUser } from '@/components/layout/nav-user'
 import { useUnreadChats } from './data/useUnreadChats'
-import { useGetUser } from './hooks/useGetUser'
+import { useGetUserAndBusiness } from './hooks/useGetUser'
 import { SidebarData } from './types'
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
-  const { data: user } = useGetUser()
+  const { user, business, isLoading: userLoading } = useGetUserAndBusiness()
 
   const { count: unreadCount, isLoading } = useUnreadChats()
 
@@ -180,7 +180,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        {user ? <NavUser user={user} /> : <Skeleton className='w-full h-3' />}
+        {user ? <NavUser user={user} business={business} /> : <Skeleton className='w-full h-3' />}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

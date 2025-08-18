@@ -3,14 +3,14 @@ import { UserIcon } from 'lucide-react'
 import { twMerge } from 'tailwind-merge'
 import { Chat, PlatformName } from '@/features/chats/ChatTypes.ts'
 import { dayInitialsMap, Employee } from '@/features/employees/types.ts'
-import { UserData } from '../features/auth/types'
+import { UserData, Role, BusinessData } from '../features/auth/types'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function getInstanceId(userData: UserData): string | undefined {
-  const whatsappPlatform = userData.socialPlatforms.find(
+export function getInstanceId(businessData: BusinessData): string | undefined {
+  const whatsappPlatform = businessData.socialPlatforms.find(
     (platform) => platform.platformName === PlatformName.WhatsappWeb
   )
   return whatsappPlatform ? whatsappPlatform.platformId : undefined
@@ -46,14 +46,12 @@ export function sortByLastMessageTimestamp(a: Chat, b: Chat): number {
   return 0
 }
 
-// Function to generate role options dynamically from employees data
-export function generateRoleOptions(employees: Employee[]) {
-  const uniqueRoles = new Set(employees.map((employee) => employee.role))
-
-  return Array.from(uniqueRoles).map((role) => {
+// Function to generate role options from the roles API
+export function generateRoleOptions(roles: Role[]) {
+  return roles.map((role) => {
     return {
-      value: role,
-      label: role.charAt(0).toUpperCase() + role.slice(1),
+      value: role.id,
+      label: role.name,
       icon: UserIcon,
     }
   })

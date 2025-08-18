@@ -22,11 +22,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardFooter, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { useGetUser } from '@/components/layout/hooks/useGetUser.ts'
+import { useGetBusiness } from '@/components/layout/hooks/useGetUser.ts'
 import { useDisconnectWhatsApp } from './useDisconnectWhatsApp'
 
 export function ViewWhatsApp() {
-  const { data: user } = useGetUser()
+  const { data: user } = useGetBusiness()
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const { disconnectWhatsApp } = useDisconnectWhatsApp()
 

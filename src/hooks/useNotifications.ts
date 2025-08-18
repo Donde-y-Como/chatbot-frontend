@@ -16,8 +16,8 @@ export const useToggleNotifications = () => {
         setUser(updatedUser)
       }
 
-      // Invalidar queries relacionadas con el usuario
-      queryClient.invalidateQueries({ queryKey: ['user'] })
+      // Invalidar queries relacionadas con el negocio
+      queryClient.invalidateQueries({ queryKey: ['business'] })
 
       toast.success(
         data.notificationsEnabled 

@@ -400,9 +400,9 @@ export function AppointmentBlock({
                       </Avatar>
                       <div>
                         <h4 className='font-medium text-sm'>{employee.name}</h4>
-                        <p className='text-xs text-muted-foreground'>
-                          {employee.role}
-                        </p>
+                        {/*<p className='text-xs text-muted-foreground'>*/}
+                        {/*  {employee.role}*/}
+                        {/*</p>*/}
                       </div>
                     </div>
                   ))}

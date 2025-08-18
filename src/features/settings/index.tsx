@@ -4,6 +4,7 @@ import {
   IconCategory,
   IconMessage,
   IconRulerMeasure,
+  IconShield,
   IconTags,
   IconTool,
   IconUser,
@@ -80,5 +81,10 @@ const sidebarNavItems = [
     title: 'Etiquetas',
     icon: <IconTags size={18} />,
     href: '/settings/tags',
+  },
+  {
+    title: 'Roles',
+    icon: <IconShield size={18} />,
+    href: '/settings/roles',
   },
 ]

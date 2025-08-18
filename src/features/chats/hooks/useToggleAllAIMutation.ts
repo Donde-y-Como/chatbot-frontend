@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useWebSocket } from '@/hooks/use-web-socket.ts'
-import { UserQueryKey } from '@/components/layout/hooks/useGetUser.ts'
-import { UserData } from '@/features/auth/types.ts'
+import { BusinessQueryKey, UserQueryKey } from '@/components/layout/hooks/useGetUser.ts'
+import { BusinessData, UserData } from '@/features/auth/types.ts'
 
 export function useToggleAllAIMutation() {
   const queryClient = useQueryClient()
@@ -18,11 +18,11 @@ export function useToggleAllAIMutation() {
       return { success: true, enabled: data.enabled }
     },
     onSuccess: async (_data, { enabled }) => {
-      queryClient.setQueryData<UserData>(UserQueryKey, (cachedUser) => {
-        if (!cachedUser) return cachedUser
+      queryClient.setQueryData<BusinessData>(BusinessQueryKey, (cachedBusiness) => {
+        if (!cachedBusiness) return cachedBusiness
         return {
-          ...cachedUser,
-          assistantConfig: { ...cachedUser.assistantConfig, enabled },
+          ...cachedBusiness,
+          assistantConfig: { ...cachedBusiness.assistantConfig, enabled },
         }
       })
     },

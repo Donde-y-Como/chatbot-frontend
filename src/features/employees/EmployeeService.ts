@@ -1,5 +1,5 @@
-import { api } from "../../api/axiosInstance";
-import { Employee } from "./types";
+import { api } from '@/api/axiosInstance';
+import { Employee, EmployeeFormValues } from './types'
 
 const generateDistantPastels = (seed: number, count = 5) => {
   const rand = ((seed * 9301 + 49297) % 233280) / 233280
@@ -21,7 +21,7 @@ export const EmployeeService = {
           color: colors[i],
         }))
       },
-    createEmployee: async (employee: Omit<Employee, "id" | "color" | "createdAt" | "businessId">) => {
+    createEmployee: async (employee: EmployeeFormValues) => {
         const response = await api.post("/employees", employee);
         if (response.status !== 201) {
             throw new Error("Error creating employee");

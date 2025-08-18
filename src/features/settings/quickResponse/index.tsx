@@ -1,23 +1,23 @@
 import { useState } from 'react'
-import { Loader2, Plus, Bell, BellOff } from 'lucide-react'
+import { Bell, BellOff, Loader2, Plus } from 'lucide-react'
+import { useGetMyBusiness } from '@/hooks/useAuth.ts'
+import { useToggleNotifications } from '@/hooks/useNotifications'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { ViewQuickResponseDialog } from '@/features/settings/quickResponse/components/view-quick-response-dialog.tsx'
 import ContentSection from '../components/content-section'
 import { DeleteQuickResponseDialog } from './components/delete-quick-response-dialog'
 import { QuickResponseDialog } from './components/quick-response-dialog'
 import { QuickResponseList } from './components/quick-response-list'
 import {
-  useGetQuickResponses,
   useCreateQuickResponse,
-  useUpdateQuickResponse,
   useDeleteQuickResponse,
+  useGetQuickResponses,
+  useUpdateQuickResponse,
 } from './hooks/useQuickResponses'
 import { QuickResponse, QuickResponseFormValues } from './types'
-import { useToggleNotifications } from '@/hooks/useNotifications'
-import { useAuth } from '@/stores/authStore'
 
 export default function QuickResponsesSection() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
@@ -28,8 +28,11 @@ export default function QuickResponsesSection() {
     QuickResponse | undefined
   >(undefined)
 
-  const { user } = useAuth()
-  const { mutateAsync: toggleNotifications, isPending: isTogglingNotifications } = useToggleNotifications()
+  const { data: user } = useGetMyBusiness()
+  const {
+    mutateAsync: toggleNotifications,
+    isPending: isTogglingNotifications,
+  } = useToggleNotifications()
 
   const {
     data: quickResponses,
@@ -45,7 +48,6 @@ export default function QuickResponsesSection() {
     useDeleteQuickResponse()
 
   const handleCreate = async (values: QuickResponseFormValues) => {
-
     await createQuickResponse(values)
     setIsCreateDialogOpen(false)
   }
@@ -104,14 +106,16 @@ export default function QuickResponsesSection() {
                 <BellOff className='h-5 w-5 text-red-600' />
               )}
               <div>
-                <Label htmlFor='notifications-toggle' className='text-sm font-medium'>
+                <Label
+                  htmlFor='notifications-toggle'
+                  className='text-sm font-medium'
+                >
                   Envío de mensajes automáticos
                 </Label>
                 <p className='text-sm text-muted-foreground'>
-                  {user?.notificationsEnabled 
+                  {user?.notificationsEnabled
                     ? 'Los mensajes de citas se envían automáticamente'
-                    : 'Los mensajes de citas están deshabilitados'
-                  }
+                    : 'Los mensajes de citas están deshabilitados'}
                 </p>
               </div>
             </div>

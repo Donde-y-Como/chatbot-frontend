@@ -18,15 +18,16 @@ import { toast } from 'sonner';
 import SocialMediaSection from '@/features/settings/profile/SocialMediaSection.tsx'
 import PlanDetailsSection from '@/features/settings/profile/PlanDetailsSection.tsx'
 import ProfileHeader from '@/features/settings/profile/ProfileHeader.tsx'
+import CredentialsSection from '@/features/settings/profile/credentials-section.tsx'
 
 export default function ProfileForm() {
   const form = useForm({
     mode: 'onChange',
   })
 
-  // Query para obtener los datos del usuario
+  // Query para obtener los datos del negocio
   const { data: user } = useQuery({
-    queryKey: ['user'],
+    queryKey: ['business'],
     queryFn: ProfileService.getMe,
   })
 
@@ -149,7 +150,7 @@ export default function ProfileForm() {
   const updateProfileMutation = useMutation({
     mutationFn: ProfileService.updateProfile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ['business'] });
       setIsEditingProfile(false); // Salir del modo edición después de guardar
       toast.success('Perfil actualizado correctamente'); // Mensaje de éxito
     },
@@ -523,6 +524,9 @@ export default function ProfileForm() {
           isSocialMediaExpanded={isSocialMediaExpanded}
           setIsSocialMediaExpanded={setIsSocialMediaExpanded}
         />
+
+        {/* Sección de Credenciales */}
+        <CredentialsSection />
       </div>
     </Form>
   )
