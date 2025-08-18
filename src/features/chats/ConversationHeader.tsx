@@ -422,7 +422,7 @@ export function ConversationHeader({
         <MakeAppointmentDialog
           defaultOpen={appointmentDialogOpen}
           onOpenChange={setAppointmentDialogOpen}
-          defaultClientName={chatData.client.name}
+          defaultClientName={chatData.client.id}
         />
       </div>
     </div>
