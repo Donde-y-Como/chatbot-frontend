@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Shield } from 'lucide-react'
+import { Check, Crown, Search, Shield, User, Users, X } from 'lucide-react'
 import { useGetPermissions } from '@/hooks/useAuth'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -25,6 +26,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
 import { CreateRoleData, Role, UpdateRoleData } from '@/features/auth/types'
 
 const roleFormSchema = z.object({
@@ -47,6 +49,42 @@ interface RoleDialogProps {
   initialData?: Role
 }
 
+// Role templates for quick setup
+const roleTemplates = [
+  {
+    name: 'Recepcionista',
+    description: 'Gestión de citas y atención al cliente',
+    permissions: [
+      'appointment.create',
+      'appointment.read',
+      'appointment.update',
+      'client.read',
+      'client.create',
+      'client.update',
+    ],
+    icon: Users,
+  },
+  {
+    name: 'Manager',
+    description: 'Supervisión y gestión del equipo',
+    permissions: [
+      'appointment.read',
+      'appointment.update',
+      'employee.read',
+      'client.read',
+      'service.read',
+      'event.read',
+    ],
+    icon: Crown,
+  },
+  {
+    name: 'Empleado',
+    description: 'Acceso básico para servicios',
+    permissions: ['appointment.read', 'client.read', 'service.read'],
+    icon: User,
+  },
+]
+
 export function RoleDialog({
   isOpen,
   onClose,
@@ -56,6 +94,9 @@ export function RoleDialog({
   submitLabel,
   initialData,
 }: RoleDialogProps) {
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showTemplates, setShowTemplates] = useState(!initialData)
+
   const { data: permissionsData, isLoading: permissionsLoading } =
     useGetPermissions()
   const permissions = permissionsData?.permissions || []
@@ -76,14 +117,35 @@ export function RoleDialog({
         description: initialData.description,
         permissions: initialData.permissions,
       })
+      setShowTemplates(false)
     } else {
       form.reset({
         name: '',
         description: '',
         permissions: [],
       })
+      setShowTemplates(true)
     }
   }, [initialData, form.reset])
+
+  // Filter permissions based on search term
+  const filteredPermissions = useMemo(() => {
+    if (!searchTerm) return permissions
+    return permissions.filter((permission) => {
+      const [domain, action] = permission.split('.')
+      const domainName = getDomainDisplayName(domain).toLowerCase()
+      const actionName = getPermissionDisplayName(permission).toLowerCase()
+      return (
+        domainName.includes(searchTerm.toLowerCase()) ||
+        actionName.includes(searchTerm.toLowerCase()) ||
+        permission.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    })
+  }, [permissions, searchTerm])
+
+  // Get selected permissions count
+  const selectedPermissions = form.watch('permissions')
+  const selectedCount = selectedPermissions?.length || 0
 
   const handleSubmit = async (values: RoleFormValues) => {
     await onSubmit(values)
@@ -92,11 +154,57 @@ export function RoleDialog({
 
   const handleClose = () => {
     form.reset()
+    setSearchTerm('')
+    setShowTemplates(!initialData)
     onClose()
   }
 
-  // Agrupar permisos por dominio
-  const groupedPermissions = permissions.reduce(
+  // Apply role template
+  const applyTemplate = (template: (typeof roleTemplates)[0]) => {
+    form.setValue('name', template.name)
+    form.setValue('description', template.description)
+    form.setValue(
+      'permissions',
+      template.permissions.filter((p) => permissions.includes(p))
+    )
+    setShowTemplates(false)
+  }
+
+  // Bulk permission actions
+  const selectAllPermissions = () => {
+    form.setValue('permissions', filteredPermissions)
+  }
+
+  const deselectAllPermissions = () => {
+    form.setValue('permissions', [])
+  }
+
+  const toggleDomainPermissions = (
+    domain: string,
+    domainPermissions: string[]
+  ) => {
+    const currentPermissions = form.getValues('permissions')
+    const domainSelected = domainPermissions.every((p) =>
+      currentPermissions.includes(p)
+    )
+
+    if (domainSelected) {
+      // Remove all domain permissions
+      form.setValue(
+        'permissions',
+        currentPermissions.filter((p) => !domainPermissions.includes(p))
+      )
+    } else {
+      // Add all domain permissions
+      const newPermissions = [
+        ...new Set([...currentPermissions, ...domainPermissions]),
+      ]
+      form.setValue('permissions', newPermissions)
+    }
+  }
+
+  // Agrupar permisos filtrados por dominio
+  const groupedPermissions = filteredPermissions.reduce(
     (acc, permission) => {
       const domain = permission.split('.')[0]
       if (!acc[domain]) {
@@ -116,6 +224,23 @@ export function RoleDialog({
       service: 'Servicios',
       event: 'Eventos',
       role: 'Roles',
+      business: 'Negocio',
+      equipment: 'Equipos',
+      consumable: 'Consumibles',
+      bundle: 'Paquetes',
+      conversation: 'Conversaciones',
+      product_tag: 'Etiquetas de Productos',
+      category: 'Categorías',
+      unit: 'Unidades',
+      quick_reply: 'Respuestas Rápidas',
+      order: 'Órdenes',
+      product: 'Productos',
+      cart: 'Carrito',
+      sale: 'Ventas',
+      tag: 'Etiquetas de clientes',
+      receipt: 'Recibos',
+      whatsapp_business: 'WhatsApp Business',
+      whatsapp_web: 'WhatsApp Web',
     }
     return domainNames[domain] || domain
   }
@@ -127,13 +252,17 @@ export function RoleDialog({
       read: 'Ver',
       update: 'Editar',
       delete: 'Eliminar',
+      connect: 'Conectar',
+      disconnect: 'Desconectar',
+      qr: 'Código QR',
+      status: 'Ver',
     }
     return actionNames[action] || action
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className='sm:max-w-2xl max-h-[80vh] flex flex-col'>
+      <DialogContent className='sm:max-w-4xl max-h-[90vh] flex flex-col'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <Shield className='h-5 w-5' />
@@ -141,6 +270,12 @@ export function RoleDialog({
           </DialogTitle>
           <DialogDescription>
             Define el nombre, descripción y permisos para este rol.
+            {selectedCount > 0 && (
+              <Badge variant='secondary' className='ml-2'>
+                {selectedCount} permiso{selectedCount !== 1 ? 's' : ''}{' '}
+                seleccionado{selectedCount !== 1 ? 's' : ''}
+              </Badge>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -149,7 +284,8 @@ export function RoleDialog({
             onSubmit={form.handleSubmit(handleSubmit)}
             className='flex flex-col flex-1'
           >
-            <div className='flex-1 space-y-4 py-4'>
+            <div className='flex-1 space-y-6 py-4'>
+              {/* Basic Information */}
               <div className='grid gap-4 md:grid-cols-2'>
                 <FormField
                   control={form.control}
@@ -171,8 +307,9 @@ export function RoleDialog({
                     <FormItem>
                       <FormLabel>Descripción *</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder='Ej: Manejo de citas y clientes'
+                        <Textarea
+                          placeholder='Ej: Manejo de citas y atención al cliente'
+                          className='min-h-[60px]'
                           {...field}
                         />
                       </FormControl>
@@ -182,76 +319,170 @@ export function RoleDialog({
                 />
               </div>
 
+              {/* Permissions Section */}
               <FormField
                 control={form.control}
                 name='permissions'
                 render={() => (
                   <FormItem>
-                    <FormLabel>Permisos *</FormLabel>
-                    <FormMessage />
-                    <ScrollArea className='h-[300px] w-full border rounded-md p-4'>
-                      <div className='space-y-4'>
-                        {Object.entries(groupedPermissions).map(
-                          ([domain, domainPermissions]) => (
-                            <div key={domain} className='space-y-2'>
-                              <h4 className='font-medium text-sm flex items-center gap-2'>
-                                {getDomainDisplayName(domain)}
-                                <span className='text-xs text-muted-foreground'>
-                                  ({domainPermissions.length} permisos)
-                                </span>
-                              </h4>
-                              <div className='grid grid-cols-2 gap-2 pl-4'>
-                                {domainPermissions.map((permission) => (
-                                  <FormField
-                                    key={permission}
-                                    control={form.control}
-                                    name='permissions'
-                                    render={({ field }) => {
-                                      return (
-                                        <FormItem
-                                          key={permission}
-                                          className='flex flex-row items-start space-x-3 space-y-0'
-                                        >
-                                          <FormControl>
-                                            <Checkbox
-                                              checked={field.value?.includes(
-                                                permission
-                                              )}
-                                              onCheckedChange={(checked) => {
-                                                return checked
-                                                  ? field.onChange([
-                                                      ...field.value,
-                                                      permission,
-                                                    ])
-                                                  : field.onChange(
-                                                      field.value?.filter(
-                                                        (value) =>
-                                                          value !== permission
-                                                      )
-                                                    )
-                                              }}
-                                            />
-                                          </FormControl>
-                                          <FormLabel className='text-sm font-normal'>
-                                            {getPermissionDisplayName(
-                                              permission
-                                            )}
-                                          </FormLabel>
-                                        </FormItem>
-                                      )
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                              {domain !==
-                                Object.keys(groupedPermissions).slice(
-                                  -1
-                                )[0] && <Separator className='mt-3' />}
-                            </div>
-                          )
-                        )}
+                    {/* Search and Bulk Actions */}
+                    <div className='space-y-3'>
+                      <div className='flex gap-2'>
+                        <div className='relative flex-1'>
+                          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
+                          <Input
+                            placeholder='Buscar permisos...'
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className='pl-9'
+                          />
+                        </div>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          onClick={selectAllPermissions}
+                          disabled={filteredPermissions.length === 0}
+                        >
+                          <Check className='h-4 w-4 mr-1' />
+                          Todos
+                        </Button>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          onClick={deselectAllPermissions}
+                          disabled={selectedCount === 0}
+                        >
+                          <X className='h-4 w-4 mr-1' />
+                          Ninguno
+                        </Button>
                       </div>
-                    </ScrollArea>
+
+                      {searchTerm && (
+                        <div className='text-sm text-muted-foreground'>
+                          {filteredPermissions.length} de {permissions.length}{' '}
+                          permisos encontrados
+                        </div>
+                      )}
+                    </div>
+
+                    <FormMessage />
+
+                    {permissionsLoading ? (
+                      <div className='flex items-center justify-center h-[300px] border rounded-md'>
+                        <div className='text-sm text-muted-foreground'>
+                          Cargando permisos...
+                        </div>
+                      </div>
+                    ) : filteredPermissions.length === 0 ? (
+                      <div className='flex items-center justify-center h-[300px] border rounded-md'>
+                        <div className='text-sm text-muted-foreground'>
+                          {searchTerm
+                            ? 'No se encontraron permisos'
+                            : 'No hay permisos disponibles'}
+                        </div>
+                      </div>
+                    ) : (
+                      <ScrollArea className='h-[350px] w-full border rounded-md p-4'>
+                        <div className='space-y-4'>
+                          {Object.entries(groupedPermissions).map(
+                            ([domain, domainPermissions]) => {
+                              const currentPermissions =
+                                form.getValues('permissions')
+                              const domainSelected = domainPermissions.every(
+                                (p) => currentPermissions.includes(p)
+                              )
+                              const domainPartiallySelected =
+                                domainPermissions.some((p) =>
+                                  currentPermissions.includes(p)
+                                ) && !domainSelected
+
+                              return (
+                                <div key={domain} className='space-y-3'>
+                                  <div className='flex items-center justify-between'>
+                                    <h4 className='font-medium text-sm flex items-center gap-2'>
+                                      <Checkbox
+                                        checked={domainSelected}
+
+                                        onCheckedChange={() =>
+                                          toggleDomainPermissions(
+                                            domain,
+                                            domainPermissions
+                                          )
+                                        }
+                                      />
+                                      {getDomainDisplayName(domain)}
+                                      <Badge
+                                        variant='outline'
+                                        className='text-xs'
+                                      >
+                                        {
+                                          domainPermissions.filter((p) =>
+                                            currentPermissions.includes(p)
+                                          ).length
+                                        }
+                                        /{domainPermissions.length}
+                                      </Badge>
+                                    </h4>
+                                  </div>
+                                  <div className='grid grid-cols-2 gap-2 pl-6'>
+                                    {domainPermissions.map((permission) => (
+                                      <FormField
+                                        key={permission}
+                                        control={form.control}
+                                        name='permissions'
+                                        render={({ field }) => {
+                                          return (
+                                            <FormItem
+                                              key={permission}
+                                              className='flex flex-row items-start space-x-3 space-y-0'
+                                            >
+                                              <FormControl>
+                                                <Checkbox
+                                                  checked={field.value?.includes(
+                                                    permission
+                                                  )}
+                                                  onCheckedChange={(
+                                                    checked
+                                                  ) => {
+                                                    return checked
+                                                      ? field.onChange([
+                                                          ...field.value,
+                                                          permission,
+                                                        ])
+                                                      : field.onChange(
+                                                          field.value?.filter(
+                                                            (value) =>
+                                                              value !==
+                                                              permission
+                                                          )
+                                                        )
+                                                  }}
+                                                />
+                                              </FormControl>
+                                              <FormLabel className='text-sm font-normal'>
+                                                {getPermissionDisplayName(
+                                                  permission
+                                                )}
+                                              </FormLabel>
+                                            </FormItem>
+                                          )
+                                        }}
+                                      />
+                                    ))}
+                                  </div>
+                                  {domain !==
+                                    Object.keys(groupedPermissions).slice(
+                                      -1
+                                    )[0] && <Separator className='mt-3' />}
+                                </div>
+                              )
+                            }
+                          )}
+                        </div>
+                      </ScrollArea>
+                    )}
                   </FormItem>
                 )}
               />

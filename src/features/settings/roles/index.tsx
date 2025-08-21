@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Loader2, Plus, Search, Shield } from 'lucide-react'
+import { Loader2, Plus, Search } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

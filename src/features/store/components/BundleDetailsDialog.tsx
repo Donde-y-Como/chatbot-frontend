@@ -65,14 +65,14 @@ export function BundleDetailsDialog({
               break
             case 'service':
               // Obtener todos los servicios y encontrar el específico
-              const services = await appointmentService.getServices()
+              { const services = await appointmentService.getServices()
               details = services.find(service => service.id === item.itemId) || null
-              break
+              break }
             case 'event':
               // Obtener el evento específico
-              const response = await api.get(`/events/${item.itemId}`)
+              { const response = await api.get(`/events/${item.itemId}`)
               details = response.data
-              break
+              break }
           }
           
           return {

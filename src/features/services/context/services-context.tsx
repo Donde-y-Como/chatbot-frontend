@@ -43,7 +43,7 @@ export default function ServicesProvider({ children }: Props) {
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 export const useServices = () => {
   const servicesContext = React.useContext(ServicesContext)
 

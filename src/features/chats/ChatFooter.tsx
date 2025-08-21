@@ -191,7 +191,7 @@ const ChatFooter = memo(
         conversationId: selectedChatId,
         message: newMsg,
       })
-    }, [newMessage, isSending, selectedChatId, sendMessageMutation.mutate, messageSenderService])
+    }, [newMessage, isSending, messageSenderService, sendMessageMutation.mutate, selectedChatId])
 
     const handleMediaSend = useCallback(
       (media: {
@@ -280,7 +280,7 @@ const ChatFooter = memo(
         console.error('Failed to send quick response batch:', error)
         toast.error('Error al enviar la respuesta rápida')
       }
-    }, [getStashedBatch, isSending, sendMessageMutation, selectedChatId, clearStash])
+    }, [getStashedBatch, isSending, sendMessageMutation.mutate, selectedChatId, clearStash])
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

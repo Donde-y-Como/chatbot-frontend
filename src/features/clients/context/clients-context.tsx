@@ -27,7 +27,7 @@ export default function ClientsProvider({ children }: Props) {
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 export const useClients = () => {
   const clientsContext = React.useContext(ClientsContext)
 

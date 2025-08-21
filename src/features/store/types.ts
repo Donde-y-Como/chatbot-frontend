@@ -100,8 +100,7 @@ export type CartWithDetails = CartPrimitives & {
   itemCount: number
 }
 
-export interface BasicCartData
-  extends Omit<CartWithDetails, 'itemsWithDetails'> {}
+export type BasicCartData = Omit<CartWithDetails, 'itemsWithDetails'>
 
 export type CartResponseData = BasicCartData | CartWithDetails
 

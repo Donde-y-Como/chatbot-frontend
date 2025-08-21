@@ -1,16 +1,15 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import { File, Upload, X } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { formatFileSize } from '@/features/bundles/utils/fileUpload.ts';
-import { Annex, CreateClientForm } from '../../types';
+import React, { useCallback, useMemo, useRef, useState } from 'react'
+import { useFormContext } from 'react-hook-form'
+import { Upload, X } from 'lucide-react'
 import { getFileType, isValidFileType } from '@/lib/utils.ts'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import { getFileIcon } from '@/features/bundles/components/form/bundle-files-form.tsx'
-
+import { formatFileSize } from '@/features/bundles/utils/fileUpload.ts'
+import { Annex, CreateClientForm } from '../../types'
 
 interface FileWithPreview extends File {
   preview?: string
@@ -30,7 +29,7 @@ export function ClientAnnexesForm() {
   const [newAnnexName, setNewAnnexName] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const currentAnnexes = watch('annexes') || []
+  const currentAnnexes = useMemo(() => watch('annexes') || [], [watch])
 
   // Calculate total size including pending annexes
   const getTotalSize = useCallback(() => {

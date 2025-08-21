@@ -1,15 +1,14 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import { File, FileText, Image, Music, Upload, Video, X } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { formatFileSize } from '@/features/bundles/utils/fileUpload.ts';
-import { Media } from '@/features/chats/ChatTypes';
-import { CreateBundleForm, EditBundleForm } from '../../types';
+import React, { useCallback, useMemo, useRef, useState } from 'react'
+import { useFormContext } from 'react-hook-form'
+import { File, FileText, Image, Music, Upload, Video, X } from 'lucide-react'
 import { getFileType, isValidFileType } from '@/lib/utils.ts'
-
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { formatFileSize } from '@/features/bundles/utils/fileUpload.ts'
+import { Media } from '@/features/chats/ChatTypes'
+import { CreateBundleForm, EditBundleForm } from '../../types'
 
 // File type utilities
 
@@ -46,7 +45,7 @@ export function BundleFilesForm() {
   const [isDragOver, setIsDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const currentFiles = watch('files') || []
+  const currentFiles = useMemo(() => watch('files') || [], [watch])
 
   // Calculate total size including pending files
   const getTotalSize = useCallback(() => {
