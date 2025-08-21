@@ -310,7 +310,7 @@ export function ServiceActionDialog({
         setConsumableUsages([])
       }
     }
-  }, [open, isEdit, currentService?.id, reset]) // Dependencias mínimas necesarias
+  }, [open, isEdit, currentService?.id, reset, currentService, getInitialSchedule]) // Dependencias mínimas necesarias
 
   // Funciones para manejar equipos
   const toggleEquipmentSelection = useCallback((equipmentId: string) => {

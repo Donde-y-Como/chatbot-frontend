@@ -1,25 +1,14 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { authService } from '@/features/auth/AuthService'
-import { 
-  Role, 
-  CreateRoleData, 
-  UpdateRoleData, 
-  UpdateCredentialsData,
-  UserData,
-  BusinessData
-} from '@/features/auth/types'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { useAuth } from '@/stores/authStore'
-import { toast } from '@/hooks/use-toast'
+import { authService } from '@/features/auth/AuthService'
+import {
+  CreateRoleData,
+  UpdateCredentialsData,
+  UpdateRoleData,
+} from '@/features/auth/types'
 
 // Auth data hooks
-export const useGetMe = () => {
-  return useQuery({
-    queryKey: ['auth', 'me'],
-    queryFn: authService.getMe,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  })
-}
-
 export const useGetMyBusiness = () => {
   return useQuery({
     queryKey: ['auth', 'business'],
@@ -57,68 +46,49 @@ export const useGetPermissions = () => {
 // Role mutations
 export const useCreateRole = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (data: CreateRoleData) => authService.createRole(data),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['roles'] })
-      toast({
-        title: 'Éxito',
-        description: data.message,
-      })
+      void queryClient.invalidateQueries({ queryKey: ['roles'] })
+      toast.success(data.message)
     },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.response?.data?.message || 'Error al crear el rol',
-        variant: 'destructive',
-      })
+    onError: () => {
+      toast.error('Error al crear el rol')
     },
   })
 }
 
 export const useUpdateRole = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ roleId, data }: { roleId: string; data: UpdateRoleData }) => 
+    mutationFn: ({ roleId, data }: { roleId: string; data: UpdateRoleData }) =>
       authService.updateRole(roleId, data),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['roles'] })
-      queryClient.invalidateQueries({ queryKey: ['roles', variables.roleId] })
-      toast({
-        title: 'Éxito',
-        description: data.message,
+      void queryClient.invalidateQueries({ queryKey: ['roles'] })
+      void queryClient.invalidateQueries({
+        queryKey: ['roles', variables.roleId],
       })
+      toast.success(data.message)
     },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.response?.data?.message || 'Error al actualizar el rol',
-        variant: 'destructive',
-      })
+    onError: () => {
+      toast.error('Error al actualizar el rol')
     },
   })
 }
 
 export const useDeleteRole = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (roleId: string) => authService.deleteRole(roleId),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['roles'] })
-      toast({
-        title: 'Éxito',
-        description: data.message,
-      })
+      void queryClient.invalidateQueries({ queryKey: ['roles'] })
+      toast.success(data.message)
     },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.response?.data?.message || 'Error al eliminar el rol',
-        variant: 'destructive',
-      })
+    onError: () => {
+      toast.error('Error al eliminar el rol')
     },
   })
 }
@@ -126,19 +96,13 @@ export const useDeleteRole = () => {
 // Credentials update
 export const useUpdateCredentials = () => {
   return useMutation({
-    mutationFn: (data: UpdateCredentialsData) => authService.updateCredentials(data),
+    mutationFn: (data: UpdateCredentialsData) =>
+      authService.updateCredentials(data),
     onSuccess: (data) => {
-      toast({
-        title: 'Éxito',
-        description: data.message,
-      })
+      toast(data.message)
     },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.response?.data?.message || 'Error al actualizar las credenciales',
-        variant: 'destructive',
-      })
+    onError: () => {
+      toast.error('Error al actualizar las credenciales')
     },
   })
 }
@@ -147,37 +111,37 @@ export const useUpdateCredentials = () => {
 export const useHasPermission = (permission: string) => {
   const { user } = useAuth()
   const { data: roles } = useGetRoles()
-  
+
   // Owner has all permissions
   if (user?.isOwner) {
     return true
   }
-  
+
   // Check if any of user's roles has the required permission
   if (!user?.roleIds || !roles) {
     return false
   }
-  
-  const userRoles = roles.filter(role => user.roleIds.includes(role.id))
-  return userRoles.some(role => role.permissions.includes(permission))
+
+  const userRoles = roles.filter((role) => user.roleIds.includes(role.id))
+  return userRoles.some((role) => role.permissions.includes(permission))
 }
 
 export const useHasAnyPermission = (permissions: string[]) => {
   const { user } = useAuth()
   const { data: roles } = useGetRoles()
-  
+
   // Owner has all permissions
   if (user?.isOwner) {
     return true
   }
-  
+
   // Check if any of user's roles has any of the required permissions
   if (!user?.roleIds || !roles) {
     return false
   }
-  
-  const userRoles = roles.filter(role => user.roleIds.includes(role.id))
-  const userPermissions = userRoles.flatMap(role => role.permissions)
-  
-  return permissions.some(permission => userPermissions.includes(permission))
+
+  const userRoles = roles.filter((role) => user.roleIds.includes(role.id))
+  const userPermissions = userRoles.flatMap((role) => role.permissions)
+
+  return permissions.some((permission) => userPermissions.includes(permission))
 }

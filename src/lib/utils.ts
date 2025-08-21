@@ -146,3 +146,47 @@ export function getWorkDaysSummary(schedule: Record<string, any>): string {
 
   return workDays.join(', ')
 }
+
+export const getDomainDisplayName = (domain: string) => {
+  const domainNames: Record<string, string> = {
+    appointment: 'Citas',
+    employee: 'Empleados',
+    client: 'Clientes',
+    service: 'Servicios',
+    event: 'Eventos',
+    role: 'Roles',
+    business: 'Negocio',
+    equipment: 'Equipos',
+    consumable: 'Consumibles',
+    bundle: 'Paquetes',
+    conversation: 'Conversaciones',
+    product_tag: 'Etiquetas de Productos',
+    category: 'Categorías',
+    unit: 'Unidades',
+    quick_reply: 'Respuestas Rápidas',
+    order: 'Órdenes',
+    product: 'Productos',
+    cart: 'Carrito',
+    sale: 'Ventas',
+    tag: 'Etiquetas de clientes',
+    receipt: 'Recibos',
+    whatsapp_business: 'WhatsApp Business',
+    whatsapp_web: 'WhatsApp Web',
+  }
+  return domainNames[domain] || domain
+}
+
+export const getPermissionDisplayName = (permission: string) => {
+  const [_, action] = permission.split('.')
+  const actionNames: Record<string, string> = {
+    create: 'Crear',
+    read: 'Ver',
+    update: 'Editar',
+    delete: 'Eliminar',
+    connect: 'Conectar',
+    disconnect: 'Desconectar',
+    qr: 'Código QR',
+    status: 'Ver',
+  }
+  return actionNames[action] || action
+}

@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Check, Crown, Search, Shield, User, Users, X } from 'lucide-react'
+import { Check, Search, Shield, X } from 'lucide-react'
+import { getDomainDisplayName, getPermissionDisplayName } from '@/lib/utils.ts'
 import { useGetPermissions } from '@/hooks/useAuth'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -50,41 +51,6 @@ interface RoleDialogProps {
 }
 
 // Role templates for quick setup
-const roleTemplates = [
-  {
-    name: 'Recepcionista',
-    description: 'Gestión de citas y atención al cliente',
-    permissions: [
-      'appointment.create',
-      'appointment.read',
-      'appointment.update',
-      'client.read',
-      'client.create',
-      'client.update',
-    ],
-    icon: Users,
-  },
-  {
-    name: 'Manager',
-    description: 'Supervisión y gestión del equipo',
-    permissions: [
-      'appointment.read',
-      'appointment.update',
-      'employee.read',
-      'client.read',
-      'service.read',
-      'event.read',
-    ],
-    icon: Crown,
-  },
-  {
-    name: 'Empleado',
-    description: 'Acceso básico para servicios',
-    permissions: ['appointment.read', 'client.read', 'service.read'],
-    icon: User,
-  },
-]
-
 export function RoleDialog({
   isOpen,
   onClose,
@@ -95,11 +61,13 @@ export function RoleDialog({
   initialData,
 }: RoleDialogProps) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [showTemplates, setShowTemplates] = useState(!initialData)
 
   const { data: permissionsData, isLoading: permissionsLoading } =
     useGetPermissions()
-  const permissions = permissionsData?.permissions || []
+  const permissions = useMemo(
+    () => permissionsData?.permissions || [],
+    [permissionsData]
+  )
 
   const form = useForm<RoleFormValues>({
     resolver: zodResolver(roleFormSchema),
@@ -117,14 +85,12 @@ export function RoleDialog({
         description: initialData.description,
         permissions: initialData.permissions,
       })
-      setShowTemplates(false)
     } else {
       form.reset({
         name: '',
         description: '',
         permissions: [],
       })
-      setShowTemplates(true)
     }
   }, [initialData, form.reset])
 
@@ -155,19 +121,7 @@ export function RoleDialog({
   const handleClose = () => {
     form.reset()
     setSearchTerm('')
-    setShowTemplates(!initialData)
     onClose()
-  }
-
-  // Apply role template
-  const applyTemplate = (template: (typeof roleTemplates)[0]) => {
-    form.setValue('name', template.name)
-    form.setValue('description', template.description)
-    form.setValue(
-      'permissions',
-      template.permissions.filter((p) => permissions.includes(p))
-    )
-    setShowTemplates(false)
   }
 
   // Bulk permission actions
@@ -215,50 +169,6 @@ export function RoleDialog({
     },
     {} as Record<string, string[]>
   )
-
-  const getDomainDisplayName = (domain: string) => {
-    const domainNames: Record<string, string> = {
-      appointment: 'Citas',
-      employee: 'Empleados',
-      client: 'Clientes',
-      service: 'Servicios',
-      event: 'Eventos',
-      role: 'Roles',
-      business: 'Negocio',
-      equipment: 'Equipos',
-      consumable: 'Consumibles',
-      bundle: 'Paquetes',
-      conversation: 'Conversaciones',
-      product_tag: 'Etiquetas de Productos',
-      category: 'Categorías',
-      unit: 'Unidades',
-      quick_reply: 'Respuestas Rápidas',
-      order: 'Órdenes',
-      product: 'Productos',
-      cart: 'Carrito',
-      sale: 'Ventas',
-      tag: 'Etiquetas de clientes',
-      receipt: 'Recibos',
-      whatsapp_business: 'WhatsApp Business',
-      whatsapp_web: 'WhatsApp Web',
-    }
-    return domainNames[domain] || domain
-  }
-
-  const getPermissionDisplayName = (permission: string) => {
-    const [domain, action] = permission.split('.')
-    const actionNames: Record<string, string> = {
-      create: 'Crear',
-      read: 'Ver',
-      update: 'Editar',
-      delete: 'Eliminar',
-      connect: 'Conectar',
-      disconnect: 'Desconectar',
-      qr: 'Código QR',
-      status: 'Ver',
-    }
-    return actionNames[action] || action
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -393,10 +303,6 @@ export function RoleDialog({
                               const domainSelected = domainPermissions.every(
                                 (p) => currentPermissions.includes(p)
                               )
-                              const domainPartiallySelected =
-                                domainPermissions.some((p) =>
-                                  currentPermissions.includes(p)
-                                ) && !domainSelected
 
                               return (
                                 <div key={domain} className='space-y-3'>
@@ -404,7 +310,6 @@ export function RoleDialog({
                                     <h4 className='font-medium text-sm flex items-center gap-2'>
                                       <Checkbox
                                         checked={domainSelected}
-
                                         onCheckedChange={() =>
                                           toggleDomainPermissions(
                                             domain,
