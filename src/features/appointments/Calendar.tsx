@@ -35,8 +35,8 @@ export function Calendar() {
   return (
     <div className='flex flex-col h-screen p-2 w-full relative'>
       <div className='flex gap-2 mb-2'>
-        <SidebarTrigger variant='outline' className='sm:hidden' />
-        <Separator orientation='vertical' className='h-7 sm:hidden' />
+        <SidebarTrigger variant='outline' className='' />
+        <Separator orientation='vertical' className='h-7' />
         <h1 className='text-2xl font-bold'>Citas</h1>
       </div>
 

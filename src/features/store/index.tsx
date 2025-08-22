@@ -20,6 +20,8 @@ import {
   useConvertToOrder,
   useConvertToSale,
 } from './hooks/usePaymentMutations'
+import { SidebarTrigger } from '@/components/ui/sidebar.tsx'
+import { Separator } from '@/components/ui/separator.tsx'
 
 export default function Store() {
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
@@ -269,6 +271,7 @@ export default function Store() {
           onSearchChange={setSearch}
           onCategoryChange={setCategory}
         />
+
 
         <div className='flex-1 pb-20 lg:pb-4 overflow-auto'>
           <ItemGrid

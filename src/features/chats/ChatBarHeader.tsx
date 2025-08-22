@@ -138,8 +138,8 @@ export function ChatBarHeader({
     <div className='sticky top-0 z-10 bg-background pb-3 w-full shadow-sm sm:pt-2'>
       <div className='flex items-center justify-between px-3  mb-2'>
         <div className='flex gap-2'>
-          <SidebarTrigger variant='outline' className='sm:hidden' />
-          <Separator orientation='vertical' className='h-7 sm:hidden' />
+          <SidebarTrigger variant='outline' className='' />
+          <Separator orientation='vertical' className='h-7 ' />
           <h1 className='text-2xl font-bold'>Chats</h1>
         </div>
         <div className='flex items-center gap-2'>

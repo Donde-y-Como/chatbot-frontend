@@ -22,6 +22,8 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Separator } from '@/components/ui/separator'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 import { useGetAppointments } from '@/features/appointments/hooks/useGetAppointments'
 import { useGetClients } from '@/features/clients/hooks/useGetClients'
 import { useGetOrdersForStats } from '@/features/orders/hooks'
@@ -229,9 +231,13 @@ export default function Dashboard() {
     <div className='p-6 space-y-6'>
       {/* Header */}
       <div className='space-y-2'>
-        <h1 className='text-3xl font-bold tracking-tight'>
-          ¡Hola, {user?.email?.split('@')[0] || 'Usuario'}! 👋
-        </h1>
+        <div className='flex gap-2 items-center'>
+          <SidebarTrigger variant='outline' className='' />
+          <Separator orientation='vertical' className='h-7 ' />
+          <h1 className='text-3xl font-bold tracking-tight'>
+            ¡Hola, {user?.email?.split('@')[0] || 'Usuario'}! 👋
+          </h1>
+        </div>
         <p className='text-muted-foreground'>
           Bienvenido a {business?.name || 'tu negocio'}. Aquí tienes un resumen
           de tu actividad.

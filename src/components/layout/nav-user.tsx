@@ -4,7 +4,7 @@ import {
   BadgeCheck,
   Bell,
   Calendar,
-  ChevronsUpDown,
+  ChevronsUpDown, CogIcon,
   CreditCard,
   LogOut,
 } from 'lucide-react'
@@ -144,8 +144,8 @@ export function NavUser({ user, business }: { user: UserData; business?: Busines
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to='/settings'>
-                  <BadgeCheck />
-                  Perfil
+                  <CogIcon />
+                  Ajustes
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

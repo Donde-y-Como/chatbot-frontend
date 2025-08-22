@@ -72,8 +72,8 @@ export default function SalesHistory() {
         <div className='mb-2 w-full flex sm:items-center flex-col sm:flex-row sm:justify-between'>
           <div className='flex flex-col gap-2'>
             <div className='flex gap-2 items-center'>
-              <SidebarTrigger variant='outline' className='sm:hidden' />
-              <Separator orientation='vertical' className='h-7 sm:hidden' />
+              <SidebarTrigger variant='outline' className='' />
+              <Separator orientation='vertical' className='h-7 ' />
               <h1 className='text-2xl font-bold'>Historial de Ventas</h1>
             </div>
             <p className='text-muted-foreground self-start mb-2 sm:mb-0'>

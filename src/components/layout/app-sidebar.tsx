@@ -246,26 +246,6 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
         {data.navGroups.map((props) => (
           <NavGroup key={props.title} {...props} />
         ))}
-        <SidebarGroup>
-          <SidebarMenu onClick={toggleSidebar} className='cursor-pointer'>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip='Abrir barra'>
-                <div>
-                  <Button
-                    onClick={toggleSidebar}
-                    data-sidebar='trigger'
-                    variant='ghost'
-                    size='icon'
-                    className='h-7 w-7'
-                  >
-                    <PanelLeft />
-                  </Button>
-                  <span className=''>Colapsar barra lateral</span>
-                </div>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
         {user ? <NavUser user={user} business={business} /> : <Skeleton className='w-full h-3' />}
