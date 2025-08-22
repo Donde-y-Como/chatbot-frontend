@@ -9,15 +9,18 @@ export const useToggleNotifications = () => {
 
   return useMutation({
     mutationFn: (enabled: boolean) => authService.toggleNotifications(enabled),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // Actualizar el usuario en el store local
       if (user) {
         const updatedUser = { ...user, notificationsEnabled: data.notificationsEnabled }
         setUser(updatedUser)
       }
 
-      // Invalidar queries relacionadas con el negocio
-      queryClient.invalidateQueries({ queryKey: ['business'] })
+      // Invalidar y refetch queries para actualizar la vista inmediatamente
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['auth', 'business'] }),
+        queryClient.refetchQueries({ queryKey: ['auth', 'business'] })
+      ])
 
       toast.success(
         data.notificationsEnabled 
