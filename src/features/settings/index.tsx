@@ -1,4 +1,5 @@
 import { Outlet } from '@tanstack/react-router'
+import { useMemo } from 'react'
 import {
   IconBrandWhatsapp,
   IconCategory,
@@ -13,8 +14,39 @@ import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx'
 import { Main } from '@/components/layout/main'
 import SidebarNav from './components/sidebar-nav'
+import { useAuth } from '@/stores/authStore'
+import { useGetRoles, getUserPermissions } from '@/hooks/useAuth'
+import { getRoutePermissions, hasRoutePermissions } from '@/lib/route-permissions'
 
 export default function Settings() {
+  const { user } = useAuth()
+  const { data: roles } = useGetRoles()
+
+  // Get user permissions for filtering settings items
+  const userPermissions = useMemo(() => {
+    return getUserPermissions(user, roles || [])
+  }, [user, roles])
+
+  // Check if user has permission to access a route
+  const hasPermission = (href: string) => {
+    const requiredPermissions = getRoutePermissions(href)
+    
+    // If no permissions required, allow access
+    if (requiredPermissions.length === 0) {
+      return true
+    }
+
+    // Check if user is owner (has wildcard permission)
+    const isOwner = userPermissions.includes('*')
+    
+    return isOwner || hasRoutePermissions(userPermissions, requiredPermissions)
+  }
+
+  // Filter sidebar items based on permissions
+  const filteredSidebarNavItems = useMemo(() => {
+    return sidebarNavItems.filter(item => hasPermission(item.href))
+  }, [userPermissions])
+
   return (
     <>
       <Main fixed>
@@ -35,7 +67,7 @@ export default function Settings() {
         <Separator className='my-2' />
         <div className='flex flex-1 flex-col space-y-2 md:space-y-2 overflow-hidden lg:flex-row lg:space-x-12 lg:space-y-0'>
           <aside className='top-0 lg:sticky lg:w-1/5'>
-            <SidebarNav items={sidebarNavItems} />
+            <SidebarNav items={filteredSidebarNavItems} />
           </aside>
           <div className='flex w-full p-1 pr-4 overflow-y-hidden'>
             <Outlet />

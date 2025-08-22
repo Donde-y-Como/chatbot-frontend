@@ -133,6 +133,7 @@ export const appointment = z.object({
     consumableId: z.string(),
     quantity: z.number(),
   })).default([]),
+  createdAt: z.string().default(""),
 })
 
 export type Appointment = z.infer<typeof appointment>

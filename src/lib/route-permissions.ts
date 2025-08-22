@@ -5,6 +5,7 @@
 export const ROUTE_PERMISSIONS: Record<string, string[]> = {
   // Dashboard/Home
   '/': [],
+  '/dashboard': [],
 
   // Chats/Conversations
   '/chats': ['conversation.read'],
@@ -29,7 +30,7 @@ export const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/paquetes': ['bundle.read'],
 
   // Products
-  '/products': ['product.read'],
+  '/productos': ['product.read'],
 
   // Services
   '/servicios': ['service.read'],
@@ -38,7 +39,7 @@ export const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/ventas': ['sale.read'],
 
   // Tools
-  // '/tools': ['tool.read'],
+  '/tools': ['equipment.read'],
 
   // Settings - All settings require admin access or specific permissions
   '/settings': ['business.read'],
