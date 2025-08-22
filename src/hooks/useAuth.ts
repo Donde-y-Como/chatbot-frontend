@@ -145,3 +145,22 @@ export const useHasAnyPermission = (permissions: string[]) => {
 
   return permissions.some((permission) => userPermissions.includes(permission))
 }
+
+// Get all user permissions as a computed value
+export const getUserPermissions = (user: any, roles: any[]) => {
+  // Owner has all permissions
+  if (user?.isOwner) {
+    return ['*']
+  }
+
+  // Get permissions from user's roles
+  if (!user?.roleIds || !roles) {
+    return []
+  }
+
+  const userRoles = roles.filter((role) => user.roleIds.includes(role.id))
+  const userPermissions = userRoles.flatMap((role) => role.permissions)
+
+  // Remove duplicates
+  return [...new Set(userPermissions)]
+}
