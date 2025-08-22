@@ -31,6 +31,15 @@ interface OrderPaymentModalProps {
   }) => void
 }
 
+// Helper methods for rounding and currency formatting
+const roundToTwoDecimals = (value: number | string): number => {
+  return Math.round((parseFloat(value.toString()) + Number.EPSILON) * 100) / 100
+}
+
+const formatCurrencyAmount = (amount: number, currency: string = 'MXN'): string => {
+  return roundToTwoDecimals(amount).toFixed(2) + ' ' + currency
+}
+
 export function OrderPaymentModal({
   isOpen,
   onClose,
@@ -38,14 +47,14 @@ export function OrderPaymentModal({
   onProcessPayment,
 }: OrderPaymentModalProps) {
   const [paymentAmount, setPaymentAmount] = useState(
-    order.remainingAmount.amount.toString()
+    roundToTwoDecimals(order.remainingAmount.amount).toString()
   )
   const [cashReceived, setCashReceived] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
   const [error, setError] = useState('')
 
   const resetFields = () => {
-    setPaymentAmount(order.remainingAmount.amount.toString())
+    setPaymentAmount(roundToTwoDecimals(order.remainingAmount.amount).toString())
     setCashReceived('')
     setPaymentMethod('cash')
     setError('')
@@ -55,7 +64,9 @@ export function OrderPaymentModal({
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
       currency: price.currency,
-    }).format(price.amount)
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(roundToTwoDecimals(price.amount))
   }
 
   const getPaymentMethodLabel = (method: PaymentMethod) => {
@@ -92,7 +103,7 @@ export function OrderPaymentModal({
 
     if (value === '') return
 
-    const amount = parseFloat(value)
+    const amount = roundToTwoDecimals(value)
     if (isNaN(amount)) {
       setError('Por favor ingresa un monto válido')
       return
@@ -103,7 +114,8 @@ export function OrderPaymentModal({
       return
     }
 
-    if (amount > order.remainingAmount.amount) {
+    const remainingRounded = roundToTwoDecimals(order.remainingAmount.amount)
+    if (amount > remainingRounded) {
       setError('El monto no puede ser mayor al saldo pendiente')
       return
     }
@@ -115,7 +127,7 @@ export function OrderPaymentModal({
 
     if (value === '') return
 
-    const amount = parseFloat(value)
+    const amount = roundToTwoDecimals(value)
     if (isNaN(amount)) {
       setError('Por favor ingresa un monto válido')
       return
@@ -126,7 +138,7 @@ export function OrderPaymentModal({
       return
     }
 
-    const paymentAmountNum = parseFloat(paymentAmount)
+    const paymentAmountNum = roundToTwoDecimals(paymentAmount)
     if (amount < paymentAmountNum) {
       setError('El efectivo recibido debe ser mayor o igual al monto a pagar')
       return
@@ -134,11 +146,13 @@ export function OrderPaymentModal({
   }
 
   const handleProcessPayment = () => {
-    const amountToPay = parseFloat(paymentAmount)
+    const amountToPay = roundToTwoDecimals(paymentAmount)
+    const remainingRounded = roundToTwoDecimals(order.remainingAmount.amount)
+    
     if (
       isNaN(amountToPay) ||
       amountToPay < 0 ||
-      amountToPay > order.remainingAmount.amount
+      amountToPay > remainingRounded
     ) {
       setError('Por favor ingresa un monto válido')
       return
@@ -146,7 +160,7 @@ export function OrderPaymentModal({
 
     let cashReceivedAmount = amountToPay
     if (paymentMethod === 'cash') {
-      cashReceivedAmount = parseFloat(cashReceived)
+      cashReceivedAmount = roundToTwoDecimals(cashReceived)
       if (isNaN(cashReceivedAmount) || cashReceivedAmount < 0) {
         setError('Por favor ingresa el efectivo recibido')
         return
@@ -159,7 +173,7 @@ export function OrderPaymentModal({
     }
 
     const rawChangeAmount = cashReceivedAmount - amountToPay
-    const changeAmount = rawChangeAmount < 1 ? 0 : rawChangeAmount
+    const changeAmount = roundToTwoDecimals(rawChangeAmount < 1 ? 0 : rawChangeAmount)
 
     onProcessPayment({
       orderId: order.id,
@@ -174,13 +188,14 @@ export function OrderPaymentModal({
 
   const isValidPayment = () => {
     if (!paymentAmount) return false
-    const amount = parseFloat(paymentAmount)
+    const amount = roundToTwoDecimals(paymentAmount)
+    const remainingRounded = roundToTwoDecimals(order.remainingAmount.amount)
     const isAmountValid =
-      !isNaN(amount) && amount >= 0 && amount <= order.remainingAmount.amount
+      !isNaN(amount) && amount >= 0 && amount <= remainingRounded
 
     if (paymentMethod === 'cash') {
       if (!cashReceived) return false
-      const cashReceivedAmount = parseFloat(cashReceived)
+      const cashReceivedAmount = roundToTwoDecimals(cashReceived)
       return (
         isAmountValid &&
         !isNaN(cashReceivedAmount) &&
@@ -193,9 +208,9 @@ export function OrderPaymentModal({
 
   const calculateChange = () => {
     if (!cashReceived || !paymentAmount) return 0
-    const cashReceivedAmount = parseFloat(cashReceived)
-    const paymentAmountNum = parseFloat(paymentAmount)
-    const change = cashReceivedAmount - paymentAmountNum
+    const cashReceivedAmount = roundToTwoDecimals(cashReceived)
+    const paymentAmountNum = roundToTwoDecimals(paymentAmount)
+    const change = roundToTwoDecimals(cashReceivedAmount - paymentAmountNum)
     // Treat change less than 1 as zero (no cents change)
     return change < 1 ? 0 : change
   }
@@ -358,7 +373,7 @@ export function OrderPaymentModal({
                       variant='ghost'
                       size='sm'
                       onClick={() =>
-                        setPaymentAmount(order.remainingAmount.amount.toString())
+                        setPaymentAmount(roundToTwoDecimals(order.remainingAmount.amount).toString())
                       }
                       className='absolute right-1 top-1 h-7 px-3 text-xs'
                     >
@@ -392,19 +407,19 @@ export function OrderPaymentModal({
                     <div className='flex justify-between text-sm'>
                       <span>Abono:</span>
                       <span className='font-medium'>
-                        {formatPrice({
-                          amount: parseFloat(paymentAmount),
-                          currency: order.totalAmount.currency,
-                        })}
+                        {formatCurrencyAmount(
+                          roundToTwoDecimals(paymentAmount),
+                          order.totalAmount.currency
+                        )}
                       </span>
                     </div>
                     <div className='flex justify-between text-sm'>
                       <span>Efectivo recibido:</span>
                       <span className='font-medium'>
-                        {formatPrice({
-                          amount: parseFloat(cashReceived),
-                          currency: order.totalAmount.currency,
-                        })}
+                        {formatCurrencyAmount(
+                          roundToTwoDecimals(cashReceived),
+                          order.totalAmount.currency
+                        )}
                       </span>
                     </div>
                     <Separator />
@@ -417,20 +432,20 @@ export function OrderPaymentModal({
                             : 'text-red-600'
                         }
                       >
-                        {formatPrice({
-                          amount: Math.abs(calculateChange()),
-                          currency: order.totalAmount.currency,
-                        })}
+                        {formatCurrencyAmount(
+                          Math.abs(calculateChange()),
+                          order.totalAmount.currency
+                        )}
                       </span>
                     </div>
                     <Separator />
                     <div className='flex justify-between text-sm font-semibold text-orange-600'>
                       <span>Nuevo saldo pendiente:</span>
                       <span>
-                        {formatPrice({
-                          amount: order.remainingAmount.amount - parseFloat(paymentAmount),
-                          currency: order.totalAmount.currency,
-                        })}
+                        {formatCurrencyAmount(
+                          roundToTwoDecimals(order.remainingAmount.amount - roundToTwoDecimals(paymentAmount)),
+                          order.totalAmount.currency
+                        )}
                       </span>
                     </div>
                   </div>

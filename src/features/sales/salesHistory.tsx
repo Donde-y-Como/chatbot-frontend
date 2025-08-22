@@ -1,43 +1,123 @@
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { Separator } from '@/components/ui/separator.tsx'
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx'
 import { TableSkeleton } from '@/components/TableSkeleton.tsx'
 import { Main } from '@/components/layout/main'
 import { CustomTable } from '@/components/tables/custom-table.tsx'
 import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx'
-import { createColumns, globalFilterFn } from './components/sales-columns'
-import { SalesFiltersComponent } from './components/sales-filters'
-import { SalesStats } from './components/sales-stats'
-import { useGetSalesForStats, useGetSalesFiltered } from './hooks'
-import { Sale, SalesFilters } from './types'
+import { useAddPaymentToOrder } from '@/features/store/hooks/usePaymentMutations'
+import { OrderWithDetails, PaymentMethod } from '@/features/store/types'
+import { OrderDeleteDialog } from '@/features/orders/components/order-delete-dialog'
+import { OrderDetailsDialog } from '@/features/orders/components/order-details-dialog'
+import { OrderEditDialog } from '@/features/orders/components/order-edit-dialog'
+import { OrderPaymentModal } from '@/features/orders/components/order-payment-modal'
+import { createColumns, globalFilterFn } from '@/features/orders/components/orders-columns'
+import { OrdersFiltersComponent } from '@/features/orders/components/orders-filters'
+import { OrdersStats } from '@/features/orders/components/orders-stats'
+import { useGetOrdersForStats, useGetOrdersFiltered } from '@/features/orders/hooks'
+import { OrdersFilters } from '@/features/orders/types'
 
 export default function SalesHistory() {
-  const [filters, setFilters] = useState<SalesFilters>({})
+  const [filters, setFilters] = useState<OrdersFilters>({})
+  const [selectedOrder, setSelectedOrder] = useState<OrderWithDetails | null>(
+    null
+  )
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [orderToDelete, setOrderToDelete] = useState<OrderWithDetails | null>(
+    null
+  )
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [orderToEdit, setOrderToEdit] = useState<OrderWithDetails | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [orderToView, setOrderToView] = useState<OrderWithDetails | null>(null)
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
 
   // Separate queries for stats and filtered data
   const {
     data: statsResponse,
     isLoading: isStatsLoading,
     error: statsError,
-  } = useGetSalesForStats()
+  } = useGetOrdersForStats()
   const {
     data: filteredResponse,
     isLoading: isTableLoading,
     error: tableError,
-  } = useGetSalesFiltered(filters)
-  const columns = useMemo(() => createColumns(), [])
+  } = useGetOrdersFiltered(filters)
+  const addPaymentMutation = useAddPaymentToOrder()
 
   // Use filtered data if available, otherwise use stats data
   const hasFilters = Object.keys(filters).length > 0
-  const salesResponse = hasFilters ? filteredResponse : statsResponse
-  const sales = salesResponse?.data || []
+  const ordersResponse = hasFilters ? filteredResponse : statsResponse
+  const allOrders = ordersResponse?.data || []
   const isLoading = hasFilters ? isTableLoading : isStatsLoading
   const error = hasFilters ? tableError : statsError
 
-  // Stats always use unfiltered data
-  const statsSales = statsResponse?.data || []
+  // Filter orders to only show those with paid amount > 0 or fully paid
+  const orders = allOrders.filter((order) => {
+    return order.paidAmount.amount > 0 || order.isFullyPaid
+  })
 
-  const handleFiltersChange = (newFilters: SalesFilters) => {
+  // Stats always use unfiltered data but also apply the same filter
+  const allStatsOrders = statsResponse?.data || []
+  const statsOrders = allStatsOrders.filter((order) => {
+    return order.paidAmount.amount > 0 || order.isFullyPaid
+  })
+
+  const handlePayment = (order: OrderWithDetails) => {
+    setSelectedOrder(order)
+    setIsPaymentModalOpen(true)
+  }
+
+  const handleEdit = (order: OrderWithDetails) => {
+    setOrderToEdit(order)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleDelete = (order: OrderWithDetails) => {
+    setOrderToDelete(order)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleViewDetails = (order: OrderWithDetails) => {
+    setOrderToView(order)
+    setIsViewDialogOpen(true)
+  }
+
+  const handleProcessPayment = async (data: {
+    orderId: string
+    amountToPay: number
+    cashReceived: number
+    changeAmount: number
+    paymentMethod: PaymentMethod
+  }) => {
+    try {
+      await addPaymentMutation.mutateAsync({
+        orderId: data.orderId,
+        paymentMethod: data.paymentMethod,
+        amount: {
+          amount: data.amountToPay,
+          currency: selectedOrder?.totalAmount.currency || 'MXN',
+        },
+        cashReceived: data.cashReceived,
+        changeAmount: data.changeAmount,
+      })
+
+      setIsPaymentModalOpen(false)
+      setSelectedOrder(null)
+    } catch (error) {
+      console.error('Payment error:', error)
+      toast.error('No se pudo registrar el pago. Intenta nuevamente.')
+    }
+  }
+
+  const columns = useMemo(
+    () =>
+      createColumns(handlePayment, handleEdit, handleDelete, handleViewDetails),
+    []
+  )
+
+  const handleFiltersChange = (newFilters: OrdersFilters) => {
     setFilters(newFilters)
   }
 
@@ -77,11 +157,11 @@ export default function SalesHistory() {
               <h1 className='text-2xl font-bold'>Historial de Ventas</h1>
             </div>
             <p className='text-muted-foreground self-start mb-2 sm:mb-0'>
-              Consulta el historial completo de ventas de tu negocio.
+              Consulta el historial de ventas con pagos realizados de tu negocio.
             </p>
           </div>
           <div className='flex gap-2'>
-            <SalesFiltersComponent
+            <OrdersFiltersComponent
               onFiltersChange={handleFiltersChange}
               currentFilters={filters}
             />
@@ -98,16 +178,16 @@ export default function SalesHistory() {
             </div>
           </div>
         ) : (
-          <SalesStats sales={statsSales} />
+          <OrdersStats orders={statsOrders} title="ventas" />
         )}
 
         {/* Tabla de Ventas */}
         <div className='-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0'>
           {isLoading ? (
             <TableSkeleton />
-          ) : sales.length > 0 ? (
-            <CustomTable<Sale>
-              data={sales}
+          ) : orders.length > 0 ? (
+            <CustomTable<OrderWithDetails>
+              data={orders}
               columns={columns}
               globalFilterFn={globalFilterFn}
               toolbar={(table) => (
@@ -134,20 +214,71 @@ export default function SalesHistory() {
         </div>
 
         {/* Información adicional */}
-        {salesResponse && (
+        {ordersResponse && (
           <div className='flex justify-between items-center text-sm text-muted-foreground'>
             <span>
-              Mostrando {sales.length} {sales.length === 1 ? 'venta' : 'ventas'}
-              {salesResponse.count !== sales.length &&
-                ` de ${salesResponse.count} total`}
+              Mostrando {orders.length} {orders.length === 1 ? 'venta' : 'ventas'} con pagos
+              {allOrders.length !== orders.length &&
+                ` de ${allOrders.length} ventas totales`}
             </span>
-            {filters.limit && sales.length === filters.limit && (
+            {filters.limit && allOrders.length === filters.limit && (
               <span className='text-xs bg-muted px-2 py-1 rounded'>
                 Límite de {filters.limit} resultados alcanzado
               </span>
             )}
           </div>
         )}
+
+        {/* Payment Modal */}
+        {selectedOrder && (
+          <OrderPaymentModal
+            isOpen={isPaymentModalOpen}
+            onClose={() => {
+              setIsPaymentModalOpen(false)
+              setSelectedOrder(null)
+            }}
+            order={selectedOrder}
+            onProcessPayment={handleProcessPayment}
+          />
+        )}
+
+        {/* Edit Order Dialog */}
+        {orderToEdit && (
+          <OrderEditDialog
+            open={isEditDialogOpen}
+            onOpenChange={(open) => {
+              setIsEditDialogOpen(open)
+              if (!open) {
+                setOrderToEdit(null)
+              }
+            }}
+            currentRow={orderToEdit}
+          />
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        {orderToDelete && (
+          <OrderDeleteDialog
+            open={isDeleteDialogOpen}
+            onOpenChange={(open) => {
+              setIsDeleteDialogOpen(open)
+              if (!open) {
+                setOrderToDelete(null)
+              }
+            }}
+            currentRow={orderToDelete}
+          />
+        )}
+
+        {/* Order Details Dialog */}
+        <OrderDetailsDialog
+          isOpen={isViewDialogOpen}
+          onClose={() => {
+            setIsViewDialogOpen(false)
+            setOrderToView(null)
+          }}
+          orderId={orderToView?.id || null}
+        />
       </section>
     </Main>
   )
