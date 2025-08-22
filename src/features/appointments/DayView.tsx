@@ -250,9 +250,17 @@ export function DayView({
   const handleCancel = async (id: string) => {
     try {
       await appointmentService.cancelAppointment(id)
-      await queryClient.invalidateQueries({
-        queryKey: [UseGetAppointmentsQueryKey, date.toISOString()],
-      })
+      
+      // Invalidar y refetch queries para actualizar la vista inmediatamente
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [UseGetAppointmentsQueryKey, date.toISOString()],
+        }),
+        queryClient.refetchQueries({
+          queryKey: [UseGetAppointmentsQueryKey, date.toISOString()],
+        })
+      ])
+      
       toast.success('Estado de la cita cambiado a cancelada')
     } catch (e) {
       toast.error('No se pudo cancelar la cita')

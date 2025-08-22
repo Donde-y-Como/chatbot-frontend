@@ -283,12 +283,19 @@ export function useAppointmentForm(
 
       if (result.id) {
         toast.success(`Cita ${appointment ? 'editada' : 'agendada'} con éxito`)
+        
+        // Invalidar y refetch queries para actualizar la vista inmediatamente
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: [UseGetAppointmentsQueryKey],
+          }),
+          queryClient.refetchQueries({
+            queryKey: [UseGetAppointmentsQueryKey],
+          })
+        ])
+
         resetForm()
         setLoading(false)
-
-        await queryClient.invalidateQueries({
-          queryKey: [UseGetAppointmentsQueryKey],
-        })
 
         // Call the appointment created callback if provided (only for new appointments)
         if (!appointment && onAppointmentCreated) {
