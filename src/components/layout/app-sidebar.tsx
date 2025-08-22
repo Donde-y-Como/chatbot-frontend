@@ -67,80 +67,120 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
     return isOwner || hasRoutePermissions(userPermissions, requiredPermissions)
   }, [userPermissions])
 
-  // All possible navigation items (will be filtered by permissions)
-  const allNavItems = React.useMemo(() => [
-    {
-      title: 'Dashboard',
-      url: '/' as const,
-      icon: Home,
-    },
-    {
-      title: 'Chats',
-      url: '/chats' as const,
-      badge: isLoading ? '...' : unreadCount?.toString() || '0',
-      icon: IconMessages,
-    },
-    {
-      title: 'Citas',
-      url: '/citas' as const,
-      icon: IconChecklist,
-    },
-    {
-      title: 'Eventos',
-      url: '/eventos' as const,
-      icon: CalendarFold,
-    },
-    {
-      title: 'Servicios',
-      url: '/servicios' as const,
-      icon: WrenchIcon,
-    },
-    {
-      title: 'Empleados',
-      url: '/empleados' as const,
-      icon: IconUsers,
-    },
-    {
-      title: 'Clientes',
-      url: '/clientes' as const,
-      icon: BookUserIcon,
-    },
-    {
-      title: 'Productos',
-      url: '/productos' as const,
-      icon: ShoppingBag,
-    },
-    {
-      title: 'Orden',
-      url: '/orden' as const,
-      icon: Store,
-    },
-    {
-      title: 'Paquetes',
-      url: '/paquetes' as const,
-      icon: IconPackages,
-    },
-    {
-      title: 'Historial de Ventas',
-      url: '/ventas' as const,
-      icon: Receipt,
-    },
-    {
-      title: 'Historial de Órdenes',
-      url: '/orden/historial' as const,
-      icon: IconClipboardList,
-    },
-    {
-      title: 'Herramientas',
-      url: '/tools' as const,
-      icon: Hammer,
-    },
-  ], [isLoading, unreadCount])
+  // Organized navigation groups with smart UX/UI grouping
+  const navigationGroups = React.useMemo(() => {
+    const groups = [
+      {
+        title: 'Panel Principal',
+        items: [
+          {
+            title: 'Dashboard',
+            url: '/' as const,
+            icon: Home,
+          },
+        ]
+      },
+      {
+        title: 'Comunicación',
+        items: [
+          {
+            title: 'Chats',
+            url: '/chats' as const,
+            badge: isLoading ? '...' : unreadCount?.toString() || '0',
+            icon: IconMessages,
+          },
+        ]
+      },
+      {
+        title: 'Agenda & Eventos',
+        items: [
+          {
+            title: 'Citas',
+            url: '/citas' as const,
+            icon: IconChecklist,
+          },
+          {
+            title: 'Eventos',
+            url: '/eventos' as const,
+            icon: CalendarFold,
+          },
+        ]
+      },
+      {
+        title: 'Clientes & Equipo',
+        items: [
+          {
+            title: 'Clientes',
+            url: '/clientes' as const,
+            icon: BookUserIcon,
+          },
+          {
+            title: 'Empleados',
+            url: '/empleados' as const,
+            icon: IconUsers,
+          },
+        ]
+      },
+      {
+        title: 'Productos & Servicios',
+        items: [
+          {
+            title: 'Servicios',
+            url: '/servicios' as const,
+            icon: WrenchIcon,
+          },
+          {
+            title: 'Productos',
+            url: '/productos' as const,
+            icon: ShoppingBag,
+          },
+          {
+            title: 'Paquetes',
+            url: '/paquetes' as const,
+            icon: IconPackages,
+          },
+        ]
+      },
+      {
+        title: 'Ventas & Órdenes',
+        items: [
+          {
+            title: 'Punto de Venta',
+            url: '/orden' as const,
+            icon: Store,
+          },
+          {
+            title: 'Historial de Ventas',
+            url: '/ventas' as const,
+            icon: Receipt,
+          },
+          {
+            title: 'Historial de Órdenes',
+            url: '/orden/historial' as const,
+            icon: IconClipboardList,
+          },
+        ]
+      },
+      {
+        title: 'Herramientas',
+        items: [
+          {
+            title: 'Equipos y Consumibles',
+            url: '/tools' as const,
+            icon: Hammer,
+          },
+        ]
+      },
+    ]
 
-  // Filter items based on user permissions
-  const filteredNavItems = React.useMemo(() => {
-    return allNavItems.filter(item => hasPermission(item.url))
-  }, [allNavItems, hasPermission])
+    // Filter groups and items based on permissions
+    return groups
+      .map(group => ({
+        ...group,
+        items: group.items.filter(item => hasPermission(item.url))
+      }))
+      .filter(group => group.items.length > 0) // Remove empty groups
+  }, [isLoading, unreadCount, hasPermission])
 
   const [data, setData] = React.useState<SidebarData>({
     teams: [
@@ -150,26 +190,16 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
         plan: 'Plan',
       },
     ],
-    navGroups: [
-      {
-        title: 'General',
-        items: filteredNavItems,
-      },
-    ],
+    navGroups: navigationGroups,
   })
 
-  // Update sidebar data when filtered items change
+  // Update sidebar data when navigation groups change
   React.useEffect(() => {
     setData(prev => ({
       ...prev,
-      navGroups: [
-        {
-          title: 'General',
-          items: filteredNavItems,
-        },
-      ],
+      navGroups: navigationGroups,
     }))
-  }, [filteredNavItems])
+  }, [navigationGroups])
 
   // Update unread count for chats
   React.useEffect(() => {
@@ -179,22 +209,29 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
         const newData = { ...prev }
         newData.navGroups = [...prev.navGroups]
 
-        // Create copy of the navigation group
-        newData.navGroups[0] = {
-          ...newData.navGroups[0],
-          items: [...newData.navGroups[0].items],
-        }
-
-        // Find the Chats item index
-        const chatItemIndex = newData.navGroups[0].items.findIndex(
-          (item) => item.title === 'Chats'
+        // Find the Communication group (where Chats is located)
+        const communicationGroupIndex = newData.navGroups.findIndex(
+          (group) => group.title === 'Comunicación'
         )
 
-        // If found, update only that element maintaining all its properties
-        if (chatItemIndex !== -1) {
-          newData.navGroups[0].items[chatItemIndex] = {
-            ...newData.navGroups[0].items[chatItemIndex],
-            badge: unreadCount.toString(),
+        if (communicationGroupIndex !== -1) {
+          // Create copy of the communication group
+          newData.navGroups[communicationGroupIndex] = {
+            ...newData.navGroups[communicationGroupIndex],
+            items: [...newData.navGroups[communicationGroupIndex].items],
+          }
+
+          // Find the Chats item index within the communication group
+          const chatItemIndex = newData.navGroups[communicationGroupIndex].items.findIndex(
+            (item) => item.title === 'Chats'
+          )
+
+          // If found, update only that element maintaining all its properties
+          if (chatItemIndex !== -1) {
+            newData.navGroups[communicationGroupIndex].items[chatItemIndex] = {
+              ...newData.navGroups[communicationGroupIndex].items[chatItemIndex],
+              badge: unreadCount.toString(),
+            }
           }
         }
 
