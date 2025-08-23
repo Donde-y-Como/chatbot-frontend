@@ -12,7 +12,12 @@ import {
   Users,
 } from 'lucide-react'
 import { useAuth } from '@/stores/authStore'
-import { useGetMyBusiness } from '@/hooks/useAuth'
+import { getRelativeTime, parseRelativeTime } from '@/lib/utils.ts'
+import {
+  getUserPermissions,
+  useGetMyBusiness,
+  useGetRoles,
+} from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -21,19 +26,18 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useGetAppointments } from '@/features/appointments/hooks/useGetAppointments'
 import { useGetClients } from '@/features/clients/hooks/useGetClients'
 import { useGetOrdersForStats } from '@/features/orders/hooks'
 import { useGetSalesForStats } from '@/features/sales/hooks'
-import { getRelativeTime, parseRelativeTime } from '@/lib/utils.ts'
 
 export default function Dashboard() {
   const { user } = useAuth()
   const { data: business } = useGetMyBusiness()
-
+  const { data: roles = [] } = useGetRoles()
   // Get current date for appointments
   const today = new Date().toISOString().split('T')[0]
 
@@ -117,6 +121,8 @@ export default function Dashboard() {
     salesLoading,
   ])
 
+  const userPermissions = getUserPermissions(user, roles)
+
   const quickActions = [
     {
       title: 'Nueva Cita',
@@ -124,6 +130,7 @@ export default function Dashboard() {
       icon: CalendarPlus,
       href: '/citas',
       color: 'bg-blue-600 hover:bg-blue-700',
+      permission: 'appointment.create',
     },
     {
       title: 'Nuevo Cliente',
@@ -131,6 +138,7 @@ export default function Dashboard() {
       icon: UserPlus,
       href: '/clientes',
       color: 'bg-green-600 hover:bg-green-700',
+      permission: 'client.create',
     },
     {
       title: 'Chat WhatsApp',
@@ -138,6 +146,7 @@ export default function Dashboard() {
       icon: MessageSquare,
       href: '/chats',
       color: 'bg-emerald-600 hover:bg-emerald-700',
+      permission: 'conversation.read',
     },
     {
       title: 'Gestionar Servicios',
@@ -145,8 +154,11 @@ export default function Dashboard() {
       icon: Package,
       href: '/servicios',
       color: 'bg-purple-600 hover:bg-purple-700',
+      permission: 'service.read',
     },
-  ]
+  ].filter(
+    (action) => userPermissions.includes(action.permission) || user?.isOwner
+  )
 
   // Generate recent activity from real data
   const recentActivity = useMemo(() => {
@@ -225,8 +237,6 @@ export default function Dashboard() {
       .slice(0, 4)
   }, [appointments, sales, clients])
 
-
-
   return (
     <div className='p-6 space-y-6'>
       {/* Header */}
@@ -280,43 +290,45 @@ export default function Dashboard() {
 
       <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
         {/* Quick Actions */}
-        <Card className='lg:col-span-2'>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <TrendingUp className='h-5 w-5' />
-              Acciones Rápidas
-            </CardTitle>
-            <CardDescription>
-              Accesos directos a las funciones más utilizadas
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='grid gap-4 sm:grid-cols-2'>
-              {quickActions.map((action) => {
-                const Icon = action.icon
-                return (
-                  <Link key={action.title} to={action.href}>
-                    <Button
-                      variant='outline'
-                      className='h-auto w-full p-4 justify-start'
-                    >
-                      <div className={`p-2 rounded-md ${action.color} mr-3`}>
-                        <Icon className='h-4 w-4 text-white' />
-                      </div>
-                      <div className='text-left'>
-                        <div className='font-medium'>{action.title}</div>
-                        <div className='text-sm text-muted-foreground'>
-                          {action.description}
-                        </div>
-                      </div>
-                    </Button>
-                  </Link>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
 
+        {quickActions.length > 0 && (
+          <Card className='lg:col-span-2'>
+            <CardHeader>
+              <CardTitle className='flex items-center gap-2'>
+                <TrendingUp className='h-5 w-5' />
+                Acciones Rápidas
+              </CardTitle>
+              <CardDescription>
+                Accesos directos a las funciones más utilizadas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className='grid gap-4 sm:grid-cols-2'>
+                {quickActions.map((action) => {
+                  const Icon = action.icon
+                  return (
+                    <Link key={action.title} to={action.href}>
+                      <Button
+                        variant='outline'
+                        className='h-auto w-full p-4 justify-start'
+                      >
+                        <div className={`p-2 rounded-md ${action.color} mr-3`}>
+                          <Icon className='h-4 w-4 text-white' />
+                        </div>
+                        <div className='text-left'>
+                          <div className='font-medium'>{action.title}</div>
+                          <div className='text-sm text-muted-foreground'>
+                            {action.description}
+                          </div>
+                        </div>
+                      </Button>
+                    </Link>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {/* Recent Activity */}
         <Card>
           <CardHeader>
