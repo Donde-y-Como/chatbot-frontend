@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { es } from 'date-fns/locale'
 import { Calendar, CalendarX, Clock, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AppointmentBlock } from '@/features/appointments/AppointmentBlock'
@@ -278,26 +279,32 @@ export function DayView({
 
   if (isLoading) {
     return (
-      <div className='flex flex-col space-y-6 h-full w-full items-center justify-center p-8'>
-        <div className='flex flex-col items-center justify-center space-y-4'>
-          <Loader2 className='h-12 w-12 text-primary animate-spin' />
-          <h3 className='text-lg font-medium'>Cargando agenda del día</h3>
-          <div className='grid grid-cols-2 gap-4 w-full max-w-md'>
-            <div className='space-y-2'>
-              <Skeleton className='h-4 w-full' />
-              <Skeleton className='h-4 w-3/4' />
+      <div className='flex flex-col h-full bg-gradient-to-br from-background to-muted/30'>
+        <div className='flex-1 flex items-center justify-center p-8'>
+          <div className='flex flex-col items-center justify-center space-y-6 max-w-md text-center'>
+            <div className='relative'>
+              <div className='w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center'>
+                <Loader2 className='h-8 w-8 text-primary animate-spin' />
+              </div>
+              <div className='absolute inset-0 rounded-full border-2 border-primary/20 animate-pulse' />
             </div>
+            
             <div className='space-y-2'>
-              <Skeleton className='h-4 w-full' />
-              <Skeleton className='h-4 w-3/4' />
+              <h3 className='text-xl font-semibold'>Cargando agenda del día</h3>
+              <p className='text-muted-foreground'>Preparando tu calendario y citas...</p>
             </div>
-            <div className='space-y-2'>
-              <Skeleton className='h-4 w-full' />
-              <Skeleton className='h-4 w-3/4' />
-            </div>
-            <div className='space-y-2'>
-              <Skeleton className='h-4 w-full' />
-              <Skeleton className='h-4 w-3/4' />
+            
+            <div className='grid grid-cols-2 gap-4 w-full'>
+              <div className='space-y-3 p-4 rounded-lg bg-card/50'>
+                <Skeleton className='h-3 w-full' />
+                <Skeleton className='h-3 w-4/5' />
+                <Skeleton className='h-3 w-3/5' />
+              </div>
+              <div className='space-y-3 p-4 rounded-lg bg-card/50'>
+                <Skeleton className='h-3 w-full' />
+                <Skeleton className='h-3 w-4/5' />
+                <Skeleton className='h-3 w-3/5' />
+              </div>
             </div>
           </div>
         </div>
@@ -307,17 +314,29 @@ export function DayView({
 
   if (!workHours) {
     return (
-      <div className='flex flex-col items-center justify-center h-full text-center p-8'>
-        <CalendarX className='h-24 w-24 text-muted-foreground mb-6' />
-        <h2 className='text-2xl font-bold mb-2'>¡Día libre!</h2>
-        <p className='text-lg text-muted-foreground mb-6'>
-          Hoy no hay horario laboral programado. ¡Disfruta de tu tiempo libre!
-        </p>
-        <div className='flex items-center justify-center p-4 bg-muted rounded-lg max-w-md'>
-          <Calendar className='h-5 w-5 mr-2 text-muted-foreground' />
-          <p className='text-sm text-muted-foreground first-letter:uppercase'>
-            {format(date, 'EEEE, d MMMM yyyy', { locale: es })}
-          </p>
+      <div className='flex flex-col items-center justify-center h-full text-center p-8 bg-gradient-to-br from-background to-muted/30'>
+        <div className='max-w-md space-y-6'>
+          <div className='w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto'>
+            <CalendarX className='h-10 w-10 text-green-600 dark:text-green-400' />
+          </div>
+          
+          <div className='space-y-3'>
+            <h2 className='text-2xl font-bold text-green-700 dark:text-green-400'>¡Día libre!</h2>
+            <p className='text-muted-foreground leading-relaxed'>
+              Hoy no hay horario laboral programado.
+              <br />
+              ¡Disfruta de tu tiempo libre!
+            </p>
+          </div>
+          
+          <div className='bg-card border rounded-lg p-4 shadow-sm'>
+            <div className='flex items-center justify-center gap-2'>
+              <Calendar className='h-4 w-4 text-muted-foreground' />
+              <p className='text-sm font-medium first-letter:uppercase'>
+                {format(date, 'EEEE, d MMMM yyyy', { locale: es })}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -326,44 +345,55 @@ export function DayView({
   const totalHeight = ((workHours.endAt - workHours.startAt) / 60) * TIME_SLOT_HEIGHT
 
   return (
-    <div className='flex flex-col space-y-4 h-full'>
-      <div className='sticky top-0 z-20 bg-background border-b'>
-        <ServiceFilter
-          services={allServices}
-          selectedService={selectedService}
-          onServiceSelect={handleSelectedService}
-        />
+    <div className='flex flex-col h-full'>
+      <div className='sticky top-0 z-20 bg-card shrink-0'>
+        <div className='p-2 md:p-3'>
+          <ServiceFilter
+            services={allServices}
+            selectedService={selectedService}
+            onServiceSelect={handleSelectedService}
+          />
+        </div>
       </div>
 
-      <div className='flex-1 overflow-hidden border rounded-lg flex flex-col'>
+      <div className='flex-1 overflow-hidden flex flex-col'>
         <ScrollArea className='h-full'>
           <div className='flex relative'>
-            <div className='w-16 flex-shrink-0 border-r bg-muted/30'>
+            <div className='w-12 md:w-16 lg:w-20 flex-shrink-0 bg-muted/20'>
               <TimeSlots startAt={workHours.startAt} endAt={workHours.endAt} />
             </div>
 
             <div
               ref={timeSlotAreaRef}
-              className={`flex-1 relative ${
+              className={`flex-1 relative transition-all duration-200 ${
                 hasOpenDialogs 
                   ? 'cursor-not-allowed opacity-60' 
                   : isDragging
                     ? 'cursor-ns-resize'
-                    : 'cursor-pointer hover:bg-primary/5'
+                    : 'cursor-pointer hover:bg-primary/5 active:bg-primary/10'
               }`}
+              role='grid'
+              aria-label='Horarios del día para crear citas'
               style={{
                 backgroundImage: `repeating-linear-gradient(
                   to bottom,
                   transparent,
                   transparent 63px,
-                  hsl(var(--border)) 63px,
-                  hsl(var(--border)) 64px
+                  hsl(var(--border) / 0.3) 63px,
+                  hsl(var(--border) / 0.3) 64px
                 )`,
                 backgroundSize: '100% 64px',
                 height: `${totalHeight}px`,
                 minHeight: `${totalHeight}px`,
               }}
               onClick={handleTimeSlotClick}
+              onTouchStart={(e) => {
+                // Handle touch for mobile
+                if (e.touches.length === 1 && !hasOpenDialogs) {
+                  const touch = e.touches[0]
+                  handleTimeSlotClick({ clientY: touch.clientY, target: e.target, currentTarget: e.currentTarget } as any)
+                }
+              }}
             >
               {/* Current time indicator */}
               {isSameDay(currentTime, date) &&
@@ -390,19 +420,20 @@ export function DayView({
                   style={getBlockPosition(timeBlock)}
                 >
                   {/* Duration label and confirm button */}
-                  <div className='absolute inset-0 flex items-center justify-center gap-2'>
-                    <div className='bg-white/95 text-blue-900 px-3 py-1 rounded text-sm font-medium'>
+                  <div className='absolute inset-0 flex items-center justify-center gap-2 p-2 md:p-4'>
+                    <div className='bg-background/95 text-blue-900 px-2 md:px-3 py-1 rounded-md text-xs md:text-sm font-semibold border shadow-sm'>
                       {formatDuration(timeBlock.startAt, timeBlock.endAt)}
                     </div>
-                    <button
+                    <Button
+                      size='sm'
                       onClick={(e) => {
                         e.stopPropagation()
                         handleConfirmBlock()
                       }}
-                      className='bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors shadow-sm'
+                      className='h-7 md:h-8 px-2 md:px-3 text-xs md:text-sm bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all duration-200'
                     >
-                      Crear Cita
-                    </button>
+                      Crear
+                    </Button>
                   </div>
                   
                   {/* Resize handles */}
