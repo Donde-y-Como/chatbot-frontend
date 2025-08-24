@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { format } from 'date-fns'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { es } from 'date-fns/locale/es'
 import { CalendarIcon } from 'lucide-react'
@@ -109,65 +109,31 @@ export function QuickAppointmentDialog({
     defaultValues,
   })
 
-  const { reset, watch } = form
-  const selectedServiceIds = useMemo(() => watch('serviceIds') || [], [watch])
+  const { reset, watch, setValue } = form
+  const selectedServiceIds =
+    useWatch({ control: form.control, name: 'serviceIds' }) ?? []
 
   // Reset form when dialog closes
   const handleOpenChange = useCallback(
     (state: boolean) => {
-      if (state) {
-        openDialog()
-        // Don't reset here, let useEffect handle it with proper values
-      } else {
-        closeDialog()
+      // Let the effect react to external open changes
+      if (!state) {
         reset() // Reset to clean state when closing
       }
       onOpenChange(state)
     },
-    [reset, onOpenChange, openDialog, closeDialog]
+    [reset, onOpenChange]
   )
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) {
       openDialog()
-
-      // Create fresh form values to ensure proper time range handling
-      const formValues = {
-        ...getDefaultQuickAppointment(),
-        clientId: initialClientId || '',
-        serviceIds: initialServiceId ? [initialServiceId] : [],
-        date: defaultDate || new Date(),
-        // Robust time value handling with validation
-        startAt:
-          typeof defaultStartTime === 'number' &&
-          !isNaN(defaultStartTime) &&
-          defaultStartTime >= 0
-            ? defaultStartTime
-            : getDefaultQuickAppointment().startAt!,
-        endAt:
-          typeof defaultEndTime === 'number' &&
-          !isNaN(defaultEndTime) &&
-          defaultEndTime >= 0
-            ? defaultEndTime
-            : getDefaultQuickAppointment().endAt!,
-      }
-
-      reset(formValues)
+      reset(defaultValues)
       setUserModifiedTime(false)
     } else {
       closeDialog()
     }
-  }, [
-    open,
-    reset,
-    initialClientId,
-    initialServiceId,
-    defaultDate,
-    defaultStartTime,
-    defaultEndTime,
-    openDialog,
-    closeDialog,
-  ])
+  }, [open, reset, defaultValues])
 
   const handleSuccess = useCallback(async () => {
     reset()
@@ -179,18 +145,16 @@ export function QuickAppointmentDialog({
     setIsSubmitting(true)
 
     try {
-      // Convertir los datos de la cita rápida al formato completo
       const appointmentData = {
         clientId: values.clientId,
         serviceIds: values.serviceIds,
-        employeeIds: [], // Sin empleados específicos para citas rápidas
+        employeeIds: [],
         date: values.date.toISOString(),
         timeRange: {
           startAt: values.startAt,
           endAt: values.endAt,
         },
-        notes: '', // Sin notas para citas rápidas
-        // Campos con valores por defecto
+        notes: '',
         status: 'pendiente' as const,
         paymentStatus: 'pendiente' as const,
         deposit: null,
@@ -229,20 +193,12 @@ export function QuickAppointmentDialog({
     }, 0)
   }, [selectedServiceIds, services])
 
-  // Auto-update end time when start time or services change (only if user hasn't manually set a time range)
-  React.useEffect(() => {
-    const startAt = form.getValues('startAt')
-    // Only auto-update if we don't have a pre-selected time range AND user hasn't manually modified time
-    if (startAt !== undefined && !userModifiedTime) {
-      form.setValue('endAt', startAt + totalDuration)
-    }
-  }, [
-    totalDuration,
-    form.setValue,
-    form.getValues,
-    hasPreSelectedTime,
-    userModifiedTime,
-  ])
+  // Auto-update end time when start time or services change
+  const startAt = useWatch({ control: form.control, name: 'startAt' })
+  useEffect(() => {
+    if (startAt === undefined || userModifiedTime || hasPreSelectedTime) return
+    setValue('endAt', startAt + totalDuration)
+  }, [startAt, totalDuration, userModifiedTime, hasPreSelectedTime, setValue])
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
