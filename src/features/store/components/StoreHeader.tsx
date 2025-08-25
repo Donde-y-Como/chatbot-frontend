@@ -1,6 +1,8 @@
 import React from 'react'
 import { Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button.tsx'
+import { Separator } from '@/components/ui/separator'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 import { POSFilters } from '../types'
 import { CategoryTabs } from './CategoryTabs'
 import { FilterButton } from './FilterButton'
@@ -34,7 +36,11 @@ export function StoreHeader({
       {/* Header móvil */}
       <div className='lg:hidden'>
         <div className='flex items-center justify-between p-3'>
-          <h1 className='text-lg font-semibold'>Orden</h1>
+          <div className='flex gap-2 items-center'>
+            <SidebarTrigger variant='outline' className='' />
+            <Separator orientation='vertical' className='h-6 ' />
+            <h1 className='text-lg font-semibold'>Punto de Venta</h1>
+          </div>
           <div className='flex items-center gap-2'>
             <FilterButton
               isActive={filters.isActive}
@@ -82,8 +88,13 @@ export function StoreHeader({
 
       {/* Header desktop */}
       <div className='hidden lg:block p-4'>
+
         <div className='flex items-center gap-4 mb-4'>
-          <div className='flex-1'>
+          <div className='flex-1 flex'>
+            <div className='flex gap-2 items-center'>
+              <SidebarTrigger variant='outline' className='' />
+              <Separator orientation='vertical' className='h-6 ' />
+            </div>
             <SearchBar
               value={filters.search}
               onChange={onSearchChange}

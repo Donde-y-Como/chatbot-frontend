@@ -1,20 +1,51 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Separator } from '@radix-ui/react-separator'
+import { startOfWeek, endOfWeek } from 'date-fns'
+import { MenuIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { CalendarHeader } from '@/features/appointments/CalendarHeader.tsx'
 import { CalendarSidebar } from '@/features/appointments/CalendarSidebar.tsx'
 import { DayView } from '@/features/appointments/DayView.tsx'
+import { WeekView } from '@/features/appointments/WeekView.tsx'
 import { useGetAppointments } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
 import { SidebarTrigger } from '../../components/ui/sidebar'
 import { format } from 'date-fns'
 
+// Calendar Sidebar Toggle Component
+function CalendarSidebarToggle({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
+  return (
+    <Button
+      variant='ghost'
+      size='sm'
+      className='h-8 w-8 p-0 shrink-0'
+      onClick={onToggle}
+    >
+      <MenuIcon className='h-4 w-4' />
+    </Button>
+  )
+}
+
 export function Calendar() {
   const { data: employees } = useGetEmployees()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [view, setView] = useState<'day' | 'week'>('day')
-  const { data: appointments } = useGetAppointments(format(selectedDate, "yyyy-MM-dd"))
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(
     new Set()
+  )
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+
+  // Get appointments based on current view
+  const startDate = view === 'week' 
+    ? startOfWeek(selectedDate, { weekStartsOn: 1 })
+    : selectedDate
+  const endDate = view === 'week'
+    ? endOfWeek(selectedDate, { weekStartsOn: 1 })
+    : selectedDate
+    
+  const { data: appointments } = useGetAppointments(
+    startDate.toISOString(),
+    endDate.toISOString()
   )
 
   useEffect(() => {
@@ -34,30 +65,44 @@ export function Calendar() {
   }, [appointments, selectedEmployees])
 
   return (
-    <div className='flex flex-col h-screen p-2 w-full relative'>
-      <div className='flex gap-2 mb-2'>
-        <SidebarTrigger variant='outline' className='sm:hidden' />
-        <Separator orientation='vertical' className='h-7 sm:hidden' />
-        <h1 className='text-2xl font-bold'>Citas</h1>
+    <div className='flex flex-col h-full w-full bg-background'>
+      {/* Mobile Header */}
+      <div className='flex md:hidden items-center justify-between p-3 border-b bg-background/95 backdrop-blur shrink-0'>
+        <div className='flex items-center gap-2'>
+          <SidebarTrigger variant='outline' className='shrink-0' />
+          <Separator orientation='vertical' className='h-5' />
+          <CalendarSidebarToggle isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+          <h1 className='text-lg font-bold'>Citas</h1>
+        </div>
       </div>
 
-      <div className='h-screen w-full flex bg-background text-foreground relative' role='application' aria-label='Sistema de citas'>
-        <aside 
-          className='flex-shrink-0' 
-          role='complementary' 
-          aria-label='Panel lateral de calendario y filtros'
-        >
-          <CalendarSidebar
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-            employees={employees}
-            selectedEmployees={selectedEmployees}
-            setSelectedEmployees={setSelectedEmployees}
-          />
-        </aside>
+      {/* Desktop Header */}
+      <div className='hidden md:flex items-center gap-3 px-4 lg:px-6 py-3 lg:py-4 border-b bg-background/95 backdrop-blur shrink-0'>
+        <div className='flex items-center gap-3'>
+          <SidebarTrigger variant='outline' className='shrink-0' />
+          <Separator orientation='vertical' className='h-5' />
+          <CalendarSidebarToggle isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+          <h1 className='text-xl lg:text-2xl font-bold tracking-tight'>Citas</h1>
+        </div>
+      </div>
 
+      {/* Main Layout */}
+      <div className='flex-1 flex overflow-hidden relative' role='application' aria-label='Sistema de citas'>
+        {/* Sidebar - Only on desktop when open */}
+        <CalendarSidebar
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          employees={employees}
+          selectedEmployees={selectedEmployees}
+          setSelectedEmployees={setSelectedEmployees}
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+        />
+
+        {/* Main Content - Responsive */}
         <main className='flex-1 flex flex-col overflow-hidden' role='main' aria-label='Vista principal del calendario'>
-          <header role='banner'>
+          {/* Calendar Header */}
+          <header className='shrink-0 bg-background' role='banner'>
             <CalendarHeader
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
@@ -66,8 +111,15 @@ export function Calendar() {
             />
           </header>
 
-          <section className='flex-1 overflow-y-auto' aria-label='Vista de citas del día'>
-            <DayView appointments={filteredAppointments} date={selectedDate} />
+          {/* Calendar Content */}
+          <section className='flex-1 overflow-hidden p-2 md:p-4' aria-label={view === 'day' ? 'Vista de citas del día' : 'Vista de citas de la semana'}>
+            <div className='h-full rounded-lg md:rounded-xl bg-card overflow-hidden'>
+              {view === 'day' ? (
+                <DayView appointments={filteredAppointments} date={selectedDate} />
+              ) : (
+                <WeekView appointments={filteredAppointments} date={selectedDate} />
+              )}
+            </div>
           </section>
         </main>
       </div>

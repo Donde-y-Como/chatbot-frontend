@@ -16,7 +16,6 @@ import ClientsProvider from '@/features/clients/context/clients-context.tsx'
 import { ClientDialogs } from '../clients/components/client-dialogs'
 import { ChatMessages, Client } from './ChatTypes'
 import { ChatBarUnlimited } from './chatBarUnlimited'
-import { usePaginatedChats } from './hooks/usePaginatedChats'
 
 const route = getRouteApi('/_authenticated/chats/')
 
@@ -35,9 +34,6 @@ function ChatsInner() {
 
   const { isOpenConnectionClient, closeConnectionClient, selectedClientData } =
     useDialogState()
-
-  // Fetch all chats
-  const { chats } = usePaginatedChats()
 
   // Fetch messages for selected chat
   const {

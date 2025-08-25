@@ -33,19 +33,33 @@ interface AddPaymentToOrderData {
 }
 
 const convertCartToSale = async (data: ConvertToSaleData) => {
-  const response = await api.post<{ success: boolean; data: SalePrimitives }>(
-    '/sales/convert-cart',
+  // First convert cart to order, then add full payment to complete it as sale
+  const orderResponse = await api.post<{ success: boolean; data: OrderWithDetails }>(
+    '/orders/convert-cart',
     {
       clientId: data.cart.selectedClientId,
-      paymentMethod: data.paymentMethod,
     }
   )
 
-  if (!response.data.success) {
-    throw new Error('No se pudo crear la venta')
+  if (!orderResponse.data.success) {
+    throw new Error('No se pudo crear la orden')
   }
 
-  return response.data.data
+  // Add full payment to convert order to sale
+  const paymentResponse = await api.post<{
+    success: boolean
+    data: OrderWithDetails | SaleWithDetails
+    type: 'sale' | 'order'
+  }>(`/orders/${orderResponse.data.data.id}/payments`, {
+    amount: data.cart.total,
+    paymentMethod: data.paymentMethod,
+  })
+
+  if (!paymentResponse.data.success) {
+    throw new Error('No se pudo procesar el pago')
+  }
+
+  return paymentResponse.data.data as SalePrimitives
 }
 
 const convertCartToOrder = async (data: ConvertToOrderData) => {

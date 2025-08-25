@@ -28,7 +28,7 @@ export default function EmployeesProvider({ children }: Props) {
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 export const useEmployees = () => {
   const employeeContext = React.useContext(EmployeesContext)
 

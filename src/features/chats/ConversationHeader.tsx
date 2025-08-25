@@ -7,10 +7,11 @@ import {
   IconBrandInstagram,
   IconBrandWhatsapp,
   IconChecklist,
-  IconDotsVertical,
   IconUser,
 } from '@tabler/icons-react'
 import { CalendarFold } from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { cn } from '@/lib/utils.ts'
 import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -266,41 +267,43 @@ export function ConversationHeader({
             tooltip={chatData.thread.enabled ? 'Desactivar IA' : 'Activar IA'}
           />
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size='icon'
-                  variant='ghost'
-                  className='size-8 rounded-full sm:inline-flex lg:size-10'
-                  onClick={handleConnectionClick}
+          <RenderIfCan permission={PERMISSIONS.CONVERSATION_UPDATE}>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size='icon'
+                    variant='ghost'
+                    className='size-8 rounded-full sm:inline-flex lg:size-10'
+                    onClick={handleConnectionClick}
+                  >
+                    <IconAffiliate
+                      size={22}
+                      className='stroke-muted-foreground'
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side='bottom'
+                  className='bg-[#020817] text-white px-2 py-1 rounded-md text-xs'
                 >
-                  <IconAffiliate
-                    size={22}
-                    className='stroke-muted-foreground'
-                  />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent
-                side='bottom'
-                className='bg-[#020817] text-white px-2 py-1 rounded-md text-xs'
-              >
-                Vincular Perfil
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+                  Vincular Perfil
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {/* Connect Client Dialog - Now using refactored ConnectClient */}
 
-          {/* Connect Client Dialog - Now using refactored ConnectClient */}
-          <ConnectClient
-            isDialog={true}
-            open={connectionDialogOpen}
-            onOpenChange={setConnectionDialogOpen}
-            currentClientData={currentClientData}
-            conversationId={selectedChatId}
-            onConnectionSuccess={handleConnectionSuccess}
-            onConnectionError={handleConnectionError}
-            onEmitSocketEvent={emit}
-          />
+            <ConnectClient
+              isDialog={true}
+              open={connectionDialogOpen}
+              onOpenChange={setConnectionDialogOpen}
+              currentClientData={currentClientData}
+              conversationId={selectedChatId}
+              onConnectionSuccess={handleConnectionSuccess}
+              onConnectionError={handleConnectionError}
+              onEmitSocketEvent={emit}
+            />
+          </RenderIfCan>
         </div>
 
         {/* Primary Actions Group - Appointments & Events */}
@@ -331,99 +334,84 @@ export function ConversationHeader({
             </Tooltip>
           </TooltipProvider>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  ref={appointmentButtonRef}
-                  size='sm'
-                  variant='ghost'
-                  className='h-9 w-9 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group'
-                  onClick={handleAppointmentClick}
+          <RenderIfCan permission={PERMISSIONS.APPOINTMENT_CREATE}>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    ref={appointmentButtonRef}
+                    size='sm'
+                    variant='ghost'
+                    className='h-9 w-9 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group'
+                    onClick={handleAppointmentClick}
+                  >
+                    <IconChecklist
+                      size={18}
+                      className='group-hover:scale-110 transition-transform duration-200'
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side='bottom'
+                  className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700 animate-in fade-in-0 zoom-in-95'
+                  sideOffset={8}
                 >
-                  <IconChecklist
-                    size={18}
-                    className='group-hover:scale-110 transition-transform duration-200'
-                  />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent
-                side='bottom'
-                className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700 animate-in fade-in-0 zoom-in-95'
-                sideOffset={8}
-              >
-                Agendar Cita
-                <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+                  Agendar Cita
+                  <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </RenderIfCan>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size='sm'
-                  variant='ghost'
-                  className='h-9 w-9 rounded-md hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-200 group'
-                  onClick={handleEventClick}
+          <RenderIfCan permission={PERMISSIONS.EVENT_CREATE}>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size='sm'
+                    variant='ghost'
+                    className='h-9 w-9 rounded-md hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-200 group'
+                    onClick={handleEventClick}
+                  >
+                    <CalendarFold
+                      size={18}
+                      className='group-hover:scale-110 transition-transform duration-200'
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side='bottom'
+                  className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700 animate-in fade-in-0 zoom-in-95'
+                  sideOffset={8}
                 >
-                  <CalendarFold
-                    size={18}
-                    className='group-hover:scale-110 transition-transform duration-200'
-                  />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent
-                side='bottom'
-                className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700 animate-in fade-in-0 zoom-in-95'
-                sideOffset={8}
-              >
-                Agendar Evento
-                <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+                  Agendar Evento
+                  <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </RenderIfCan>
         </div>
 
-        {/* Secondary Action - More Options */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size='sm'
-                variant='ghost'
-                className='h-9 w-6 rounded-md hover:bg-gray-100 transition-colors duration-200'
-              >
-                <IconDotsVertical size={16} className='text-muted-foreground' />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent
-              side='bottom'
-              className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700 animate-in fade-in-0 zoom-in-95'
-              sideOffset={8}
-            >
-              Más opciones
-              <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
         {/* Dialogs */}
-        {eventDialogOpen && (
-          <AddClientFromChats
-            key='event-dialog'
-            open={eventDialogOpen}
-            onClose={() => setEventDialogOpen(false)}
-            preselectedClientId={chatData.client?.id || ''}
-            title='Agendar Cliente en Evento'
-          />
-        )}
+        <RenderIfCan permission={PERMISSIONS.EVENT_CREATE}>
+          {eventDialogOpen && (
+            <AddClientFromChats
+              key='event-dialog'
+              open={eventDialogOpen}
+              onClose={() => setEventDialogOpen(false)}
+              preselectedClientId={chatData.client?.id || ''}
+              title='Agendar Cliente en Evento'
+            />
+          )}
+        </RenderIfCan>
 
-        <MakeAppointmentDialog
-          defaultOpen={appointmentDialogOpen}
-          onOpenChange={setAppointmentDialogOpen}
-          defaultClientName={chatData.client.id}
-        />
+        <RenderIfCan permission={PERMISSIONS.APPOINTMENT_CREATE}>
+          <MakeAppointmentDialog
+            defaultOpen={appointmentDialogOpen}
+            onOpenChange={setAppointmentDialogOpen}
+            defaultClientName={chatData.client.id}
+          />
+        </RenderIfCan>
       </div>
     </div>
   )

@@ -1,9 +1,18 @@
 import { useState } from 'react'
-import { Category } from '../types'
+import {
+  ChevronDown,
+  ChevronRight,
+  Edit,
+  Eye,
+  Plus,
+  Trash2,
+} from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Edit, Trash2, Eye, Plus, ChevronRight, ChevronDown } from 'lucide-react'
+import { Category } from '../types'
 
 interface CategoryListProps {
   categories: Category[]
@@ -13,15 +22,17 @@ interface CategoryListProps {
   onCreateSubcategory: (parentCategory: Category) => void
 }
 
-export function CategoryList({ 
-  categories, 
-  onEdit, 
-  onDelete, 
-  onView, 
-  onCreateSubcategory 
+export function CategoryList({
+  categories,
+  onEdit,
+  onDelete,
+  onView,
+  onCreateSubcategory,
 }: CategoryListProps) {
   // Estado para controlar qué categorías están expandidas
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set()
+  )
 
   const toggleExpanded = (categoryId: string) => {
     const newExpanded = new Set(expandedCategories)
@@ -42,13 +53,15 @@ export function CategoryList({
   }
 
   // Separar categorías padre (las que no tienen parentCategoryId)
-  const parentCategories = categories.filter(cat => !cat.parentCategoryId)
+  const parentCategories = categories.filter((cat) => !cat.parentCategoryId)
 
   return (
     <div className='space-y-4'>
       {parentCategories.map((parentCategory) => {
         const isExpanded = expandedCategories.has(parentCategory.id)
-        const hasSubcategories = parentCategory.subcategories && parentCategory.subcategories.length > 0
+        const hasSubcategories =
+          parentCategory.subcategories &&
+          parentCategory.subcategories.length > 0
 
         return (
           <div key={parentCategory.id} className='space-y-2'>
@@ -74,8 +87,10 @@ export function CategoryList({
                         </Button>
                       )}
                       {!hasSubcategories && <div className='w-6' />}
-                      
-                      <h3 className='font-semibold text-lg'>{parentCategory.name}</h3>
+
+                      <h3 className='font-semibold text-lg'>
+                        {parentCategory.name}
+                      </h3>
                       <Badge variant='default'>Categoría Padre</Badge>
                     </div>
                     <p className='text-sm text-muted-foreground mt-1 ml-8'>
@@ -100,32 +115,38 @@ export function CategoryList({
                     <Eye className='h-4 w-4 mr-1' />
                     Ver
                   </Button>
-                  <Button
-                    variant='outline' 
-                    size='sm'
-                    onClick={() => onEdit(parentCategory)}
-                    className='flex-1 min-w-0'
-                  >
-                    <Edit className='h-4 w-4 mr-1' />
-                    Editar
-                  </Button>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => onCreateSubcategory(parentCategory)}
-                    className='flex-1 min-w-0'
-                  >
-                    <Plus className='h-4 w-4 mr-1' />
-                    Subcategoría
-                  </Button>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => onDelete(parentCategory)}
-                    className='text-destructive hover:text-destructive'
-                  >
-                    <Trash2 className='h-4 w-4' />
-                  </Button>
+                  <RenderIfCan permission={PERMISSIONS.CATEGORY_UPDATE}>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => onEdit(parentCategory)}
+                      className='flex-1 min-w-0'
+                    >
+                      <Edit className='h-4 w-4 mr-1' />
+                      Editar
+                    </Button>
+                  </RenderIfCan>
+                  <RenderIfCan permission={PERMISSIONS.CATEGORY_UPDATE}>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => onCreateSubcategory(parentCategory)}
+                      className='flex-1 min-w-0'
+                    >
+                      <Plus className='h-4 w-4 mr-1' />
+                      Subcategoría
+                    </Button>
+                  </RenderIfCan>
+                  <RenderIfCan permission={PERMISSIONS.CATEGORY_DELETE}>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => onDelete(parentCategory)}
+                      className='text-destructive hover:text-destructive'
+                    >
+                      <Trash2 className='h-4 w-4' />
+                    </Button>
+                  </RenderIfCan>
                 </div>
               </CardContent>
             </Card>
@@ -134,13 +155,18 @@ export function CategoryList({
             {hasSubcategories && isExpanded && (
               <div className='ml-6 space-y-2 animate-in slide-in-from-top-2 duration-200'>
                 {parentCategory.subcategories?.map((subcategory) => (
-                  <Card key={subcategory.id} className='hover:shadow-sm transition-shadow border-l-2 border-l-muted'>
+                  <Card
+                    key={subcategory.id}
+                    className='hover:shadow-sm transition-shadow border-l-2 border-l-muted'
+                  >
                     <CardHeader className='pb-2'>
                       <div className='flex items-start justify-between'>
                         <div className='flex-1'>
                           <div className='flex items-center gap-2'>
                             <h4 className='font-medium'>{subcategory.name}</h4>
-                            <Badge variant='secondary' className='text-xs'>Subcategoría</Badge>
+                            <Badge variant='secondary' className='text-xs'>
+                              Subcategoría
+                            </Badge>
                           </div>
                           <p className='text-sm text-muted-foreground mt-1 ml-6'>
                             {subcategory.description}
@@ -159,23 +185,27 @@ export function CategoryList({
                           <Eye className='h-4 w-4 mr-1' />
                           Ver
                         </Button>
-                        <Button
-                          variant='outline' 
-                          size='sm'
-                          onClick={() => onEdit(subcategory)}
-                          className='flex-1'
-                        >
-                          <Edit className='h-4 w-4 mr-1' />
-                          Editar
-                        </Button>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={() => onDelete(subcategory)}
-                          className='text-destructive hover:text-destructive'
-                        >
-                          <Trash2 className='h-4 w-4' />
-                        </Button>
+                        <RenderIfCan permission={PERMISSIONS.CATEGORY_UPDATE}>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => onEdit(subcategory)}
+                            className='flex-1'
+                          >
+                            <Edit className='h-4 w-4 mr-1' />
+                            Editar
+                          </Button>
+                        </RenderIfCan>
+                        <RenderIfCan permission={PERMISSIONS.CATEGORY_DELETE}>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => onDelete(subcategory)}
+                            className='text-destructive hover:text-destructive'
+                          >
+                            <Trash2 className='h-4 w-4' />
+                          </Button>
+                        </RenderIfCan>
                       </div>
                     </CardContent>
                   </Card>

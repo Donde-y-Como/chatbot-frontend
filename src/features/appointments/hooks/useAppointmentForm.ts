@@ -57,11 +57,19 @@ export function useAppointmentForm(
   )
   
   // Nuevos estados para equipos y consumibles
-  const [selectedEquipmentIds, setSelectedEquipmentIds] = useState<string[]>(
+  // Solo almacenamos los cambios manuales, no los heredados del servicio
+  const [manualEquipmentIds, setManualEquipmentIds] = useState<string[]>(
     appointment?.equipmentIds || []
   )
-  const [consumableUsages, setConsumableUsages] = useState<ConsumableUsage[]>(
+  const [manualConsumableUsages, setManualConsumableUsages] = useState<ConsumableUsage[]>(
     appointment?.consumableUsages || []
+  )
+  
+  // Estado para trackear si el usuario ha hecho cambios manuales
+  const [hasManualResourceChanges, setHasManualResourceChanges] = useState<boolean>(
+    (appointment?.equipmentIds && appointment.equipmentIds.length > 0) ||
+    (appointment?.consumableUsages && appointment.consumableUsages.length > 0) ||
+    false
   )
   
   const [loading, setLoading] = useState(false)
@@ -71,7 +79,7 @@ export function useAppointmentForm(
   useEffect(() => {
     if (defaultClientName && clients && clients.length > 0 && !clientId) {
       // Buscar cliente por nombre
-      const matchingClient = clients.find(client =>
+      const matchingClient = clients.find(client => 
         client.id && client.id === defaultClientName
       )
 
@@ -187,8 +195,10 @@ export function useAppointmentForm(
       setPaymentStatus(appointment.paymentStatus || 'pendiente')
       setDeposit(appointment.deposit || null)
       setNotes(appointment.notes || '')
-      setSelectedEquipmentIds(appointment.equipmentIds || [])
-      setConsumableUsages(appointment.consumableUsages || [])
+      setManualEquipmentIds(appointment.equipmentIds || [])
+      setManualConsumableUsages(appointment.consumableUsages || [])
+      setRemovedInheritedEquipmentIds([])
+      setHasManualResourceChanges(Boolean(appointment.equipmentIds?.length || appointment.consumableUsages?.length))
     } else {
       setClientId('')
       setServiceIds([])
@@ -207,8 +217,10 @@ export function useAppointmentForm(
       setPaymentStatus('pendiente')
       setDeposit(null)
       setNotes('')
-      setSelectedEquipmentIds([])
-      setConsumableUsages([])
+      setManualEquipmentIds([])
+      setManualConsumableUsages([])
+      setRemovedInheritedEquipmentIds([])
+      setHasManualResourceChanges(false)
     }
 
     setActiveStep(1)
@@ -245,8 +257,20 @@ export function useAppointmentForm(
       status,
       paymentStatus,
       deposit,
-      equipmentIds: selectedEquipmentIds,
-      consumableUsages,
+      // Solo enviar equipos y consumibles si el usuario hizo cambios manuales
+      ...(hasManualResourceChanges ? {
+        equipmentIds: [
+          ...manualEquipmentIds,
+          ...inheritedEquipmentIds.filter(id => !removedInheritedEquipmentIds.includes(id))
+        ],
+        consumableUsages: Array.from(
+          new Map([
+            ...inheritedConsumableUsages.map(u => [u.consumableId, u.quantity] as [string, number]),
+            ...manualConsumableUsages.map(u => [u.consumableId, u.quantity] as [string, number])
+          ]).entries()
+        ).filter(([, quantity]) => quantity > 0)
+         .map(([consumableId, quantity]) => ({ consumableId, quantity })),
+      } : {}),
     } satisfies Partial<Appointment>
 
     try {
@@ -259,12 +283,19 @@ export function useAppointmentForm(
 
       if (result.id) {
         toast.success(`Cita ${appointment ? 'editada' : 'agendada'} con éxito`)
+        
+        // Invalidar y refetch queries para actualizar la vista inmediatamente
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: [UseGetAppointmentsQueryKey],
+          }),
+          queryClient.refetchQueries({
+            queryKey: [UseGetAppointmentsQueryKey],
+          })
+        ])
+
         resetForm()
         setLoading(false)
-
-        await queryClient.invalidateQueries({
-          queryKey: [UseGetAppointmentsQueryKey],
-        })
 
         // Call the appointment created callback if provided (only for new appointments)
         if (!appointment && onAppointmentCreated) {
@@ -296,6 +327,69 @@ export function useAppointmentForm(
     }
   }
 
+  // Memoized values para obtener equipos y consumibles heredados de servicios
+  const inheritedEquipmentIds = useMemo(() => {
+    if (!services || serviceIds.length === 0) return []
+    
+    const inheritedIds = new Set<string>()
+    serviceIds.forEach(serviceId => {
+      const service = services.find(s => s.id === serviceId)
+      if (service?.equipmentIds) {
+        service.equipmentIds.forEach(id => inheritedIds.add(id))
+      }
+    })
+    
+    return Array.from(inheritedIds)
+  }, [services, serviceIds])
+  
+  const inheritedConsumableUsages = useMemo(() => {
+    if (!services || serviceIds.length === 0) return []
+    
+    const usageMap = new Map<string, number>()
+    serviceIds.forEach(serviceId => {
+      const service = services.find(s => s.id === serviceId)
+      if (service?.consumableUsages) {
+        service.consumableUsages.forEach(usage => {
+          const current = usageMap.get(usage.consumableId) || 0
+          usageMap.set(usage.consumableId, current + usage.quantity)
+        })
+      }
+    })
+    
+    return Array.from(usageMap.entries()).map(([consumableId, quantity]) => ({
+      consumableId,
+      quantity
+    }))
+  }, [services, serviceIds])
+  
+  // Lista para trackear equipos heredados que se han "quitado" manualmente
+  const [removedInheritedEquipmentIds, setRemovedInheritedEquipmentIds] = useState<string[]>([])
+  
+  // Combinamos heredados con manuales para la UI, excluyendo los removidos
+  const selectedEquipmentIds = useMemo(() => {
+    const inherited = inheritedEquipmentIds.filter(id => !removedInheritedEquipmentIds.includes(id))
+    const combined = new Set([...inherited, ...manualEquipmentIds])
+    return Array.from(combined)
+  }, [inheritedEquipmentIds, manualEquipmentIds, removedInheritedEquipmentIds])
+  
+  const consumableUsages = useMemo(() => {
+    const usageMap = new Map<string, number>()
+    
+    // Agregar heredados
+    inheritedConsumableUsages.forEach(usage => {
+      usageMap.set(usage.consumableId, usage.quantity)
+    })
+    
+    // Sobrescribir con cambios manuales
+    manualConsumableUsages.forEach(usage => {
+      usageMap.set(usage.consumableId, usage.quantity)
+    })
+    
+    return Array.from(usageMap.entries())
+      .filter(([, quantity]) => quantity > 0)
+      .map(([consumableId, quantity]) => ({ consumableId, quantity }))
+  }, [inheritedConsumableUsages, manualConsumableUsages])
+
   const selectedClient = useMemo(
     () => clients?.find((client) => client.id === clientId),
     [clients, clientId]
@@ -326,15 +420,35 @@ export function useAppointmentForm(
   }
 
   const toggleEquipmentSelection = (equipmentId: string) => {
-    setSelectedEquipmentIds((prev) =>
-      prev.includes(equipmentId)
-        ? prev.filter((id) => id !== equipmentId)
-        : [...prev, equipmentId]
-    )
+    setHasManualResourceChanges(true)
+    
+    const isInherited = inheritedEquipmentIds.includes(equipmentId)
+    const isSelected = selectedEquipmentIds.includes(equipmentId)
+    const isManual = manualEquipmentIds.includes(equipmentId)
+    const isRemovedInherited = removedInheritedEquipmentIds.includes(equipmentId)
+    
+    if (isInherited) {
+      if (isSelected && !isRemovedInherited) {
+        // Está heredado y seleccionado, lo "quitamos" (agregamos a removidos)
+        setRemovedInheritedEquipmentIds(prev => [...prev, equipmentId])
+      } else if (!isSelected && isRemovedInherited) {
+        // Está heredado pero fue removido, lo volvemos a incluir
+        setRemovedInheritedEquipmentIds(prev => prev.filter(id => id !== equipmentId))
+      }
+    } else {
+      // No es heredado, toggle normal en manuales
+      setManualEquipmentIds((prev) =>
+        prev.includes(equipmentId)
+          ? prev.filter((id) => id !== equipmentId)
+          : [...prev, equipmentId]
+      )
+    }
   }
 
   const updateConsumableUsage = (consumableId: string, quantity: number) => {
-    setConsumableUsages((prev) => {
+    setHasManualResourceChanges(true)
+    
+    setManualConsumableUsages((prev) => {
       const existingIndex = prev.findIndex(usage => usage.consumableId === consumableId)
       
       if (quantity === 0) {
@@ -376,10 +490,11 @@ export function useAppointmentForm(
     setNotes,
 
     // Campos de equipos y consumibles
-    selectedEquipmentIds,
-    consumableUsages,
-    setSelectedEquipmentIds,
-    setConsumableUsages,
+    selectedEquipmentIds, // Para UI (combinados)
+    consumableUsages,     // Para UI (combinados) 
+    inheritedEquipmentIds, // Para distinguir heredados
+    inheritedConsumableUsages, // Para distinguir heredados
+    hasManualResourceChanges, // Para saber si hubo cambios manuales
 
     clients,
     services,

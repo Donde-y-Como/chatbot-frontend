@@ -314,8 +314,8 @@ export function EventCreateModal({ open, onClose, defaultDate }: CreateEventMode
       if (!isOpen && hasFilledFields()) {
         return;
       }
-      // En caso contrario, permitimos el cierre y llamamos a onClose
-      !isOpen && onClose();
+      // En caso contrario, permitimos el cierre y llamamos a
+      if(!isOpen) onClose();
     }}>
       <DialogContent className="sm:max-w-3xl">
         <Form {...form}>

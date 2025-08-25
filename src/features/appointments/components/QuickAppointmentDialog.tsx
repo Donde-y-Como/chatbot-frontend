@@ -1,7 +1,13 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { format } from 'date-fns'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { es } from 'date-fns/locale/es'
+import { CalendarIcon } from 'lucide-react'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
 import {
   Dialog,
   DialogContent,
@@ -19,20 +25,24 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { CalendarIcon } from 'lucide-react'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale/es'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { appointmentService } from '../appointmentService'
+import { useDialogState } from '../contexts/DialogStateContext'
+import { useGetServices } from '../hooks/useGetServices'
+import {
+  getDefaultQuickAppointment,
+  minutesToTime,
+  QuickAppointmentFormValues,
+  quickAppointmentSchema,
+  timeToMinutes,
+} from '../types-quick'
 import { CreateOrSelectClient } from './CreateOrSelectClient'
 import { CreateOrSelectMultipleServices } from './CreateOrSelectMultipleServices'
-import { useGetServices } from '../hooks/useGetServices'
-import { useDialogState } from '../contexts/DialogStateContext'
-import { appointmentService } from '../appointmentService'
-import { quickAppointmentSchema, getDefaultQuickAppointment, QuickAppointmentFormValues, minutesToTime, timeToMinutes } from '../types-quick'
-import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 
 interface Props {
   open: boolean
@@ -58,28 +68,26 @@ export function QuickAppointmentDialog({
   defaultEndTime,
 }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [hasPreSelectedTime, setHasPreSelectedTime] = useState(defaultStartTime !== undefined && defaultEndTime !== undefined)
+  const hasPreSelectedTime =
+    defaultStartTime !== undefined && defaultEndTime !== undefined
   const [userModifiedTime, setUserModifiedTime] = useState(false)
   const { data: services = [], isLoading: servicesLoading } = useGetServices()
   const { openDialog, closeDialog } = useDialogState()
 
   // Default values for quick appointment
   const defaultValues = useMemo(() => {
-    const hasValidTimeRange = defaultStartTime !== undefined && defaultEndTime !== undefined
+    const hasValidTimeRange =
+      defaultStartTime !== undefined && defaultEndTime !== undefined
     const baseDefaults = getDefaultQuickAppointment()
-    
+
     // Use provided time range if available, otherwise fall back to base defaults
-    const finalStartTime = hasValidTimeRange ? defaultStartTime! : baseDefaults.startAt!
-    const finalEndTime = hasValidTimeRange ? defaultEndTime! : baseDefaults.endAt!
-    
-    console.log('QuickAppointmentDialog defaultValues:', {
-      defaultStartTime,
-      defaultEndTime,
-      hasValidTimeRange,
-      finalStartTime,
-      finalEndTime
-    })
-    
+    const finalStartTime = hasValidTimeRange
+      ? defaultStartTime!
+      : baseDefaults.startAt!
+    const finalEndTime = hasValidTimeRange
+      ? defaultEndTime!
+      : baseDefaults.endAt!
+
     return {
       ...baseDefaults,
       clientId: initialClientId || '',
@@ -88,70 +96,44 @@ export function QuickAppointmentDialog({
       startAt: finalStartTime,
       endAt: finalEndTime,
     }
-  }, [initialClientId, initialServiceId, defaultDate, defaultStartTime, defaultEndTime])
-
-  // Check if we have a pre-selected time range
-  useEffect(() => {
-    const hasValidTimeRange = defaultStartTime !== undefined && defaultEndTime !== undefined
-    setHasPreSelectedTime(hasValidTimeRange)
-    console.log('QuickAppointmentDialog - Time range check:', {
-      defaultStartTime,
-      defaultEndTime,
-      hasValidTimeRange
-    })
-  }, [defaultStartTime, defaultEndTime])
+  }, [
+    initialClientId,
+    initialServiceId,
+    defaultDate,
+    defaultStartTime,
+    defaultEndTime,
+  ])
 
   const form = useForm<QuickAppointmentFormValues>({
     resolver: zodResolver(quickAppointmentSchema),
     defaultValues,
   })
 
-  const { reset, watch } = form
-  const selectedServiceIds = useMemo(() => watch('serviceIds') || [], [watch])
+  const { reset, watch, setValue } = form
+  const selectedServiceIds =
+    useWatch({ control: form.control, name: 'serviceIds' }) ?? []
 
   // Reset form when dialog closes
-  const handleOpenChange = useCallback((state: boolean) => {
-    if (state) {
-      openDialog()
-      // Don't reset here, let useEffect handle it with proper values
-    } else {
-      closeDialog()
-      reset() // Reset to clean state when closing
-    }
-    onOpenChange(state)
-  }, [reset, onOpenChange, openDialog, closeDialog])
+  const handleOpenChange = useCallback(
+    (state: boolean) => {
+      // Let the effect react to external open changes
+      if (!state) {
+        reset() // Reset to clean state when closing
+      }
+      onOpenChange(state)
+    },
+    [reset, onOpenChange]
+  )
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) {
       openDialog()
-      
-      // Create fresh form values to ensure proper time range handling
-      const formValues = {
-        ...getDefaultQuickAppointment(),
-        clientId: initialClientId || '',
-        serviceIds: initialServiceId ? [initialServiceId] : [],
-        date: defaultDate || new Date(),
-        // Robust time value handling with validation
-        startAt: (typeof defaultStartTime === 'number' && !isNaN(defaultStartTime) && defaultStartTime >= 0) 
-          ? defaultStartTime 
-          : getDefaultQuickAppointment().startAt!,
-        endAt: (typeof defaultEndTime === 'number' && !isNaN(defaultEndTime) && defaultEndTime >= 0) 
-          ? defaultEndTime 
-          : getDefaultQuickAppointment().endAt!,
-      }
-      
-      console.log('QuickAppointmentDialog - Setting form values:', {
-        providedTimes: { defaultStartTime, defaultEndTime },
-        resolvedTimes: { startAt: formValues.startAt, endAt: formValues.endAt },
-        isTimeRangeValid: formValues.startAt !== getDefaultQuickAppointment().startAt
-      })
-      
-      reset(formValues)
+      reset(defaultValues)
       setUserModifiedTime(false)
     } else {
       closeDialog()
     }
-  }, [open, reset, initialClientId, initialServiceId, defaultDate, defaultStartTime, defaultEndTime, openDialog, closeDialog])
+  }, [open, reset, defaultValues])
 
   const handleSuccess = useCallback(async () => {
     reset()
@@ -163,18 +145,16 @@ export function QuickAppointmentDialog({
     setIsSubmitting(true)
 
     try {
-      // Convertir los datos de la cita rápida al formato completo
       const appointmentData = {
         clientId: values.clientId,
         serviceIds: values.serviceIds,
-        employeeIds: [], // Sin empleados específicos para citas rápidas
+        employeeIds: [],
         date: values.date.toISOString(),
         timeRange: {
           startAt: values.startAt,
           endAt: values.endAt,
         },
-        notes: '', // Sin notas para citas rápidas
-        // Campos con valores por defecto
+        notes: '',
         status: 'pendiente' as const,
         paymentStatus: 'pendiente' as const,
         deposit: null,
@@ -186,7 +166,7 @@ export function QuickAppointmentDialog({
       if (onClientChange && values.clientId !== initialClientId) {
         onClientChange(values.clientId)
       }
-      
+
       await handleSuccess()
       onSuccess?.(result.id)
     } catch (error) {
@@ -196,55 +176,56 @@ export function QuickAppointmentDialog({
     }
   }
 
-
   // Calculate total duration from selected services
   const totalDuration = useMemo(() => {
     if (!selectedServiceIds.length || !services.length) return 60 // Default 1 hour
 
     return selectedServiceIds.reduce((total, serviceId) => {
-      const service = services.find(s => s.id === serviceId)
+      const service = services.find((s) => s.id === serviceId)
       if (service) {
-        const minutes = service.duration.unit === 'hours' 
-          ? service.duration.value * 60 
-          : service.duration.value
+        const minutes =
+          service.duration.unit === 'hours'
+            ? service.duration.value * 60
+            : service.duration.value
         return total + minutes
       }
       return total
     }, 0)
   }, [selectedServiceIds, services])
 
-  // Auto-update end time when start time or services change (only if user hasn't manually set a time range)
-  React.useEffect(() => {
-    const startAt = form.getValues('startAt')
-    // Only auto-update if we don't have a pre-selected time range AND user hasn't manually modified time
-    if (startAt !== undefined && !hasPreSelectedTime && !userModifiedTime) {
-      form.setValue('endAt', startAt + totalDuration)
-    }
-  }, [totalDuration, form, hasPreSelectedTime, userModifiedTime])
+  // Auto-update end time when start time or services change
+  const startAt = useWatch({ control: form.control, name: 'startAt' })
+  useEffect(() => {
+    if (startAt === undefined || userModifiedTime || hasPreSelectedTime) return
+    setValue('endAt', startAt + totalDuration)
+  }, [startAt, totalDuration, userModifiedTime, hasPreSelectedTime, setValue])
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90wh]">
+      <DialogContent className='sm:max-w-2xl max-h-[90wh]'>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-            toast.error('Completa todos los campos por favor')
-          })}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit, () => {
+              toast.error('Completa todos los campos por favor')
+            })}
+          >
             <DialogHeader>
               <DialogTitle>Crear Cita Rápida</DialogTitle>
               <DialogDescription>
-                Crea una nueva cita con configuración básica. Los campos avanzados se configurarán automáticamente.
+                Crea una nueva cita con configuración básica. Los campos
+                avanzados se configurarán automáticamente.
               </DialogDescription>
             </DialogHeader>
 
-            <ScrollArea className="">
-              <div className="space-y-6 p-1">
+            <ScrollArea className=''>
+              <div className='space-y-6 p-1'>
                 {/* Cliente */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Cliente</h3>
-                  
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-medium'>Cliente</h3>
+
                   <FormField
                     control={form.control}
-                    name="clientId"
+                    name='clientId'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Seleccionar Cliente</FormLabel>
@@ -267,12 +248,12 @@ export function QuickAppointmentDialog({
                 </div>
 
                 {/* Servicios */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Servicios</h3>
-                  
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-medium'>Servicios</h3>
+
                   <FormField
                     control={form.control}
-                    name="serviceIds"
+                    name='serviceIds'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Seleccionar Servicios</FormLabel>
@@ -284,14 +265,18 @@ export function QuickAppointmentDialog({
                             }}
                             onToggle={(id) => {
                               const currentServices = field.value || []
-                              const updatedServices = currentServices.includes(id)
-                                ? currentServices.filter((serviceId: string) => serviceId !== id)
+                              const updatedServices = currentServices.includes(
+                                id
+                              )
+                                ? currentServices.filter(
+                                    (serviceId: string) => serviceId !== id
+                                  )
                                 : [...currentServices, id]
-                              
+
                               field.onChange(updatedServices)
                             }}
-                            maxHeight="200px"
-                            placeholder="Buscar o crear servicio..."
+                            maxHeight='200px'
+                            placeholder='Buscar o crear servicio...'
                           />
                         </FormControl>
                         <FormMessage />
@@ -301,37 +286,37 @@ export function QuickAppointmentDialog({
                 </div>
 
                 {/* Fecha */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Fecha</h3>
-                  
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-medium'>Fecha</h3>
+
                   <FormField
                     control={form.control}
-                    name="date"
+                    name='date'
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem className='flex flex-col'>
                         <FormLabel>Fecha de la Cita</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
-                                variant={"outline"}
+                                variant={'outline'}
                                 className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
+                                  'w-full pl-3 text-left font-normal',
+                                  !field.value && 'text-muted-foreground'
                                 )}
                               >
                                 {field.value ? (
-                                  format(field.value, "PPP", { locale: es })
+                                  format(field.value, 'PPP', { locale: es })
                                 ) : (
                                   <span>Selecciona una fecha</span>
                                 )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
+                          <PopoverContent className='w-auto p-0' align='start'>
                             <Calendar
-                              mode="single"
+                              mode='single'
                               selected={field.value}
                               onSelect={field.onChange}
                               disabled={(date) => date < new Date()}
@@ -347,34 +332,39 @@ export function QuickAppointmentDialog({
                 </div>
 
                 {/* Horarios */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Horario</h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-medium'>Horario</h3>
+
+                  <div className='grid grid-cols-2 gap-4'>
                     <FormField
                       control={form.control}
-                      name="startAt"
+                      name='startAt'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel htmlFor="startAt">Hora de Inicio</FormLabel>
+                          <FormLabel htmlFor='startAt'>
+                            Hora de Inicio
+                          </FormLabel>
                           <FormControl>
                             <Input
-                              id="startAt"
-                              type="time"
+                              id='startAt'
+                              type='time'
                               value={minutesToTime(field.value || 0)}
                               onChange={(e) => {
                                 const minutes = timeToMinutes(e.target.value)
                                 field.onChange(minutes)
                                 setUserModifiedTime(true)
-                                
+
                                 // Auto-update end time logic:
                                 // Only auto-update if we don't have a pre-selected time range
                                 // When user has manually selected a time range, preserve it
                                 if (!hasPreSelectedTime) {
-                                  form.setValue('endAt', minutes + totalDuration)
+                                  form.setValue(
+                                    'endAt',
+                                    minutes + totalDuration
+                                  )
                                 }
                               }}
-                              aria-required="true"
+                              aria-required='true'
                             />
                           </FormControl>
                           <FormMessage />
@@ -384,20 +374,20 @@ export function QuickAppointmentDialog({
 
                     <FormField
                       control={form.control}
-                      name="endAt"
+                      name='endAt'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel htmlFor="endAt">Hora de Fin</FormLabel>
+                          <FormLabel htmlFor='endAt'>Hora de Fin</FormLabel>
                           <FormControl>
                             <Input
-                              id="endAt"
-                              type="time"
+                              id='endAt'
+                              type='time'
                               value={minutesToTime(field.value || 0)}
                               onChange={(e) => {
                                 const minutes = timeToMinutes(e.target.value)
                                 field.onChange(minutes)
                               }}
-                              aria-required="true"
+                              aria-required='true'
                             />
                           </FormControl>
                           <FormMessage />
@@ -405,31 +395,32 @@ export function QuickAppointmentDialog({
                       )}
                     />
                   </div>
-                  
+
                   {totalDuration > 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      Duración total estimada: {Math.floor(totalDuration / 60)}h {totalDuration % 60}min
+                    <p className='text-sm text-muted-foreground'>
+                      Duración total estimada: {Math.floor(totalDuration / 60)}h{' '}
+                      {totalDuration % 60}min
                     </p>
                   )}
                 </div>
               </div>
             </ScrollArea>
 
-            <DialogFooter className="mt-6 gap-2">
+            <DialogFooter className='mt-6 gap-2'>
               <Button
-                type="button"
-                variant="outline"
+                type='button'
+                variant='outline'
                 onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting}
-                aria-label="Cancelar"
+                aria-label='Cancelar'
               >
                 Cancelar
               </Button>
               <Button
-                type="submit"
+                type='submit'
                 disabled={isSubmitting || servicesLoading}
-                aria-label="Crear cita rápida"
-                className="min-w-24"
+                aria-label='Crear cita rápida'
+                className='min-w-24'
               >
                 {isSubmitting ? 'Creando...' : 'Crear Cita'}
               </Button>

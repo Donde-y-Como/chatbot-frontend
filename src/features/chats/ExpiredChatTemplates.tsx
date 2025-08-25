@@ -147,7 +147,7 @@ export const ExpiredChatTemplates: React.FC<ExpiredChatTemplatesProps> = ({
     selectedTemplate,
     variables,
     processTemplateContent,
-    sendTemplateMutation,
+    sendTemplateMutation.mutate,
     selectedChatId,
   ])
 

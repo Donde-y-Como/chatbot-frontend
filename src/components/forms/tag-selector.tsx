@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { useGetProductTags } from '@/features/products/hooks/useGetAuxiliaryData'
+import { useGetTags } from '@/features/settings/tags/hooks/useTags'
 
 interface TagSelectorProps {
   title?: string
@@ -26,7 +26,7 @@ export function TagSelector({
   helperText = 'Las etiquetas te ayudan a organizar y filtrar tus elementos. Puedes seleccionar múltiples etiquetas haciendo clic en ellas.',
 }: TagSelectorProps) {
   const { control } = useFormContext()
-  const { data: tags = [] } = useGetProductTags()
+  const { data: tags = [] } = useGetTags()
   const [searchQuery, setSearchQuery] = useState('')
 
   // Filter tags based on search query

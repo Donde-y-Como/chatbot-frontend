@@ -4,14 +4,26 @@ import {
   Briefcase,
   CalendarIcon,
   Camera,
+  Check,
+  ChevronsUpDown,
   Lock,
   Mail,
   MapPin,
   User,
+  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
+import { Badge } from '@/components/ui/badge'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
 import {
   FormControl,
   FormField,
@@ -26,8 +38,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { FileUpload } from '@/components/file-upload'
+import { useGetRoles } from '@/hooks/useAuth'
 
 export function EmployeeInfoSection({ form, files, onFilesChange, isEdit }) {
+  const { data: roles, isLoading: rolesLoading } = useGetRoles()
   return (
     <div className='flex flex-col flex-1'>
       {/* Employee Data Section */}
@@ -88,20 +102,96 @@ export function EmployeeInfoSection({ form, files, onFilesChange, isEdit }) {
             <div className='grid gap-3 md:grid-cols-2'>
               <FormField
                 control={form.control}
-                name='role'
+                name='roleIds'
                 render={({ field }) => (
                   <FormItem className='space-y-1'>
                     <FormLabel className='text-sm font-medium flex items-center gap-2'>
                       <Briefcase className='h-3.5 w-3.5' />
-                      Rol o cargo *
+                      Roles *
                     </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Ej: Estilista, Recepcionista, Gerente'
-                        className='h-9'
-                        {...field}
-                      />
-                    </FormControl>
+                    <div className='space-y-2'>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between h-9",
+                                !field.value?.length && "text-muted-foreground"
+                              )}
+                              disabled={rolesLoading}
+                            >
+                              {field.value?.length
+                                ? `${field.value.length} rol(es) seleccionado(s)`
+                                : "Seleccionar roles"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput placeholder="Buscar roles..." />
+                            <CommandList>
+                              <CommandEmpty>No se encontraron roles.</CommandEmpty>
+                              <CommandGroup>
+                                {roles?.map((role) => (
+                                  <CommandItem
+                                    key={role.id}
+                                    onSelect={() => {
+                                      const currentValue = field.value || []
+                                      const newValue = currentValue.includes(role.id)
+                                        ? currentValue.filter((id) => id !== role.id)
+                                        : [...currentValue, role.id]
+                                      field.onChange(newValue)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        field.value?.includes(role.id)
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    <div>
+                                      <div className="font-medium">{role.name}</div>
+                                      <div className="text-sm text-muted-foreground">
+                                        {role.description}
+                                      </div>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      
+                      {field.value?.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {field.value.map((roleId) => {
+                            const role = roles?.find((r) => r.id === roleId)
+                            return (
+                              <Badge key={roleId} variant="secondary" className="text-xs">
+                                {role?.name}
+                                <button
+                                  type="button"
+                                  className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                  onClick={() => {
+                                    const newValue = field.value.filter((id) => id !== roleId)
+                                    field.onChange(newValue)
+                                  }}
+                                >
+                                  <X className="h-3 w-3" />
+                                  <span className="sr-only">Remover {role?.name}</span>
+                                </button>
+                              </Badge>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}

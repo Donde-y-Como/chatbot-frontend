@@ -12,7 +12,8 @@ export const SalesService = {
     if (filters?.limit) params.append('limit', filters.limit.toString())
     if (filters?.offset) params.append('offset', filters.offset.toString())
 
-    const response = await api.get<SalesResponse>(`/sales?${params.toString()}`)
+    // Using orders endpoint since sales are handled as completed orders in the backend
+    const response = await api.get<SalesResponse>(`/orders?${params.toString()}`)
     return response.data
   }
 }

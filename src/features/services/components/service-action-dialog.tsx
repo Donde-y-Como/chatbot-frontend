@@ -49,12 +49,12 @@ import {
 } from './service-mutations'
 import { ConsumableUsage } from '../types'
 
-// Form validation schema actualizado con los nuevos campos
+// Form validation schema - campos opcionales según backend
 const formSchema = z.object({
+  // CAMPOS OBLIGATORIOS
   name: z
     .string()
     .min(1, { message: 'El nombre del servicio es obligatorio.' }),
-  description: z.string().min(1, { message: 'La descripción es obligatoria.' }),
   durationValue: z.coerce
     .number()
     .min(1, { message: 'La duración debe ser al menos 1.' }),
@@ -70,56 +70,53 @@ const formSchema = z.object({
     message: 'El tiempo mínimo de anticipación debe ser de al menos 0 horas.',
   }),
   schedule: scheduleSchema,
-  // Nuevos campos
+  
+  // CAMPOS OPCIONALES
+  description: z.string().optional(),
   productInfo: z.object({
-    sku: z.string().min(1, 'El SKU es requerido'),
+    sku: z.string().optional(),
     discountPercentage: z.preprocess(
       (val) => {
         if (val === '' || val === null || val === undefined) return 0
         const num = Number(val)
-        return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
+        return isNaN(num) ? 0 : Math.floor(num)
       },
-      z
-        .number()
-        .min(0, 'El descuento no puede ser negativo')
-        .max(100, 'El descuento no puede exceder 100%')
-    ),
-    categoryIds: z.array(z.string()).default([]),
-    subcategoryIds: z.array(z.string()).default([]),
-    status: z.nativeEnum(ProductStatus),
-    tagIds: z.array(z.string()).default([]),
+      z.number().min(0, 'El descuento no puede ser negativo').max(100, 'El descuento no puede exceder 100%')
+    ).default(0).optional(),
+    categoryIds: z.array(z.string()).default([]).optional(),
+    subcategoryIds: z.array(z.string()).default([]).optional(),
+    status: z.nativeEnum(ProductStatus).default(ProductStatus.ACTIVO).optional(),
+    tagIds: z.array(z.string()).default([]).optional(),
     taxPercentage: z.preprocess(
       (val) => {
         if (val === '' || val === null || val === undefined) return 0
         const num = Number(val)
-        return isNaN(num) ? 0 : Math.floor(num) // Asegurar que sea entero
+        return isNaN(num) ? 0 : Math.floor(num)
       },
       z.number().min(0, 'El impuesto no puede ser negativo')
-    ),
-    notes: z
-      .string()
-      .max(500, 'Las notas no pueden exceder 500 caracteres')
-      .default(''),
+    ).default(0).optional(),
+    notes: z.string().max(500, 'Las notas no pueden exceder 500 caracteres').default('').optional(),
     cost: z.object({
       amount: z.number().min(0, 'El costo no puede ser negativo'),
       currency: z.string().min(1, 'La moneda es requerida'),
-    }),
+    }).optional(),
     precioModificado: z.object({
       amount: z.number().min(0, 'El precio modificado no puede ser negativo'),
       currency: z.string().min(1, 'La moneda es requerida'),
-    }),
-  }),
+    }).optional(),
+  }).optional(),
   codigoBarras: z.coerce
     .number()
     .int('El código de barras debe ser un número entero')
-    .positive('El código de barras debe ser positivo'),
-  photos: z.array(z.string()),
+    .positive('El código de barras debe ser positivo')
+    .optional(),
+  photos: z.array(z.string()).optional(),
   // Campos de equipos y consumibles (opcionales)
-  equipmentIds: z.array(z.string()).default([]),
+  equipmentIds: z.array(z.string()).default([]).optional(),
   consumableUsages: z.array(z.object({
     consumableId: z.string(),
     quantity: z.number().min(1, 'La cantidad debe ser al menos 1'),
-  })).default([]),
+  })).default([]).optional(),
 })
 
 type ServiceForm = z.infer<typeof formSchema>
@@ -231,7 +228,6 @@ export function ServiceActionDialog({
         }
       : {
           name: '',
-          description: '',
           durationValue: 30,
           durationUnit: 'minutes' as const,
           priceAmount: 0,
@@ -239,18 +235,6 @@ export function ServiceActionDialog({
           maxConcurrentBooks: 1,
           minBookingLeadHours: 0,
           schedule: getInitialSchedule(),
-          productInfo: {
-            ...getDefaultProductInfo(),
-            sku: '',
-            categoryIds: [],
-            subcategoryIds: [],
-            tagIds: [],
-            notes: '',
-          },
-          codigoBarras: 0,
-          photos: [],
-          equipmentIds: [],
-          consumableUsages: [],
         }
   }, [currentService, getInitialSchedule, isEdit])
 
@@ -269,7 +253,6 @@ export function ServiceActionDialog({
   }, [userScheduleQuery.data, isEdit, open, form])
 
   // Reset form when dialog closes or when switching between create/edit
-
   const handleOpenChange = useCallback(
     (state: boolean) => {
       if (!state) {
@@ -289,9 +272,35 @@ export function ServiceActionDialog({
   // Reset form when modal is opened/closed - this clears previous errors
   React.useEffect(() => {
     if (open) {
-      reset(defaultValues)
+      // Solo llamamos reset con los valores por defecto una vez
+      const currentDefaults = isEdit && currentService ? {
+        ...currentService,
+        durationValue: currentService.duration.value,
+        durationUnit: currentService.duration.unit,
+        priceAmount: currentService.price.amount,
+        priceCurrency: currentService.price.currency,
+        schedule: currentService.schedule,
+        productInfo: currentService.productInfo,
+        codigoBarras: Number(currentService.codigoBarras) || undefined,
+        photos: currentService.photos || [],
+        equipmentIds: currentService.equipmentIds || [],
+        consumableUsages: currentService.consumableUsages || [],
+      } : {
+        name: '',
+        durationValue: 30,
+        durationUnit: 'minutes' as const,
+        priceAmount: 0,
+        priceCurrency: 'MXN',
+        maxConcurrentBooks: 1,
+        minBookingLeadHours: 0,
+        schedule: getInitialSchedule(),
+        // Campos opcionales omitidos
+      }
+      
+      reset(currentDefaults)
       setPhotos([])
       setFormSubmitError(null)
+      
       // Sincronizar estados con valores por defecto
       if (isEdit && currentService) {
         setSelectedEquipmentIds(currentService.equipmentIds || [])
@@ -301,10 +310,10 @@ export function ServiceActionDialog({
         setConsumableUsages([])
       }
     }
-  }, [open, reset, defaultValues, isEdit, currentService])
+  }, [open, isEdit, currentService?.id, reset, currentService, getInitialSchedule]) // Dependencias mínimas necesarias
 
   // Funciones para manejar equipos
-  const toggleEquipmentSelection = (equipmentId: string) => {
+  const toggleEquipmentSelection = useCallback((equipmentId: string) => {
     setSelectedEquipmentIds(prev => {
       const newIds = prev.includes(equipmentId)
         ? prev.filter(id => id !== equipmentId)
@@ -314,10 +323,10 @@ export function ServiceActionDialog({
       form.setValue('equipmentIds', newIds)
       return newIds
     })
-  }
+  }, [form])
 
   // Funciones para manejar consumibles
-  const updateConsumableUsage = (consumableId: string, quantity: number) => {
+  const updateConsumableUsage = useCallback((consumableId: string, quantity: number) => {
     setConsumableUsages(prev => {
       const newUsages = quantity === 0
         ? prev.filter(usage => usage.consumableId !== consumableId)
@@ -333,48 +342,52 @@ export function ServiceActionDialog({
       form.setValue('consumableUsages', newUsages)
       return newUsages
     })
-  }
+  }, [form])
 
-  const getConsumableUsage = (consumableId: string): number => {
+  const getConsumableUsage = useCallback((consumableId: string): number => {
     const usage = consumableUsages.find(u => u.consumableId === consumableId)
     return usage?.quantity || 0
-  }
+  }, [consumableUsages])
 
   // Funciones de utilidad para consumibles
-  const incrementConsumable = (consumable: Consumable) => {
+  const incrementConsumable = useCallback((consumable: Consumable) => {
     const currentUsage = getConsumableUsage(consumable.id)
     if (currentUsage < consumable.stock) {
       updateConsumableUsage(consumable.id, currentUsage + 1)
     }
-  }
+  }, [getConsumableUsage, updateConsumableUsage])
 
-  const decrementConsumable = (consumable: Consumable) => {
+  const decrementConsumable = useCallback((consumable: Consumable) => {
     const currentUsage = getConsumableUsage(consumable.id)
     if (currentUsage > 0) {
       updateConsumableUsage(consumable.id, currentUsage - 1)
     }
-  }
+  }, [getConsumableUsage, updateConsumableUsage])
 
   // Filtros para equipos y consumibles
   const activeEquipment = useMemo(() => {
+    if (!equipment?.length) return []
     return equipment.filter((eq) => eq.status === EquipmentStatus.ACTIVE)
   }, [equipment])
 
   const filteredEquipment = useMemo(() => {
     if (!equipmentSearchQuery.trim()) return activeEquipment
+    const query = equipmentSearchQuery.toLowerCase()
     return activeEquipment.filter((eq) =>
-      eq.name.toLowerCase().includes(equipmentSearchQuery.toLowerCase()) ||
-      eq.category?.toLowerCase().includes(equipmentSearchQuery.toLowerCase()) ||
-      eq.brand?.toLowerCase().includes(equipmentSearchQuery.toLowerCase())
+      eq.name.toLowerCase().includes(query) ||
+      eq.category?.toLowerCase().includes(query) ||
+      eq.brand?.toLowerCase().includes(query)
     )
   }, [activeEquipment, equipmentSearchQuery])
 
   const filteredConsumables = useMemo(() => {
+    if (!consumables?.length) return []
     if (!consumablesSearchQuery.trim()) return consumables
+    const query = consumablesSearchQuery.toLowerCase()
     return consumables.filter((consumable) =>
-      consumable.name.toLowerCase().includes(consumablesSearchQuery.toLowerCase()) ||
-      consumable.category?.toLowerCase().includes(consumablesSearchQuery.toLowerCase()) ||
-      consumable.brand?.toLowerCase().includes(consumablesSearchQuery.toLowerCase())
+      consumable.name.toLowerCase().includes(query) ||
+      consumable.category?.toLowerCase().includes(query) ||
+      consumable.brand?.toLowerCase().includes(query)
     )
   }, [consumables, consumablesSearchQuery])
 
@@ -398,7 +411,7 @@ export function ServiceActionDialog({
 
       try {
         const url = await uploadFile(file)
-        form.setValue('photos', [...form.getValues('photos'), url])
+        form.setValue('photos', [...(form.getValues('photos') ?? []), url])
       } catch (error) {
         toast.error('Hubo un error al subir la imagen')
       }
@@ -467,48 +480,14 @@ export function ServiceActionDialog({
     []
   )
 
-  // Check if there are filled fields
-  const hasFilledFields = React.useCallback(() => {
-    const formValues = form.getValues()
-    const productInfo = formValues.productInfo
 
-    return (
-      formValues.name !== '' ||
-      formValues.description !== '' ||
-      formValues.priceAmount !== 0 ||
-      formValues.durationValue !== 30 ||
-      formValues.maxConcurrentBooks !== 1 ||
-      formValues.minBookingLeadHours !== 0 ||
-      formValues.codigoBarras !== 0 ||
-      photos.length > 0 ||
-      productInfo?.sku !== '' ||
-      productInfo?.categoryIds.length > 0 ||
-      productInfo?.subcategoryIds.length > 0 ||
-      productInfo?.tagIds.length > 0 ||
-      productInfo?.discountPercentage !== 0 ||
-      productInfo?.taxPercentage !== 0 ||
-      productInfo?.cost.amount !== 0 ||
-      productInfo?.notes !== '' ||
-      selectedEquipmentIds.length > 0 ||
-      consumableUsages.length > 0
-    )
-  }, [form, photos])
 
   const isLoadingSchedule = !isEdit && userScheduleQuery.isLoading
 
   return (
     <Dialog
       open={open}
-      onOpenChange={(isOpen) => {
-        // Si está cerrando (isOpen === false) y hay campos rellenados, prevenimos el cierre
-        if (!isOpen && hasFilledFields()) {
-          return
-        }
-        // En caso contrario, permitimos el cierre y llamamos a handleOpenChange
-        if (!isOpen) {
-          handleOpenChange(isOpen)
-        }
-      }}
+      onOpenChange={handleOpenChange}
     >
       <DialogContent className='sm:max-w-4xl'>
         <Form {...form}>
@@ -823,11 +802,7 @@ export function ServiceActionDialog({
                             variant='ghost'
                             size='sm'
                             className='absolute inset-y-0 right-0 flex items-center pr-3 h-full'
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              setEquipmentSearchQuery('')
-                            }}
+                            onClick={() => setEquipmentSearchQuery('')}
                           >
                             <X className='h-4 w-4' />
                           </Button>
@@ -848,11 +823,7 @@ export function ServiceActionDialog({
                                 'cursor-pointer hover:border-primary transition-all',
                                 selectedEquipmentIds.includes(eq.id) && 'border-primary bg-primary/5'
                               )}
-                              onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                toggleEquipmentSelection(eq.id)
-                              }}
+                              onClick={() => toggleEquipmentSelection(eq.id)}
                             >
                               <CardContent className='p-3'>
                                 <div className='flex items-center justify-between'>
@@ -917,11 +888,7 @@ export function ServiceActionDialog({
                             variant='ghost'
                             size='sm'
                             className='absolute inset-y-0 right-0 flex items-center pr-3 h-full'
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              setConsumablesSearchQuery('')
-                            }}
+                            onClick={() => setConsumablesSearchQuery('')}
                           >
                             <X className='h-4 w-4' />
                           </Button>
@@ -974,11 +941,7 @@ export function ServiceActionDialog({
                                         variant='outline'
                                         size='sm'
                                         className='h-8 w-8 p-0'
-                                        onClick={(e) => {
-                                          e.preventDefault()
-                                          e.stopPropagation()
-                                          decrementConsumable(consumable)
-                                        }}
+                                        onClick={() => decrementConsumable(consumable)}
                                         disabled={!canDecrement}
                                       >
                                         <Minus className='h-4 w-4' />
@@ -991,11 +954,7 @@ export function ServiceActionDialog({
                                         variant='outline'
                                         size='sm'
                                         className='h-8 w-8 p-0'
-                                        onClick={(e) => {
-                                          e.preventDefault()
-                                          e.stopPropagation()
-                                          incrementConsumable(consumable)
-                                        }}
+                                        onClick={() => incrementConsumable(consumable)}
                                         disabled={!canIncrement || consumable.stock === 0}
                                       >
                                         <Plus className='h-4 w-4' />

@@ -4,7 +4,7 @@ import { SalesFilters } from "./types"
 
 export const useGetSales = (filters?: SalesFilters) => {
   return useQuery({
-    queryKey: ["sales", filters],
+    queryKey: ["orders", "sales", filters], // Updated to reflect orders endpoint
     queryFn: () => SalesService.getSales(filters),
     staleTime: 1000 * 60 * 5, // 5 minutes
   })
@@ -13,7 +13,7 @@ export const useGetSales = (filters?: SalesFilters) => {
 // Hook for unfiltered data (for stats)
 export const useGetSalesForStats = () => {
   return useQuery({
-    queryKey: ["sales", "stats"],
+    queryKey: ["orders", "sales", "stats"], // Updated to reflect orders endpoint
     queryFn: () => SalesService.getSales(), // No filters for stats
     staleTime: 1000 * 60 * 15, // 15 minutes - stats can be cached longer
   })
@@ -22,7 +22,7 @@ export const useGetSalesForStats = () => {
 // Hook for filtered data (for table)
 export const useGetSalesFiltered = (filters: SalesFilters) => {
   return useQuery({
-    queryKey: ["sales", "filtered", filters],
+    queryKey: ["orders", "sales", "filtered", filters], // Updated to reflect orders endpoint
     queryFn: () => SalesService.getSales(filters),
     staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: Object.keys(filters).length > 0, // Only run when there are filters

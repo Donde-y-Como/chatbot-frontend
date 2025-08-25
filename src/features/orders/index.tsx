@@ -49,12 +49,20 @@ export default function Orders() {
   // Use filtered data if available, otherwise use stats data
   const hasFilters = Object.keys(filters).length > 0
   const ordersResponse = hasFilters ? filteredResponse : statsResponse
-  const orders = ordersResponse?.data || []
+  const allOrders = ordersResponse?.data || []
   const isLoading = hasFilters ? isTableLoading : isStatsLoading
   const error = hasFilters ? tableError : statsError
 
-  // Stats always use unfiltered data
-  const statsOrders = statsResponse?.data || []
+  // Filter orders to only show those with paid amount equal to 0
+  const orders = allOrders.filter((order) => {
+    return order.paidAmount.amount === 0
+  })
+
+  // Stats always use unfiltered data but also apply the same filter
+  const allStatsOrders = statsResponse?.data || []
+  const statsOrders = allStatsOrders.filter((order) => {
+    return order.paidAmount.amount === 0
+  })
 
   const handlePayment = (order: OrderWithDetails) => {
     setSelectedOrder(order)
@@ -145,12 +153,12 @@ export default function Orders() {
         <div className='mb-2 w-full flex sm:items-center flex-col sm:flex-row sm:justify-between'>
           <div className='flex flex-col gap-2'>
             <div className='flex gap-2 items-center'>
-              <SidebarTrigger variant='outline' className='sm:hidden' />
-              <Separator orientation='vertical' className='h-7 sm:hidden' />
+              <SidebarTrigger variant='outline' className='' />
+              <Separator orientation='vertical' className='h-7 ' />
               <h1 className='text-2xl font-bold'>Historial de Órdenes</h1>
             </div>
             <p className='text-muted-foreground self-start mb-2 sm:mb-0'>
-              Consulta el historial completo de órdenes de tu negocio.
+              Consulta las órdenes pendientes de pago de tu negocio.
             </p>
           </div>
           <div className='flex gap-2'>
@@ -196,12 +204,12 @@ export default function Orders() {
             <div className='flex items-center justify-center h-32 border border-dashed rounded-lg'>
               <div className='text-center'>
                 <p className='text-muted-foreground mb-2'>
-                  No se encontraron órdenes
+                  No se encontraron órdenes pendientes
                 </p>
                 <p className='text-sm text-muted-foreground'>
                   {Object.keys(filters).length > 0
                     ? 'Intenta ajustar los filtros para ver más resultados'
-                    : 'Aún no se han registrado órdenes'}
+                    : 'No hay órdenes pendientes de pago'}
                 </p>
               </div>
             </div>
@@ -213,11 +221,11 @@ export default function Orders() {
           <div className='flex justify-between items-center text-sm text-muted-foreground'>
             <span>
               Mostrando {orders.length}{' '}
-              {orders.length === 1 ? 'orden' : 'órdenes'}
-              {ordersResponse.count !== orders.length &&
-                ` de ${ordersResponse.count} total`}
+              {orders.length === 1 ? 'orden pendiente' : 'órdenes pendientes'}
+              {allOrders.length !== orders.length &&
+                ` de ${allOrders.length} órdenes totales`}
             </span>
-            {filters.limit && orders.length === filters.limit && (
+            {filters.limit && allOrders.length === filters.limit && (
               <span className='text-xs bg-muted px-2 py-1 rounded'>
                 Límite de {filters.limit} resultados alcanzado
               </span>

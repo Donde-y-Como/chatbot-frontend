@@ -8,6 +8,8 @@ import {
   User,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,11 +24,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardFooter, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { useGetUser } from '@/components/layout/hooks/useGetUser.ts'
+import { useGetBusiness } from '@/components/layout/hooks/useGetUser.ts'
 import { useDisconnectWhatsApp } from './useDisconnectWhatsApp'
 
 export function ViewWhatsApp() {
-  const { data: user } = useGetUser()
+  const { data: user } = useGetBusiness()
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const { disconnectWhatsApp } = useDisconnectWhatsApp()
 
@@ -119,45 +121,48 @@ export function ViewWhatsApp() {
         </div>
 
         <div className='flex gap-2 w-full sm:w-auto'>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant='destructive'
-                size='sm'
-                className='flex-1 sm:flex-none'
-                disabled={isDisconnecting}
-              >
-                <Unlink className='w-4 h-4 mr-2' />
-                Desconectar
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>¿Desconectar WhatsApp Web?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Perderás acceso a tus conversaciones de WhatsApp Web. Podrás
-                  reconectar en cualquier momento.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDisconnect}
-                  className='bg-red-600 hover:bg-red-700'
+          <RenderIfCan permission={PERMISSIONS.WHATSAPP_WEB_DISCONNECT}>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant='destructive'
+                  size='sm'
+                  className='flex-1 sm:flex-none'
+                  disabled={isDisconnecting}
                 >
-                  {isDisconnecting ? (
-                    <>
-                      <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                      Desconectando...
-                    </>
-                  ) : (
-                    'Desconectar'
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
+                  <Unlink className='w-4 h-4 mr-2' />
+                  Desconectar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    ¿Desconectar WhatsApp Web?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Perderás acceso a tus conversaciones de WhatsApp Web. Podrás
+                    reconectar en cualquier momento.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDisconnect}
+                    className='bg-red-600 hover:bg-red-700'
+                  >
+                    {isDisconnecting ? (
+                      <>
+                        <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                        Desconectando...
+                      </>
+                    ) : (
+                      'Desconectar'
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </RenderIfCan>
           <Button variant='outline' size='sm' className='flex-1 sm:flex-none'>
             Cerrar
           </Button>

@@ -6,9 +6,9 @@ export function Appointments() {
   return (
     <Main fixed>
       <DialogStateProvider>
-        <section className='flex h-full gap-2 w-full'>
+        <div className='h-full w-full overflow-hidden'>
           <Calendar />
-        </section>
+        </div>
       </DialogStateProvider>
     </Main>
   )

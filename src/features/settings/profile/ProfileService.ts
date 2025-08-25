@@ -7,12 +7,12 @@ import { BusinessSchedule,
 
 export const ProfileService = {
   getMe: async () => {
-    const response = await api.get<UserData>('/auth/user')
+    const response = await api.get<UserData>('/my-business')
     return response.data
   },
   
   updateProfile: async (data: UpdateUserRequest) => {
-    const response = await api.put<UserData>('/auth/user', data)
+    const response = await api.put<UserData>('/my-business', data)
     return response.data
   }
 }

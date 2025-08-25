@@ -1,44 +1,31 @@
-import { DataTableColumnHeader } from '@/components/tables/data-table-column-header.tsx'
+import { format, parseISO } from 'date-fns'
+import { ColumnDef, FilterFn } from '@tanstack/react-table'
+import { es } from 'date-fns/locale/es'
+import { getWorkDaysSummary } from '@/lib/utils.ts'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip.tsx'
-import { ColumnDef, FilterFn } from '@tanstack/react-table'
-import { format, parseISO } from 'date-fns'
-import { es } from 'date-fns/locale/es'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip.tsx'
+import { DataTableColumnHeader } from '@/components/tables/data-table-column-header.tsx'
+import { Employee } from '../types'
 import { DataTableRowActions } from './data-table-row-actions'
-import { Employee, dayInitialsMap } from '../types'
-import { getWorkDaysSummary } from '@/lib/utils.ts'
 
 // Global filter function for multi-field search
 export const globalFilterFn: FilterFn<Employee> = (row, columnId, value) => {
   if (!value) return true
-  
+
   const employee = row.original
   const searchValue = String(value).toLowerCase()
-  
+
   // Search only in name and email
-  const matches = (
+  return (
     employee.name.toLowerCase().includes(searchValue) ||
     employee.email.toLowerCase().includes(searchValue)
   )
-  
-  return matches
-}
-
-
-// Role color mapping
-const getRoleVariant = (role: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
-  const roleColors: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-    'admin': 'destructive',
-    'administrador': 'destructive',
-    'manager': 'default',
-    'gerente': 'default',
-    'employee': 'secondary',
-    'empleado': 'secondary',
-    'specialist': 'outline',
-    'especialista': 'outline'
-  }
-  return roleColors[role.toLowerCase()] || 'outline'
 }
 
 export const createColumns = (): ColumnDef<Employee>[] => [
@@ -49,13 +36,14 @@ export const createColumns = (): ColumnDef<Employee>[] => [
     ),
     cell: ({ row }) => {
       const { photo, name } = row.original
-      const truncatedName = name.length > 25 ? `${name.substring(0, 25)}...` : name
+      const truncatedName =
+        name.length > 25 ? `${name.substring(0, 25)}...` : name
       const needsTooltip = name.length > 25
-      
+
       const content = (
         <div className='flex items-center space-x-3'>
           <Avatar className='h-9 w-9'>
-            <AvatarImage src={photo} alt={name} className='object-cover'/>
+            <AvatarImage src={photo} alt={name} className='object-cover' />
             <AvatarFallback className='bg-primary/10 text-primary font-semibold'>
               {name.charAt(0).toUpperCase()}
             </AvatarFallback>
@@ -65,14 +53,12 @@ export const createColumns = (): ColumnDef<Employee>[] => [
           </div>
         </div>
       )
-      
+
       if (needsTooltip) {
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
-                {content}
-              </TooltipTrigger>
+              <TooltipTrigger asChild>{content}</TooltipTrigger>
               <TooltipContent>
                 <p>{name}</p>
               </TooltipContent>
@@ -80,7 +66,7 @@ export const createColumns = (): ColumnDef<Employee>[] => [
           </TooltipProvider>
         )
       }
-      
+
       return content
     },
     enableHiding: false,
@@ -94,20 +80,21 @@ export const createColumns = (): ColumnDef<Employee>[] => [
     ),
     cell: ({ row }) => {
       const email = row.getValue('email') as string
-      const truncatedEmail = email.length > 30 ? `${email.substring(0, 30)}...` : email
+      const truncatedEmail =
+        email.length > 30 ? `${email.substring(0, 30)}...` : email
       const needsTooltip = email.length > 30
-      
+
       const content = (
-        <div className='font-mono text-sm text-muted-foreground'>{truncatedEmail}</div>
+        <div className='font-mono text-sm text-muted-foreground'>
+          {truncatedEmail}
+        </div>
       )
-      
+
       if (needsTooltip) {
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
-                {content}
-              </TooltipTrigger>
+              <TooltipTrigger asChild>{content}</TooltipTrigger>
               <TooltipContent>
                 <p>{email}</p>
               </TooltipContent>
@@ -115,7 +102,7 @@ export const createColumns = (): ColumnDef<Employee>[] => [
           </TooltipProvider>
         )
       }
-      
+
       return content
     },
     enableHiding: false,
@@ -123,15 +110,15 @@ export const createColumns = (): ColumnDef<Employee>[] => [
   },
 
   {
-    accessorKey: 'role',
+    accessorKey: 'roleNames',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Rol' />
+      <DataTableColumnHeader column={column} title='Roles' />
     ),
     cell: ({ row }) => {
-      const role = row.getValue('role') as string
+      const roles = row.getValue('roleNames') as string[]
       return (
-        <Badge variant={getRoleVariant(role)} className='capitalize text-sm font-medium'>
-          {role}
+        <Badge variant='outline' className='capitalize text-sm font-medium'>
+          {roles.join(', ') || 'Sin roles'}
         </Badge>
       )
     },
@@ -148,22 +135,22 @@ export const createColumns = (): ColumnDef<Employee>[] => [
     ),
     cell: ({ row }) => {
       const address = row.original.address || ''
-      if (!address) return <span className='text-muted-foreground text-sm'>Sin dirección</span>
-      
-      const truncatedAddress = address.length > 30 ? `${address.substring(0, 30)}...` : address
+      if (!address)
+        return (
+          <span className='text-muted-foreground text-sm'>Sin dirección</span>
+        )
+
+      const truncatedAddress =
+        address.length > 30 ? `${address.substring(0, 30)}...` : address
       const needsTooltip = address.length > 30
-      
-      const content = (
-        <div className='text-sm'>{truncatedAddress}</div>
-      )
-      
+
+      const content = <div className='text-sm'>{truncatedAddress}</div>
+
       if (needsTooltip) {
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
-                {content}
-              </TooltipTrigger>
+              <TooltipTrigger asChild>{content}</TooltipTrigger>
               <TooltipContent>
                 <p>{address}</p>
               </TooltipContent>
@@ -171,7 +158,7 @@ export const createColumns = (): ColumnDef<Employee>[] => [
           </TooltipProvider>
         )
       }
-      
+
       return content
     },
     enableSorting: true,
@@ -185,7 +172,7 @@ export const createColumns = (): ColumnDef<Employee>[] => [
     cell: ({ row }) => {
       const schedule = row.original.schedule
       const workDays = getWorkDaysSummary(schedule)
-      
+
       return (
         <Badge variant='outline' className='text-xs font-medium'>
           {workDays}
@@ -202,8 +189,9 @@ export const createColumns = (): ColumnDef<Employee>[] => [
     ),
     cell: ({ row }) => {
       const birthDate = row.original.birthDate
-      if (!birthDate) return <span className='text-muted-foreground text-sm'>Sin fecha</span>
-      
+      if (!birthDate)
+        return <span className='text-muted-foreground text-sm'>Sin fecha</span>
+
       return (
         <Badge variant='secondary' className='text-xs'>
           {format(parseISO(birthDate), 'dd/MM/y', { locale: es })}
@@ -220,8 +208,9 @@ export const createColumns = (): ColumnDef<Employee>[] => [
     ),
     cell: ({ row }) => {
       const createdAt = row.original.createdAt
-      if (!createdAt) return <span className='text-muted-foreground text-sm'>Sin fecha</span>
-      
+      if (!createdAt)
+        return <span className='text-muted-foreground text-sm'>Sin fecha</span>
+
       return (
         <Badge variant='secondary' className='text-xs'>
           {format(parseISO(createdAt), 'dd/MM/y', { locale: es })}

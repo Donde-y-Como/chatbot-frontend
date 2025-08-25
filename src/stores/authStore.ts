@@ -1,12 +1,14 @@
 import { create } from 'zustand'
-import { UserData } from '@/features/auth/types.ts'
+import { UserData, BusinessData } from '@/features/auth/types.ts'
 
 const ACCESS_TOKEN = 'thisisjustarandomstring'
 
 interface AuthState {
   auth: {
     user: UserData | null
+    business: BusinessData | null
     setUser: (user: UserData) => void
+    setBusiness: (business: BusinessData) => void
     accessToken: string
     setAccessToken: (accessToken: string) => void
     resetAccessToken: () => void
@@ -21,13 +23,22 @@ export const useAuthStore = create<AuthState>()((set, get) => {
   const initUser = localStorage.getItem('user')
     ? JSON.parse(localStorage.getItem('user')!)
     : null
+  const initBusiness = localStorage.getItem('business')
+    ? JSON.parse(localStorage.getItem('business')!)
+    : null
   return {
     auth: {
       user: initUser,
+      business: initBusiness,
       setUser: (user: UserData) =>
         set((state) => {
           localStorage.setItem('user', JSON.stringify(user))
           return { ...state, auth: { ...state.auth, user } }
+        }),
+      setBusiness: (business: BusinessData) =>
+        set((state) => {
+          localStorage.setItem('business', JSON.stringify(business))
+          return { ...state, auth: { ...state.auth, business } }
         }),
       accessToken: initToken,
       setAccessToken: (accessToken) =>
@@ -39,15 +50,17 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         set((state) => {
           localStorage.removeItem(ACCESS_TOKEN)
           localStorage.removeItem('user')
+          localStorage.removeItem('business')
           return { ...state, auth: { ...state.auth, accessToken: '' } }
         }),
       reset: () =>
         set((state) => {
           localStorage.removeItem(ACCESS_TOKEN)
           localStorage.removeItem('user')
+          localStorage.removeItem('business')
           return {
             ...state,
-            auth: { ...state.auth, user: null, accessToken: '' },
+            auth: { ...state.auth, user: null, business: null, accessToken: '' },
           }
         }),
       isAuthenticated: () => {

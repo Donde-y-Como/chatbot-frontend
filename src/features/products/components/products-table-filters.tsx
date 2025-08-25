@@ -1,7 +1,8 @@
 import React from 'react'
 import { CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons'
 import { Column } from '@tanstack/react-table'
-import { Layers, Package, Ruler, Tag } from 'lucide-react'
+import { Layers, Package, Ruler, Tag as TagIcon} from 'lucide-react'
+import { Tag } from '@/features/settings/tags/types.ts'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -177,11 +178,11 @@ export const generateCategoryOptions = (categories: Category[]) =>
     }))
 
 // Generate tag options from tags array
-export const generateTagOptions = (tags: ProductTag[]) =>
+export const generateTagOptions = (tags: Tag[]) =>
   tags.map((tag) => ({
     value: tag.id,
     label: tag.name,
-    icon: Tag,
+    icon: TagIcon,
   }))
 
 // Generate unit options from units array

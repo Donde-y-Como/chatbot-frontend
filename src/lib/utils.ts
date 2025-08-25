@@ -1,19 +1,52 @@
 import { type ClassValue, clsx } from 'clsx'
 import { UserIcon } from 'lucide-react'
 import { twMerge } from 'tailwind-merge'
-import { Chat, PlatformName } from '@/features/chats/ChatTypes.ts'
-import { dayInitialsMap, Employee } from '@/features/employees/types.ts'
-import { UserData } from '../features/auth/types'
+import { Chat } from '@/features/chats/ChatTypes.ts'
+import { dayInitialsMap } from '@/features/employees/types.ts'
+import { Role } from '../features/auth/types'
+import { Permission } from '@/api/permissions.ts'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function getInstanceId(userData: UserData): string | undefined {
-  const whatsappPlatform = userData.socialPlatforms.find(
-    (platform) => platform.platformName === PlatformName.WhatsappWeb
-  )
-  return whatsappPlatform ? whatsappPlatform.platformId : undefined
+// Helper function to get relative time
+export const getRelativeTime = (dateString: string) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+
+  const minutes = Math.floor(diff / (1000 * 60))
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+  if (minutes < 60) {
+    return `Hace ${minutes} minuto${minutes !== 1 ? 's' : ''}`
+  } else if (hours < 24) {
+    return `Hace ${hours} hora${hours !== 1 ? 's' : ''}`
+  } else {
+    return `Hace ${days} día${days !== 1 ? 's' : ''}`
+  }
+}
+
+// Helper function to parse relative time for sorting
+export const parseRelativeTime = (timeString: string) => {
+  const match = timeString.match(/Hace (\d+) (minuto|hora|día)/)
+  if (!match) return 0
+
+  const value = parseInt(match[1])
+  const unit = match[2]
+
+  switch (unit) {
+    case 'minuto':
+      return value
+    case 'hora':
+      return value * 60
+    case 'día':
+      return value * 60 * 24
+    default:
+      return 0
+  }
 }
 
 /**
@@ -46,14 +79,12 @@ export function sortByLastMessageTimestamp(a: Chat, b: Chat): number {
   return 0
 }
 
-// Function to generate role options dynamically from employees data
-export function generateRoleOptions(employees: Employee[]) {
-  const uniqueRoles = new Set(employees.map((employee) => employee.role))
-
-  return Array.from(uniqueRoles).map((role) => {
+// Function to generate role options from the roles API
+export function generateRoleOptions(roles: Role[]) {
+  return roles.map((role) => {
     return {
-      value: role,
-      label: role.charAt(0).toUpperCase() + role.slice(1),
+      value: role.id,
+      label: role.name,
       icon: UserIcon,
     }
   })
@@ -131,20 +162,72 @@ export const isValidFileType = (mimetype: string): boolean => {
   return allowedTypes.includes(mimetype) && !dangerousTypes.includes(mimetype)
 }
 
-
 // Helper function to get work days summary
 export function getWorkDaysSummary(schedule: Record<string, any>): string {
   if (!schedule || Object.keys(schedule).length === 0) return 'Sin horario'
 
   const workDays = Object.keys(schedule)
-    .filter(day => schedule[day] && schedule[day].startAt !== undefined)
-    .map(day => dayInitialsMap[day as keyof typeof dayInitialsMap])
+    .filter((day) => schedule[day] && schedule[day].startAt !== undefined)
+    .map((day) => dayInitialsMap[day as keyof typeof dayInitialsMap])
     .filter(Boolean)
 
   if (workDays.length === 0) return 'Sin horario'
   if (workDays.length === 7) return 'L-DO'
   if (workDays.length === 6 && !workDays.includes('DO')) return 'L-SA'
-  if (workDays.length === 5 && workDays.includes('LU') && workDays.includes('VI')) return 'L-V'
+  if (
+    workDays.length === 5 &&
+    workDays.includes('LU') &&
+    workDays.includes('VI')
+  )
+    return 'L-V'
 
   return workDays.join(', ')
+}
+
+export const getDomainDisplayName = (domain: string) => {
+  const domainNames: Record<string, string> = {
+    appointment: 'Citas',
+    employee: 'Empleados',
+    client: 'Clientes',
+    service: 'Servicios',
+    event: 'Eventos',
+    role: 'Roles',
+    business: 'Negocio',
+    equipment: 'Equipos',
+    consumable: 'Consumibles',
+    bundle: 'Paquetes',
+    conversation: 'Conversaciones',
+    product_tag: 'Etiquetas de Productos',
+    category: 'Categorías',
+    unit: 'Unidades',
+    quick_reply: 'Respuestas Rápidas',
+    order: 'Órdenes',
+    product: 'Productos',
+    cart: 'Carrito',
+    sale: 'Ventas',
+    tag: 'Etiquetas de clientes',
+    receipt: 'Recibos',
+    whatsapp_business: 'WhatsApp Business',
+    whatsapp_web: 'WhatsApp Web',
+  }
+  return domainNames[domain] || domain
+}
+
+export const getPermissionDisplayName = (permission: Permission) => {
+  const [domain, action] = permission.split('.')
+
+  const domainName = getDomainDisplayName(domain)
+
+  const actionNames: Record<string, string> = {
+    create: 'Crear',
+    read: 'Ver',
+    update: 'Editar',
+    delete: 'Eliminar',
+    connect: 'Conectar',
+    disconnect: 'Desconectar',
+    qr: 'Código QR',
+    status: 'Ver',
+  }
+
+  return actionNames[action] ? `${actionNames[action]} ${domainName}` : permission
 }

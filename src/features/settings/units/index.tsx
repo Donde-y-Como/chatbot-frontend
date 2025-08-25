@@ -1,19 +1,21 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { useDebounce } from '@uidotdev/usehooks'
 import { Loader2, Plus, Search } from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useDebounce } from '@uidotdev/usehooks'
 import ContentSection from '../components/content-section'
-import { UnitList } from './components/unit-list'
-import { UnitDialog } from './components/unit-dialog'
-import { ViewUnitDialog } from './components/view-unit-dialog'
 import { DeleteUnitDialog } from './components/delete-unit-dialog'
+import { UnitDialog } from './components/unit-dialog'
+import { UnitList } from './components/unit-list'
+import { ViewUnitDialog } from './components/view-unit-dialog'
 import {
-  useGetUnits,
   useCreateUnit,
-  useUpdateUnit,
   useDeleteUnit,
+  useGetUnits,
+  useUpdateUnit,
 } from './hooks/useUnits'
 import { Unit, UnitFormValues } from './types'
 
@@ -41,16 +43,17 @@ export default function UnitsSection() {
   // Filtrar unidades basándome en la búsqueda
   const filteredUnits = useMemo(() => {
     if (!units) return []
-    
+
     if (!debouncedSearchQuery.trim()) {
       return units
     }
 
     const query = debouncedSearchQuery.toLowerCase().trim()
-    
-    return units.filter(unit => 
-      unit.name.toLowerCase().includes(query) ||
-      unit.abbreviation.toLowerCase().includes(query)
+
+    return units.filter(
+      (unit) =>
+        unit.name.toLowerCase().includes(query) ||
+        unit.abbreviation.toLowerCase().includes(query)
     )
   }, [units, debouncedSearchQuery])
 
@@ -63,11 +66,11 @@ export default function UnitsSection() {
     if (selectedUnit) {
       // Solo enviar los campos que han cambiado
       const updateData: { name?: string; abbreviation?: string } = {}
-      
+
       if (values.name !== selectedUnit.name) {
         updateData.name = values.name
       }
-      
+
       if (values.abbreviation !== selectedUnit.abbreviation) {
         updateData.abbreviation = values.abbreviation
       }
@@ -78,7 +81,7 @@ export default function UnitsSection() {
           data: updateData,
         })
       }
-      
+
       setIsEditDialogOpen(false)
       setSelectedUnit(undefined)
     }
@@ -115,10 +118,12 @@ export default function UnitsSection() {
       <div className='space-y-6'>
         <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between'>
           <h3 className='text-lg font-medium'>Tus unidades de medida</h3>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className='mr-2 h-4 w-4' />
-            Agregar unidad
-          </Button>
+          <RenderIfCan permission={PERMISSIONS.UNIT_CREATE}>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className='mr-2 h-4 w-4' />
+              Agregar unidad
+            </Button>
+          </RenderIfCan>
         </div>
 
         {/* Barra de búsqueda */}
@@ -135,10 +140,9 @@ export default function UnitsSection() {
         {/* Mostrar información de búsqueda */}
         {debouncedSearchQuery && (
           <div className='text-sm text-muted-foreground'>
-            {filteredUnits.length === 0 
+            {filteredUnits.length === 0
               ? `No se encontraron unidades que coincidan con "${debouncedSearchQuery}"`
-              : `Mostrando ${filteredUnits.length} de ${units?.length || 0} unidades`
-            }
+              : `Mostrando ${filteredUnits.length} de ${units?.length || 0} unidades`}
           </div>
         )}
 

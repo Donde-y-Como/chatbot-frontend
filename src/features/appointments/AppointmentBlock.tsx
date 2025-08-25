@@ -8,12 +8,14 @@ import {
   Mail,
   MapPin,
   MessageSquare,
+  Package,
   Trash2,
   User,
   Users,
   Wrench,
-  Package,
 } from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { cn } from '@/lib/utils.ts'
 import {
   AlertDialog,
@@ -44,12 +46,15 @@ import { EditAppointmentDialog } from '@/features/appointments/components/EditAp
 import { QuickEditStatusDialog } from '@/features/appointments/components/QuickEditStatusDialog.tsx'
 import { useDialogState } from '@/features/appointments/contexts/DialogStateContext'
 import { formatTime } from '@/features/appointments/utils/formatters'
+import { useConsumables } from '@/features/tools/hooks/useConsumables'
+import { useEquipment } from '@/features/tools/hooks/useEquipment'
 import { ClientPrimitives } from '../clients/types'
 import { Employee } from '../employees/types'
+import {
+  AppointmentStatusBadge,
+  PaymentStatusBadge,
+} from './components/StatusBadges'
 import { ClientChatButton } from './components/client-chat-button'
-import { AppointmentStatusBadge, PaymentStatusBadge } from './components/StatusBadges'
-import { useEquipment } from '@/features/tools/hooks/useEquipment'
-import { useConsumables } from '@/features/tools/hooks/useConsumables'
 import type { Appointment, Service } from './types'
 
 interface AppointmentBlockProps {
@@ -146,34 +151,50 @@ export function AppointmentBlock({
   const statusBadge = getStatusBadge()
 
   // Obtener equipos asignados
-  const assignedEquipment = (equipment && equipment.length > 0 && appointment.equipmentIds && appointment.equipmentIds.length > 0) 
-    ? equipment.filter(eq => {
-        const isAssigned = appointment.equipmentIds?.includes(eq.id)
-        return isAssigned
-      })
-    : []
+  const assignedEquipment =
+    equipment &&
+    equipment.length > 0 &&
+    appointment.equipmentIds &&
+    appointment.equipmentIds.length > 0
+      ? equipment.filter((eq) => {
+          return appointment.equipmentIds?.includes(eq.id)
+        })
+      : []
 
   // Obtener consumibles asignados con su información completa
-  const assignedConsumables = (consumables && consumables.length > 0 && appointment.consumableUsages && appointment.consumableUsages.length > 0)
-    ? appointment.consumableUsages.map(usage => {
-        const consumable = consumables.find(c => c.id === usage.consumableId)
-        return consumable ? { ...consumable, quantity: usage.quantity } : null
-      }).filter((item): item is NonNullable<typeof item> => item !== null)
-    : []
+  const assignedConsumables =
+    consumables &&
+    consumables.length > 0 &&
+    appointment.consumableUsages &&
+    appointment.consumableUsages.length > 0
+      ? appointment.consumableUsages
+          .map((usage) => {
+            const consumable = consumables.find(
+              (c) => c.id === usage.consumableId
+            )
+            return consumable
+              ? { ...consumable, quantity: usage.quantity }
+              : null
+          })
+          .filter((item): item is NonNullable<typeof item> => item !== null)
+      : []
 
   return (
-    <Dialog onOpenChange={(open) => {
-      if (open) {
-        openDialog()
-      } else {
-        closeDialog()
-      }
-    }}>
+    <Dialog
+      onOpenChange={(open) => {
+        if (open) {
+          openDialog()
+        } else {
+          closeDialog()
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <div
           className={cn(
             'absolute rounded-md overflow-hidden cursor-pointer transition-all hover:opacity-90 border-2 border-background group',
-            appointment.status === 'cancelada' && 'opacity-60 border-dashed border-red-300'
+            appointment.status === 'cancelada' &&
+              'opacity-60 border-dashed border-red-300'
           )}
           style={{
             top: `calc(${adjustedTopOffset}px)`,
@@ -181,9 +202,11 @@ export function AppointmentBlock({
             left: `calc(${leftPercent}% + 2px)`,
             width: `calc(${widthPercent}% - 4px)`,
             backgroundColor:
-              appointment.status === 'cancelada' 
+              appointment.status === 'cancelada'
                 ? '#6b7280' // Gris para canceladas
-                : employees.length > 0 ? employees[0].color : '#6c757d',
+                : employees.length > 0
+                  ? employees[0].color
+                  : '#6c757d',
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -207,7 +230,9 @@ export function AppointmentBlock({
                 )}
                 <span className='truncate block'>
                   {appointment.serviceNames
-                    .map((s) => (s.length > 20 ? `${s.substring(0, 20)}...` : s))
+                    .map((s) =>
+                      s.length > 20 ? `${s.substring(0, 20)}...` : s
+                    )
                     .join(', ')}
                 </span>
               </div>
@@ -250,8 +275,12 @@ export function AppointmentBlock({
           <div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4'>
             <div>
               <div className='flex items-center gap-2 mb-2 flex-wrap'>
-                <AppointmentStatusBadge status={appointment.status || 'pendiente'} />
-                <PaymentStatusBadge paymentStatus={appointment.paymentStatus || 'pendiente'} />
+                <AppointmentStatusBadge
+                  status={appointment.status || 'pendiente'}
+                />
+                <PaymentStatusBadge
+                  paymentStatus={appointment.paymentStatus || 'pendiente'}
+                />
                 {statusBadge.timeInfo && (
                   <span className='text-xs text-muted-foreground'>
                     {statusBadge.timeInfo}
@@ -284,10 +313,12 @@ export function AppointmentBlock({
               </div>
             </div>
 
-            <div className='flex flex-wrap gap-2'>
-              <QuickEditStatusDialog appointment={appointment} />
-              <EditAppointmentDialog appointment={appointment} />
-            </div>
+            <RenderIfCan permission={PERMISSIONS.APPOINTMENT_UPDATE}>
+              <div className='flex flex-wrap gap-2'>
+                <QuickEditStatusDialog appointment={appointment} />
+                <EditAppointmentDialog appointment={appointment} />
+              </div>
+            </RenderIfCan>
           </div>
 
           <DialogDescription
@@ -337,7 +368,10 @@ export function AppointmentBlock({
                               : 'minutos'}
                           </p>
                         </div>
-                        <Badge variant='outline' className='flex-shrink-0 text-xs'>
+                        <Badge
+                          variant='outline'
+                          className='flex-shrink-0 text-xs'
+                        >
                           {service.price.amount.toLocaleString('es-MX')}{' '}
                           {service.price.currency}
                         </Badge>
@@ -358,7 +392,8 @@ export function AppointmentBlock({
                       <div className='flex justify-between items-center text-sm text-muted-foreground mt-2'>
                         <span>Abono registrado:</span>
                         <span className='font-medium'>
-                          {appointment.deposit.amount.toLocaleString('es-MX')} {appointment.deposit.currency}
+                          {appointment.deposit.amount.toLocaleString('es-MX')}{' '}
+                          {appointment.deposit.currency}
                         </span>
                       </div>
                     )}
@@ -400,9 +435,9 @@ export function AppointmentBlock({
                       </Avatar>
                       <div>
                         <h4 className='font-medium text-sm'>{employee.name}</h4>
-                        <p className='text-xs text-muted-foreground'>
-                          {employee.role}
-                        </p>
+                        {/*<p className='text-xs text-muted-foreground'>*/}
+                        {/*  {employee.role}*/}
+                        {/*</p>*/}
                       </div>
                     </div>
                   ))}
@@ -475,13 +510,17 @@ export function AppointmentBlock({
                     {client.address && (
                       <div className='flex items-start gap-2'>
                         <MapPin className='h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5' />
-                        <p className='text-xs text-muted-foreground'>{client.address}</p>
+                        <p className='text-xs text-muted-foreground'>
+                          {client.address}
+                        </p>
                       </div>
                     )}
                     {client.notes && (
                       <div className='flex items-start gap-2'>
                         <MessageSquare className='h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5' />
-                        <p className='text-xs text-muted-foreground'>{client.notes}</p>
+                        <p className='text-xs text-muted-foreground'>
+                          {client.notes}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -508,9 +547,7 @@ export function AppointmentBlock({
                       <div className='flex-1 min-w-0'>
                         <h4 className='font-medium text-sm'>{eq.name}</h4>
                         <div className='flex gap-2 text-xs text-muted-foreground mt-0.5'>
-                          {eq.category && (
-                            <span>{eq.category}</span>
-                          )}
+                          {eq.category && <span>{eq.category}</span>}
                           {eq.brand && (
                             <>
                               {eq.category && <span>•</span>}
@@ -545,7 +582,9 @@ export function AppointmentBlock({
                         <Package className='h-4 w-4 text-muted-foreground' />
                       </div>
                       <div className='flex-1 min-w-0'>
-                        <h4 className='font-medium text-sm'>{consumable?.name}</h4>
+                        <h4 className='font-medium text-sm'>
+                          {consumable?.name}
+                        </h4>
                         <div className='flex gap-2 text-xs text-muted-foreground mt-0.5'>
                           {consumable?.category && (
                             <span>{consumable.category}</span>
@@ -613,41 +652,45 @@ export function AppointmentBlock({
             <Button variant='secondary'>Cerrar</Button>
           </DialogClose>
 
-          {isUpcoming && appointment.status !== 'cancelada' && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant='destructive'>
-                  <Trash2 className='h-4 w-4 mr-2' />
-                  Cancelar Cita
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    ¿Estás seguro de cancelar esta cita?
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción cambiará el estado de la cita{' '}
-                    <strong>#{appointment.folio}</strong> agendada para el{' '}
-                    <strong>{shortFormattedDate}</strong> a las{' '}
-                    <strong>{formatTime(appointment.timeRange.startAt)}</strong>{' '}
-                    a <strong>"Cancelada"</strong>.
-                    <br />
-                    <br />
-                    La cita se mantendrá en el historial para referencia.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>No, mantener cita</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => cancelAppointment(appointment.id)}
-                  >
-                    Sí, cancelar cita
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+          <RenderIfCan permission={PERMISSIONS.APPOINTMENT_DELETE}>
+            {isUpcoming && appointment.status !== 'cancelada' && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant='destructive'>
+                    <Trash2 className='h-4 w-4 mr-2' />
+                    Cancelar Cita
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      ¿Estás seguro de cancelar esta cita?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción cambiará el estado de la cita{' '}
+                      <strong>#{appointment.folio}</strong> agendada para el{' '}
+                      <strong>{shortFormattedDate}</strong> a las{' '}
+                      <strong>
+                        {formatTime(appointment.timeRange.startAt)}
+                      </strong>{' '}
+                      a <strong>"Cancelada"</strong>.
+                      <br />
+                      <br />
+                      La cita se mantendrá en el historial para referencia.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>No, mantener cita</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => cancelAppointment(appointment.id)}
+                    >
+                      Sí, cancelar cita
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </RenderIfCan>
         </DialogFooter>
       </DialogContent>
     </Dialog>

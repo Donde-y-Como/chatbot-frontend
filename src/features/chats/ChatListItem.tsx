@@ -14,6 +14,8 @@ import {
 import { es } from 'date-fns/locale/es'
 import { Check, MoreVertical } from 'lucide-react'
 import { toast } from 'sonner'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { cn } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -267,8 +269,13 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
           )}
         </div>
         <div className='font-medium w-full grid grid-cols-5 gap-y-0.5'>
-          <span 
-            className={cn('col-span-4', shouldHighlight && !isEditing && 'ring-2 ring-blue-500 ring-opacity-75 rounded px-1 animate-pulse')}
+          <span
+            className={cn(
+              'col-span-4',
+              shouldHighlight &&
+                !isEditing &&
+                'ring-2 ring-blue-500 ring-opacity-75 rounded px-1 animate-pulse'
+            )}
             onClick={(e) => {
               if (shouldHighlight && !isEditing) {
                 e.stopPropagation()
@@ -340,109 +347,118 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                 {chat.newClientMessagesCount}
               </span>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  asChild
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Button
-                    variant='ghost'
-                    className='h-6 w-6 p-0 hover:bg-muted'
+              <RenderIfCan permission={PERMISSIONS.CONVERSATION_UPDATE}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    asChild
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <MoreVertical className='h-4 w-4' />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-44'>
-                  {chat.client ? (
-                    <>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setShouldHighlight(true)
-                        }}
-                      >
-                        Cambiar nombre
+                    <Button
+                      variant='ghost'
+                      className='h-6 w-6 p-0 hover:bg-muted'
+                    >
+                      <MoreVertical className='h-4 w-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end' className='w-44'>
+                    {chat.client ? (
+                      <>
+                        <RenderIfCan permission={PERMISSIONS.CLIENT_UPDATE}>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setShouldHighlight(true)
+                            }}
+                          >
+                            Cambiar nombre
+                          </DropdownMenuItem>
+                        </RenderIfCan>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleMarkAsUnread()
+                          }}
+                        >
+                          Marcar como no leido
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setIsAddTagsModalOpen(true)
+                          }}
+                        >
+                          Agregar etiqueta
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const clientData = {
+                              id: chat.client?.id,
+                              name: chat.client?.name,
+                              platformName: chat.platformName,
+                              platformId: chat.client?.platformIdentities.find(
+                                (i) => i.platformName === chat.platformName
+                              )?.platformId,
+                              platformIdentities:
+                                chat.client?.platformIdentities,
+                              conversationId: chat.id,
+                            }
+                            openConnectionClient(clientData)
+                          }}
+                        >
+                          Vincular
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (!chat.client) {
+                              return
+                            }
+                            setCurrentRow({
+                              id: chat.client.id,
+                              businessId: chat.client.businessId,
+                              name: chat.client.name,
+                              platformIdentities:
+                                chat.client.platformIdentities,
+                              tagIds: chat.client.tagIds,
+                              annexes: chat.client.annexes,
+                              photo: chat.client.photo,
+                              notes: chat.client.notes,
+                              email: chat.client.email,
+                              address: chat.client.address,
+                              birthdate: chat.client.birthdate,
+                              createdAt: chat.client.createdAt,
+                              updatedAt: chat.client.updatedAt,
+                            })
+                            setOpen('view')
+                          }}
+                        >
+                          Ver perfil
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <DropdownMenuItem disabled>
+                        No hay cliente asociado
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleMarkAsUnread()
-                        }}
-                      >
-                        Marcar como no leido
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setIsAddTagsModalOpen(true)
-                        }}
-                      >
-                        Agregar etiqueta
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const clientData = {
-                            id: chat.client?.id,
-                            name: chat.client?.name,
-                            platformName: chat.platformName,
-                            platformId: chat.client?.platformIdentities.find(
-                              (i) => i.platformName === chat.platformName
-                            )?.platformId,
-                            platformIdentities: chat.client?.platformIdentities,
-                            conversationId: chat.id,
-                          }
-                          openConnectionClient(clientData)
-                        }}
-                      >
-                        Vincular
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (!chat.client) {
-                            return
-                          }
-                          setCurrentRow({
-                            id: chat.client.id,
-                            businessId: chat.client.businessId,
-                            name: chat.client.name,
-                            platformIdentities: chat.client.platformIdentities,
-                            tagIds: chat.client.tagIds,
-                            annexes: chat.client.annexes,
-                            photo: chat.client.photo,
-                            notes: chat.client.notes,
-                            email: chat.client.email,
-                            address: chat.client.address,
-                            birthdate: chat.client.birthdate,
-                            createdAt: chat.client.createdAt,
-                            updatedAt: chat.client.updatedAt,
-                          })
-                          setOpen('view')
-                        }}
-                      >
-                        Ver perfil
-                      </DropdownMenuItem>
-                    </>
-                  ) : (
-                    <DropdownMenuItem disabled>
-                      No hay cliente asociado
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </RenderIfCan>
             )}
           </span>
         </div>
       </div>
-      {chat.client && (
-        <AddTagsModal
-          open={isAddTagsModalOpen}
-          setOpen={setIsAddTagsModalOpen}
-          client={chat.client}
-          onSave={handleAddTags}
-        />
-      )}
+
+      <RenderIfCan permission={PERMISSIONS.TAG_CREATE}>
+        {chat.client && (
+          <AddTagsModal
+            open={isAddTagsModalOpen}
+            setOpen={setIsAddTagsModalOpen}
+            client={chat.client}
+            onSave={handleAddTags}
+          />
+        )}
+      </RenderIfCan>
     </div>
   )
 }

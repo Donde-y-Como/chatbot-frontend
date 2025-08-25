@@ -1,7 +1,7 @@
 import React from 'react'
 import { CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons'
 import { Column } from '@tanstack/react-table'
-import { Package, Tag } from 'lucide-react'
+import { Package, Tag as TagIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
 import { ProductStatus } from '@/features/products/types'
-import { ProductTag } from '@/features/products/types'
+import { Tag } from '@/features/settings/tags/types'
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>
@@ -168,9 +168,9 @@ export const generateStatusOptions = () => [
 ]
 
 // Generate tag options from tags array
-export const generateTagOptions = (tags: ProductTag[]) =>
+export const generateTagOptions = (tags: Tag[]) =>
   tags.map((tag) => ({
     value: tag.id,
     label: tag.name,
-    icon: Tag,
+    icon: TagIcon,
   }))

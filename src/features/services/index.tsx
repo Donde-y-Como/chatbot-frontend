@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
 import { Briefcase, DollarSign, Timer, TrendingUp } from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -11,9 +13,9 @@ import { useGetServices } from '@/features/appointments/hooks/useGetServices'
 import { Service } from '@/features/appointments/types'
 import {
   useGetCategories,
-  useGetProductTags,
   useGetUnits,
 } from '@/features/products/hooks/useGetAuxiliaryData'
+import { useGetTags } from '@/features/settings/tags/hooks/useTags.ts'
 import { createColumns, globalFilterFn } from './components/services-columns'
 import { ServicesDialogs } from './components/services-dialogs'
 import { ServicesPrimaryButtons } from './components/services-primary-buttons'
@@ -36,7 +38,7 @@ function ServicesContent() {
   const { data: unitsData, isLoading: isLoadingUnits } = useGetUnits()
   const { data: categoriesData, isLoading: isLoadingCategories } =
     useGetCategories()
-  const { data: tagsData, isLoading: isLoadingTags } = useGetProductTags()
+  const { data: tagsData, isLoading: isLoadingTags } = useGetTags()
 
   const isLoading =
     isServicesLoading || isLoadingUnits || isLoadingCategories || isLoadingTags
@@ -57,11 +59,7 @@ function ServicesContent() {
     () => generateTagOptions(tagsData || []),
     [tagsData]
   )
-  const unitOptions = useMemo(
-    () => generateUnitOptions(unitsData || []),
-    [unitsData]
-  )
-
+  useMemo(() => generateUnitOptions(unitsData || []), [unitsData])
   // Get services array
   const servicesArray = services
 
@@ -78,8 +76,8 @@ function ServicesContent() {
         <div className='mb-2 w-full flex sm:items-center flex-col sm:flex-row sm:justify-between'>
           <div className='flex flex-col gap-2'>
             <div className='flex gap-2 items-center'>
-              <SidebarTrigger variant='outline' className='sm:hidden' />
-              <Separator orientation='vertical' className='h-7 sm:hidden' />
+              <SidebarTrigger variant='outline' className='' />
+              <Separator orientation='vertical' className='h-7 ' />
               <h1 className='text-2xl font-bold'>Servicios</h1>
             </div>
             <p className='text-muted-foreground self-start mb-2 sm:mb-0'>
@@ -87,7 +85,9 @@ function ServicesContent() {
             </p>
           </div>
 
-          <ServicesPrimaryButtons />
+          <RenderIfCan permission={PERMISSIONS.SERVICE_CREATE}>
+            <ServicesPrimaryButtons />
+          </RenderIfCan>
         </div>
 
         {/* Statistics */}
@@ -193,11 +193,13 @@ function ServicesContent() {
               <CardContent className='flex flex-col items-center justify-center py-12 text-center'>
                 <Briefcase className='h-12 w-12 text-muted-foreground mb-4' />
                 <h3 className='text-lg font-semibold mb-2'>No hay servicios</h3>
-                <p className='text-muted-foreground mb-6 max-w-md'>
-                  Comienza creando tu primer servicio para ofrecer a tus
-                  clientes.
-                </p>
-                <ServicesPrimaryButtons />
+                <RenderIfCan permission={PERMISSIONS.SERVICE_CREATE}>
+                  <p className='text-muted-foreground mb-6 max-w-md'>
+                    Comienza creando tu primer servicio para ofrecer a tus
+                    clientes.
+                  </p>
+                  <ServicesPrimaryButtons />
+                </RenderIfCan>
               </CardContent>
             </Card>
           )}

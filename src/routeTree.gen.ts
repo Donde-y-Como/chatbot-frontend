@@ -22,6 +22,9 @@ import { Route as authLinkIniciarSesionTokenImport } from './routes/(auth)/link-
 
 // Create Virtual Routes
 
+const AuthenticatedDashboardLazyImport = createFileRoute(
+  '/_authenticated/dashboard',
+)()
 const errors503LazyImport = createFileRoute('/(errors)/503')()
 const errors500LazyImport = createFileRoute('/(errors)/500')()
 const errors404LazyImport = createFileRoute('/(errors)/404')()
@@ -47,8 +50,8 @@ const AuthenticatedSettingsIndexLazyImport = createFileRoute(
 const AuthenticatedServiciosIndexLazyImport = createFileRoute(
   '/_authenticated/servicios/',
 )()
-const AuthenticatedProductsIndexLazyImport = createFileRoute(
-  '/_authenticated/products/',
+const AuthenticatedProductosIndexLazyImport = createFileRoute(
+  '/_authenticated/productos/',
 )()
 const AuthenticatedPaquetesIndexLazyImport = createFileRoute(
   '/_authenticated/paquetes/',
@@ -77,6 +80,9 @@ const AuthenticatedSettingsUnitsLazyImport = createFileRoute(
 const AuthenticatedSettingsTagsLazyImport = createFileRoute(
   '/_authenticated/settings/tags',
 )()
+const AuthenticatedSettingsRolesLazyImport = createFileRoute(
+  '/_authenticated/settings/roles',
+)()
 const AuthenticatedSettingsQuickResponsesLazyImport = createFileRoute(
   '/_authenticated/settings/quick-responses',
 )()
@@ -102,6 +108,16 @@ const AuthenticatedIndexRoute = AuthenticatedIndexImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+
+const AuthenticatedDashboardLazyRoute = AuthenticatedDashboardLazyImport.update(
+  {
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any,
+).lazy(() =>
+  import('./routes/_authenticated/dashboard.lazy').then((d) => d.Route),
+)
 
 const errors503LazyRoute = errors503LazyImport
   .update({
@@ -222,13 +238,13 @@ const AuthenticatedServiciosIndexLazyRoute =
     import('./routes/_authenticated/servicios/index.lazy').then((d) => d.Route),
   )
 
-const AuthenticatedProductsIndexLazyRoute =
-  AuthenticatedProductsIndexLazyImport.update({
-    id: '/products/',
-    path: '/products/',
+const AuthenticatedProductosIndexLazyRoute =
+  AuthenticatedProductosIndexLazyImport.update({
+    id: '/productos/',
+    path: '/productos/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any).lazy(() =>
-    import('./routes/_authenticated/products/index.lazy').then((d) => d.Route),
+    import('./routes/_authenticated/productos/index.lazy').then((d) => d.Route),
   )
 
 const AuthenticatedPaquetesIndexLazyRoute =
@@ -318,6 +334,15 @@ const AuthenticatedSettingsTagsLazyRoute =
     getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
   } as any).lazy(() =>
     import('./routes/_authenticated/settings/tags.lazy').then((d) => d.Route),
+  )
+
+const AuthenticatedSettingsRolesLazyRoute =
+  AuthenticatedSettingsRolesLazyImport.update({
+    id: '/roles',
+    path: '/roles',
+    getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/settings/roles.lazy').then((d) => d.Route),
   )
 
 const AuthenticatedSettingsQuickResponsesLazyRoute =
@@ -458,6 +483,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof errors503LazyImport
       parentRoute: typeof rootRoute
     }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardLazyImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
     '/_authenticated/': {
       id: '/_authenticated/'
       path: '/'
@@ -505,6 +537,13 @@ declare module '@tanstack/react-router' {
       path: '/quick-responses'
       fullPath: '/settings/quick-responses'
       preLoaderRoute: typeof AuthenticatedSettingsQuickResponsesLazyImport
+      parentRoute: typeof AuthenticatedSettingsRouteLazyImport
+    }
+    '/_authenticated/settings/roles': {
+      id: '/_authenticated/settings/roles'
+      path: '/roles'
+      fullPath: '/settings/roles'
+      preLoaderRoute: typeof AuthenticatedSettingsRolesLazyImport
       parentRoute: typeof AuthenticatedSettingsRouteLazyImport
     }
     '/_authenticated/settings/tags': {
@@ -577,11 +616,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPaquetesIndexLazyImport
       parentRoute: typeof AuthenticatedRouteImport
     }
-    '/_authenticated/products/': {
-      id: '/_authenticated/products/'
-      path: '/products'
-      fullPath: '/products'
-      preLoaderRoute: typeof AuthenticatedProductsIndexLazyImport
+    '/_authenticated/productos/': {
+      id: '/_authenticated/productos/'
+      path: '/productos'
+      fullPath: '/productos'
+      preLoaderRoute: typeof AuthenticatedProductosIndexLazyImport
       parentRoute: typeof AuthenticatedRouteImport
     }
     '/_authenticated/servicios/': {
@@ -621,6 +660,7 @@ interface AuthenticatedSettingsRouteLazyRouteChildren {
   AuthenticatedSettingsAccountLazyRoute: typeof AuthenticatedSettingsAccountLazyRoute
   AuthenticatedSettingsCategoriesLazyRoute: typeof AuthenticatedSettingsCategoriesLazyRoute
   AuthenticatedSettingsQuickResponsesLazyRoute: typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  AuthenticatedSettingsRolesLazyRoute: typeof AuthenticatedSettingsRolesLazyRoute
   AuthenticatedSettingsTagsLazyRoute: typeof AuthenticatedSettingsTagsLazyRoute
   AuthenticatedSettingsUnitsLazyRoute: typeof AuthenticatedSettingsUnitsLazyRoute
   AuthenticatedSettingsWhatsappLazyRoute: typeof AuthenticatedSettingsWhatsappLazyRoute
@@ -635,6 +675,7 @@ const AuthenticatedSettingsRouteLazyRouteChildren: AuthenticatedSettingsRouteLaz
       AuthenticatedSettingsCategoriesLazyRoute,
     AuthenticatedSettingsQuickResponsesLazyRoute:
       AuthenticatedSettingsQuickResponsesLazyRoute,
+    AuthenticatedSettingsRolesLazyRoute: AuthenticatedSettingsRolesLazyRoute,
     AuthenticatedSettingsTagsLazyRoute: AuthenticatedSettingsTagsLazyRoute,
     AuthenticatedSettingsUnitsLazyRoute: AuthenticatedSettingsUnitsLazyRoute,
     AuthenticatedSettingsWhatsappLazyRoute:
@@ -649,6 +690,7 @@ const AuthenticatedSettingsRouteLazyRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRouteLazyRoute: typeof AuthenticatedSettingsRouteLazyRouteWithChildren
+  AuthenticatedDashboardLazyRoute: typeof AuthenticatedDashboardLazyRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedOrdenHistorialLazyRoute: typeof AuthenticatedOrdenHistorialLazyRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
@@ -658,7 +700,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEventosIndexLazyRoute: typeof AuthenticatedEventosIndexLazyRoute
   AuthenticatedOrdenIndexLazyRoute: typeof AuthenticatedOrdenIndexLazyRoute
   AuthenticatedPaquetesIndexLazyRoute: typeof AuthenticatedPaquetesIndexLazyRoute
-  AuthenticatedProductsIndexLazyRoute: typeof AuthenticatedProductsIndexLazyRoute
+  AuthenticatedProductosIndexLazyRoute: typeof AuthenticatedProductosIndexLazyRoute
   AuthenticatedServiciosIndexLazyRoute: typeof AuthenticatedServiciosIndexLazyRoute
   AuthenticatedToolsIndexLazyRoute: typeof AuthenticatedToolsIndexLazyRoute
   AuthenticatedVentasIndexLazyRoute: typeof AuthenticatedVentasIndexLazyRoute
@@ -667,6 +709,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRouteLazyRoute:
     AuthenticatedSettingsRouteLazyRouteWithChildren,
+  AuthenticatedDashboardLazyRoute: AuthenticatedDashboardLazyRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedOrdenHistorialLazyRoute: AuthenticatedOrdenHistorialLazyRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
@@ -676,7 +719,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEventosIndexLazyRoute: AuthenticatedEventosIndexLazyRoute,
   AuthenticatedOrdenIndexLazyRoute: AuthenticatedOrdenIndexLazyRoute,
   AuthenticatedPaquetesIndexLazyRoute: AuthenticatedPaquetesIndexLazyRoute,
-  AuthenticatedProductsIndexLazyRoute: AuthenticatedProductsIndexLazyRoute,
+  AuthenticatedProductosIndexLazyRoute: AuthenticatedProductosIndexLazyRoute,
   AuthenticatedServiciosIndexLazyRoute: AuthenticatedServiciosIndexLazyRoute,
   AuthenticatedToolsIndexLazyRoute: AuthenticatedToolsIndexLazyRoute,
   AuthenticatedVentasIndexLazyRoute: AuthenticatedVentasIndexLazyRoute,
@@ -697,6 +740,7 @@ export interface FileRoutesByFullPath {
   '/404': typeof errors404LazyRoute
   '/500': typeof errors500LazyRoute
   '/503': typeof errors503LazyRoute
+  '/dashboard': typeof AuthenticatedDashboardLazyRoute
   '/': typeof AuthenticatedIndexRoute
   '/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
@@ -704,6 +748,7 @@ export interface FileRoutesByFullPath {
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  '/settings/roles': typeof AuthenticatedSettingsRolesLazyRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappLazyRoute
@@ -714,7 +759,7 @@ export interface FileRoutesByFullPath {
   '/eventos': typeof AuthenticatedEventosIndexLazyRoute
   '/orden': typeof AuthenticatedOrdenIndexLazyRoute
   '/paquetes': typeof AuthenticatedPaquetesIndexLazyRoute
-  '/products': typeof AuthenticatedProductsIndexLazyRoute
+  '/productos': typeof AuthenticatedProductosIndexLazyRoute
   '/servicios': typeof AuthenticatedServiciosIndexLazyRoute
   '/settings/': typeof AuthenticatedSettingsIndexLazyRoute
   '/tools': typeof AuthenticatedToolsIndexLazyRoute
@@ -731,6 +776,7 @@ export interface FileRoutesByTo {
   '/404': typeof errors404LazyRoute
   '/500': typeof errors500LazyRoute
   '/503': typeof errors503LazyRoute
+  '/dashboard': typeof AuthenticatedDashboardLazyRoute
   '/': typeof AuthenticatedIndexRoute
   '/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
@@ -738,6 +784,7 @@ export interface FileRoutesByTo {
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  '/settings/roles': typeof AuthenticatedSettingsRolesLazyRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappLazyRoute
@@ -748,7 +795,7 @@ export interface FileRoutesByTo {
   '/eventos': typeof AuthenticatedEventosIndexLazyRoute
   '/orden': typeof AuthenticatedOrdenIndexLazyRoute
   '/paquetes': typeof AuthenticatedPaquetesIndexLazyRoute
-  '/products': typeof AuthenticatedProductsIndexLazyRoute
+  '/productos': typeof AuthenticatedProductosIndexLazyRoute
   '/servicios': typeof AuthenticatedServiciosIndexLazyRoute
   '/settings': typeof AuthenticatedSettingsIndexLazyRoute
   '/tools': typeof AuthenticatedToolsIndexLazyRoute
@@ -768,6 +815,7 @@ export interface FileRoutesById {
   '/(errors)/404': typeof errors404LazyRoute
   '/(errors)/500': typeof errors500LazyRoute
   '/(errors)/503': typeof errors503LazyRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardLazyRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/(auth)/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/(auth)/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
@@ -775,6 +823,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
   '/_authenticated/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/_authenticated/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
+  '/_authenticated/settings/roles': typeof AuthenticatedSettingsRolesLazyRoute
   '/_authenticated/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
   '/_authenticated/settings/units': typeof AuthenticatedSettingsUnitsLazyRoute
   '/_authenticated/settings/whatsapp': typeof AuthenticatedSettingsWhatsappLazyRoute
@@ -785,7 +834,7 @@ export interface FileRoutesById {
   '/_authenticated/eventos/': typeof AuthenticatedEventosIndexLazyRoute
   '/_authenticated/orden/': typeof AuthenticatedOrdenIndexLazyRoute
   '/_authenticated/paquetes/': typeof AuthenticatedPaquetesIndexLazyRoute
-  '/_authenticated/products/': typeof AuthenticatedProductsIndexLazyRoute
+  '/_authenticated/productos/': typeof AuthenticatedProductosIndexLazyRoute
   '/_authenticated/servicios/': typeof AuthenticatedServiciosIndexLazyRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexLazyRoute
   '/_authenticated/tools/': typeof AuthenticatedToolsIndexLazyRoute
@@ -806,6 +855,7 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
+    | '/dashboard'
     | '/'
     | '/link-iniciar-sesion/$token'
     | '/restablecer-contrasena/$token'
@@ -813,6 +863,7 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/settings/categories'
     | '/settings/quick-responses'
+    | '/settings/roles'
     | '/settings/tags'
     | '/settings/units'
     | '/settings/whatsapp'
@@ -823,7 +874,7 @@ export interface FileRouteTypes {
     | '/eventos'
     | '/orden'
     | '/paquetes'
-    | '/products'
+    | '/productos'
     | '/servicios'
     | '/settings/'
     | '/tools'
@@ -839,6 +890,7 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
+    | '/dashboard'
     | '/'
     | '/link-iniciar-sesion/$token'
     | '/restablecer-contrasena/$token'
@@ -846,6 +898,7 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/settings/categories'
     | '/settings/quick-responses'
+    | '/settings/roles'
     | '/settings/tags'
     | '/settings/units'
     | '/settings/whatsapp'
@@ -856,7 +909,7 @@ export interface FileRouteTypes {
     | '/eventos'
     | '/orden'
     | '/paquetes'
-    | '/products'
+    | '/productos'
     | '/servicios'
     | '/settings'
     | '/tools'
@@ -874,6 +927,7 @@ export interface FileRouteTypes {
     | '/(errors)/404'
     | '/(errors)/500'
     | '/(errors)/503'
+    | '/_authenticated/dashboard'
     | '/_authenticated/'
     | '/(auth)/link-iniciar-sesion/$token'
     | '/(auth)/restablecer-contrasena/$token'
@@ -881,6 +935,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/categories'
     | '/_authenticated/settings/quick-responses'
+    | '/_authenticated/settings/roles'
     | '/_authenticated/settings/tags'
     | '/_authenticated/settings/units'
     | '/_authenticated/settings/whatsapp'
@@ -891,7 +946,7 @@ export interface FileRouteTypes {
     | '/_authenticated/eventos/'
     | '/_authenticated/orden/'
     | '/_authenticated/paquetes/'
-    | '/_authenticated/products/'
+    | '/_authenticated/productos/'
     | '/_authenticated/servicios/'
     | '/_authenticated/settings/'
     | '/_authenticated/tools/'
@@ -957,6 +1012,7 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/route.tsx",
       "children": [
         "/_authenticated/settings",
+        "/_authenticated/dashboard",
         "/_authenticated/",
         "/_authenticated/orden/historial",
         "/_authenticated/chats/",
@@ -966,7 +1022,7 @@ export const routeTree = rootRoute
         "/_authenticated/eventos/",
         "/_authenticated/orden/",
         "/_authenticated/paquetes/",
-        "/_authenticated/products/",
+        "/_authenticated/productos/",
         "/_authenticated/servicios/",
         "/_authenticated/tools/",
         "/_authenticated/ventas/"
@@ -982,6 +1038,7 @@ export const routeTree = rootRoute
         "/_authenticated/settings/account",
         "/_authenticated/settings/categories",
         "/_authenticated/settings/quick-responses",
+        "/_authenticated/settings/roles",
         "/_authenticated/settings/tags",
         "/_authenticated/settings/units",
         "/_authenticated/settings/whatsapp",
@@ -1012,6 +1069,10 @@ export const routeTree = rootRoute
     "/(errors)/503": {
       "filePath": "(errors)/503.lazy.tsx"
     },
+    "/_authenticated/dashboard": {
+      "filePath": "_authenticated/dashboard.lazy.tsx",
+      "parent": "/_authenticated"
+    },
     "/_authenticated/": {
       "filePath": "_authenticated/index.tsx",
       "parent": "/_authenticated"
@@ -1036,6 +1097,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/settings/quick-responses": {
       "filePath": "_authenticated/settings/quick-responses.lazy.tsx",
+      "parent": "/_authenticated/settings"
+    },
+    "/_authenticated/settings/roles": {
+      "filePath": "_authenticated/settings/roles.lazy.tsx",
       "parent": "/_authenticated/settings"
     },
     "/_authenticated/settings/tags": {
@@ -1078,8 +1143,8 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/paquetes/index.lazy.tsx",
       "parent": "/_authenticated"
     },
-    "/_authenticated/products/": {
-      "filePath": "_authenticated/products/index.lazy.tsx",
+    "/_authenticated/productos/": {
+      "filePath": "_authenticated/productos/index.lazy.tsx",
       "parent": "/_authenticated"
     },
     "/_authenticated/servicios/": {

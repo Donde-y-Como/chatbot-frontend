@@ -27,7 +27,7 @@ export function AddTagsModal({
   client,
   onSave,
 }: AddTagsModalProps) {
-  const { data: tags, isLoading: isTagsLoading } = useGetTags();
+  const { data: tags=[], isLoading: isTagsLoading } = useGetTags();
   const [selectedTags, setSelectedTags] = useState<string[]>(client.tagIds || []);
 
   const handleTagSelect = (tagId: string) => {
@@ -50,15 +50,17 @@ export function AddTagsModal({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Agregar etiquetas</AlertDialogTitle>
-          <AlertDialogDescription>
-            Selecciona las etiquetas que quieres agregar a este cliente.
-          </AlertDialogDescription>
+          {  tags.length >0 && (
+            <AlertDialogDescription>
+              Selecciona las etiquetas que quieres agregar a este cliente.
+            </AlertDialogDescription>
+          )}
         </AlertDialogHeader>
         <div className="grid gap-2">
           {isTagsLoading ? (
             <div>Cargando etiquetas...</div>
           ) : (
-            tags?.map((tag) => (
+            tags.length >0 ? tags.map((tag) => (
               <div key={tag.id} className="flex items-center space-x-2">
                 <Checkbox
                   id={tag.id}
@@ -67,8 +69,8 @@ export function AddTagsModal({
                 />
                 <Label htmlFor={tag.id}>{tag.name}</Label>
               </div>
-            ))
-          )}
+            )): (<div>No hay etiquetas disponibles.</div>))
+          }
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>

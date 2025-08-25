@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { PERMISSIONS } from '@/api/permissions.ts'
 import { TableSkeleton } from '@/components/TableSkeleton.tsx'
 import { Main } from '@/components/layout/main'
 import { DialogStateProvider } from '@/features/appointments/contexts/DialogStateContext.tsx'
@@ -19,6 +20,7 @@ import {
 } from './components/clients-table-filters.tsx'
 import { useGetTags } from './hooks/useGetTags.ts'
 import { ClientPrimitives } from './types.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 
 export default function Clients() {
   const { data: clients, isLoading } = useGetClients()
@@ -37,8 +39,8 @@ export default function Clients() {
           <div className='mb-2 w-full flex sm:items-center flex-col sm:flex-row  sm:justify-between'>
             <div className='flex flex-col gap-2'>
               <div className='flex gap-2 items-center'>
-                <SidebarTrigger variant='outline' className='sm:hidden' />
-                <Separator orientation='vertical' className='h-7 sm:hidden' />
+                <SidebarTrigger variant='outline' className='' />
+                <Separator orientation='vertical' className='h-7 ' />
                 <h1 className='text-2xl font-bold'>Clientes</h1>
               </div>
 
@@ -47,7 +49,9 @@ export default function Clients() {
               </p>
             </div>
 
-            <ClientPrimaryButtons />
+            <RenderIfCan permission={PERMISSIONS.CLIENT_CREATE}>
+              <ClientPrimaryButtons />
+            </RenderIfCan>
           </div>
           <div className='-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0'>
             {clients && tags && (
@@ -71,7 +75,9 @@ export default function Clients() {
                         title='Etiquetas'
                         options={tagOptions}
                       />
-                      <AddTagButton withLabel />
+                      <RenderIfCan permission={PERMISSIONS.TAG_CREATE}>
+                        <AddTagButton withLabel />
+                      </RenderIfCan>
                     </div>
                   </DataTableToolbar>
                 )}

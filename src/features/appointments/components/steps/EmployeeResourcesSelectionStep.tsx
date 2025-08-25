@@ -22,6 +22,8 @@ interface EmployeeResourcesSelectionStepProps {
   // Equipment & Consumables props
   selectedEquipmentIds: string[]
   consumableUsages: ConsumableUsage[]
+  inheritedEquipmentIds: string[] // Nuevos props para identificar heredados
+  inheritedConsumableUsages: ConsumableUsage[]
   onEquipmentToggle: (equipmentId: string) => void
   onConsumableUsageUpdate: (consumableId: string, quantity: number) => void
   // Navigation props
@@ -40,6 +42,8 @@ export function EmployeeResourcesSelectionStep({
   onEmployeeToggle,
   selectedEquipmentIds,
   consumableUsages,
+  inheritedEquipmentIds,
+  inheritedConsumableUsages,
   onEquipmentToggle,
   onConsumableUsageUpdate,
   onNext,
@@ -105,6 +109,22 @@ export function EmployeeResourcesSelectionStep({
   const getConsumableUsage = (consumableId: string): number => {
     const usage = consumableUsages.find(u => u.consumableId === consumableId)
     return usage?.quantity || 0
+  }
+  
+  // Obtener cantidad heredada de un consumible
+  const getInheritedConsumableUsage = (consumableId: string): number => {
+    const usage = inheritedConsumableUsages.find(u => u.consumableId === consumableId)
+    return usage?.quantity || 0
+  }
+  
+  // Verificar si un equipo es heredado del servicio
+  const isEquipmentInherited = (equipmentId: string): boolean => {
+    return inheritedEquipmentIds.includes(equipmentId)
+  }
+  
+  // Verificar si un consumible tiene cantidad heredada
+  const isConsumableInherited = (consumableId: string): boolean => {
+    return getInheritedConsumableUsage(consumableId) > 0
   }
 
   // Incrementar cantidad de consumible
@@ -308,48 +328,57 @@ export function EmployeeResourcesSelectionStep({
             <ScrollArea className='h-40 w-full rounded-md border'>
               <div className='p-4'>
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
-                  {filteredEquipment.map((eq) => (
-                    <Card
-                      key={eq.id}
-                      className={cn(
-                        'cursor-pointer hover:border-primary transition-all',
-                        {
-                          'border-primary bg-primary/5':
-                            selectedEquipmentIds.includes(eq.id),
-                        }
-                      )}
-                      onClick={() => onEquipmentToggle(eq.id)}
-                    >
-                      <CardContent className='p-3'>
-                        <div className='flex items-center justify-between'>
-                          <div className='flex-1'>
-                            <div className='flex items-center gap-2'>
-                              <Wrench className='h-4 w-4 text-muted-foreground' />
-                              <p className='text-sm font-medium'>{eq.name}</p>
-                              {eq.status !== EquipmentStatus.ACTIVE && (
-                                <Badge variant='secondary' className='text-xs'>
-                                  {eq.status}
-                                </Badge>
+                  {filteredEquipment.map((eq) => {
+                    const isInherited = isEquipmentInherited(eq.id)
+                    return (
+                      <Card
+                        key={eq.id}
+                        className={cn(
+                          'cursor-pointer hover:border-primary transition-all',
+                          {
+                            'border-primary bg-primary/5':
+                              selectedEquipmentIds.includes(eq.id),
+                            'border-blue-500 bg-blue-50 dark:bg-blue-950 dark:border-blue-400': isInherited && !selectedEquipmentIds.includes(eq.id), // Estilo para heredados
+                          }
+                        )}
+                        onClick={() => onEquipmentToggle(eq.id)}
+                      >
+                        <CardContent className='p-3'>
+                          <div className='flex items-center justify-between'>
+                            <div className='flex-1'>
+                              <div className='flex items-center gap-2'>
+                                <Wrench className='h-4 w-4 text-muted-foreground' />
+                                <p className='text-sm font-medium'>{eq.name}</p>
+                                {isInherited && (
+                                  <Badge variant='outline' className='text-xs bg-blue-100 border-blue-400 dark:bg-blue-900 dark:border-blue-500 dark:text-blue-300'>
+                                    Del servicio
+                                  </Badge>
+                                )}
+                                {eq.status !== EquipmentStatus.ACTIVE && (
+                                  <Badge variant='secondary' className='text-xs'>
+                                    {eq.status}
+                                  </Badge>
+                                )}
+                              </div>
+                              {eq.category && (
+                                <p className='text-xs text-muted-foreground mt-1'>
+                                  {eq.category}
+                                </p>
+                              )}
+                              {eq.brand && (
+                                <p className='text-xs text-muted-foreground'>
+                                  {eq.brand}
+                                </p>
                               )}
                             </div>
-                            {eq.category && (
-                              <p className='text-xs text-muted-foreground mt-1'>
-                                {eq.category}
-                              </p>
-                            )}
-                            {eq.brand && (
-                              <p className='text-xs text-muted-foreground'>
-                                {eq.brand}
-                              </p>
+                            {selectedEquipmentIds.includes(eq.id) && (
+                              <CheckCircle className='h-5 w-5 text-primary flex-shrink-0' />
                             )}
                           </div>
-                          {selectedEquipmentIds.includes(eq.id) && (
-                            <CheckCircle className='h-5 w-5 text-primary flex-shrink-0' />
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
                 </div>
               </div>
             </ScrollArea>
@@ -405,13 +434,16 @@ export function EmployeeResourcesSelectionStep({
                 <div className='space-y-3'>
                   {filteredConsumables.map((consumable) => {
                     const currentUsage = getConsumableUsage(consumable.id)
+                    const inheritedUsage = getInheritedConsumableUsage(consumable.id)
+                    const isInherited = isConsumableInherited(consumable.id)
                     const canIncrement = currentUsage < consumable.stock
                     const canDecrement = currentUsage > 0
 
                     return (
                       <Card key={consumable.id} className={cn(
                         'transition-all',
-                        currentUsage > 0 && 'border-primary bg-primary/5'
+                        currentUsage > 0 && 'border-primary bg-primary/5',
+                        isInherited && currentUsage === inheritedUsage && 'border-blue-500 bg-blue-50 dark:bg-blue-950 dark:border-blue-400' // Estilo para heredados sin cambios
                       )}>
                         <CardContent className='p-3'>
                           <div className='flex items-center justify-between'>
@@ -419,6 +451,11 @@ export function EmployeeResourcesSelectionStep({
                               <div className='flex items-center gap-2'>
                                 <Package className='h-4 w-4 text-muted-foreground' />
                                 <p className='text-sm font-medium'>{consumable.name}</p>
+                                {isInherited && (
+                                  <Badge variant='outline' className='text-xs bg-blue-100 border-blue-400 dark:bg-blue-900 dark:border-blue-500 dark:text-blue-300'>
+                                    Del servicio: {inheritedUsage}
+                                  </Badge>
+                                )}
                               </div>
                               <div className='flex items-center gap-4 mt-1'>
                                 {consumable.category && (

@@ -109,7 +109,7 @@ export function ProductActionDialog() {
         form.reset(quickDefaults);
       }
     }
-  }, [isDialogOpen, selectedProduct, dialogMode, createMode]);
+  }, [isDialogOpen, selectedProduct, dialogMode, createMode, form.reset]);
 
   const onSubmit = async (data: CreateProductForm) => {
     const operation = dialogMode === 'create' 

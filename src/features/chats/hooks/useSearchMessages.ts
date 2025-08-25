@@ -49,7 +49,7 @@ export function useSearchMessages({
     error,
     refetch,
   } = useInfiniteQuery({
-    queryKey,
+    queryKey: queryKey,
     queryFn: async ({ pageParam = 0 }) => {
       const params = new URLSearchParams({
         query,

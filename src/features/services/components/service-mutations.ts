@@ -5,10 +5,10 @@ import { MinutesTimeRange } from '../../appointments/types'
 import { ProductInfo } from '@/types'
 import { Unit } from '../../settings/units/types'
 
-// Form data shape for service creation/update with new fields
+// Form data shape for service creation/update - campos opcionales
 export interface ServiceFormData {
+  // CAMPOS OBLIGATORIOS
   name: string
-  description: string
   durationValue: number
   durationUnit: 'minutes' | 'hours'
   priceAmount: number
@@ -16,26 +16,23 @@ export interface ServiceFormData {
   maxConcurrentBooks: number
   minBookingLeadHours: number
   schedule: Record<string, MinutesTimeRange>
-  // Nuevos campos
-  productInfo: ProductInfo
-  codigoBarras: number
-  photos: string[]
-  // Campos de equipos y consumibles
-  equipmentIds: string[]
-  consumableUsages: Array<{
+  
+  // CAMPOS OPCIONALES
+  description?: string
+  productInfo?: ProductInfo
+  codigoBarras?: number
+  photos?: string[]
+  equipmentIds?: string[]
+  consumableUsages?: Array<{
     consumableId: string
     quantity: number
   }>
 }
 
-/**
- * Transforms form data to API service format
- */
 const transformFormToApiData = (formData: ServiceFormData) => {
-  const transformed = {
-    // Campos originales
+  const transformed: any = {
+    // CAMPOS OBLIGATORIOS
     name: formData.name,
-    description: formData.description,
     maxConcurrentBooks: formData.maxConcurrentBooks,
     minBookingLeadHours: formData.minBookingLeadHours,
     schedule: formData.schedule,
@@ -49,23 +46,38 @@ const transformFormToApiData = (formData: ServiceFormData) => {
       unit: formData.durationUnit, 
       value: formData.durationValue 
     },
-    
-    // Nuevos campos - pasados directamente
-    productInfo: formData.productInfo,
-    codigoBarras: formData.codigoBarras,
-    photos: formData.photos,
-    
-    // Campos de equipos y consumibles
-    equipmentIds: formData.equipmentIds,
-    consumableUsages: formData.consumableUsages,
   }
+  
+  // CAMPOS OPCIONALES - solo incluir si tienen valor
+  if (formData.description !== undefined && formData.description !== '') {
+    transformed.description = formData.description
+  }
+  
+  if (formData.productInfo) {
+    transformed.productInfo = formData.productInfo
+  }
+  
+  if (formData.codigoBarras !== undefined && formData.codigoBarras > 0) {
+    transformed.codigoBarras = formData.codigoBarras
+  }
+  
+  if (formData.photos && formData.photos.length > 0) {
+    transformed.photos = formData.photos
+  }
+  
+  if (formData.equipmentIds && formData.equipmentIds.length > 0) {
+    transformed.equipmentIds = formData.equipmentIds
+  }
+  
+  if (formData.consumableUsages && formData.consumableUsages.length > 0) {
+    transformed.consumableUsages = formData.consumableUsages
+  }
+  
+  console.log('Datos enviados al backend:', transformed)
   
   return transformed
 }
 
-/**
- * Hook for creating a new service
- */
 export const useCreateService = (options?: {
   onSuccess?: () => void
 }) => {

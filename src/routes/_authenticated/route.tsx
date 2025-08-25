@@ -7,6 +7,7 @@ import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import SkipToMain from '@/components/skip-to-main'
+import { RouteGuard } from '@/components/auth/route-guard'
 
 export const Route = createFileRoute('/_authenticated')({
   component: RouteComponent,
@@ -42,7 +43,9 @@ function RouteComponent() {
             'group-data-[scroll-locked=1]/body:has-[main.fixed-main]:h-svh'
           )}
         >
-          <Outlet />
+          <RouteGuard>
+            <Outlet />
+          </RouteGuard>
         </div>
       </SidebarProvider>
     </SearchProvider>

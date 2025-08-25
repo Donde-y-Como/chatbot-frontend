@@ -79,7 +79,7 @@ export function CategoryDialog({
         parentCategoryId: undefined,
       })
     }
-  }, [initialData, selectedParentCategory, mode])
+  }, [initialData, selectedParentCategory, mode, form.reset])
 
   const handleSubmit = async (values: CategoryFormValues) => {
     try {

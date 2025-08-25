@@ -3,7 +3,8 @@ import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { DataTableColumnHeader } from '@/components/tables/data-table-column-header'
-import { Category, Product, ProductStatus, ProductTag, Unit } from '../types'
+import { Tag } from '@/features/settings/tags/types.ts'
+import { Category, Product, ProductStatus, Unit } from '../types'
 import { DataTableRowActions } from './data-table-row-actions'
 
 // Función helper para formatear precios
@@ -127,7 +128,7 @@ export function globalFilterFn(
 export const createProductColumns = (
   units: Unit[] = [],
   categories: Category[] = [],
-  tags: ProductTag[] = []
+  tags: Tag[] = []
 ): ColumnDef<Product>[] => [
   // Global filter column (hidden, used for multi-field search)
   {
@@ -378,16 +379,7 @@ export const createProductColumns = (
           {tagIds.slice(0, 2).map((tagId) => {
             const tag = tags.find((t) => t.id === tagId)
             return (
-              <Badge
-                key={tagId}
-                variant='secondary'
-                className='text-xs'
-                style={{
-                  backgroundColor: tag?.color ? `${tag.color}20` : undefined,
-                  borderColor: tag?.color || undefined,
-                  color: tag?.color || undefined,
-                }}
-              >
+              <Badge key={tagId} variant='secondary' className='text-xs'>
                 {tag?.name || 'Sin nombre'}
               </Badge>
             )

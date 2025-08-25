@@ -17,9 +17,10 @@ import { OrderWithDetails, PaymentMethod } from '@/features/store/types'
 
 interface OrdersStatsProps {
   orders: OrderWithDetails[]
+  title?: string
 }
 
-export function OrdersStats({ orders }: OrdersStatsProps) {
+export function OrdersStats({ orders, title = 'órdenes' }: OrdersStatsProps) {
   // Calcular estadísticas generales
   const totalOrders = orders.length
   const totalOrderValue = orders.reduce(
@@ -107,7 +108,7 @@ export function OrdersStats({ orders }: OrdersStatsProps) {
         <CardContent className='flex items-center justify-center py-8'>
           <div className='text-center'>
             <Package className='h-12 w-12 text-muted-foreground mx-auto mb-2' />
-            <p className='text-muted-foreground'>No hay órdenes para mostrar</p>
+            <p className='text-muted-foreground'>No hay {title} para mostrar</p>
           </div>
         </CardContent>
       </Card>
@@ -120,13 +121,13 @@ export function OrdersStats({ orders }: OrdersStatsProps) {
       <Card>
         <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
           <CardTitle className='text-sm font-medium'>
-            Total de Órdenes
+            Total de {title}
           </CardTitle>
           <Package className='h-4 w-4 text-muted-foreground' />
         </CardHeader>
         <CardContent>
           <div className='text-2xl font-bold'>{totalOrders}</div>
-          <p className='text-xs text-muted-foreground'>órdenes registradas</p>
+          <p className='text-xs text-muted-foreground'>{title} registradas</p>
         </CardContent>
       </Card>
 

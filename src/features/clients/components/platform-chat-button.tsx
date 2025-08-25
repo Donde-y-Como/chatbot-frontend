@@ -35,13 +35,7 @@ export function PlatformChatButton({ clientId, platformName, profileName, size =
     setIsLoading(true);
     setError(null);
     try {
-      // Obtener todas las conversaciones
-      const conversations = await chatService.getChats();
-      
-      // Filtrar conversaciones por clientId y platformName
-      const filteredChats = conversations.filter(
-        chat => chat.client?.id === clientId && chat.platformName === platformName
-      );
+      const filteredChats = await chatService.getChatsByClientId(clientId, platformName);
       
       setChats(filteredChats);
       

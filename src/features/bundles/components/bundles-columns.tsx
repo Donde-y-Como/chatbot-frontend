@@ -4,7 +4,8 @@ import { es } from 'date-fns/locale/es'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { DataTableColumnHeader } from '@/components/tables/data-table-column-header'
-import { ProductStatus, ProductTag } from '@/features/products/types'
+import { ProductStatus } from '@/features/products/types'
+import { Tag } from '@/features/settings/tags/types.ts'
 import { Bundle } from '../types'
 import { formatBundlePrice } from '../utils/bundleUtils'
 import { DataTableRowActions } from './data-table-row-actions'
@@ -66,9 +67,7 @@ export function globalFilterFn(
   return searchFields.some((field) => field.includes(searchValue))
 }
 
-export const createBundleColumns = (
-  tags: ProductTag[] = []
-): ColumnDef<Bundle>[] => [
+export const createBundleColumns = (tags: Tag[] = []): ColumnDef<Bundle>[] => [
   // Global filter column (hidden, used for multi-field search)
   {
     id: 'globalFilter',
@@ -188,21 +187,12 @@ export const createBundleColumns = (
           const tag = tags.find((t) => t.id === tagId)
           return tag || null
         })
-        .filter((item): item is ProductTag => item !== null)
+        .filter((item): item is Tag => item !== null)
 
       return (
         <div className='flex flex-wrap gap-1 max-w-[200px]'>
           {tagItems.slice(0, 2).map((item) => (
-            <Badge
-              key={item.id}
-              variant='outline'
-              className='text-xs'
-              style={{
-                backgroundColor: item.color ? `${item.color}20` : undefined,
-                borderColor: item.color || undefined,
-                color: item.color || undefined,
-              }}
-            >
+            <Badge key={item.id} variant='outline' className='text-xs'>
               {item.name}
             </Badge>
           ))}

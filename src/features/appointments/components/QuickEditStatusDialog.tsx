@@ -86,9 +86,15 @@ export function QuickEditStatusDialog({ appointment }: QuickEditStatusDialogProp
         setOpen(false)
         closeDialog() // Notificar que se cerró el dialog
 
-        await queryClient.invalidateQueries({
-          queryKey: [UseGetAppointmentsQueryKey],
-        })
+        // Invalidar y refetch queries para actualizar la vista inmediatamente
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: [UseGetAppointmentsQueryKey],
+          }),
+          queryClient.refetchQueries({
+            queryKey: [UseGetAppointmentsQueryKey],
+          })
+        ])
       } else {
         toast.error('Error al actualizar el estado')
       }
