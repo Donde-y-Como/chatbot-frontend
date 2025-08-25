@@ -1,29 +1,23 @@
-import { useState, useMemo } from 'react'
-import { Loader2, Plus, Search, Tag as TagIcon, ChevronDown } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { useDebounce } from '@uidotdev/usehooks'
+import { Loader2, Plus, Search } from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { useDebounce } from '@uidotdev/usehooks'
 import ContentSection from '../components/content-section'
-import { TagList } from './components/tag-list'
-import { TagDialog } from './components/tag-dialog'
-import { ViewTagDialog } from './components/view-tag-dialog'
 import { DeleteTagDialog } from './components/delete-tag-dialog'
+import { TagDialog } from './components/tag-dialog'
+import { TagList } from './components/tag-list'
+import { ViewTagDialog } from './components/view-tag-dialog'
 import {
-  useGetTags,
   useCreateTag,
-  useUpdateTag,
   useDeleteTag,
+  useGetTags,
+  useUpdateTag,
 } from './hooks/useTags'
-import { Tag, TagFormValues, SimpleTagFormValues, TagDialogMode } from './types'
+import { SimpleTagFormValues, Tag, TagDialogMode, TagFormValues } from './types'
+import { RenderIfCan } from '@/lib/Can.tsx'
 
 export default function TagsSection() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
@@ -50,16 +44,17 @@ export default function TagsSection() {
   // Filtrar etiquetas basándose en la búsqueda
   const filteredTags = useMemo(() => {
     if (!tags) return []
-    
+
     if (!debouncedSearchQuery.trim()) {
       return tags
     }
 
     const query = debouncedSearchQuery.toLowerCase().trim()
-    
-    return tags.filter(tag => 
-      tag.name.toLowerCase().includes(query) ||
-      tag.description.toLowerCase().includes(query)
+
+    return tags.filter(
+      (tag) =>
+        tag.name.toLowerCase().includes(query) ||
+        tag.description.toLowerCase().includes(query)
     )
   }, [tags, debouncedSearchQuery])
 
@@ -72,11 +67,14 @@ export default function TagsSection() {
     if (selectedTag) {
       // Solo enviar los campos que han cambiado
       const updateData: { name?: string; description?: string } = {}
-      
+
       if ('name' in values && values.name !== selectedTag.name) {
         updateData.name = values.name
-      }      
-      if ('description' in values && values.description !== selectedTag.description) {
+      }
+      if (
+        'description' in values &&
+        values.description !== selectedTag.description
+      ) {
         updateData.description = values.description
       }
 
@@ -86,7 +84,7 @@ export default function TagsSection() {
           data: updateData,
         })
       }
-      
+
       setIsEditDialogOpen(false)
       setSelectedTag(undefined)
     }
@@ -154,12 +152,13 @@ export default function TagsSection() {
       <div className='space-y-6'>
         <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between'>
           <h3 className='text-lg font-medium'>Tus etiquetas</h3>
-                
-          <Button onClick={openCreateCompleteDialog}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva etiqueta
-          </Button>
 
+          <RenderIfCan permission={PERMISSIONS.PRODUCT_TAG_CREATE}>
+            <Button onClick={openCreateCompleteDialog}>
+              <Plus className='mr-2 h-4 w-4' />
+              Nueva etiqueta
+            </Button>
+          </RenderIfCan>
         </div>
 
         {/* Barra de búsqueda */}
@@ -176,10 +175,9 @@ export default function TagsSection() {
         {/* Mostrar información de búsqueda */}
         {debouncedSearchQuery && (
           <div className='text-sm text-muted-foreground'>
-            {filteredTags.length === 0 
+            {filteredTags.length === 0
               ? `No se encontraron etiquetas que coincidan con "${debouncedSearchQuery}"`
-              : `Mostrando ${filteredTags.length} de ${tags?.length || 0} etiquetas`
-            }
+              : `Mostrando ${filteredTags.length} de ${tags?.length || 0} etiquetas`}
           </div>
         )}
 
@@ -194,8 +192,8 @@ export default function TagsSection() {
           <Alert variant='destructive' className='mb-6'>
             <AlertTitle>Error al cargar las etiquetas</AlertTitle>
             <AlertDescription>
-              No se pudieron cargar las etiquetas. Por favor, intenta
-              recargar la página.
+              No se pudieron cargar las etiquetas. Por favor, intenta recargar
+              la página.
             </AlertDescription>
           </Alert>
         )}

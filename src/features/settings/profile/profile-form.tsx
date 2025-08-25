@@ -1,24 +1,50 @@
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Form,
-  FormLabel,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState, useEffect } from 'react'
-import { ChevronDown, ChevronUp, Plus, X, Edit, Save, Clock } from 'lucide-react'
-import { ProfileService, ScheduleService } from '@/features/settings/profile/ProfileService.ts'
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Edit,
+  Plus,
+  Save,
+  X,
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { UpdateBusinessScheduleRequest, WeekDay, WorkDay } from '@/features/settings/profile/types.ts'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Form, FormLabel } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useUploadMedia } from '@/features/chats/hooks/useUploadMedia.ts'
-import { toast } from 'sonner';
-import SocialMediaSection from '@/features/settings/profile/SocialMediaSection.tsx'
 import PlanDetailsSection from '@/features/settings/profile/PlanDetailsSection.tsx'
 import ProfileHeader from '@/features/settings/profile/ProfileHeader.tsx'
+import {
+  ProfileService,
+  ScheduleService,
+} from '@/features/settings/profile/ProfileService.ts'
+import SocialMediaSection from '@/features/settings/profile/SocialMediaSection.tsx'
 import CredentialsSection from '@/features/settings/profile/credentials-section.tsx'
+import {
+  UpdateBusinessScheduleRequest,
+  WeekDay,
+  WorkDay,
+} from '@/features/settings/profile/types.ts'
 
 export default function ProfileForm() {
   const form = useForm({
@@ -33,26 +59,30 @@ export default function ProfileForm() {
 
   const [isPlanExpanded, setIsPlanExpanded] = useState(false)
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
-  const [isSocialMediaExpanded, setIsSocialMediaExpanded] = useState(false);
+  const [isSocialMediaExpanded, setIsSocialMediaExpanded] = useState(false)
   const [isEditingSchedule, setIsEditingSchedule] = useState(false)
   const [isAddingNonWorkDate, setIsAddingNonWorkDate] = useState(false)
 
   // Datos de edición de horario
-  const [editWorkDays, setEditWorkDays] = useState<Partial<Record<WeekDay, WorkDay>>>({})
-  const [editNonWorkDates, setEditNonWorkDates] = useState<Array<{
-    date: string;
-    reason: string;
-    recurrent: boolean;
-  }>>([])
+  const [editWorkDays, setEditWorkDays] = useState<
+    Partial<Record<WeekDay, WorkDay>>
+  >({})
+  const [editNonWorkDates, setEditNonWorkDates] = useState<
+    Array<{
+      date: string
+      reason: string
+      recurrent: boolean
+    }>
+  >([])
   const [newNonWorkDate, setNewNonWorkDate] = useState({
     date: '',
     reason: '',
-    recurrent: false
+    recurrent: false,
   })
 
   const queryClient = useQueryClient()
 
-  const {data: schedule } = useQuery({
+  const { data: schedule } = useQuery({
     queryKey: ['schedule'],
     queryFn: ScheduleService.getSchedule,
   })
@@ -61,19 +91,19 @@ export default function ProfileForm() {
   const updateScheduleMutation = useMutation({
     mutationFn: ScheduleService.updateSchedule,
     onSuccess: async () => {
-      queryClient.invalidateQueries({ queryKey: ['schedule'] })
-      await setIsEditingSchedule(false)
-      toast.success('Horario actualizado correctamente');
+      await queryClient.invalidateQueries({ queryKey: ['schedule'] })
+      setIsEditingSchedule(false)
+      toast.success('Horario actualizado correctamente')
     },
     onError: () => {
-      toast.error('Error al actualizar el horario');
+      toast.error('Error al actualizar el horario')
     },
   })
 
   // Inicializar datos de edición cuando se carga el horario
   useEffect(() => {
     if (schedule) {
-      setEditWorkDays({...schedule.weeklyWorkDays})
+      setEditWorkDays({ ...schedule.weeklyWorkDays })
       setEditNonWorkDates([...schedule.nonWorkDates])
     }
   }, [schedule])
@@ -84,25 +114,30 @@ export default function ProfileForm() {
   }
 
   // Función para manejar cambios en los días laborables
-  const handleWorkDayChange = (day: WeekDay, field: 'startAt' | 'endAt', hours: number, minutes: number) => {
+  const handleWorkDayChange = (
+    day: WeekDay,
+    field: 'startAt' | 'endAt',
+    hours: number,
+    minutes: number
+  ) => {
     const minutes_total = timeToMinutes(hours, minutes)
 
-    setEditWorkDays(prev => {
+    setEditWorkDays((prev) => {
       const current = prev[day] || { startAt: 540, endAt: 1080 }
       return {
         ...prev,
         [day]: {
           ...current,
-          [field]: minutes_total
-        }
+          [field]: minutes_total,
+        },
       }
     })
   }
 
   // Función para agregar o quitar un día de trabajo
   const toggleWorkDay = (day: WeekDay, active: boolean) => {
-    setEditWorkDays(prev => {
-      const newWorkDays = {...prev}
+    setEditWorkDays((prev) => {
+      const newWorkDays = { ...prev }
       if (active) {
         newWorkDays[day] = { startAt: 540, endAt: 1080 } // 9:00 AM - 6:00 PM por defecto
       } else {
@@ -115,11 +150,11 @@ export default function ProfileForm() {
   // Función para añadir una nueva fecha no laborable
   const addNonWorkDate = () => {
     if (newNonWorkDate.date && newNonWorkDate.reason) {
-      setEditNonWorkDates(prev => [...prev, {...newNonWorkDate}])
+      setEditNonWorkDates((prev) => [...prev, { ...newNonWorkDate }])
       setNewNonWorkDate({
         date: '',
         reason: '',
-        recurrent: false
+        recurrent: false,
       })
       setIsAddingNonWorkDate(false)
     }
@@ -127,57 +162,57 @@ export default function ProfileForm() {
 
   // Función para eliminar una fecha no laborable
   const removeNonWorkDate = (index: number) => {
-    setEditNonWorkDates(prev => prev.filter((_, i) => i !== index))
+    setEditNonWorkDates((prev) => prev.filter((_, i) => i !== index))
   }
 
   // Función para guardar los cambios del horario
   const saveScheduleChanges = async () => {
     const updateData: UpdateBusinessScheduleRequest = {
       weeklyWorkDays: editWorkDays,
-      nonWorkDates: editNonWorkDates
+      nonWorkDates: editNonWorkDates,
     }
 
     await updateScheduleMutation.mutateAsync(updateData)
   }
 
   // Hook para manejar la carga de imágenes
-  const { uploadFile, isUploading } = useUploadMedia();
+  const { uploadFile, isUploading } = useUploadMedia()
 
   // Estado para controlar la edición del perfil
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
 
   // Mutación para actualizar el perfil
   const updateProfileMutation = useMutation({
     mutationFn: ProfileService.updateProfile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['business'] });
-      setIsEditingProfile(false); // Salir del modo edición después de guardar
-      toast.success('Perfil actualizado correctamente'); // Mensaje de éxito
+      queryClient.invalidateQueries({ queryKey: ['business'] })
+      setIsEditingProfile(false) // Salir del modo edición después de guardar
+      toast.success('Perfil actualizado correctamente') // Mensaje de éxito
     },
     onError: () => {
-      toast.error('Error al actualizar el perfil'); // Mensaje de error (opcional)
+      toast.error('Error al actualizar el perfil') // Mensaje de error (opcional)
     },
-  });
+  })
 
   // Función para manejar la carga de la foto de perfil
   const handleLogoUpload = async (file: File) => {
     try {
-      const url = await uploadFile(file);
-      form.setValue('logo', url); // Actualizar el valor del campo logo
+      const url = await uploadFile(file)
+      form.setValue('logo', url) // Actualizar el valor del campo logo
     } catch (error) {
-      console.error('Error al cargar la imagen:', error);
+      console.error('Error al cargar la imagen:', error)
     }
-  };
+  }
 
   // Función para guardar cambios del perfil
   const saveProfileChanges = async () => {
-    const updatedData = form.getValues();
-    await updateProfileMutation.mutateAsync(updatedData);
-  };
+    const updatedData = form.getValues()
+    await updateProfileMutation.mutateAsync(updatedData)
+  }
 
   return (
     <Form {...form}>
-      <div className="space-y-8">
+      <div className='space-y-8'>
         <ProfileHeader
           user={user}
           isEditingProfile={isEditingProfile}
@@ -189,40 +224,41 @@ export default function ProfileForm() {
         />
 
         {/* Business Schedule Section */}
-        <div className="space-y-4">
+        <div className='space-y-4'>
           {/* Header with toggle button and edit button */}
-          <div className="flex items-center justify-between cursor-pointer">
+          <div className='flex items-center justify-between cursor-pointer'>
             <div
-              className="flex items-center space-x-2"
+              className='flex items-center space-x-2'
               onClick={() => setIsScheduleExpanded(!isScheduleExpanded)}
             >
-              <h3 className="text-lg font-medium">Horario de Trabajo</h3>
-              {isScheduleExpanded ?
-                <ChevronUp className="h-5 w-5 text-gray-500" /> :
-                <ChevronDown className="h-5 w-5 text-gray-500" />
-              }
+              <h3 className='text-lg font-medium'>Horario de Trabajo</h3>
+              {isScheduleExpanded ? (
+                <ChevronUp className='h-5 w-5 text-gray-500' />
+              ) : (
+                <ChevronDown className='h-5 w-5 text-gray-500' />
+              )}
             </div>
-            {isScheduleExpanded && (
-              isEditingSchedule ? (
-                <div className="flex space-x-2">
+            {isScheduleExpanded &&
+              (isEditingSchedule ? (
+                <div className='flex space-x-2'>
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant='outline'
+                    size='sm'
                     onClick={() => {
                       // Resetear al estado original y cancelar edición
                       if (schedule) {
-                        setEditWorkDays({...schedule.weeklyWorkDays})
+                        setEditWorkDays({ ...schedule.weeklyWorkDays })
                         setEditNonWorkDates([...schedule.nonWorkDates])
                       }
                       setIsEditingSchedule(false)
                       setIsAddingNonWorkDate(false)
                     }}
                   >
-                    <X className="h-4 w-4 mr-1" /> Cancelar
+                    <X className='h-4 w-4 mr-1' /> Cancelar
                   </Button>
                   <Button
-                    variant="default"
-                    size="sm"
+                    variant='default'
+                    size='sm'
                     onClick={saveScheduleChanges}
                     disabled={updateScheduleMutation.isPending}
                   >
@@ -230,42 +266,59 @@ export default function ProfileForm() {
                       <span>Guardando...</span>
                     ) : (
                       <>
-                        <Save className="h-4 w-4 mr-1" /> Guardar
+                        <Save className='h-4 w-4 mr-1' /> Guardar
                       </>
                     )}
                   </Button>
                 </div>
               ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditingSchedule(true)}
-                >
-                  <Edit className="h-4 w-4 mr-1" /> Editar
-                </Button>
-              )
-            )}
+                <RenderIfCan permission={PERMISSIONS.BUSINESS_UPDATE}>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setIsEditingSchedule(true)}
+                  >
+                    <Edit className='h-4 w-4 mr-1' /> Editar
+                  </Button>
+                </RenderIfCan>
+              ))}
           </div>
 
           {isScheduleExpanded && (
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {/* Work Days */}
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <FormLabel>Días laborables</FormLabel>
                 {isEditingSchedule ? (
-                  <div className="space-y-4">
+                  <div className='space-y-4'>
                     {/* Editable work days */}
-                    {(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as WeekDay[]).map((day) => {
+                    {(
+                      [
+                        'MONDAY',
+                        'TUESDAY',
+                        'WEDNESDAY',
+                        'THURSDAY',
+                        'FRIDAY',
+                        'SATURDAY',
+                        'SUNDAY',
+                      ] as WeekDay[]
+                    ).map((day) => {
                       const isWorkDay = Boolean(editWorkDays[day])
-                      const workDay = editWorkDays[day] || { startAt: 540, endAt: 1080 }
+                      const workDay = editWorkDays[day] || {
+                        startAt: 540,
+                        endAt: 1080,
+                      }
                       const startHours = Math.floor(workDay.startAt / 60)
                       const startMinutes = workDay.startAt % 60
                       const endHours = Math.floor(workDay.endAt / 60)
                       const endMinutes = workDay.endAt % 60
 
                       return (
-                        <div key={day} className="flex items-start space-x-3 border p-3 rounded-md">
-                          <div className="flex items-start space-x-2">
+                        <div
+                          key={day}
+                          className='flex items-start space-x-3 border p-3 rounded-md'
+                        >
+                          <div className='flex items-start space-x-2'>
                             <Checkbox
                               id={`workday-${day}`}
                               checked={isWorkDay}
@@ -273,10 +326,10 @@ export default function ProfileForm() {
                                 toggleWorkDay(day, checked as boolean)
                               }}
                             />
-                            <div className="grid gap-1.5 leading-none">
+                            <div className='grid gap-1.5 leading-none'>
                               <label
                                 htmlFor={`workday-${day}`}
-                                className="font-medium text-sm"
+                                className='font-medium text-sm'
                               >
                                 {formatDay(day)}
                               </label>
@@ -284,22 +337,30 @@ export default function ProfileForm() {
                           </div>
 
                           {isWorkDay && (
-                            <div className="flex flex-1 items-center space-x-2">
-                              <div className="flex items-center">
-                                <Clock className="h-4 w-4 mr-1 text-gray-500" />
-                                <div className="flex items-center space-x-1">
+                            <div className='flex flex-1 items-center space-x-2'>
+                              <div className='flex items-center'>
+                                <Clock className='h-4 w-4 mr-1 text-gray-500' />
+                                <div className='flex items-center space-x-1'>
                                   <Select
                                     value={startHours.toString()}
                                     onValueChange={(value) => {
-                                      handleWorkDayChange(day, 'startAt', parseInt(value), startMinutes)
+                                      handleWorkDayChange(
+                                        day,
+                                        'startAt',
+                                        parseInt(value),
+                                        startMinutes
+                                      )
                                     }}
                                   >
-                                    <SelectTrigger className="w-16">
-                                      <SelectValue placeholder="Hora" />
+                                    <SelectTrigger className='w-16'>
+                                      <SelectValue placeholder='Hora' />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {Array.from({length: 24}, (_, i) => (
-                                        <SelectItem key={i} value={i.toString()}>
+                                      {Array.from({ length: 24 }, (_, i) => (
+                                        <SelectItem
+                                          key={i}
+                                          value={i.toString()}
+                                        >
                                           {i.toString().padStart(2, '0')}
                                         </SelectItem>
                                       ))}
@@ -309,15 +370,23 @@ export default function ProfileForm() {
                                   <Select
                                     value={startMinutes.toString()}
                                     onValueChange={(value) => {
-                                      handleWorkDayChange(day, 'startAt', startHours, parseInt(value))
+                                      handleWorkDayChange(
+                                        day,
+                                        'startAt',
+                                        startHours,
+                                        parseInt(value)
+                                      )
                                     }}
                                   >
-                                    <SelectTrigger className="w-16">
-                                      <SelectValue placeholder="Min" />
+                                    <SelectTrigger className='w-16'>
+                                      <SelectValue placeholder='Min' />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {[0, 15, 30, 45].map((min) => (
-                                        <SelectItem key={min} value={min.toString()}>
+                                        <SelectItem
+                                          key={min}
+                                          value={min.toString()}
+                                        >
                                           {min.toString().padStart(2, '0')}
                                         </SelectItem>
                                       ))}
@@ -326,21 +395,29 @@ export default function ProfileForm() {
                                 </div>
                               </div>
                               <span>a</span>
-                              <div className="flex items-center">
-                                <Clock className="h-4 w-4 mr-1 text-gray-500" />
-                                <div className="flex items-center space-x-1">
+                              <div className='flex items-center'>
+                                <Clock className='h-4 w-4 mr-1 text-gray-500' />
+                                <div className='flex items-center space-x-1'>
                                   <Select
                                     value={endHours.toString()}
                                     onValueChange={(value) => {
-                                      handleWorkDayChange(day, 'endAt', parseInt(value), endMinutes)
+                                      handleWorkDayChange(
+                                        day,
+                                        'endAt',
+                                        parseInt(value),
+                                        endMinutes
+                                      )
                                     }}
                                   >
-                                    <SelectTrigger className="w-16">
-                                      <SelectValue placeholder="Hora" />
+                                    <SelectTrigger className='w-16'>
+                                      <SelectValue placeholder='Hora' />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {Array.from({length: 24}, (_, i) => (
-                                        <SelectItem key={i} value={i.toString()}>
+                                      {Array.from({ length: 24 }, (_, i) => (
+                                        <SelectItem
+                                          key={i}
+                                          value={i.toString()}
+                                        >
                                           {i.toString().padStart(2, '0')}
                                         </SelectItem>
                                       ))}
@@ -350,15 +427,23 @@ export default function ProfileForm() {
                                   <Select
                                     value={endMinutes.toString()}
                                     onValueChange={(value) => {
-                                      handleWorkDayChange(day, 'endAt', endHours, parseInt(value))
+                                      handleWorkDayChange(
+                                        day,
+                                        'endAt',
+                                        endHours,
+                                        parseInt(value)
+                                      )
                                     }}
                                   >
-                                    <SelectTrigger className="w-16">
-                                      <SelectValue placeholder="Min" />
+                                    <SelectTrigger className='w-16'>
+                                      <SelectValue placeholder='Min' />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {[0, 15, 30, 45].map((min) => (
-                                        <SelectItem key={min} value={min.toString()}>
+                                        <SelectItem
+                                          key={min}
+                                          value={min.toString()}
+                                        >
                                           {min.toString().padStart(2, '0')}
                                         </SelectItem>
                                       ))}
@@ -373,79 +458,109 @@ export default function ProfileForm() {
                     })}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {schedule && Object.entries(schedule.weeklyWorkDays).map(([day, hours]) => (
-                      <div key={day} className="border p-3 rounded-md">
-                        <p className="font-medium">{formatDay(day)}</p>
-                        <p className="text-sm text-gray-600">
-                          {formatTime(hours.startAt)} - {formatTime(hours.endAt)}
-                        </p>
-                      </div>
-                    ))}
-                    {(!schedule || Object.keys(schedule.weeklyWorkDays).length === 0) && (
-                      <p className="text-sm text-gray-500">No hay días laborables configurados</p>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'>
+                    {schedule &&
+                      Object.entries(schedule.weeklyWorkDays).map(
+                        ([day, hours]) => (
+                          <div key={day} className='border p-3 rounded-md'>
+                            <p className='font-medium'>{formatDay(day)}</p>
+                            <p className='text-sm text-gray-600'>
+                              {formatTime(hours.startAt)} -{' '}
+                              {formatTime(hours.endAt)}
+                            </p>
+                          </div>
+                        )
+                      )}
+                    {(!schedule ||
+                      Object.keys(schedule.weeklyWorkDays).length === 0) && (
+                      <p className='text-sm text-gray-500'>
+                        No hay días laborables configurados
+                      </p>
                     )}
                   </div>
                 )}
               </div>
 
               {/* Non-Working Days */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between'>
                   <FormLabel>Días no laborables</FormLabel>
                   {isEditingSchedule && (
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant='outline'
+                      size='sm'
                       onClick={() => setIsAddingNonWorkDate(true)}
                     >
-                      <Plus className="h-4 w-4 mr-1" /> Agregar
+                      <Plus className='h-4 w-4 mr-1' /> Agregar
                     </Button>
                   )}
                 </div>
 
                 {isEditingSchedule ? (
-                  <div className="space-y-3">
+                  <div className='space-y-3'>
                     {editNonWorkDates.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                         {editNonWorkDates.map((nonWorkDate, index) => (
-                          <div key={index} className="border p-3 rounded-md flex justify-between items-start">
+                          <div
+                            key={index}
+                            className='border p-3 rounded-md flex justify-between items-start'
+                          >
                             <div>
-                              <p className="font-medium">{new Date(nonWorkDate.date).toLocaleDateString()}</p>
-                              <p className="text-sm text-gray-600">{nonWorkDate.reason}</p>
+                              <p className='font-medium'>
+                                {new Date(
+                                  nonWorkDate.date
+                                ).toLocaleDateString()}
+                              </p>
+                              <p className='text-sm text-gray-600'>
+                                {nonWorkDate.reason}
+                              </p>
                               {nonWorkDate.recurrent && (
-                                <p className="text-xs text-blue-600">Recurrente cada año</p>
+                                <p className='text-xs text-blue-600'>
+                                  Recurrente cada año
+                                </p>
                               )}
                             </div>
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-500"
+                              variant='ghost'
+                              size='icon'
+                              className='h-8 w-8 text-red-500'
                               onClick={() => removeNonWorkDate(index)}
                             >
-                              <X className="h-4 w-4" />
+                              <X className='h-4 w-4' />
                             </Button>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">No hay días no laborables configurados</p>
+                      <p className='text-sm text-gray-500'>
+                        No hay días no laborables configurados
+                      </p>
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {schedule && schedule.nonWorkDates && schedule.nonWorkDates.length > 0 ? (
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                    {schedule &&
+                    schedule.nonWorkDates &&
+                    schedule.nonWorkDates.length > 0 ? (
                       schedule.nonWorkDates.map((nonWorkDate, index) => (
-                        <div key={index} className="border p-3 rounded-md">
-                          <p className="font-medium">{new Date(nonWorkDate.date).toLocaleDateString()}</p>
-                          <p className="text-sm text-gray-600">{nonWorkDate.reason}</p>
+                        <div key={index} className='border p-3 rounded-md'>
+                          <p className='font-medium'>
+                            {new Date(nonWorkDate.date).toLocaleDateString()}
+                          </p>
+                          <p className='text-sm text-gray-600'>
+                            {nonWorkDate.reason}
+                          </p>
                           {nonWorkDate.recurrent && (
-                            <p className="text-xs text-blue-600">Recurrente cada año</p>
+                            <p className='text-xs text-blue-600'>
+                              Recurrente cada año
+                            </p>
                           )}
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500">No hay días no laborables configurados</p>
+                      <p className='text-sm text-gray-500'>
+                        No hay días no laborables configurados
+                      </p>
                     )}
                   </div>
                 )}
@@ -455,48 +570,67 @@ export default function ProfileForm() {
         </div>
 
         {/* Diálogo para añadir día no laborable */}
-        <Dialog open={isAddingNonWorkDate} onOpenChange={setIsAddingNonWorkDate}>
+        <Dialog
+          open={isAddingNonWorkDate}
+          onOpenChange={setIsAddingNonWorkDate}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Agregar día no laborable</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <FormLabel htmlFor="non-work-date">Fecha</FormLabel>
+            <div className='grid gap-4 py-4'>
+              <div className='grid gap-2'>
+                <FormLabel htmlFor='non-work-date'>Fecha</FormLabel>
                 <Input
-                  id="non-work-date"
-                  type="date"
+                  id='non-work-date'
+                  type='date'
                   value={newNonWorkDate.date}
-                  onChange={(e) => setNewNonWorkDate({...newNonWorkDate, date: e.target.value})}
+                  onChange={(e) =>
+                    setNewNonWorkDate({
+                      ...newNonWorkDate,
+                      date: e.target.value,
+                    })
+                  }
                 />
               </div>
-              <div className="grid gap-2">
-                <FormLabel htmlFor="non-work-reason">Motivo</FormLabel>
+              <div className='grid gap-2'>
+                <FormLabel htmlFor='non-work-reason'>Motivo</FormLabel>
                 <Input
-                  id="non-work-reason"
+                  id='non-work-reason'
                   value={newNonWorkDate.reason}
-                  onChange={(e) => setNewNonWorkDate({...newNonWorkDate, reason: e.target.value})}
-                  placeholder="Ej: Navidad, Día festivo, etc."
+                  onChange={(e) =>
+                    setNewNonWorkDate({
+                      ...newNonWorkDate,
+                      reason: e.target.value,
+                    })
+                  }
+                  placeholder='Ej: Navidad, Día festivo, etc.'
                 />
               </div>
-              <div className="flex items-center space-x-2">
+              <div className='flex items-center space-x-2'>
                 <Checkbox
-                  id="non-work-recurrent"
+                  id='non-work-recurrent'
                   checked={newNonWorkDate.recurrent}
                   onCheckedChange={(checked) =>
-                    setNewNonWorkDate({...newNonWorkDate, recurrent: checked as boolean})
+                    setNewNonWorkDate({
+                      ...newNonWorkDate,
+                      recurrent: checked as boolean,
+                    })
                   }
                 />
                 <label
-                  htmlFor="non-work-recurrent"
-                  className="text-sm font-medium leading-none"
+                  htmlFor='non-work-recurrent'
+                  className='text-sm font-medium leading-none'
                 >
                   Repetir cada año
                 </label>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddingNonWorkDate(false)}>
+              <Button
+                variant='outline'
+                onClick={() => setIsAddingNonWorkDate(false)}
+              >
                 Cancelar
               </Button>
               <Button
@@ -508,8 +642,6 @@ export default function ProfileForm() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-
 
         {/* Sección de Detalles del Plan */}
         <PlanDetailsSection
@@ -535,13 +667,13 @@ export default function ProfileForm() {
 // Función para formatear el día de la semana
 function formatDay(day: string): string {
   const dayMap: Record<string, string> = {
-    'MONDAY': 'Lunes',
-    'TUESDAY': 'Martes',
-    'WEDNESDAY': 'Miércoles',
-    'THURSDAY': 'Jueves',
-    'FRIDAY': 'Viernes',
-    'SATURDAY': 'Sábado',
-    'SUNDAY': 'Domingo',
+    MONDAY: 'Lunes',
+    TUESDAY: 'Martes',
+    WEDNESDAY: 'Miércoles',
+    THURSDAY: 'Jueves',
+    FRIDAY: 'Viernes',
+    SATURDAY: 'Sábado',
+    SUNDAY: 'Domingo',
   }
   return dayMap[day] || day
 }

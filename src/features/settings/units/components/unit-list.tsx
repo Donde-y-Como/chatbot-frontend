@@ -1,8 +1,10 @@
-import { Unit } from '../types'
+import { Edit, Trash2 } from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Edit, Trash2, Eye } from 'lucide-react'
+import { Unit } from '../types'
 
 interface UnitListProps {
   units: Unit[]
@@ -45,23 +47,27 @@ export function UnitList({ units, onEdit, onDelete, onView }: UnitListProps) {
                 <Eye className='h-4 w-4 mr-1' />
                 Ver
               </Button> */}
-              <Button
-                variant='outline' 
-                size='sm'
-                onClick={() => onEdit(unit)}
-                className='flex-1'
-              >
-                <Edit className='h-4 w-4 mr-1' />
-                Editar
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => onDelete(unit)}
-                className='text-destructive hover:text-destructive'
-              >
-                <Trash2 className='h-4 w-4' />
-              </Button>
+              <RenderIfCan permission={PERMISSIONS.UNIT_UPDATE}>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => onEdit(unit)}
+                  className='flex-1'
+                >
+                  <Edit className='h-4 w-4 mr-1' />
+                  Editar
+                </Button>
+              </RenderIfCan>
+              <RenderIfCan permission={PERMISSIONS.UNIT_DELETE}>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => onDelete(unit)}
+                  className='text-destructive hover:text-destructive'
+                >
+                  <Trash2 className='h-4 w-4' />
+                </Button>
+              </RenderIfCan>
             </div>
           </CardContent>
         </Card>

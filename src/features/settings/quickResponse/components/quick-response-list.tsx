@@ -1,4 +1,6 @@
 import { IconEdit, IconEye, IconTrash } from '@tabler/icons-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -70,22 +72,26 @@ export function QuickResponseList({
                   >
                     <IconEye size={14} />
                   </Button>
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    onClick={() => onEdit(quickResponse)}
-                    title='Editar'
-                  >
-                    <IconEdit size={14} />
-                  </Button>
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    onClick={() => onDelete(quickResponse)}
-                    title='Eliminar'
-                  >
-                    <IconTrash size={14} />
-                  </Button>
+                  <RenderIfCan permission={PERMISSIONS.QUICK_REPLY_UPDATE}>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      onClick={() => onEdit(quickResponse)}
+                      title='Editar'
+                    >
+                      <IconEdit size={14} />
+                    </Button>
+                  </RenderIfCan>
+                  <RenderIfCan permission={PERMISSIONS.QUICK_REPLY_DELETE}>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      onClick={() => onDelete(quickResponse)}
+                      title='Eliminar'
+                    >
+                      <IconTrash size={14} />
+                    </Button>
+                  </RenderIfCan>
                 </div>
               </TableCell>
             </TableRow>

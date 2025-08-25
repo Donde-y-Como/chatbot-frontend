@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Bell, BellOff, Loader2, Plus } from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { useGetMyBusiness } from '@/hooks/useAuth.ts'
 import { useToggleNotifications } from '@/hooks/useNotifications'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -97,42 +99,47 @@ export default function QuickResponsesSection() {
     >
       <div className='space-y-6'>
         {/* Sección de notificaciones */}
-        <div className='border rounded-lg p-4 bg-card'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center space-x-3'>
-              {user?.notificationsEnabled ? (
-                <Bell className='h-5 w-5 text-green-600' />
-              ) : (
-                <BellOff className='h-5 w-5 text-red-600' />
-              )}
-              <div>
-                <Label
-                  htmlFor='notifications-toggle'
-                  className='text-sm font-medium'
-                >
-                  Envío de mensajes automáticos
-                </Label>
-                <p className='text-sm text-muted-foreground'>
-                  {user?.notificationsEnabled
-                    ? 'Los mensajes de citas se envían automáticamente'
-                    : 'Los mensajes de citas están deshabilitados'}
-                </p>
+        <RenderIfCan permission={PERMISSIONS.BUSINESS_UPDATE}>
+          <div className='border rounded-lg p-4 bg-card'>
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center space-x-3'>
+                {user?.notificationsEnabled ? (
+                  <Bell className='h-5 w-5 text-green-600' />
+                ) : (
+                  <BellOff className='h-5 w-5 text-red-600' />
+                )}
+                <div>
+                  <Label
+                    htmlFor='notifications-toggle'
+                    className='text-sm font-medium'
+                  >
+                    Envío de mensajes automáticos
+                  </Label>
+                  <p className='text-sm text-muted-foreground'>
+                    {user?.notificationsEnabled
+                      ? 'Los mensajes de citas se envían automáticamente'
+                      : 'Los mensajes de citas están deshabilitados'}
+                  </p>
+                </div>
               </div>
+              <Switch
+                id='notifications-toggle'
+                checked={user?.notificationsEnabled ?? true}
+                onCheckedChange={handleToggleNotifications}
+                disabled={isTogglingNotifications}
+              />
             </div>
-            <Switch
-              id='notifications-toggle'
-              checked={user?.notificationsEnabled ?? true}
-              onCheckedChange={handleToggleNotifications}
-              disabled={isTogglingNotifications}
-            />
           </div>
-        </div>
+        </RenderIfCan>
+
         <div className='flex justify-between items-center'>
           <h3 className='text-lg font-medium'>Tus respuestas rápidas</h3>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className='mr-2 h-4 w-4' />
-            Agregar respuesta
-          </Button>
+          <RenderIfCan permission={PERMISSIONS.QUICK_REPLY_CREATE}>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className='mr-2 h-4 w-4' />
+              Agregar respuesta
+            </Button>
+          </RenderIfCan>
         </div>
 
         {isLoadingQuickResponses && (

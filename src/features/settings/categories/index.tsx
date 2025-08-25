@@ -1,30 +1,37 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { useDebounce } from '@uidotdev/usehooks'
 import { Loader2, Plus, Search } from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useDebounce } from '@uidotdev/usehooks'
 import ContentSection from '../components/content-section'
-import { CategoryList } from './components/category-list'
 import { CategoryDialog } from './components/category-dialog'
-import { ViewCategoryDialog } from './components/view-category-dialog'
+import { CategoryList } from './components/category-list'
 import { DeleteCategoryDialog } from './components/delete-category-dialog'
+import { ViewCategoryDialog } from './components/view-category-dialog'
 import {
-  useGetCategories,
   useCreateCategory,
-  useUpdateCategory,
   useDeleteCategory,
+  useGetCategories,
+  useUpdateCategory,
 } from './hooks/useCategories'
 import { Category, CategoryFormValues } from './types'
+import { RenderIfCan } from '@/lib/Can.tsx'
 
 export default function CategoriesSection() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isCreateSubcategoryDialogOpen, setIsCreateSubcategoryDialogOpen] = useState(false)
+  const [isCreateSubcategoryDialogOpen, setIsCreateSubcategoryDialogOpen] =
+    useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<Category | undefined>(undefined)
-  const [selectedParentCategory, setSelectedParentCategory] = useState<Category | undefined>(undefined)
+  const [selectedCategory, setSelectedCategory] = useState<
+    Category | undefined
+  >(undefined)
+  const [selectedParentCategory, setSelectedParentCategory] = useState<
+    Category | undefined
+  >(undefined)
   const [searchQuery, setSearchQuery] = useState('')
 
   // Debounce de la búsqueda
@@ -36,50 +43,60 @@ export default function CategoriesSection() {
     error: categoriesError,
   } = useGetCategories()
 
-  const { mutateAsync: createCategory, isPending: isCreating } = useCreateCategory()
-  const { mutateAsync: updateCategory, isPending: isUpdating } = useUpdateCategory()
-  const { mutateAsync: deleteCategory, isPending: isDeleting } = useDeleteCategory()
+  const { mutateAsync: createCategory, isPending: isCreating } =
+    useCreateCategory()
+  const { mutateAsync: updateCategory, isPending: isUpdating } =
+    useUpdateCategory()
+  const { mutateAsync: deleteCategory, isPending: isDeleting } =
+    useDeleteCategory()
 
   // Función para filtrar categorías basándose en la búsqueda
   const filteredCategories = useMemo(() => {
     if (!categories) return []
-    
+
     if (!debouncedSearchQuery.trim()) {
       return categories
     }
 
     const query = debouncedSearchQuery.toLowerCase().trim()
-    
+
     // Filtrar tanto categorías padre como subcategorías
-    const filtered = categories.filter(category => {
-      // Buscar en categoría padre
-      const parentMatches = category.name.toLowerCase().includes(query) ||
-                           category.description.toLowerCase().includes(query)
-      
-      // Buscar en subcategorías
-      const subcategoryMatches = category.subcategories?.some(sub =>
-        sub.name.toLowerCase().includes(query) ||
-        sub.description.toLowerCase().includes(query)
-      )
-      
-      return parentMatches || subcategoryMatches
-    }).map(category => {
-      // Si la categoría padre no coincide pero sus subcategorías sí,
-      // filtrar solo las subcategorías que coinciden
-      if (!category.name.toLowerCase().includes(query) && 
-          !category.description.toLowerCase().includes(query) &&
-          category.subcategories) {
-        return {
-          ...category,
-          subcategories: category.subcategories.filter(sub =>
+    const filtered = categories
+      .filter((category) => {
+        // Buscar en categoría padre
+        const parentMatches =
+          category.name.toLowerCase().includes(query) ||
+          category.description.toLowerCase().includes(query)
+
+        // Buscar en subcategorías
+        const subcategoryMatches = category.subcategories?.some(
+          (sub) =>
             sub.name.toLowerCase().includes(query) ||
             sub.description.toLowerCase().includes(query)
-          )
+        )
+
+        return parentMatches || subcategoryMatches
+      })
+      .map((category) => {
+        // Si la categoría padre no coincide pero sus subcategorías sí,
+        // filtrar solo las subcategorías que coinciden
+        if (
+          !category.name.toLowerCase().includes(query) &&
+          !category.description.toLowerCase().includes(query) &&
+          category.subcategories
+        ) {
+          return {
+            ...category,
+            subcategories: category.subcategories.filter(
+              (sub) =>
+                sub.name.toLowerCase().includes(query) ||
+                sub.description.toLowerCase().includes(query)
+            ),
+          }
         }
-      }
-      return category
-    })
-    
+        return category
+      })
+
     return filtered
   }, [categories, debouncedSearchQuery])
 
@@ -108,11 +125,11 @@ export default function CategoriesSection() {
     if (selectedCategory) {
       // Solo enviar los campos que han cambiado
       const updateData: { name?: string; description?: string } = {}
-      
+
       if (values.name !== selectedCategory.name) {
         updateData.name = values.name
       }
-      
+
       if (values.description !== selectedCategory.description) {
         updateData.description = values.description
       }
@@ -123,7 +140,7 @@ export default function CategoriesSection() {
           data: updateData,
         })
       }
-      
+
       setIsEditDialogOpen(false)
       setSelectedCategory(undefined)
     }
@@ -165,10 +182,12 @@ export default function CategoriesSection() {
       <div className='space-y-6'>
         <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between'>
           <h3 className='text-lg font-medium'>Tus categorías</h3>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className='mr-2 h-4 w-4' />
-            Nueva categoría
-          </Button>
+          <RenderIfCan permission={PERMISSIONS.CATEGORY_CREATE}>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className='mr-2 h-4 w-4' />
+              Nueva categoría
+            </Button>
+          </RenderIfCan>
         </div>
 
         {/* Barra de búsqueda */}
@@ -185,10 +204,9 @@ export default function CategoriesSection() {
         {/* Mostrar información de búsqueda */}
         {debouncedSearchQuery && (
           <div className='text-sm text-muted-foreground'>
-            {filteredCount === 0 
+            {filteredCount === 0
               ? `No se encontraron categorías que coincidan con "${debouncedSearchQuery}"`
-              : `Mostrando ${filteredCount} de ${totalCount} elementos`
-            }
+              : `Mostrando ${filteredCount} de ${totalCount} elementos`}
           </div>
         )}
 
@@ -203,8 +221,8 @@ export default function CategoriesSection() {
           <Alert variant='destructive' className='mb-6'>
             <AlertTitle>Error al cargar las categorías</AlertTitle>
             <AlertDescription>
-              No se pudieron cargar las categorías. Por favor, intenta
-              recargar la página.
+              No se pudieron cargar las categorías. Por favor, intenta recargar
+              la página.
             </AlertDescription>
           </Alert>
         )}

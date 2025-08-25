@@ -1,4 +1,6 @@
-import { useGetBusiness, useGetUser } from '@/components/layout/hooks/useGetUser.ts'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
+import { useGetBusiness } from '@/components/layout/hooks/useGetUser.ts'
 import { CreateWhatsAppInstance } from '@/features/settings/whatsappWeb/CreateWhatsAppInstance.tsx'
 import ContentSection from '../components/content-section'
 import { ConnectWhatsApp } from './ConnectWhatsApp'
@@ -20,14 +22,22 @@ export default function SettingsWhatsappWeb() {
         title='Whatsapp Web'
         desc='Para conectar tu cuenta de Whatsapp Web, primero debes tener un número de teléfono registrado.'
       >
-        <CreateWhatsAppInstance />
+        <RenderIfCan permission={PERMISSIONS.WHATSAPP_WEB_CONNECT}>
+          <CreateWhatsAppInstance />
+        </RenderIfCan>
       </ContentSection>
     )
   }
 
   return (
     <ContentSection title='Sesion de Whatsapp Web' desc='Gestiona tu conexion'>
-      {isWhatsAppConnected ? <ViewWhatsApp /> : <ConnectWhatsApp />}
+      {isWhatsAppConnected ? (
+        <ViewWhatsApp />
+      ) : (
+        <RenderIfCan permission={PERMISSIONS.WHATSAPP_WEB_CONNECT}>
+          <ConnectWhatsApp />
+        </RenderIfCan>
+      )}
     </ContentSection>
   )
 }

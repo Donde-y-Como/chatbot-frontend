@@ -1,11 +1,14 @@
 import { ReactNode } from 'react'
-import { useHasPermission } from '@/hooks/useAuth.ts'
 import { Permission } from '@/api/permissions.ts'
+import { useHasPermission } from '@/hooks/useAuth.ts'
 
-export function Can(
-  permission: Permission,
+export function Can({
+  permission,
+  children,
+}: {
+  permission: Permission
   children: (allowed: boolean) => ReactNode
-) {
+}) {
   const allowed = useHasPermission(permission)
 
   return <>{children(allowed)}</>

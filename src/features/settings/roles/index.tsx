@@ -1,21 +1,23 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { useDebounce } from '@uidotdev/usehooks'
 import { Loader2, Plus, Search } from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
+import {
+  useCreateRole,
+  useDeleteRole,
+  useGetRoles,
+  useUpdateRole,
+} from '@/hooks/useAuth'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useDebounce } from '@uidotdev/usehooks'
+import { CreateRoleData, Role, UpdateRoleData } from '@/features/auth/types'
 import ContentSection from '../components/content-section'
-import { RoleList } from './components/role-list'
-import { RoleDialog } from './components/role-dialog'
-import { ViewRoleDialog } from './components/view-role-dialog'
 import { DeleteRoleDialog } from './components/delete-role-dialog'
-import {
-  useGetRoles,
-  useCreateRole,
-  useUpdateRole,
-  useDeleteRole,
-} from '@/hooks/useAuth'
-import { Role, CreateRoleData, UpdateRoleData } from '@/features/auth/types'
+import { RoleDialog } from './components/role-dialog'
+import { RoleList } from './components/role-list'
+import { ViewRoleDialog } from './components/view-role-dialog'
 
 export default function RolesSection() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
@@ -41,16 +43,17 @@ export default function RolesSection() {
   // Filtrar roles basándose en la búsqueda
   const filteredRoles = useMemo(() => {
     if (!roles) return []
-    
+
     if (!debouncedSearchQuery.trim()) {
       return roles
     }
 
     const query = debouncedSearchQuery.toLowerCase().trim()
-    
-    return roles.filter(role => 
-      role.name.toLowerCase().includes(query) ||
-      role.description.toLowerCase().includes(query)
+
+    return roles.filter(
+      (role) =>
+        role.name.toLowerCase().includes(query) ||
+        role.description.toLowerCase().includes(query)
     )
   }, [roles, debouncedSearchQuery])
 
@@ -65,7 +68,7 @@ export default function RolesSection() {
         roleId: selectedRole.id,
         data: values,
       })
-      
+
       setIsEditDialogOpen(false)
       setSelectedRole(undefined)
     }
@@ -106,11 +109,12 @@ export default function RolesSection() {
       <div className='space-y-6'>
         <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between'>
           <h3 className='text-lg font-medium'>Roles del sistema</h3>
-                
-          <Button onClick={openCreateDialog}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo rol
-          </Button>
+          <RenderIfCan permission={PERMISSIONS.ROLE_CREATE}>
+            <Button onClick={openCreateDialog}>
+              <Plus className='mr-2 h-4 w-4' />
+              Nuevo rol
+            </Button>
+          </RenderIfCan>
         </div>
 
         {/* Barra de búsqueda */}
@@ -127,10 +131,9 @@ export default function RolesSection() {
         {/* Mostrar información de búsqueda */}
         {debouncedSearchQuery && (
           <div className='text-sm text-muted-foreground'>
-            {filteredRoles.length === 0 
+            {filteredRoles.length === 0
               ? `No se encontraron roles que coincidan con "${debouncedSearchQuery}"`
-              : `Mostrando ${filteredRoles.length} de ${roles?.length || 0} roles`
-            }
+              : `Mostrando ${filteredRoles.length} de ${roles?.length || 0} roles`}
           </div>
         )}
 
@@ -145,8 +148,8 @@ export default function RolesSection() {
           <Alert variant='destructive' className='mb-6'>
             <AlertTitle>Error al cargar los roles</AlertTitle>
             <AlertDescription>
-              No se pudieron cargar los roles. Por favor, intenta
-              recargar la página.
+              No se pudieron cargar los roles. Por favor, intenta recargar la
+              página.
             </AlertDescription>
           </Alert>
         )}
@@ -178,8 +181,8 @@ export default function RolesSection() {
           onClose={() => setIsCreateDialogOpen(false)}
           onSubmit={handleCreate}
           isSubmitting={isCreating}
-          title="Crear nuevo rol"
-          submitLabel="Crear"
+          title='Crear nuevo rol'
+          submitLabel='Crear'
         />
 
         {/* Edit Dialog */}
@@ -192,8 +195,8 @@ export default function RolesSection() {
           onSubmit={handleUpdate}
           isSubmitting={isUpdating}
           initialData={selectedRole}
-          title="Editar rol"
-          submitLabel="Actualizar"
+          title='Editar rol'
+          submitLabel='Actualizar'
         />
 
         {/* Delete Dialog */}
