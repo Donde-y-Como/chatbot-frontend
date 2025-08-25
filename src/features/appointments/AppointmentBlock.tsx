@@ -157,8 +157,7 @@ export function AppointmentBlock({
     appointment.equipmentIds &&
     appointment.equipmentIds.length > 0
       ? equipment.filter((eq) => {
-          const isAssigned = appointment.equipmentIds?.includes(eq.id)
-          return isAssigned
+          return appointment.equipmentIds?.includes(eq.id)
         })
       : []
 
@@ -653,41 +652,45 @@ export function AppointmentBlock({
             <Button variant='secondary'>Cerrar</Button>
           </DialogClose>
 
-          {isUpcoming && appointment.status !== 'cancelada' && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant='destructive'>
-                  <Trash2 className='h-4 w-4 mr-2' />
-                  Cancelar Cita
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    ¿Estás seguro de cancelar esta cita?
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción cambiará el estado de la cita{' '}
-                    <strong>#{appointment.folio}</strong> agendada para el{' '}
-                    <strong>{shortFormattedDate}</strong> a las{' '}
-                    <strong>{formatTime(appointment.timeRange.startAt)}</strong>{' '}
-                    a <strong>"Cancelada"</strong>.
-                    <br />
-                    <br />
-                    La cita se mantendrá en el historial para referencia.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>No, mantener cita</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => cancelAppointment(appointment.id)}
-                  >
-                    Sí, cancelar cita
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+          <RenderIfCan permission={PERMISSIONS.APPOINTMENT_DELETE}>
+            {isUpcoming && appointment.status !== 'cancelada' && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant='destructive'>
+                    <Trash2 className='h-4 w-4 mr-2' />
+                    Cancelar Cita
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      ¿Estás seguro de cancelar esta cita?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción cambiará el estado de la cita{' '}
+                      <strong>#{appointment.folio}</strong> agendada para el{' '}
+                      <strong>{shortFormattedDate}</strong> a las{' '}
+                      <strong>
+                        {formatTime(appointment.timeRange.startAt)}
+                      </strong>{' '}
+                      a <strong>"Cancelada"</strong>.
+                      <br />
+                      <br />
+                      La cita se mantendrá en el historial para referencia.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>No, mantener cita</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => cancelAppointment(appointment.id)}
+                    >
+                      Sí, cancelar cita
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </RenderIfCan>
         </DialogFooter>
       </DialogContent>
     </Dialog>
