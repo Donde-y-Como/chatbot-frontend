@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { PERMISSIONS } from '@/api/permissions.ts'
 import { generateRoleOptions } from '@/lib/utils.ts'
 import { useGetRoles } from '@/hooks/useAuth.ts'
 import { TableSkeleton } from '@/components/TableSkeleton.tsx'
@@ -17,6 +18,7 @@ import {
 import { DataTableFacetedFilter } from './components/employees-table-filters.tsx'
 import EmployeesProvider from './context/employees-context.tsx'
 import { Employee } from './types.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 
 export default function Employees() {
   const { data: employees, isLoading } = useGetEmployees()
@@ -47,7 +49,9 @@ export default function Employees() {
                 Gestiona los empleados de tu negocio aqui.
               </p>
             </div>
-            <EmployeePrimaryButtons />
+            <RenderIfCan permission={PERMISSIONS.EMPLOYEE_CREATE}>
+              <EmployeePrimaryButtons />
+            </RenderIfCan>
           </div>
           <div className='-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0'>
             {employees && (
