@@ -7,6 +7,8 @@ import {
   MoreHorizontal,
   Trash2,
 } from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -62,13 +64,15 @@ export function OrderRowActions({
           Ver detalles
         </DropdownMenuItem>
         {onEdit && (
-          <DropdownMenuItem
-            onClick={() => onEdit(order)}
-            className='text-blue-600 focus:text-blue-600'
-          >
-            <Edit className='mr-2 h-4 w-4' />
-            Editar
-          </DropdownMenuItem>
+          <RenderIfCan permission={PERMISSIONS.ORDER_UPDATE}>
+            <DropdownMenuItem
+              onClick={() => onEdit(order)}
+              className='text-blue-600 focus:text-blue-600'
+            >
+              <Edit className='mr-2 h-4 w-4' />
+              Editar
+            </DropdownMenuItem>
+          </RenderIfCan>
         )}
         <DropdownMenuSeparator />
         {canReceivePayment && (
@@ -81,7 +85,7 @@ export function OrderRowActions({
           </DropdownMenuItem>
         )}
         {onDelete && (
-          <>
+          <RenderIfCan permission={PERMISSIONS.ORDER_DELETE}>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onDelete(order)}
@@ -90,7 +94,7 @@ export function OrderRowActions({
               <Trash2 className='mr-2 h-4 w-4' />
               Eliminar
             </DropdownMenuItem>
-          </>
+          </RenderIfCan>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

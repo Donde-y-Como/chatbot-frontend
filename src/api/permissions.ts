@@ -158,9 +158,7 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.EMPLOYEE_READ,
     PERMISSIONS.SERVICE_READ,
   ],
-  [PERMISSIONS.APPOINTMENT_DELETE]: [
-    PERMISSIONS.APPOINTMENT_READ,
-  ],
+  [PERMISSIONS.APPOINTMENT_DELETE]: [PERMISSIONS.APPOINTMENT_READ],
 
   // Orders need products and clients
   [PERMISSIONS.ORDER_CREATE]: [
@@ -173,9 +171,7 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.PRODUCT_READ,
     PERMISSIONS.CLIENT_READ,
   ],
-  [PERMISSIONS.ORDER_DELETE]: [
-    PERMISSIONS.ORDER_READ,
-  ],
+  [PERMISSIONS.ORDER_DELETE]: [PERMISSIONS.ORDER_READ],
 
   // Sales need products and clients
   [PERMISSIONS.SALE_CREATE]: [
@@ -188,9 +184,7 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.PRODUCT_READ,
     PERMISSIONS.CLIENT_READ,
   ],
-  [PERMISSIONS.SALE_DELETE]: [
-    PERMISSIONS.SALE_READ,
-  ],
+  [PERMISSIONS.SALE_DELETE]: [PERMISSIONS.SALE_READ],
 
   // Cart operations need products and clients
   [PERMISSIONS.CART_CREATE]: [
@@ -198,13 +192,8 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.PRODUCT_READ,
     PERMISSIONS.CLIENT_READ,
   ],
-  [PERMISSIONS.CART_UPDATE]: [
-    PERMISSIONS.CART_READ,
-    PERMISSIONS.PRODUCT_READ,
-  ],
-  [PERMISSIONS.CART_DELETE]: [
-    PERMISSIONS.CART_READ,
-  ],
+  [PERMISSIONS.CART_UPDATE]: [PERMISSIONS.CART_READ, PERMISSIONS.PRODUCT_READ],
+  [PERMISSIONS.CART_DELETE]: [PERMISSIONS.CART_READ],
 
   // Events may need employee and client access
   [PERMISSIONS.EVENT_CREATE]: [
@@ -216,9 +205,7 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.EVENT_READ,
     PERMISSIONS.EMPLOYEE_READ,
   ],
-  [PERMISSIONS.EVENT_DELETE]: [
-    PERMISSIONS.EVENT_READ,
-  ],
+  [PERMISSIONS.EVENT_DELETE]: [PERMISSIONS.EVENT_READ],
 
   // Conversations need client access
   [PERMISSIONS.CONVERSATION_CREATE]: [
@@ -229,9 +216,7 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.CONVERSATION_READ,
     PERMISSIONS.CLIENT_READ,
   ],
-  [PERMISSIONS.CONVERSATION_DELETE]: [
-    PERMISSIONS.CONVERSATION_READ,
-  ],
+  [PERMISSIONS.CONVERSATION_DELETE]: [PERMISSIONS.CONVERSATION_READ],
 
   // Products need categories and tags
   [PERMISSIONS.PRODUCT_CREATE]: [
@@ -246,9 +231,7 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.PRODUCT_TAG_READ,
     PERMISSIONS.UNIT_READ,
   ],
-  [PERMISSIONS.PRODUCT_DELETE]: [
-    PERMISSIONS.PRODUCT_READ,
-  ],
+  [PERMISSIONS.PRODUCT_DELETE]: [PERMISSIONS.PRODUCT_READ],
 
   // Services need categories
   [PERMISSIONS.SERVICE_CREATE]: [
@@ -259,20 +242,12 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.SERVICE_READ,
     PERMISSIONS.CATEGORY_READ,
   ],
-  [PERMISSIONS.SERVICE_DELETE]: [
-    PERMISSIONS.SERVICE_READ,
-  ],
+  [PERMISSIONS.SERVICE_DELETE]: [PERMISSIONS.SERVICE_READ],
 
   // Bundles need products and services
-  [PERMISSIONS.BUNDLE_CREATE]: [
-    PERMISSIONS.BUNDLE_READ,
-  ],
-  [PERMISSIONS.BUNDLE_UPDATE]: [
-    PERMISSIONS.BUNDLE_READ,
-  ],
-  [PERMISSIONS.BUNDLE_DELETE]: [
-    PERMISSIONS.BUNDLE_READ,
-  ],
+  [PERMISSIONS.BUNDLE_CREATE]: [PERMISSIONS.BUNDLE_READ],
+  [PERMISSIONS.BUNDLE_UPDATE]: [PERMISSIONS.BUNDLE_READ],
+  [PERMISSIONS.BUNDLE_DELETE]: [PERMISSIONS.BUNDLE_READ],
 
   // Consumables need units and categories
   [PERMISSIONS.CONSUMABLE_CREATE]: [
@@ -285,9 +260,7 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.UNIT_READ,
     PERMISSIONS.CATEGORY_READ,
   ],
-  [PERMISSIONS.CONSUMABLE_DELETE]: [
-    PERMISSIONS.CONSUMABLE_READ,
-  ],
+  [PERMISSIONS.CONSUMABLE_DELETE]: [PERMISSIONS.CONSUMABLE_READ],
 
   // Equipment may need categories
   [PERMISSIONS.EQUIPMENT_CREATE]: [
@@ -298,9 +271,7 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.EQUIPMENT_READ,
     PERMISSIONS.CATEGORY_READ,
   ],
-  [PERMISSIONS.EQUIPMENT_DELETE]: [
-    PERMISSIONS.EQUIPMENT_READ,
-  ],
+  [PERMISSIONS.EQUIPMENT_DELETE]: [PERMISSIONS.EQUIPMENT_READ],
 
   // Receipts need sales/orders
   [PERMISSIONS.RECEIPT_CREATE]: [
@@ -313,9 +284,7 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.SALE_READ,
     PERMISSIONS.ORDER_READ,
   ],
-  [PERMISSIONS.RECEIPT_DELETE]: [
-    PERMISSIONS.RECEIPT_READ,
-  ],
+  [PERMISSIONS.RECEIPT_DELETE]: [PERMISSIONS.RECEIPT_READ],
 
   // Employees need roles
   [PERMISSIONS.EMPLOYEE_CREATE]: [
@@ -326,9 +295,7 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.EMPLOYEE_READ,
     PERMISSIONS.ROLE_READ,
   ],
-  [PERMISSIONS.EMPLOYEE_DELETE]: [
-    PERMISSIONS.EMPLOYEE_READ,
-  ],
+  [PERMISSIONS.EMPLOYEE_DELETE]: [PERMISSIONS.EMPLOYEE_READ],
 
   // Quick replies need conversations
   [PERMISSIONS.QUICK_REPLY_CREATE]: [
@@ -339,9 +306,7 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.QUICK_REPLY_READ,
     PERMISSIONS.CONVERSATION_READ,
   ],
-  [PERMISSIONS.QUICK_REPLY_DELETE]: [
-    PERMISSIONS.QUICK_REPLY_READ,
-  ],
+  [PERMISSIONS.QUICK_REPLY_DELETE]: [PERMISSIONS.QUICK_REPLY_READ],
 
   // WhatsApp Business needs WhatsApp Web access
   [PERMISSIONS.WHATSAPP_BUSINESS_UPDATE]: [
@@ -394,36 +359,42 @@ export const PERMISSION_DEPENDENCIES: Record<Permission, Permission[]> = {
     PERMISSIONS.EMPLOYEE_READ,
     PERMISSIONS.CONSUMABLE_READ,
     PERMISSIONS.EQUIPMENT_READ,
-    PERMISSIONS.SERVICE_READ
+    PERMISSIONS.SERVICE_READ,
   ],
   [PERMISSIONS.BUSINESS_READ]: [],
-  [PERMISSIONS.CLIENT_READ]: [
-    PERMISSIONS.TAG_READ,
-  ],
+  [PERMISSIONS.CLIENT_READ]: [PERMISSIONS.TAG_READ],
   [PERMISSIONS.CONVERSATION_READ]: [
     PERMISSIONS.TAG_READ,
     PERMISSIONS.CLIENT_READ,
   ],
-  [PERMISSIONS.EMPLOYEE_READ]: [
-    PERMISSIONS.ROLE_READ,
-  ],
+  [PERMISSIONS.EMPLOYEE_READ]: [PERMISSIONS.ROLE_READ],
   [PERMISSIONS.BUNDLE_READ]: [
     PERMISSIONS.PRODUCT_TAG_READ,
     PERMISSIONS.CATEGORY_READ,
     PERMISSIONS.UNIT_READ,
     PERMISSIONS.PRODUCT_READ,
-    PERMISSIONS.SERVICE_READ
+    PERMISSIONS.SERVICE_READ,
   ],
   [PERMISSIONS.CONSUMABLE_READ]: [],
   [PERMISSIONS.EQUIPMENT_READ]: [],
   [PERMISSIONS.PRODUCT_TAG_READ]: [],
   [PERMISSIONS.UNIT_READ]: [],
   [PERMISSIONS.QUICK_REPLY_READ]: [],
-  [PERMISSIONS.EVENT_READ]: [
-
+  [PERMISSIONS.EVENT_READ]: [],
+  [PERMISSIONS.ORDER_READ]: [
+    PERMISSIONS.CLIENT_READ,
+    PERMISSIONS.PRODUCT_TAG_READ,
+    PERMISSIONS.PRODUCT_READ,
+    PERMISSIONS.RECEIPT_READ,
+    PERMISSIONS.BUNDLE_READ,
+    PERMISSIONS.SERVICE_READ,
+    PERMISSIONS.EVENT_READ,
   ],
-  [PERMISSIONS.ORDER_READ]: [],
-  [PERMISSIONS.PRODUCT_READ]: [],
+  [PERMISSIONS.PRODUCT_READ]: [
+    PERMISSIONS.PRODUCT_TAG_READ,
+    PERMISSIONS.CATEGORY_READ,
+    PERMISSIONS.UNIT_READ,
+  ],
   [PERMISSIONS.CART_READ]: [],
   [PERMISSIONS.SALE_READ]: [],
   [PERMISSIONS.SERVICE_READ]: [],
@@ -460,21 +431,23 @@ export function canRemovePermission(
   canRemove: boolean
   dependentPermissions: Permission[]
 } {
-  const withoutPermission = currentPermissions.filter(p => p !== permissionToRemove)
+  const withoutPermission = currentPermissions.filter(
+    (p) => p !== permissionToRemove
+  )
   const resolvedWithoutPermission = addPermissionsRelated(withoutPermission)
 
   // If the permission is still in resolved list, other permissions need it
   const canRemove = !resolvedWithoutPermission.includes(permissionToRemove)
 
   // Find which permissions depend on this one
-  const dependentPermissions = currentPermissions.filter(permission => {
+  const dependentPermissions = currentPermissions.filter((permission) => {
     const dependencies = getDirectDependencies(permission)
     return dependencies.includes(permissionToRemove)
   })
 
   return {
     canRemove,
-    dependentPermissions
+    dependentPermissions,
   }
 }
 
@@ -484,10 +457,12 @@ export function canRemovePermission(
  * @param manualPermissions - Permissions that were manually selected
  * @returns Array of permissions that would be auto-added due to dependencies
  */
-export function getAutoAddedPermissions(manualPermissions: Permission[]): Permission[] {
+export function getAutoAddedPermissions(
+  manualPermissions: Permission[]
+): Permission[] {
   const resolved = addPermissionsRelated(manualPermissions)
   const manual = new Set(manualPermissions)
-  return resolved.filter(p => !manual.has(p))
+  return resolved.filter((p) => !manual.has(p))
 }
 
 // Example usage and testing
@@ -495,7 +470,9 @@ export function testPermissionDependencies() {
   console.log('Testing permission dependencies...')
 
   // Test appointment creation
-  const appointmentPermissions = addPermissionsRelated([PERMISSIONS.APPOINTMENT_CREATE])
+  const appointmentPermissions = addPermissionsRelated([
+    PERMISSIONS.APPOINTMENT_CREATE,
+  ])
   console.log('Appointment create permissions:', appointmentPermissions)
 
   // Test order creation
@@ -506,15 +483,15 @@ export function testPermissionDependencies() {
   const multiplePermissions = addPermissionsRelated([
     PERMISSIONS.APPOINTMENT_CREATE,
     PERMISSIONS.ORDER_CREATE,
-    PERMISSIONS.CLIENT_UPDATE
+    PERMISSIONS.CLIENT_UPDATE,
   ])
   console.log('Multiple permissions resolved:', multiplePermissions)
 
   // Test can remove permission
-  const canRemove = canRemovePermission(
+  const canRemove = canRemovePermission(PERMISSIONS.CLIENT_READ, [
+    PERMISSIONS.APPOINTMENT_CREATE,
     PERMISSIONS.CLIENT_READ,
-    [PERMISSIONS.APPOINTMENT_CREATE, PERMISSIONS.CLIENT_READ]
-  )
+  ])
   console.log('Can remove CLIENT_READ:', canRemove)
 }
 
