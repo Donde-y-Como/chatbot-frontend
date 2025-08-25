@@ -1,4 +1,17 @@
+import { useMemo, useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconBrandWhatsapp,
+  IconRefresh,
+  IconSearch,
+} from '@tabler/icons-react'
+import { CheckCheckIcon, TagIcon } from 'lucide-react'
+import { toast } from 'sonner'
 import { api } from '@/api/axiosInstance.ts'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -11,17 +24,6 @@ import {
 } from '@/features/chats/StartConversation.tsx'
 import { useGetTemplates } from '@/features/clients/hooks/useGetTemplates.ts'
 import { useWhatsApp } from '@/features/settings/whatsappWeb/useWhatsApp'
-import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconBrandWhatsapp,
-  IconRefresh,
-  IconSearch,
-} from '@tabler/icons-react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CheckCheckIcon, TagIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { toast } from 'sonner'
 import { useGetTags } from '../clients/hooks/useGetTags'
 import { AddTagButton } from './AddTagButton'
 
@@ -177,12 +179,14 @@ export function ChatBarHeader({
             onToggle={handleAIToggle}
             tooltip={allAIEnabled ? 'Desactivar IAs' : 'Activar IAs'}
           />
-          {templates && (
-            <StartConversation
-              templates={templates}
-              onSubmit={handleOnNewConversation}
-            />
-          )}
+          <RenderIfCan permission={PERMISSIONS.CONVERSATION_CREATE}>
+            {templates && (
+              <StartConversation
+                templates={templates}
+                onSubmit={handleOnNewConversation}
+              />
+            )}
+          </RenderIfCan>
         </div>
       </div>
 
@@ -197,13 +201,17 @@ export function ChatBarHeader({
         />
       </label>
 
-      <div className='mx-4 flex gap-2 my-2 overflow-x-auto overflow-y-hidden whitespace-nowrap pb-1 filters-scrollbar'
+      <div
+        className='mx-4 flex gap-2 my-2 overflow-x-auto overflow-y-hidden whitespace-nowrap pb-1 filters-scrollbar'
         style={{
           scrollbarWidth: 'thin',
-          scrollbarColor: 'hsl(var(--muted-foreground) / 0.3) hsl(var(--muted))',
+          scrollbarColor:
+            'hsl(var(--muted-foreground) / 0.3) hsl(var(--muted))',
         }}
       >
-        <AddTagButton withLabel/>
+        <RenderIfCan permission={PERMISSIONS.TAG_CREATE}>
+          <AddTagButton withLabel />
+        </RenderIfCan>
         {platforms.map(({ name, label, icon: Icon, color }) => (
           <Badge
             key={name}
