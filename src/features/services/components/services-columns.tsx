@@ -18,6 +18,7 @@ import {
 } from '@/features/products/types.ts'
 import { getServiceStatus } from '../utils/serviceUtils'
 import { DataTableRowActions } from './data-table-row-actions'
+import { Tag } from '@/features/settings/tags/types.ts'
 
 // Global filter function for multi-field search
 export function globalFilterFn(
@@ -42,7 +43,7 @@ export function globalFilterFn(
 export const createColumns = (
   units: Unit[] = [],
   categories: Category[] = [],
-  tags: ProductTag[] = []
+  tags: Tag[] = []
 ): ColumnDef<Service>[] => [
   {
     accessorKey: 'name',
