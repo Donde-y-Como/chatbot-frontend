@@ -127,7 +127,7 @@ export function CalendarHeader({
         <h2 className='text-base font-bold first-letter:uppercase truncate' aria-live='polite'>
           {format(
             selectedDate,
-            view === 'day' ? 'EEE, d MMM yyyy' : "'Semana' w 'de' MMM yyyy",
+            view === 'day' ? 'EEE, d MMM yyyy' : "'Semana' w 'de' yyyy",
             { locale: es }
           )}
         </h2>
@@ -212,7 +212,7 @@ export function CalendarHeader({
           <h2 className='text-lg lg:text-xl font-bold tracking-tight first-letter:uppercase' aria-live='polite'>
             {format(
               selectedDate,
-              view === 'day' ? 'EEEE, d MMMM' : "'Semana' w 'de' MMMM",
+              view === 'day' ? 'EEEE, d MMMM' : "'Semana' w 'de' yyyy",
               { locale: es }
             )}
           </h2>

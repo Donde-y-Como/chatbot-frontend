@@ -20,6 +20,16 @@ export function EmployeesSelector({
                                         selectedEmployees,
                                         setSelectedEmployees,
                                       }: EmployeesSelectorProps) {
+
+  const selectAllEmployees = () => {
+    const allEmployeeIds = employees.map((emp) => emp.id)
+    setSelectedEmployees(new Set(allEmployeeIds))
+  }
+
+  const deselectAllEmployees = () => {
+    setSelectedEmployees(new Set())
+  }
+
   return (
     <Collapsible
       open={isEmployeesOpen}
@@ -49,6 +59,28 @@ export function EmployeesSelector({
       </div>
 
       <CollapsibleContent className='px-2 pb-2 md:p-2'>
+
+        <div className='flex items-center justify-between mb-2 md:mb-3 px-1'>
+          <Button
+            variant='default'
+            size='sm'
+            className='h-6 md:h-7 px-2 text-xs md:text-sm'
+            onClick={selectAllEmployees}
+            disabled={selectedEmployees.size === employees.length}
+          >
+            Todos
+          </Button>
+          <Button
+            variant='outline'
+            size='sm'
+            className='h-6 md:h-7 px-2 text-xs md:text-sm'
+            onClick={deselectAllEmployees}
+            disabled={selectedEmployees.size === 0}
+          >
+            Ninguno
+          </Button>
+        </div>
+
         <div className='space-y-0.5 md:space-y-1'>
           {employees.map((employee: Employee) => (
             <label
@@ -66,7 +98,7 @@ export function EmployeesSelector({
                     else newSelected.delete(employee.id)
                     setSelectedEmployees(newSelected)
                   }}
-                  className='h-3 w-3 md:h-4 md:w-4'
+                  className='h-4 w-4'
                 />
               </div>
 
