@@ -69,7 +69,7 @@ export function CalendarSidebar({
       <div
         className={`${
           sidebarIsOpen 
-            ? 'fixed md:relative z-40 md:z-auto left-0 top-0 h-full w-full max-w-xs md:max-w-none md:w-72 bg-background md:bg-card/50 shadow-lg md:shadow-none' 
+            ? 'fixed md:relative z-40 md:z-auto left-0 top-0 h-full max-w-xs md:max-w-none md:w-72 bg-background md:bg-card/50 shadow-lg md:shadow-none' 
             : 'hidden'
         }`}
       >
@@ -88,7 +88,7 @@ export function CalendarSidebar({
             <div className='flex-1 flex flex-col overflow-hidden'>
               <div className='flex-1 overflow-hidden'>
                 <ScrollArea className='h-full'>
-                  <div className='p-2 md:p-3  flex flex-col justify-center gap-8'>
+                  <div className='p-2 md:p-3 flex flex-col justify-center gap-8'>
                     {/* Quick Actions */}
                     <div className='space-y-2 md:space-y-3'>
                       <h3 className='text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wider'>Acciones rápidas</h3>
