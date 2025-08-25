@@ -1,15 +1,16 @@
+import { DotsHorizontalIcon } from '@radix-ui/react-icons'
+import { Row } from '@tanstack/react-table'
+import { IconEdit, IconEye } from '@tabler/icons-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { DotsHorizontalIcon } from '@radix-ui/react-icons'
-import { IconEdit, IconEye, IconTrash } from '@tabler/icons-react'
-import { Row } from '@tanstack/react-table'
 import { useClients } from '../context/clients-context'
 import { ClientPrimitives } from '../types'
 
@@ -32,7 +33,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end' className='w-[160px]'>
-        <DropdownMenuItem
+          <DropdownMenuItem
             onClick={() => {
               setCurrentRow(row.original)
               setOpen('view')
@@ -42,19 +43,20 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             <DropdownMenuShortcut>
               <IconEye size={16} />
             </DropdownMenuShortcut>
-        </DropdownMenuItem>
-          <DropdownMenuSeparator/>
-        <DropdownMenuItem
-            onClick={() => {
-              setCurrentRow(row.original)
-              setOpen('edit')
-            }}
-          >
-            Editar
-            <DropdownMenuShortcut>
-              <IconEdit size={16} />
-            </DropdownMenuShortcut>
-        </DropdownMenuItem>
+          </DropdownMenuItem>
+          <RenderIfCan permission={PERMISSIONS.CLIENT_UPDATE}>
+            <DropdownMenuItem
+              onClick={() => {
+                setCurrentRow(row.original)
+                setOpen('edit')
+              }}
+            >
+              Editar
+              <DropdownMenuShortcut>
+                <IconEdit size={16} />
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </RenderIfCan>
           {/* <DropdownMenuSeparator /> */}
           {/* <DropdownMenuItem
             onClick={() => {
