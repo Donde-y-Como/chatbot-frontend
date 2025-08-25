@@ -18,6 +18,8 @@ import {
   Zap,
 } from 'lucide-react'
 import moment from 'moment-timezone'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
@@ -316,44 +318,48 @@ export default function EventsView() {
             </div>
 
             <div className='flex flex-col sm:flex-row items-center gap-2'>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant='default' className='w-full sm:w-auto'>
-                    <Plus className='mr-2 h-4 w-4' />
-                    Crear Evento
-                    <ChevronDown className='ml-2 h-4 w-4' />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-64'>
-                  <DropdownMenuItem onClick={handleQuickEvent} className='p-3'>
-                    <Zap className='mr-3 h-5 w-5 text-blue-500' />
-                    <div className='flex flex-col gap-1'>
-                      <span className='font-medium'>Creación rápida</span>
-                      <span className='text-xs text-muted-foreground'>
-                        Solo campos esenciales: nombre, descripción, ubicación,
-                        capacidad, fechas y precio
-                      </span>
-                    </div>
-                  </DropdownMenuItem>
+              <RenderIfCan permission={PERMISSIONS.EVENT_CREATE}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='default' className='w-full sm:w-auto'>
+                      <Plus className='mr-2 h-4 w-4' />
+                      Crear Evento
+                      <ChevronDown className='ml-2 h-4 w-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end' className='w-64'>
+                    <DropdownMenuItem
+                      onClick={handleQuickEvent}
+                      className='p-3'
+                    >
+                      <Zap className='mr-3 h-5 w-5 text-blue-500' />
+                      <div className='flex flex-col gap-1'>
+                        <span className='font-medium'>Creación rápida</span>
+                        <span className='text-xs text-muted-foreground'>
+                          Solo campos esenciales: nombre, descripción,
+                          ubicación, capacidad, fechas y precio
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
 
-                  <DropdownMenuSeparator />
+                    <DropdownMenuSeparator />
 
-                  <DropdownMenuItem
-                    onClick={handleCompleteEvent}
-                    className='p-3'
-                  >
-                    <Settings className='mr-3 h-5 w-5 text-green-500' />
-                    <div className='flex flex-col gap-1'>
-                      <span className='font-medium'>Creación detallada</span>
-                      <span className='text-xs text-muted-foreground'>
-                        Todos los campos y opciones avanzadas como recurrencias,
-                        fotos y más
-                      </span>
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
+                    <DropdownMenuItem
+                      onClick={handleCompleteEvent}
+                      className='p-3'
+                    >
+                      <Settings className='mr-3 h-5 w-5 text-green-500' />
+                      <div className='flex flex-col gap-1'>
+                        <span className='font-medium'>Creación detallada</span>
+                        <span className='text-xs text-muted-foreground'>
+                          Todos los campos y opciones avanzadas como
+                          recurrencias, fotos y más
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </RenderIfCan>
               <div className='flex items-center w-full sm:w-auto'>
                 <Tabs
                   value={viewMode}
