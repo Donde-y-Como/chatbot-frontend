@@ -145,10 +145,10 @@ export function WeekView({
       
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: [UseGetAppointmentsQueryKey, date.toISOString()],
+          queryKey: [UseGetAppointmentsQueryKey],
         }),
         queryClient.refetchQueries({
-          queryKey: [UseGetAppointmentsQueryKey, date.toISOString()],
+          queryKey: [UseGetAppointmentsQueryKey],
         })
       ])
       
