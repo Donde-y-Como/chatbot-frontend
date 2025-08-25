@@ -130,7 +130,7 @@ export function CalendarSidebar({
       <div
         className={`${
           sidebarIsOpen
-            ? 'fixed md:relative z-40 md:z-auto left-0 top-0 h-full max-w-xs md:max-w-none md:w-72 bg-background md:bg-card/50 shadow-lg md:shadow-none'
+            ? 'fixed md:relative z-40 md:z-auto left-0 top-0 h-full  bg-background md:bg-card/50 shadow-lg md:shadow-none'
             : 'hidden'
         }`}
       >
