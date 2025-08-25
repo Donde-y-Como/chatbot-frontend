@@ -4,6 +4,7 @@ import { twMerge } from 'tailwind-merge'
 import { Chat } from '@/features/chats/ChatTypes.ts'
 import { dayInitialsMap } from '@/features/employees/types.ts'
 import { Role } from '../features/auth/types'
+import { Permission } from '@/api/permissions.ts'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -212,8 +213,11 @@ export const getDomainDisplayName = (domain: string) => {
   return domainNames[domain] || domain
 }
 
-export const getPermissionDisplayName = (permission: string) => {
-  const [_, action] = permission.split('.')
+export const getPermissionDisplayName = (permission: Permission) => {
+  const [domain, action] = permission.split('.')
+
+  const domainName = getDomainDisplayName(domain)
+
   const actionNames: Record<string, string> = {
     create: 'Crear',
     read: 'Ver',
@@ -224,5 +228,6 @@ export const getPermissionDisplayName = (permission: string) => {
     qr: 'Código QR',
     status: 'Ver',
   }
-  return actionNames[action] || action
+
+  return actionNames[action] ? `${actionNames[action]} ${domainName}` : permission
 }

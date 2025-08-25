@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Role } from '@/features/auth/types'
 import { getDomainDisplayName, getPermissionDisplayName } from '@/lib/utils.ts'
+import { Permission } from '@/api/permissions.ts'
 
 interface ViewRoleDialogProps {
   isOpen: boolean
@@ -31,7 +32,7 @@ export function ViewRoleDialog({ isOpen, onClose, data }: ViewRoleDialogProps) {
       acc[domain].push(permission)
       return acc
     },
-    {} as Record<string, string[]>
+    {} as Record<string, Permission[]>
   )
 
   return (

@@ -7,6 +7,7 @@ import {
   UpdateCredentialsData,
   UpdateRoleData,
 } from '@/features/auth/types'
+import { Permission } from '@/api/permissions.ts'
 
 // Auth data hooks
 export const useGetMyBusiness = () => {
@@ -108,7 +109,7 @@ export const useUpdateCredentials = () => {
 }
 
 // Permission utility hooks
-export const useHasPermission = (permission: string) => {
+export const useHasPermission = (permission: Permission) => {
   const { user } = useAuth()
   const { data: roles } = useGetRoles()
 
@@ -126,7 +127,7 @@ export const useHasPermission = (permission: string) => {
   return userRoles.some((role) => role.permissions.includes(permission))
 }
 
-export const useHasAnyPermission = (permissions: string[]) => {
+export const useHasAnyPermission = (permissions: Permission[]) => {
   const { user } = useAuth()
   const { data: roles } = useGetRoles()
 

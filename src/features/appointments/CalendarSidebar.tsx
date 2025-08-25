@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { es } from 'date-fns/locale/es'
-import { MenuIcon, Plus, ChevronDown, Settings, Zap } from 'lucide-react'
+import { ChevronDown, Plus, Settings, Zap } from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-// Removed Collapsible imports - no longer needed
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
-// Removed unused useSidebar import
 import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { EmployeesSelector } from '@/features/appointments/EmployeesSelector.tsx'
 import { MakeAppointmentDialog } from '@/features/appointments/components/MakeAppointmentDialog.tsx'
@@ -29,6 +29,67 @@ interface SidebarProps {
   onToggle?: () => void
 }
 
+function CreateAppointmentButton({
+  handleQuickAppointment,
+  handleCompleteAppointment,
+}) {
+  return (
+    <div className='space-y-2 md:space-y-3'>
+      <h3 className='text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wider'>
+        Acciones rápidas
+      </h3>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button className='w-full h-9 md:h-10 text-sm bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-md transition-all duration-300'>
+            <Plus className='mr-2 h-3 w-3 md:h-4 md:w-4' />
+            Crear cita
+            <ChevronDown className='ml-auto h-3 w-3 md:h-4 md:w-4' />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align='end' className='w-72 p-2'>
+          <DropdownMenuItem
+            onClick={handleQuickAppointment}
+            className='p-4 rounded-lg cursor-pointer transition-colors'
+          >
+            <div className='flex items-start gap-3'>
+              <div className='w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0'>
+                <Zap className='h-5 w-5 text-blue-600' />
+              </div>
+              <div className='flex flex-col gap-1'>
+                <span className='font-semibold text-sm'>Creación rápida</span>
+                <span className='text-xs text-muted-foreground leading-relaxed'>
+                  Solo campos esenciales: cliente, servicios, fecha y horario
+                </span>
+              </div>
+            </div>
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator className='my-2' />
+
+          <DropdownMenuItem
+            onClick={handleCompleteAppointment}
+            className='p-4 rounded-lg cursor-pointer transition-colors'
+          >
+            <div className='flex items-start gap-3'>
+              <div className='w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0'>
+                <Settings className='h-5 w-5 text-green-600' />
+              </div>
+              <div className='flex flex-col gap-1'>
+                <span className='font-semibold text-sm'>
+                  Creación detallada
+                </span>
+                <span className='text-xs text-muted-foreground leading-relaxed'>
+                  Todos los campos: empleados, notas, estado, pago y más
+                </span>
+              </div>
+            </div>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
+
 export function CalendarSidebar({
   selectedDate,
   setSelectedDate,
@@ -38,14 +99,14 @@ export function CalendarSidebar({
   isOpen = true,
   onToggle,
 }: SidebarProps) {
-   const [internalIsOpen, setInternalIsOpen] = useState(true)
+  const [internalIsOpen, setInternalIsOpen] = useState(true)
   const sidebarIsOpen = onToggle ? isOpen : internalIsOpen
-  
+
   const toggleSidebar = useCallback(() => {
     if (onToggle) {
       onToggle()
     } else {
-      setInternalIsOpen(prev => !prev)
+      setInternalIsOpen((prev) => !prev)
     }
   }, [onToggle])
   const [isEmployeesOpen, setIsEmployeesOpen] = useState(true)
@@ -68,14 +129,14 @@ export function CalendarSidebar({
       {/* Sidebar Panel */}
       <div
         className={`${
-          sidebarIsOpen 
-            ? 'fixed md:relative z-40 md:z-auto left-0 top-0 h-full max-w-xs md:max-w-none md:w-72 bg-background md:bg-card/50 shadow-lg md:shadow-none' 
+          sidebarIsOpen
+            ? 'fixed md:relative z-40 md:z-auto left-0 top-0 h-full max-w-xs md:max-w-none md:w-72 bg-background md:bg-card/50 shadow-lg md:shadow-none'
             : 'hidden'
         }`}
       >
         {/* Mobile Backdrop */}
         {sidebarIsOpen && (
-          <div 
+          <div
             className='fixed inset-0 bg-black/50 md:hidden z-30'
             onClick={toggleSidebar}
           />
@@ -90,59 +151,19 @@ export function CalendarSidebar({
                 <ScrollArea className='h-full'>
                   <div className='p-2 md:p-3 flex flex-col justify-center gap-8'>
                     {/* Quick Actions */}
-                    <div className='space-y-2 md:space-y-3'>
-                      <h3 className='text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wider'>Acciones rápidas</h3>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button className='w-full h-9 md:h-10 text-sm bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-md transition-all duration-300'>
-                            <Plus className='mr-2 h-3 w-3 md:h-4 md:w-4' />
-                            Crear cita
-                            <ChevronDown className='ml-auto h-3 w-3 md:h-4 md:w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-72 p-2">
-                          <DropdownMenuItem 
-                            onClick={handleQuickAppointment} 
-                            className="p-4 rounded-lg cursor-pointer transition-colors"
-                          >
-                            <div className='flex items-start gap-3'>
-                              <div className='w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0'>
-                                <Zap className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <div className="flex flex-col gap-1">
-                                <span className="font-semibold text-sm">Creación rápida</span>
-                                <span className="text-xs text-muted-foreground leading-relaxed">
-                                  Solo campos esenciales: cliente, servicios, fecha y horario
-                                </span>
-                              </div>
-                            </div>
-                          </DropdownMenuItem>
-                          
-                          <DropdownMenuSeparator className='my-2' />
-                          
-                          <DropdownMenuItem 
-                            onClick={handleCompleteAppointment} 
-                            className="p-4 rounded-lg cursor-pointer transition-colors"
-                          >
-                            <div className='flex items-start gap-3'>
-                              <div className='w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0'>
-                                <Settings className="h-5 w-5 text-green-600" />
-                              </div>
-                              <div className="flex flex-col gap-1">
-                                <span className="font-semibold text-sm">Creación detallada</span>
-                                <span className="text-xs text-muted-foreground leading-relaxed">
-                                  Todos los campos: empleados, notas, estado, pago y más
-                                </span>
-                              </div>
-                            </div>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+
+                    <RenderIfCan permission={PERMISSIONS.APPOINTMENT_CREATE}>
+                      <CreateAppointmentButton
+                        handleCompleteAppointment={handleCompleteAppointment}
+                        handleQuickAppointment={handleQuickAppointment}
+                      />
+                    </RenderIfCan>
 
                     {/* Calendar Section */}
                     <div className='space-y-2 md:space-y-3 p-2'>
-                      <h3 className='text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wider  '>Calendario</h3>
+                      <h3 className='text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wider  '>
+                        Calendario
+                      </h3>
                       <div className='rounded-lg md:rounded-xl bg-card overflow-hidden transition-all duration-300 '>
                         <Calendar
                           required
@@ -157,7 +178,7 @@ export function CalendarSidebar({
 
                     {/* Employees Filter Section */}
                     <div className=' '>
-                       <EmployeesSelector
+                      <EmployeesSelector
                         employees={employees}
                         selectedEmployees={selectedEmployees}
                         setSelectedEmployees={setSelectedEmployees}
@@ -172,13 +193,13 @@ export function CalendarSidebar({
           </div>
         )}
       </div>
-      
+
       {/* Diálogos */}
       <MakeAppointmentDialog
         defaultOpen={showCompleteAppointment}
         onOpenChange={setShowCompleteAppointment}
       />
-      
+
       <QuickAppointmentDialog
         open={showQuickAppointment}
         onOpenChange={setShowQuickAppointment}
@@ -199,8 +220,7 @@ export function CalendarSidebarSkeleton() {
             size='sm'
             className='h-8 w-8 p-0 md:w-full md:justify-center'
             disabled
-          >
-          </Button>
+          ></Button>
         </div>
 
         {/* Content */}
@@ -226,7 +246,10 @@ export function CalendarSidebarSkeleton() {
                   </div>
                   <div className='grid grid-cols-7 gap-1 md:gap-2'>
                     {Array.from({ length: 35 }).map((_, i) => (
-                      <Skeleton key={i} className='h-6 md:h-8 w-full aspect-square' />
+                      <Skeleton
+                        key={i}
+                        className='h-6 md:h-8 w-full aspect-square'
+                      />
                     ))}
                   </div>
                 </div>
@@ -245,7 +268,10 @@ export function CalendarSidebarSkeleton() {
                 </div>
                 <div className='px-2 pb-2 md:p-2 space-y-0.5 md:space-y-1'>
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className='flex items-center gap-2 md:gap-3 p-2 md:p-3'>
+                    <div
+                      key={i}
+                      className='flex items-center gap-2 md:gap-3 p-2 md:p-3'
+                    >
                       <Skeleton className='h-3 w-3 md:h-4 md:w-4' />
                       <Skeleton className='h-2.5 w-2.5 md:h-3 md:w-3 rounded-full' />
                       <Skeleton className='h-3 md:h-4 w-20 md:w-24' />

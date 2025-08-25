@@ -1,4 +1,5 @@
 import { PlatformName } from '@/features/chats/ChatTypes.ts'
+import { Permission } from '@/api/permissions.ts'
 
 export interface LoginData {
   email: string
@@ -22,7 +23,7 @@ export interface Role {
   businessId: string
   name: string
   description: string
-  permissions: string[]
+  permissions: Permission[]
   createdAt: string
 }
 
@@ -39,7 +40,7 @@ export interface UpdateRoleData {
 }
 
 export interface PermissionsResponse {
-  permissions: string[]
+  permissions: Permission[]
 }
 
 export type PlatformConfig = {

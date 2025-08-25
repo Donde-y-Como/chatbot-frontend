@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Check, Search, Shield, X } from 'lucide-react'
+import { Check, Search, Shield, X, Info, AlertTriangle } from 'lucide-react'
 import { getDomainDisplayName, getPermissionDisplayName } from '@/lib/utils.ts'
 import { useGetPermissions } from '@/hooks/useAuth'
 import { Badge } from '@/components/ui/badge'
@@ -27,8 +27,15 @@ import {
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { Textarea } from '@/components/ui/textarea'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CreateRoleData, Role, UpdateRoleData } from '@/features/auth/types'
+import {
+  PERMISSIONS,
+  Permission,
+  PERMISSION_DEPENDENCIES,
+  addPermissionsRelated
+} from '@/api/permissions'
+import { Textarea } from '@/components/ui/textarea.tsx' // Import your permission system
 
 const roleFormSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio'),
@@ -50,17 +57,21 @@ interface RoleDialogProps {
   initialData?: Role
 }
 
-// Role templates for quick setup
 export function RoleDialog({
-  isOpen,
-  onClose,
-  onSubmit,
-  isSubmitting,
-  title,
-  submitLabel,
-  initialData,
-}: RoleDialogProps) {
+                             isOpen,
+                             onClose,
+                             onSubmit,
+                             isSubmitting,
+                             title,
+                             submitLabel,
+                             initialData,
+                           }: RoleDialogProps) {
   const [searchTerm, setSearchTerm] = useState('')
+  const [showDependencies, setShowDependencies] = useState(false)
+  const [removalWarning, setRemovalWarning] = useState<{
+    permission: string
+    dependents: string[]
+  } | null>(null)
 
   const { data: permissionsData, isLoading: permissionsLoading } =
     useGetPermissions()
@@ -94,6 +105,23 @@ export function RoleDialog({
     }
   }, [initialData, form.reset])
 
+  // Get current permissions with dependencies resolved
+  const currentPermissions = form.watch('permissions')
+  const resolvedPermissions = useMemo(() => {
+    return addPermissionsRelated(currentPermissions as Permission[])
+  }, [currentPermissions])
+
+  // Separate manually selected from auto-added permissions
+  const { manuallySelected, autoAdded } = useMemo(() => {
+    const manual = new Set(currentPermissions)
+    const auto = resolvedPermissions.filter(p => !manual.has(p))
+
+    return {
+      manuallySelected: currentPermissions,
+      autoAdded: auto
+    }
+  }, [currentPermissions, resolvedPermissions])
+
   // Filter permissions based on search term
   const filteredPermissions = useMemo(() => {
     if (!searchTerm) return permissions
@@ -110,11 +138,16 @@ export function RoleDialog({
   }, [permissions, searchTerm])
 
   // Get selected permissions count
-  const selectedPermissions = form.watch('permissions')
-  const selectedCount = selectedPermissions?.length || 0
+  const totalPermissionsCount = resolvedPermissions.length
+  const manualPermissionsCount = currentPermissions?.length || 0
 
   const handleSubmit = async (values: RoleFormValues) => {
-    await onSubmit(values)
+    // Submit with all resolved permissions (manual + dependencies)
+    const finalValues = {
+      ...values,
+      permissions: resolvedPermissions
+    }
+    await onSubmit(finalValues)
     form.reset()
   }
 
@@ -124,9 +157,41 @@ export function RoleDialog({
     onClose()
   }
 
-  // Bulk permission actions
+  // Enhanced permission toggle with dependency resolution
+  const handlePermissionToggle = (permission: Permission, checked: boolean) => {
+    const currentValues = form.getValues('permissions') as Permission[]
+
+    if (checked) {
+      // Add permission and its dependencies
+      const withDependencies = addPermissionsRelated([...currentValues, permission])
+      form.setValue('permissions', withDependencies)
+      setRemovalWarning(null) // Clear any warnings
+    } else {
+      // Check if removing this permission would break dependencies
+      const withoutPermission = currentValues.filter(p => p !== permission)
+      const resolvedWithoutPermission = addPermissionsRelated(withoutPermission)
+
+      if (resolvedWithoutPermission.includes(permission)) {
+        // Find dependent permissions and show warning
+        const dependents = currentValues.filter(p => {
+          const deps = getDependenciesFor(p)
+          return deps.includes(permission)
+        })
+        setRemovalWarning({
+          permission: getPermissionDisplayName(permission),
+          dependents: dependents.map(p => getPermissionDisplayName(p))
+        })
+      } else {
+        form.setValue('permissions', withoutPermission)
+        setRemovalWarning(null)
+      }
+    }
+  }
+
+  // Bulk permission actions with dependencies
   const selectAllPermissions = () => {
-    form.setValue('permissions', filteredPermissions)
+    const allResolved = addPermissionsRelated(filteredPermissions as Permission[])
+    form.setValue('permissions', allResolved)
   }
 
   const deselectAllPermissions = () => {
@@ -135,29 +200,35 @@ export function RoleDialog({
 
   const toggleDomainPermissions = (
     domain: string,
-    domainPermissions: string[]
+    domainPermissions: Permission[]
   ) => {
-    const currentPermissions = form.getValues('permissions')
+    const currentValues = form.getValues('permissions') as Permission[]
     const domainSelected = domainPermissions.every((p) =>
-      currentPermissions.includes(p)
+      resolvedPermissions.includes(p)
     )
 
     if (domainSelected) {
-      // Remove all domain permissions
-      form.setValue(
-        'permissions',
-        currentPermissions.filter((p) => !domainPermissions.includes(p))
-      )
+      // Remove domain permissions that can be safely removed
+      const withoutDomain = currentValues.filter((p) => !domainPermissions.includes(p))
+      form.setValue('permissions', withoutDomain)
     } else {
-      // Add all domain permissions
-      const newPermissions = [
-        ...new Set([...currentPermissions, ...domainPermissions]),
-      ]
-      form.setValue('permissions', newPermissions)
+      // Add all domain permissions with dependencies
+      const withDomain = addPermissionsRelated([...currentValues, ...domainPermissions as Permission[]])
+      form.setValue('permissions', withDomain)
     }
   }
 
-  // Agrupar permisos filtrados por dominio
+  // Check if a permission was auto-added due to dependencies
+  const isAutoAdded = (permission: Permission) => {
+    return autoAdded.includes(permission)
+  }
+
+  // Get dependencies for a permission
+  const getDependenciesFor = (permission: Permission): Permission[] => {
+    return PERMISSION_DEPENDENCIES[permission] || []
+  }
+
+  // Group filtered permissions by domain
   const groupedPermissions = filteredPermissions.reduce(
     (acc, permission) => {
       const domain = permission.split('.')[0]
@@ -167,7 +238,7 @@ export function RoleDialog({
       acc[domain].push(permission)
       return acc
     },
-    {} as Record<string, string[]>
+    {} as Record<string, Permission[]>
   )
 
   return (
@@ -178,14 +249,35 @@ export function RoleDialog({
             <Shield className='h-5 w-5' />
             {title}
           </DialogTitle>
-          <DialogDescription>
-            Define el nombre, descripción y permisos para este rol.
-            {selectedCount > 0 && (
-              <Badge variant='secondary' className='ml-2'>
-                {selectedCount} permiso{selectedCount !== 1 ? 's' : ''}{' '}
-                seleccionado{selectedCount !== 1 ? 's' : ''}
+          <DialogDescription className='flex flex-col gap-2'>
+            <div>
+              Define el nombre, descripción y permisos para este rol.
+            </div>
+            <div className='flex items-center gap-2 flex-wrap'>
+              <Badge variant='secondary'>
+                {manualPermissionsCount} seleccionado{manualPermissionsCount !== 1 ? 's' : ''}
               </Badge>
-            )}
+              {autoAdded.length > 0 && (
+                <Badge variant='outline' className='text-orange-600 border-orange-200'>
+                  +{autoAdded.length} dependencia{autoAdded.length !== 1 ? 's' : ''}
+                </Badge>
+              )}
+              <Badge variant='default'>
+                = {totalPermissionsCount} total
+              </Badge>
+              {autoAdded.length > 0 && (
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => setShowDependencies(!showDependencies)}
+                  className='text-xs h-6 px-2'
+                >
+                  <Info className='h-3 w-3 mr-1' />
+                  {showDependencies ? 'Ocultar' : 'Ver'} dependencias
+                </Button>
+              )}
+            </div>
           </DialogDescription>
         </DialogHeader>
 
@@ -229,6 +321,37 @@ export function RoleDialog({
                 />
               </div>
 
+              {/* Removal Warning */}
+              {removalWarning && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    No se puede remover <strong>{removalWarning.permission}</strong> porque es requerido por: {removalWarning.dependents.join(', ')}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {showDependencies && autoAdded.length > 0 && (
+                <div className='bg-orange-50 border border-orange-200 rounded-md p-3'>
+                  <h4 className='font-medium text-sm text-orange-800 mb-2'>
+                    Permisos añadidos automáticamente:
+                  </h4>
+                  <div className='flex flex-wrap gap-1'>
+                    {autoAdded.map((permission) => (
+                      <Badge
+                        key={permission}
+                        variant='outline'
+                        className='text-xs text-orange-700 border-orange-300'
+                      >
+                        {getPermissionDisplayName(permission as Permission)}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className='text-xs text-orange-600 mt-2'>
+                    Estos permisos son requeridos por los permisos que seleccionaste manualmente.
+                  </p>
+                </div>
+              )}
+
               {/* Permissions Section */}
               <FormField
                 control={form.control}
@@ -262,7 +385,7 @@ export function RoleDialog({
                           variant='outline'
                           size='sm'
                           onClick={deselectAllPermissions}
-                          disabled={selectedCount === 0}
+                          disabled={manualPermissionsCount === 0}
                         >
                           <X className='h-4 w-4 mr-1' />
                           Ninguno
@@ -298,12 +421,12 @@ export function RoleDialog({
                         <div className='space-y-4'>
                           {Object.entries(groupedPermissions).map(
                             ([domain, domainPermissions]) => {
-                              const currentPermissions =
-                                form.getValues('permissions')
                               const domainSelected = domainPermissions.every(
-                                (p) => currentPermissions.includes(p)
+                                (p) => resolvedPermissions.includes(p)
                               )
-
+                              domainPermissions.some(
+                                (p) => resolvedPermissions.includes(p)
+                              )
                               return (
                                 <div key={domain} className='space-y-3'>
                                   <div className='flex items-center justify-between'>
@@ -324,7 +447,7 @@ export function RoleDialog({
                                       >
                                         {
                                           domainPermissions.filter((p) =>
-                                            currentPermissions.includes(p)
+                                            resolvedPermissions.includes(p)
                                           ).length
                                         }
                                         /{domainPermissions.length}
@@ -332,50 +455,56 @@ export function RoleDialog({
                                     </h4>
                                   </div>
                                   <div className='grid grid-cols-2 gap-2 pl-6'>
-                                    {domainPermissions.map((permission) => (
-                                      <FormField
-                                        key={permission}
-                                        control={form.control}
-                                        name='permissions'
-                                        render={({ field }) => {
-                                          return (
-                                            <FormItem
-                                              key={permission}
-                                              className='flex flex-row items-start space-x-3 space-y-0'
+                                    {domainPermissions.map((permission) => {
+                                      const isChecked = resolvedPermissions.includes(permission)
+                                      const isAutoAddedPermission = isAutoAdded(permission)
+                                      const isManuallySelected = currentPermissions.includes(permission)
+                                      const dependencies = getDependenciesFor(permission as Permission)
+
+                                      return (
+                                        <div key={permission} className='space-y-1'>
+                                          <FormItem className='flex flex-row items-start space-x-3 space-y-0'>
+                                            <FormControl>
+                                              <Checkbox
+                                                checked={isChecked}
+                                                onCheckedChange={(checked) =>
+                                                  handlePermissionToggle(
+                                                    permission as Permission,
+                                                    !!checked
+                                                  )
+                                                }
+                                              />
+                                            </FormControl>
+                                            <FormLabel
+                                              className={`text-sm font-normal flex items-center gap-1 ${
+                                                isAutoAddedPermission
+                                                  ? 'text-orange-600'
+                                                  : 'text-foreground'
+                                              }`}
                                             >
-                                              <FormControl>
-                                                <Checkbox
-                                                  checked={field.value?.includes(
-                                                    permission
-                                                  )}
-                                                  onCheckedChange={(
-                                                    checked
-                                                  ) => {
-                                                    return checked
-                                                      ? field.onChange([
-                                                          ...field.value,
-                                                          permission,
-                                                        ])
-                                                      : field.onChange(
-                                                          field.value?.filter(
-                                                            (value) =>
-                                                              value !==
-                                                              permission
-                                                          )
-                                                        )
-                                                  }}
-                                                />
-                                              </FormControl>
-                                              <FormLabel className='text-sm font-normal'>
-                                                {getPermissionDisplayName(
-                                                  permission
-                                                )}
-                                              </FormLabel>
-                                            </FormItem>
-                                          )
-                                        }}
-                                      />
-                                    ))}
+                                              {getPermissionDisplayName(permission)}
+                                              {isAutoAddedPermission && (
+                                                <Badge
+                                                  variant='outline'
+                                                  className='text-xs text-orange-600 border-orange-300'
+                                                >
+                                                  auto
+                                                </Badge>
+                                              )}
+                                            </FormLabel>
+                                          </FormItem>
+
+                                          {/* Show dependencies for manually selected permissions */}
+                                          {isManuallySelected && dependencies.length > 0 && (
+                                            <div className='text-xs text-muted-foreground pl-6'>
+                                              Requiere: {dependencies.map(dep =>
+                                              getPermissionDisplayName(dep)
+                                            ).join(', ')}
+                                            </div>
+                                          )}
+                                        </div>
+                                      )
+                                    })}
                                   </div>
                                   {domain !==
                                     Object.keys(groupedPermissions).slice(
