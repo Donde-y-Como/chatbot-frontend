@@ -1,5 +1,14 @@
 import { useMemo } from 'react'
-import { AlertTriangle, Package, TrendingUp, DollarSign, PieChart, BarChart3 } from 'lucide-react'
+import {
+  AlertTriangle,
+  BarChart3,
+  DollarSign,
+  Package,
+  PieChart,
+  TrendingUp,
+} from 'lucide-react'
+import { PERMISSIONS } from '@/api/permissions.ts'
+import { RenderIfCan } from '@/lib/Can.tsx'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -7,19 +16,26 @@ import { TableSkeleton } from '@/components/TableSkeleton'
 import { Main } from '@/components/layout/main'
 import { CustomTable } from '@/components/tables/custom-table'
 import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx'
+import { useGetTags } from '@/features/settings/tags/hooks/useTags'
 import { BundleDialogs } from './components/bundle-dialogs'
 import { BundlePrimaryButtons } from './components/bundle-primary-buttons'
-import { createBundleColumns, globalFilterFn } from './components/bundles-columns'
+import {
+  createBundleColumns,
+  globalFilterFn,
+} from './components/bundles-columns'
+import {
+  DataTableFacetedFilter,
+  generateStatusOptions,
+  generateTagOptions,
+} from './components/bundles-table-filters'
 import { BundleProvider } from './context/bundles-context'
 import { useGetBundles } from './hooks/useGetBundles'
 import { Bundle } from './types'
 import { calculateBundleStats, formatBundlePrice } from './utils/bundleUtils'
-import { DataTableFacetedFilter, generateStatusOptions, generateTagOptions } from './components/bundles-table-filters'
-import { useGetProductTags } from '@/features/products/hooks/useGetAuxiliaryData'
 
 function BundlesContent() {
   const { data: bundlesData, isLoading: isLoadingBundles } = useGetBundles()
-  const { data: tagsData, isLoading: isLoadingTags } = useGetProductTags()
+  const { data: tagsData = [], isLoading: isLoadingTags } = useGetTags()
 
   const isLoading = isLoadingBundles || isLoadingTags
 
@@ -30,7 +46,10 @@ function BundlesContent() {
 
   // Generate filter options
   const statusOptions = useMemo(() => generateStatusOptions(), [])
-  const tagOptions = useMemo(() => generateTagOptions(tagsData || []), [tagsData])
+  const tagOptions = useMemo(
+    () => generateTagOptions(tagsData || []),
+    [tagsData]
+  )
 
   // Obtener bundles de la respuesta
   const bundles = bundlesData || []
@@ -57,7 +76,9 @@ function BundlesContent() {
             </p>
           </div>
 
-          <BundlePrimaryButtons />
+          <RenderIfCan permission={PERMISSIONS.BUNDLE_CREATE}>
+            <BundlePrimaryButtons />
+          </RenderIfCan>
         </div>
 
         {/* Estadísticas Profesionales */}
@@ -120,9 +141,7 @@ function BundlesContent() {
           {/* Composición de paquetes */}
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>
-                Composición
-              </CardTitle>
+              <CardTitle className='text-sm font-medium'>Composición</CardTitle>
               <PieChart className='h-4 w-4 text-muted-foreground' />
             </CardHeader>
             <CardContent>
@@ -141,9 +160,7 @@ function BundlesContent() {
           {/* Estado de disponibilidad */}
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>
-                Estado
-              </CardTitle>
+              <CardTitle className='text-sm font-medium'>Estado</CardTitle>
               <AlertTriangle className='h-4 w-4 text-muted-foreground' />
             </CardHeader>
             <CardContent>
@@ -151,13 +168,17 @@ function BundlesContent() {
                 {stats.outOfStock > 0 && (
                   <div className='flex items-center justify-between text-sm'>
                     <span className='text-red-600'>No disponibles</span>
-                    <span className='font-medium text-red-600'>{stats.outOfStock}</span>
+                    <span className='font-medium text-red-600'>
+                      {stats.outOfStock}
+                    </span>
                   </div>
                 )}
                 {stats.inactive > 0 && (
                   <div className='flex items-center justify-between text-sm'>
                     <span className='text-orange-600'>Inactivos</span>
-                    <span className='font-medium text-orange-600'>{stats.inactive}</span>
+                    <span className='font-medium text-orange-600'>
+                      {stats.inactive}
+                    </span>
                   </div>
                 )}
                 {stats.outOfStock === 0 && stats.inactive === 0 && (
@@ -194,16 +215,16 @@ function BundlesContent() {
           {/* Rendimiento */}
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>
-                Rendimiento
-              </CardTitle>
+              <CardTitle className='text-sm font-medium'>Rendimiento</CardTitle>
               <TrendingUp className='h-4 w-4 text-muted-foreground' />
             </CardHeader>
             <CardContent>
               <div className='space-y-2'>
                 <div className='flex items-center justify-between text-sm'>
                   <span className='text-muted-foreground'>Rentables</span>
-                  <span className='font-medium text-green-600'>{stats.profitableBundles}</span>
+                  <span className='font-medium text-green-600'>
+                    {stats.profitableBundles}
+                  </span>
                 </div>
                 <div className='flex items-center justify-between text-sm'>
                   <span className='text-muted-foreground'>Alto valor</span>
@@ -216,7 +237,7 @@ function BundlesContent() {
 
         {/* Tabla de paquetes */}
         <div className='-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0'>
-          {bundles.length > 0 && tagsData ? (
+          {bundles.length > 0 ? (
             <CustomTable<Bundle>
               data={bundles}
               columns={columns}
@@ -228,12 +249,12 @@ function BundlesContent() {
                 >
                   <DataTableFacetedFilter
                     column={table.getColumn('status')}
-                    title="Estado"
+                    title='Estado'
                     options={statusOptions}
                   />
                   <DataTableFacetedFilter
                     column={table.getColumn('tagIds')}
-                    title="Etiquetas"
+                    title='Etiquetas'
                     options={tagOptions}
                   />
                 </DataTableToolbar>
@@ -244,10 +265,13 @@ function BundlesContent() {
               <CardContent className='flex flex-col items-center justify-center py-12 text-center'>
                 <Package className='h-12 w-12 text-muted-foreground mb-4' />
                 <h3 className='text-lg font-semibold mb-2'>No hay paquetes</h3>
-                <p className='text-muted-foreground mb-6 max-w-md'>
-                  Comienza creando tu primer paquete para agrupar productos y servicios.
-                </p>
-                <BundlePrimaryButtons />
+                <RenderIfCan permission={PERMISSIONS.BUNDLE_CREATE}>
+                  <p className='text-muted-foreground mb-6 max-w-md'>
+                    Comienza creando tu primer paquete para agrupar productos y
+                    servicios.
+                  </p>
+                  <BundlePrimaryButtons />
+                </RenderIfCan>
               </CardContent>
             </Card>
           )}
