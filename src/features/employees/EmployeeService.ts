@@ -23,7 +23,7 @@ export const EmployeeService = {
   },
   createEmployee: async (employee: EmployeeFormValues) => {
     const response = await api.post('/employees', employee)
-    if (response.status !== 200) {
+    if (response.status !== 201) {
       if (response.data.title) {
         throw new Error(response.data.title)
       }

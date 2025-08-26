@@ -42,7 +42,6 @@ export function EmployeeActionDialog({
   onOpenChange,
 }: EmployeeActionDialogProps) {
   const isEdit = !!currentEmployee
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedTab, setSelectedTab] = useState('employee')
   const [photos, setPhotos] = useState<File[]>([])
   const { uploadFile, validateFile, isUploading } = useUploadMedia()
@@ -75,11 +74,11 @@ export function EmployeeActionDialog({
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['employees'] })
-      toast.success('Empleado guardado correctamente')
+      toast.success(isEdit ? 'Empleado actualizado correctamente' : 'Empleado creado correctamente')
       form.reset()
       setPhotos([])
-      onOpenChange(false)
       setSelectedTab('employee')
+      onOpenChange(false)
     },
     onError: (error) => {
       if (error instanceof AxiosError) {
@@ -150,12 +149,14 @@ export function EmployeeActionDialog({
   )
 
   const onSubmit = async () => {
-    setIsSubmitting(true)
+    if (employeeMutation.isPending || isUploading) {
+      return // Prevent double submission
+    }
+    
     if (photos.length > 0) {
       await handleImageUpload(photos[0])
     }
     employeeMutation.mutate(form.getValues())
-    setIsSubmitting(false)
   }
 
   // Función para verificar si ha rellenado algún campo
@@ -206,12 +207,27 @@ export function EmployeeActionDialog({
     <Dialog
       open={open}
       onOpenChange={(isOpen) => {
-        if (!isOpen && hasFilledFields()) {
+        // Prevent closing during API calls
+        if (employeeMutation.isPending || isUploading) {
           return
         }
-        form.reset()
-        setPhotos([])
-        setSelectedTab('employee')
+        
+        if (!isOpen) {
+          // Only check for filled fields when trying to close
+          if (hasFilledFields()) {
+            // Could add a confirmation dialog here
+            const shouldClose = confirm('¿Estás seguro de que deseas cerrar? Se perderán los cambios no guardados.')
+            if (!shouldClose) {
+              return
+            }
+          }
+          
+          // Reset form and close
+          form.reset()
+          setPhotos([])
+          setSelectedTab('employee')
+        }
+        
         onOpenChange(isOpen)
       }}
     >
@@ -302,22 +318,49 @@ export function EmployeeActionDialog({
                   </div>
                 </ScrollArea>
 
+                {/* Show form errors if any */}
+                {Object.keys(form.formState.errors).length > 0 && (
+                  <div className='flex-shrink-0 px-2 py-3 bg-red-50 border border-red-200 rounded-md'>
+                    <div className='text-sm text-red-600'>
+                      <p className='font-medium mb-1'>Por favor corrige los siguientes errores:</p>
+                      <ul className='list-disc list-inside space-y-1'>
+                        {Object.entries(form.formState.errors).map(([field, error]) => (
+                          <li key={field}>
+                            {field === 'name' && 'Nombre: '}
+                            {field === 'email' && 'Email: '}
+                            {field === 'password' && 'Contraseña: '}
+                            {field === 'roleIds' && 'Roles: '}
+                            {field === 'birthDate' && 'Fecha de nacimiento: '}
+                            {field === 'address' && 'Dirección: '}
+                            {error?.message}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
                 <DialogFooter className='flex-shrink-0 mt-4 pt-4 border-t bg-background'>
                   <Button
                     type='button'
                     variant='outline'
                     onClick={() => onOpenChange(false)}
-                    disabled={isSubmitting || isUploading}
+                    disabled={employeeMutation.isPending || isUploading}
                   >
                     Cancelar
                   </Button>
                   <Button
                     type='submit'
-                    disabled={isSubmitting || isUploading}
+                    disabled={employeeMutation.isPending || isUploading || !form.formState.isValid}
                     className='min-w-[120px]'
                   >
-                    {isSubmitting || isUploading
-                      ? 'Guardando...'
+                    {employeeMutation.isPending || isUploading
+                      ? (
+                          <>
+                            <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
+                            {isEdit ? 'Actualizando...' : 'Creando...'}
+                          </>
+                        )
                       : isEdit
                         ? 'Actualizar Empleado'
                         : 'Crear Empleado'}

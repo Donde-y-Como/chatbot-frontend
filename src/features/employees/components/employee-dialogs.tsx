@@ -10,7 +10,11 @@ export function EmployeeDialogs() {
       <EmployeeActionDialog
         key='user-add'
         open={open === 'add'}
-        onOpenChange={() => setOpen('add')}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setOpen(null)
+          }
+        }}
       />
 
       {currentRow && (
@@ -18,11 +22,11 @@ export function EmployeeDialogs() {
           <EmployeeActionDialog
             key={`user-edit-${currentRow.id}`}
             open={open === 'edit'}
-            onOpenChange={() => {
-              setOpen('edit')
-              setTimeout(() => {
+            onOpenChange={(isOpen) => {
+              if (!isOpen) {
+                setOpen(null)
                 setCurrentRow(null)
-              }, 500)
+              }
             }}
             currentEmployee={currentRow}
           />
@@ -30,11 +34,11 @@ export function EmployeeDialogs() {
           <EmployeeViewDialog
             key={`user-view-${currentRow.id}`}
             open={open === 'view'}
-            onOpenChange={() => {
-              setOpen('view')
-              setTimeout(() => {
+            onOpenChange={(isOpen) => {
+              if (!isOpen) {
+                setOpen(null)
                 setCurrentRow(null)
-              }, 500)
+              }
             }}
             currentEmployee={currentRow}
           />
@@ -42,11 +46,11 @@ export function EmployeeDialogs() {
           <EmployeeDeleteDialog
             key={`user-delete-${currentRow.id}`}
             open={open === 'delete'}
-            onOpenChange={() => {
-              setOpen('delete')
-              setTimeout(() => {
+            onOpenChange={(isOpen) => {
+              if (!isOpen) {
+                setOpen(null)
                 setCurrentRow(null)
-              }, 500)
+              }
             }}
             currentRow={currentRow}
           />
