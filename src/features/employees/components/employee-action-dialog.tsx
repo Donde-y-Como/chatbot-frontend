@@ -28,6 +28,7 @@ import {
 } from '../types'
 import { EmployeeInfoSection } from './form/employee-info-section'
 import { ScheduleSection } from './form/schedule-section'
+import { AxiosError } from 'axios'
 
 interface EmployeeActionDialogProps {
   currentEmployee?: Employee
@@ -80,8 +81,12 @@ export function EmployeeActionDialog({
       onOpenChange(false)
       setSelectedTab('employee')
     },
-    onError: () => {
-      toast.error('Error al guardar empleado')
+    onError: (error) => {
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data?.title || error.message)
+      } else {
+        toast.error('Hubo un error al guardar el empleado')
+      }
     },
   })
 

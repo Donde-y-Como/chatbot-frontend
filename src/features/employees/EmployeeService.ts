@@ -1,4 +1,4 @@
-import { api } from '@/api/axiosInstance';
+import { api } from '@/api/axiosInstance'
 import { Employee, EmployeeFormValues } from './types'
 
 const generateDistantPastels = (seed: number, count = 5) => {
@@ -13,24 +13,30 @@ const generateDistantPastels = (seed: number, count = 5) => {
 }
 
 export const EmployeeService = {
-    getEmployees: async (): Promise<Employee[]> => {
-        const response = await api.get<Omit<Employee, 'color'>[]>('/employees')
-        const colors = generateDistantPastels(42, response.data.length)
-        return response.data.map((emp, i) => ({
-          ...emp,
-          color: colors[i],
-        }))
-      },
-    createEmployee: async (employee: EmployeeFormValues) => {
-        const response = await api.post("/employees", employee);
-        if (response.status !== 201) {
-            throw new Error("Error creating employee");
-        }
-    },
-    updateEmployee: async (id: string, employee: Partial<Employee>) => {
-        const response = await api.put(`/employees/${id}`, employee);
-        if (response.status !== 200) {
-            throw new Error("Error updating employee");
-        }
+  getEmployees: async (): Promise<Employee[]> => {
+    const response = await api.get<Omit<Employee, 'color'>[]>('/employees')
+    const colors = generateDistantPastels(42, response.data.length)
+    return response.data.map((emp, i) => ({
+      ...emp,
+      color: colors[i],
+    }))
+  },
+  createEmployee: async (employee: EmployeeFormValues) => {
+    const response = await api.post('/employees', employee)
+    if (response.status !== 200) {
+      if (response.data.title) {
+        throw new Error(response.data.title)
+      }
+      throw new Error('Error creando el empleado')
     }
-};
+  },
+  updateEmployee: async (id: string, employee: Partial<Employee>) => {
+    const response = await api.put(`/employees/${id}`, employee)
+    if (response.status !== 200) {
+      if (response.data.title) {
+        throw new Error(response.data.title)
+      }
+      throw new Error('Error actualizando el empleado')
+    }
+  },
+}
