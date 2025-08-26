@@ -12,6 +12,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useGetUser } from '@/components/layout/hooks/useGetUser.ts'
 import { useEmployees } from '../context/employees-context'
 import { Employee } from '../types'
 
@@ -21,6 +22,8 @@ interface DataTableRowActionsProps {
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const { setOpen, setCurrentRow } = useEmployees()
+  const { data: user } = useGetUser()
+
   return (
     <>
       <DropdownMenu modal={false}>
@@ -59,21 +62,23 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
               </DropdownMenuShortcut>
             </DropdownMenuItem>
           </RenderIfCan>
-          <RenderIfCan permission={PERMISSIONS.EMPLOYEE_DELETE}>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                setCurrentRow(row.original)
-                setOpen('delete')
-              }}
-              className='!text-red-500'
-            >
-              Eliminar
-              <DropdownMenuShortcut>
-                <IconTrash size={16} />
-              </DropdownMenuShortcut>
-            </DropdownMenuItem>
-          </RenderIfCan>
+          {row.original.userId !== user?.id && (
+            <RenderIfCan permission={PERMISSIONS.EMPLOYEE_DELETE}>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setCurrentRow(row.original)
+                  setOpen('delete')
+                }}
+                className='!text-red-500'
+              >
+                Eliminar
+                <DropdownMenuShortcut>
+                  <IconTrash size={16} />
+                </DropdownMenuShortcut>
+              </DropdownMenuItem>
+            </RenderIfCan>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </>

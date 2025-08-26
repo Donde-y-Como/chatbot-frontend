@@ -88,6 +88,7 @@ export type Employee = {
   birthDate?: string
   createdAt: string
   color: string
+  userId: string
 }
 
 export const dayInitialsMap = {
