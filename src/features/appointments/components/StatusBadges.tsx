@@ -15,11 +15,10 @@ export function AppointmentStatusBadge({ status }: AppointmentStatusBadgeProps) 
   return (
     <Badge 
       variant="outline"
-      className="text-xs"
+      className="text-xs text-white font-medium"
       style={{ 
-        backgroundColor: config.bgColor,
-        color: config.color,
-        borderColor: config.color + '40'
+        backgroundColor: config.color,
+        borderColor: config.color
       }}
     >
       {config.label}

@@ -56,6 +56,7 @@ import {
 } from './components/StatusBadges'
 import { ClientChatButton } from './components/client-chat-button'
 import type { Appointment, Service } from './types'
+import { getAppointmentStatusConfig } from './types'
 
 interface AppointmentBlockProps {
   cancelAppointment: (id: string) => void
@@ -185,6 +186,15 @@ export function AppointmentBlock({
           .filter((item): item is NonNullable<typeof item> => item !== null)
       : []
 
+  // Get status-based background color
+  const statusConfig = getAppointmentStatusConfig(appointment.status || 'pendiente')
+  const backgroundColor = statusConfig.color
+
+  // Format display text: FirstName - ServiceName
+  const firstName = client.name.split(' ')[0]
+  const primaryService = services.length > 0 ? services[0].name : 'Sin servicio'
+  const displayText = `${firstName} - ${primaryService}`
+
   return (
     <Dialog
       onOpenChange={(open) => {
@@ -200,26 +210,26 @@ export function AppointmentBlock({
           className={cn(
             'absolute rounded-md overflow-hidden cursor-pointer transition-all hover:opacity-90 border-2 border-background group',
             appointment.status === 'cancelada' &&
-              'opacity-60 border-dashed border-red-300'
+              'opacity-60 border-dashed'
           )}
           style={{
-            top: `calc(${adjustedTopOffset}px)`,
-            height: `${adjustedEventHeight}px`,
-            left: `calc(${leftPercent}% + 2px)`,
-            width: `calc(${widthPercent}% - 4px)`,
-            backgroundColor:
-              appointment.status === 'cancelada'
-                ? '#6b7280' // Gris para canceladas
-                : employees.length > 0
-                  ? employees[0].color
-                  : '#6c757d',
+            ...{
+              top: `calc(${adjustedTopOffset}px)`,
+              height: `${adjustedEventHeight}px`,
+              left: `calc(${leftPercent}% + 2px)`,
+              width: `calc(${widthPercent}% - 4px)`,
+              backgroundColor: backgroundColor,
+            },
+            ...(appointment.status === 'cancelada' && {
+              borderColor: backgroundColor,
+            })
           }}
           onClick={(e) => e.stopPropagation()}
         >
           {duration > 60 ? (
             <div className='p-2 flex flex-col h-full min-w-0'>
               <div className='flex items-center justify-between text-white text-sm font-semibold min-w-0'>
-                <span className='truncate flex-1 mr-2'>{client.name}</span>
+                <span className='truncate flex-1 mr-2'>{displayText}</span>
                 <Badge
                   variant='outline'
                   className='bg-white/20 text-white border-0 text-xs flex-shrink-0'
@@ -252,7 +262,7 @@ export function AppointmentBlock({
           ) : (
             <div className='p-1 flex items-center text-white text-xs font-semibold h-full min-w-0'>
               <div className='flex items-center gap-1 flex-1 min-w-0'>
-                <span className='truncate'>{client.name}</span>
+                <span className='truncate'>{displayText}</span>
                 {appointment.status === 'cancelada' && (
                   <span className='bg-red-500/80 text-white text-xs px-1 py-0.5 rounded flex-shrink-0'>
                     CANCELADA

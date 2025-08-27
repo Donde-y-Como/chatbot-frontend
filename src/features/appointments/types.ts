@@ -141,12 +141,12 @@ export type Appointment = z.infer<typeof appointment>
 // Funciones utilitarias para obtener configuraciones de colores
 export const getAppointmentStatusConfig = (status: AppointmentStatus) => {
   const configs = {
-    pendiente: { label: 'Pendiente', color: '#6b7280', bgColor: '#f3f4f6' },
-    confirmada: { label: 'Confirmada', color: '#3b82f6', bgColor: '#dbeafe' },
-    reprogramada: { label: 'Reprogramada', color: '#f59e0b', bgColor: '#fef3c7' },
-    completada: { label: 'Completada', color: '#10b981', bgColor: '#d1fae5' },
-    cancelada: { label: 'Cancelada', color: '#ef4444', bgColor: '#fee2e2' },
-    'no asistió': { label: 'No Asistió', color: '#ef4444', bgColor: '#fee2e2' }
+    pendiente: { label: 'Pendiente', color: '#6b7280' },        // gray
+    confirmada: { label: 'Confirmada', color: '#10b981' },      // green
+    reprogramada: { label: 'Reprogramada', color: '#6366f1' },  // indigo
+    completada: { label: 'Completada', color: '#3b82f6' },      // blue
+    cancelada: { label: 'Cancelada', color: '#ef4444' },        // red
+    'no asistió': { label: 'No Asistió', color: '#f97316' }     // orange
   }
   return configs[status] || configs.pendiente
 }
