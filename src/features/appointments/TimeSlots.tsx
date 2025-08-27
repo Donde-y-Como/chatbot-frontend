@@ -1,5 +1,11 @@
 
-export function TimeSlots({ startAt = 400, endAt = 1400 }) {
+interface TimeSlotsProps {
+  startAt?: number
+  endAt?: number
+  timeSlotHeight?: number
+}
+
+export function TimeSlots({ startAt = 400, endAt = 1400, timeSlotHeight = 120 }: TimeSlotsProps) {
   const startHour = Math.floor(startAt / 60)
   const endHour = Math.ceil(endAt / 60)
   // Create an array of hours from startHour to endHour.
@@ -14,7 +20,11 @@ export function TimeSlots({ startAt = 400, endAt = 1400 }) {
   return (
     <div className='relative'> {/* Ensure the container is relative */}
       {hours.map((hour) => (
-        <div key={hour} className='h-[64px] border-b text-xs text-right pr-2 py-[4px]'>
+        <div 
+          key={hour} 
+          className='border-b text-xs text-right pr-2 py-[4px]'
+          style={{ height: `${timeSlotHeight}px` }}
+        >
           {formatHour(hour)}
         </div>
       ))}

@@ -69,10 +69,10 @@ interface AppointmentBlockProps {
     startAt: number
     endAt: number
   }
+  zoomScale?: number
 }
 
-const MINUTE_HEIGHT = 64 / 60
-const verticalGap = 4
+// Constants now calculated dynamically based on zoom scale
 
 export function AppointmentBlock({
   cancelAppointment,
@@ -83,14 +83,20 @@ export function AppointmentBlock({
   column,
   totalColumns,
   workHours,
+  zoomScale = 1,
 }: AppointmentBlockProps) {
+  // Use the same calculation as DayView: BASE_TIME_SLOT_HEIGHT (120px) * zoomScale / 60 minutes
+  const BASE_TIME_SLOT_HEIGHT = 120
+  const scaledMinuteHeight = (BASE_TIME_SLOT_HEIGHT * zoomScale) / 60
+  const scaledVerticalGap = 4 * zoomScale
+
   const eventStartMinutes = appointment.timeRange.startAt
   const startMinutesRelative = eventStartMinutes - workHours.startAt
   const duration = appointment.timeRange.endAt - appointment.timeRange.startAt
-  const topOffset = startMinutesRelative * MINUTE_HEIGHT
-  const eventHeight = duration * MINUTE_HEIGHT
-  const adjustedTopOffset = topOffset + verticalGap / 2
-  const adjustedEventHeight = eventHeight - verticalGap
+  const topOffset = startMinutesRelative * scaledMinuteHeight
+  const eventHeight = duration * scaledMinuteHeight
+  const adjustedTopOffset = topOffset + scaledVerticalGap / 2
+  const adjustedEventHeight = eventHeight - scaledVerticalGap
   const leftPercent = (column / totalColumns) * 100
   const widthPercent = 100 / totalColumns
 

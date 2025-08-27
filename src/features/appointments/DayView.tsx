@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { format, isSameDay } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
 import { es } from 'date-fns/locale'
-import { Calendar, CalendarX, Clock, Loader2 } from 'lucide-react'
+import { Calendar, CalendarX, Clock, Loader2, Minus, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
@@ -25,11 +25,15 @@ import { useDialogState } from '@/features/appointments/contexts/DialogStateCont
 import type { Appointment } from './types'
 
 // Simple constants
-const TIME_SLOT_HEIGHT = 64
+const BASE_TIME_SLOT_HEIGHT = 120
 const MINUTES_PER_HOUR = 60
 const DEFAULT_DURATION = 60 // 1 hour
 const MIN_DURATION = 15 // 15 minutes
 const SNAP_MINUTES = 15
+
+// Zoom constants
+const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3]
+const DEFAULT_ZOOM_INDEX = 2 // 100%
 
 // Time block type
 type TimeBlock = {
@@ -52,6 +56,9 @@ export function DayView({
   const [selectedService, setSelectedService] = useState<ServiceFilterProps['selectedService']>('all')
   const [currentTime, setCurrentTime] = useState(date)
   
+  // Zoom state
+  const [zoomIndex, setZoomIndex] = useState(DEFAULT_ZOOM_INDEX)
+  
   // Simple time block state
   const [timeBlock, setTimeBlock] = useState<TimeBlock | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -62,6 +69,22 @@ export function DayView({
   const timeSlotAreaRef = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
   const { hasOpenDialogs } = useDialogState()
+
+  // Computed zoom values
+  const currentZoom = ZOOM_LEVELS[zoomIndex]
+  const TIME_SLOT_HEIGHT = BASE_TIME_SLOT_HEIGHT * currentZoom
+
+  // Zoom controls
+  const handleZoomIn = useCallback(() => {
+    setZoomIndex(prev => Math.min(prev + 1, ZOOM_LEVELS.length - 1))
+  }, [])
+
+  const handleZoomOut = useCallback(() => {
+    setZoomIndex(prev => Math.max(prev - 1, 0))
+  }, [])
+
+  const canZoomIn = zoomIndex < ZOOM_LEVELS.length - 1
+  const canZoomOut = zoomIndex > 0
 
   const handleSelectedService = (serviceId: string | 'all') => {
     setSelectedService(serviceId)
@@ -92,7 +115,7 @@ export function DayView({
       workHours.startAt,
       Math.min(workHours.endAt - MIN_DURATION, snappedMinutes + workHours.startAt)
     )
-  }, [workHours])
+  }, [workHours, TIME_SLOT_HEIGHT])
 
   const formatTime = (minutes: number): string => {
     const hours = Math.floor(minutes / MINUTES_PER_HOUR)
@@ -171,17 +194,6 @@ export function DayView({
       Math.min(workHours.endAt - MIN_DURATION, snappedMinutes + workHours.startAt)
     )
 
-    console.log('Dragging:', {
-      clientY: e.clientY,
-      rectTop: rect.top,
-      relativeY,
-      minutesFromStart,
-      snappedMinutes,
-      currentTime,
-      dragHandle,
-      workHours
-    })
-    
     if (dragHandle === 'top') {
       const newStartAt = Math.max(
         workHours.startAt,
@@ -195,7 +207,7 @@ export function DayView({
       )
       setTimeBlock({ startAt: timeBlock.startAt, endAt: newEndAt })
     }
-  }, [isDragging, timeBlock, dragHandle, workHours])
+  }, [isDragging, timeBlock, dragHandle, workHours, TIME_SLOT_HEIGHT])
 
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
@@ -347,12 +359,40 @@ export function DayView({
   return (
     <div className='flex flex-col h-full'>
       <div className='sticky top-0 z-20 bg-card shrink-0'>
-        <div className='p-2 md:p-3'>
+        <div className='p-2 md:p-3 space-y-3'>
           <ServiceFilter
             services={allServices}
             selectedService={selectedService}
             onServiceSelect={handleSelectedService}
           />
+          
+          {/* Zoom Controls */}
+          <div className='flex items-center gap-2 justify-end'>
+            <span className='text-xs text-muted-foreground mr-2'>Zoom:</span>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={handleZoomOut}
+              disabled={!canZoomOut}
+              className='h-8 w-8 p-0'
+              title='Zoom out'
+            >
+              <Minus className='h-3 w-3' />
+            </Button>
+            <span className='text-xs font-medium min-w-12 text-center'>
+              {Math.round(currentZoom * 100)}%
+            </span>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={handleZoomIn}
+              disabled={!canZoomIn}
+              className='h-8 w-8 p-0'
+              title='Zoom in'
+            >
+              <Plus className='h-3 w-3' />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -360,7 +400,11 @@ export function DayView({
         <ScrollArea className='h-full'>
           <div className='flex relative'>
             <div className='w-12 md:w-16 lg:w-20 flex-shrink-0 bg-muted/20'>
-              <TimeSlots startAt={workHours.startAt} endAt={workHours.endAt} />
+              <TimeSlots 
+                startAt={workHours.startAt} 
+                endAt={workHours.endAt} 
+                timeSlotHeight={TIME_SLOT_HEIGHT}
+              />
             </div>
 
             <div
@@ -378,11 +422,11 @@ export function DayView({
                 backgroundImage: `repeating-linear-gradient(
                   to bottom,
                   transparent,
-                  transparent 63px,
-                  hsl(var(--border) / 0.3) 63px,
-                  hsl(var(--border) / 0.3) 64px
+                  transparent ${TIME_SLOT_HEIGHT - 1}px,
+                  hsl(var(--border) / 0.3) ${TIME_SLOT_HEIGHT - 1}px,
+                  hsl(var(--border) / 0.3) ${TIME_SLOT_HEIGHT}px
                 )`,
-                backgroundSize: '100% 64px',
+                backgroundSize: `100% ${TIME_SLOT_HEIGHT}px`,
                 height: `${totalHeight}px`,
                 minHeight: `${totalHeight}px`,
               }}
@@ -486,6 +530,7 @@ export function DayView({
                     column={column}
                     totalColumns={totalColumns}
                     workHours={workHours}
+                    zoomScale={currentZoom}
                   />
                 )
               })}
