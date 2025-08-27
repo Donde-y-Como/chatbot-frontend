@@ -190,6 +190,12 @@ export function AppointmentBlock({
   const statusConfig = getAppointmentStatusConfig(appointment.status || 'pendiente')
   const backgroundColor = statusConfig.color
 
+  // Handle null client case
+  if (!client) {
+    console.warn('AppointmentBlock: client is null for appointment', appointment.id)
+    return null
+  }
+
   // Format display text: FirstName - ServiceName
   const firstName = client.name.split(' ')[0]
   const primaryService = services.length > 0 ? services[0].name : 'Sin servicio'
