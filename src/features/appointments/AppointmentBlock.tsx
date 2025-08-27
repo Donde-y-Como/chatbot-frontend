@@ -431,10 +431,6 @@ export function AppointmentBlock({
                     <div
                       key={employee.id}
                       className='flex items-center gap-3 p-2 rounded-lg border border-border/50 bg-primary/5'
-                      style={{
-                        borderLeftColor: employee.color,
-                        borderLeftWidth: '3px',
-                      }}
                     >
                       <Avatar className='h-8 w-8'>
                         <AvatarImage
@@ -442,10 +438,7 @@ export function AppointmentBlock({
                           alt={employee.name}
                           className='object-cover'
                         />
-                        <AvatarFallback
-                          style={{ backgroundColor: employee.color }}
-                          className='text-white text-sm'
-                        >
+                        <AvatarFallback className='bg-primary/20 text-primary font-medium text-sm'>
                           {employee.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>

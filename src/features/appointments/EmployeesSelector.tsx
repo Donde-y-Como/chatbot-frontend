@@ -103,10 +103,6 @@ export function EmployeesSelector({
               </div>
 
               <div className='flex items-center gap-2 md:gap-3 ml-2 md:ml-3'>
-                <div
-                  className='w-2.5 h-2.5 md:w-3 md:h-3 rounded-full transition-transform duration-200 group-hover:scale-110'
-                  style={{ backgroundColor: employee.color }}
-                />
                 <span className='select-none cursor-pointer text-xs md:text-sm font-medium transition-colors duration-200 group-hover:text-primary truncate'>
                   {employee.name}
                 </span>
