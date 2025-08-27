@@ -49,21 +49,46 @@ export function CreateOrSelectMultipleServices({
   const { data: services = [], isLoading } = useGetServices()
   const createServiceMutation = useCreateService()
 
-  const filteredServices = useMemo(() => {
-    if (!searchQuery.trim()) return services
+  // Utility function for improved searching
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .trim()
+      .normalize('NFD') // Decompose accented characters
+      .replace(/[\u0300-\u036f]/g, '') // Remove accent marks
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+  }
 
-    return services.filter((service) =>
-      service.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [services, searchQuery])
+  // Pre-compute normalized service names for better performance
+  const normalizedServices = useMemo(() => {
+    return services.map((service) => ({
+      ...service,
+      normalizedName: normalizeText(service.name)
+    }))
+  }, [services])
+
+  // Instant reactive search filtering
+  const filteredServices = useMemo(() => {
+    const trimmedQuery = searchQuery.trim()
+    if (!trimmedQuery) return services
+
+    const normalizedQuery = normalizeText(trimmedQuery)
+
+    return normalizedServices
+      .filter((service) => service.normalizedName.includes(normalizedQuery))
+      .map(({ normalizedName, ...service }) => service) // Remove normalizedName from result
+  }, [normalizedServices, searchQuery])
 
   const noExactMatch = useMemo(() => {
-    if (!searchQuery.trim()) return false
+    const trimmedQuery = searchQuery.trim()
+    if (!trimmedQuery) return false
 
-    return !services.some(
-      (service) => service.name.toLowerCase() === searchQuery.toLowerCase()
+    const normalizedQuery = normalizeText(trimmedQuery)
+
+    return !normalizedServices.some(
+      (service) => service.normalizedName === normalizedQuery
     )
-  }, [services, searchQuery])
+  }, [normalizedServices, searchQuery])
 
   const handleCreateService = async () => {
     const serviceName = newServiceName || searchQuery
@@ -90,10 +115,17 @@ export function CreateOrSelectMultipleServices({
   }
 
   const handleSelectAll = () => {
-    if (selectedIds.length === services.length) {
-      onChange([])
+    const visibleServices = searchQuery.trim() ? filteredServices : services
+    const allVisibleSelected = visibleServices.every(service => selectedIds.includes(service.id))
+    
+    if (allVisibleSelected) {
+      // Remove all visible services from selection
+      const remainingIds = selectedIds.filter(id => !visibleServices.some(service => service.id === id))
+      onChange(remainingIds)
     } else {
-      onChange(services.map((service) => service.id))
+      // Add all visible services to selection
+      const newIds = [...new Set([...selectedIds, ...visibleServices.map(service => service.id)])]
+      onChange(newIds)
     }
   }
 
@@ -283,14 +315,13 @@ export function CreateOrSelectMultipleServices({
         <Card className='border border-border/50 shadow-sm'>
           <CardContent className='p-0'>
             <Command className='rounded-lg'>
-              <div className='flex items-center border-b w-full bg-muted/30'>
-                <Search className='h-4 w-4 text-muted-foreground ml-3 mr-2' />
-                <CommandInput
+              <div className='flex items-center border-b w-full bg-muted/30 p-2'>
+                <Input
                   placeholder={placeholder}
                   value={searchQuery}
-                  onValueChange={setSearchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className='border-0 focus:ring-0 bg-transparent'
+                  className='border-0 focus:ring-0 bg-transparent shadow-none p-3'
                 />
                 <Button
                   variant='ghost'
@@ -318,7 +349,10 @@ export function CreateOrSelectMultipleServices({
                       <div className='flex items-center justify-between px-3 py-2 border-b bg-muted/20'>
                         <div className='flex items-center'>
                           <Checkbox
-                            checked={selectedIds.length === services.length}
+                            checked={(() => {
+                              const visibleServices = searchQuery.trim() ? filteredServices : services
+                              return visibleServices.length > 0 && visibleServices.every(service => selectedIds.includes(service.id))
+                            })()}
                             onCheckedChange={handleSelectAll}
                             className='mr-2 h-3 w-3'
                           />
@@ -328,9 +362,11 @@ export function CreateOrSelectMultipleServices({
                             onClick={handleSelectAll}
                             className='text-xs text-muted-foreground hover:text-foreground h-auto py-1 px-1'
                           >
-                            {selectedIds.length === services.length
-                              ? 'Deseleccionar todos'
-                              : 'Seleccionar todos'}
+                            {(() => {
+                              const visibleServices = searchQuery.trim() ? filteredServices : services
+                              const allVisibleSelected = visibleServices.every(service => selectedIds.includes(service.id))
+                              return allVisibleSelected ? 'Deseleccionar todos' : 'Seleccionar todos'
+                            })()}
                           </Button>
                         </div>
                         {selectedIds.length > 0 && (
@@ -339,7 +375,7 @@ export function CreateOrSelectMultipleServices({
                               variant='secondary'
                               className='text-xs px-2 py-0.5'
                             >
-                              {selectedIds.length} de {services.length}
+                              {selectedIds.length} de {searchQuery.trim() ? filteredServices.length : services.length}
                             </Badge>
                           </div>
                         )}
