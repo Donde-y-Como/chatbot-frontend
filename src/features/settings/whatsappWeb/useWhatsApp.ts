@@ -1,21 +1,13 @@
-import { useEffect, useState } from "react";
-import { useWhatsAppData } from "./useWhatsAppData";
+import { useWhatsAppData } from './useWhatsAppData'
 
 export function useWhatsApp() {
-    const [isConnected, setIsConnected] = useState(false);
-    const { data: whatsappData, isLoading } = useWhatsAppData();
+  const { data: whatsappData, isLoading, isError } = useWhatsAppData()
 
-    useEffect(() => {
-        if (whatsappData?.isConnected) {
-            setIsConnected(true);
-        } else {
-            setIsConnected(false);
-        }
-    }, [whatsappData])
-
-    return {
-        isConnected,
-        isLoading, 
-        whatsappData
-    }
+  return {
+    isConnected: whatsappData?.isConnected ?? false,
+    hasWhatsAppInstance: whatsappData?.hasWhatsAppInstance ?? false,
+    isLoading: isLoading && !isError, // Don't show loading if there's an error
+    whatsappData,
+    isError,
+  }
 }

@@ -9,18 +9,31 @@ import { useWhatsApp } from './useWhatsApp'
 
 export default function SettingsWhatsappWeb() {
   const { data: business, isLoading } = useGetBusiness()
-  const { isConnected: isWhatsAppConnected, isLoading: isWhatsAppLoading } =
-    useWhatsApp()
+  const { 
+    isConnected: isWhatsAppConnected, 
+    hasWhatsAppInstance,
+    isLoading: isWhatsAppLoading,
+    isError: isWhatsAppError 
+  } = useWhatsApp()
 
-  if (isWhatsAppLoading || isLoading || !business) {
+  if (isLoading) {
+    return <div>Cargando información del negocio...</div>
+  }
+
+  if (isWhatsAppLoading && !isWhatsAppError) {
     return <div>Recuperando sesion de whatsapp web...</div>
   }
 
-  if (!business.phone) {
+  if(!business) {
+    return <div>Cargando...</div>
+  }
+
+  // If there's no WhatsApp instance (404/400 from status endpoint), show phone form
+  if (!hasWhatsAppInstance) {
     return (
       <ContentSection
         title='Whatsapp Web'
-        desc='Para conectar tu cuenta de Whatsapp Web, primero debes tener un número de teléfono registrado.'
+        desc='Para conectar tu cuenta de Whatsapp Web, primero debes registrar un número de teléfono.'
       >
         <RenderIfCan permission={PERMISSIONS.WHATSAPP_WEB_CONNECT}>
           <CreateWhatsAppInstance />
@@ -29,6 +42,7 @@ export default function SettingsWhatsappWeb() {
     )
   }
 
+  // If WhatsApp instance exists, show connection status
   return (
     <ContentSection title='Sesion de Whatsapp Web' desc='Gestiona tu conexion'>
       {isWhatsAppConnected ? (
