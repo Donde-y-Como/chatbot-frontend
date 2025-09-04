@@ -13,14 +13,20 @@ export function useWhatsAppData() {
       if (!user) throw new Error('User not found')
 
       try {
-        const statusResponse = await api.get<{ isConnected: boolean }>('/whatsapp-web/status')
+        const statusResponse = await api.get<{ 
+          status?: 'open' | 'closed',
+          isConnected?: boolean 
+        }>('/whatsapp-web/status')
         
-        // If WhatsApp is connected, return the status
-        if (statusResponse.data.isConnected) {
+        // Handle both possible response formats
+        const isConnected = statusResponse.data.status === 'open' || statusResponse.data.isConnected === true
+        
+        // If WhatsApp is connected, return immediately without fetching QR
+        if (isConnected) {
           return { isConnected: true, qr: '', hasWhatsAppInstance: true }
         }
 
-        // If WhatsApp is not connected, get QR code
+        // Only fetch QR code if WhatsApp is not connected
         try {
           const qrResponse = await api.get<{ qrCode: string }>('/whatsapp-web/qr')
           return { isConnected: false, qr: qrResponse.data.qrCode, hasWhatsAppInstance: true }

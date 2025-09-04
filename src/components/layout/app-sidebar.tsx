@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { ComponentProps } from 'react'
 import {
-  IconChecklist, IconClipboardList,
+  IconChecklist,
+  IconClipboardList,
   IconMessages,
   IconPackages,
   IconUsers,
@@ -12,23 +13,22 @@ import {
   Command,
   Hammer,
   Home,
-  PanelLeft,
   Receipt,
   ShoppingBag,
   Store,
   WrenchIcon,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button.tsx'
+import { useAuth } from '@/stores/authStore'
+import {
+  getRoutePermissions,
+  hasRoutePermissions,
+} from '@/lib/route-permissions'
+import { getUserPermissions, useGetRoles } from '@/hooks/useAuth'
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarRail,
-  useSidebar,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { NavGroup } from '@/components/layout/nav-group'
@@ -36,16 +36,12 @@ import { NavUser } from '@/components/layout/nav-user'
 import { useUnreadChats } from './data/useUnreadChats'
 import { useGetUserAndBusiness } from './hooks/useGetUser'
 import { SidebarData } from './types'
-import { useAuth } from '@/stores/authStore'
-import { useGetRoles, getUserPermissions } from '@/hooks/useAuth'
-import { getRoutePermissions, hasRoutePermissions } from '@/lib/route-permissions'
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const { user, business } = useGetUserAndBusiness()
   const { user: authUser } = useAuth()
   const { data: roles } = useGetRoles()
   const { count: unreadCount, isLoading } = useUnreadChats()
-  const { toggleSidebar } = useSidebar()
 
   // Get user permissions for filtering sidebar items
   const userPermissions = React.useMemo(() => {
@@ -53,19 +49,24 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   }, [authUser, roles])
 
   // Check if user has permission to access a route
-  const hasPermission = React.useCallback((url: string) => {
-    const requiredPermissions = getRoutePermissions(url)
-    
-    // If no permissions required, allow access
-    if (requiredPermissions.length === 0) {
-      return true
-    }
+  const hasPermission = React.useCallback(
+    (url: string) => {
+      const requiredPermissions = getRoutePermissions(url)
 
-    // Check if user is owner (has wildcard permission)
-    const isOwner = userPermissions.includes('*')
-    
-    return isOwner || hasRoutePermissions(userPermissions, requiredPermissions)
-  }, [userPermissions])
+      // If no permissions required, allow access
+      if (requiredPermissions.length === 0) {
+        return true
+      }
+
+      // Check if user is owner (has wildcard permission)
+      const isOwner = userPermissions.includes('*')
+
+      return (
+        isOwner || hasRoutePermissions(userPermissions, requiredPermissions)
+      )
+    },
+    [userPermissions]
+  )
 
   // Organized navigation groups with smart UX/UI grouping
   const navigationGroups = React.useMemo(() => {
@@ -78,7 +79,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
             url: '/' as const,
             icon: Home,
           },
-        ]
+        ],
       },
       {
         title: 'Comunicación',
@@ -89,7 +90,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
             badge: isLoading ? '...' : unreadCount?.toString() || '0',
             icon: IconMessages,
           },
-        ]
+        ],
       },
       {
         title: 'Agenda & Eventos',
@@ -104,7 +105,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
             url: '/eventos' as const,
             icon: CalendarFold,
           },
-        ]
+        ],
       },
       {
         title: 'Clientes & Equipo',
@@ -119,7 +120,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
             url: '/empleados' as const,
             icon: IconUsers,
           },
-        ]
+        ],
       },
       {
         title: 'Productos & Servicios',
@@ -139,7 +140,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
             url: '/paquetes' as const,
             icon: IconPackages,
           },
-        ]
+        ],
       },
       {
         title: 'Ventas & Órdenes',
@@ -159,7 +160,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
             url: '/orden/historial' as const,
             icon: IconClipboardList,
           },
-        ]
+        ],
       },
       {
         title: 'Herramientas',
@@ -169,17 +170,17 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
             url: '/tools' as const,
             icon: Hammer,
           },
-        ]
+        ],
       },
     ]
 
     // Filter groups and items based on permissions
     return groups
-      .map(group => ({
+      .map((group) => ({
         ...group,
-        items: group.items.filter(item => hasPermission(item.url))
+        items: group.items.filter((item) => hasPermission(item.url)),
       }))
-      .filter(group => group.items.length > 0) // Remove empty groups
+      .filter((group) => group.items.length > 0) // Remove empty groups
   }, [isLoading, unreadCount, hasPermission])
 
   const [data, setData] = React.useState<SidebarData>({
@@ -195,7 +196,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 
   // Update sidebar data when navigation groups change
   React.useEffect(() => {
-    setData(prev => ({
+    setData((prev) => ({
       ...prev,
       navGroups: navigationGroups,
     }))
@@ -222,14 +223,16 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           }
 
           // Find the Chats item index within the communication group
-          const chatItemIndex = newData.navGroups[communicationGroupIndex].items.findIndex(
-            (item) => item.title === 'Chats'
-          )
+          const chatItemIndex = newData.navGroups[
+            communicationGroupIndex
+          ].items.findIndex((item) => item.title === 'Chats')
 
           // If found, update only that element maintaining all its properties
           if (chatItemIndex !== -1) {
             newData.navGroups[communicationGroupIndex].items[chatItemIndex] = {
-              ...newData.navGroups[communicationGroupIndex].items[chatItemIndex],
+              ...newData.navGroups[communicationGroupIndex].items[
+                chatItemIndex
+              ],
               badge: unreadCount.toString(),
             }
           }
@@ -248,7 +251,11 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
       <SidebarFooter>
-        {user ? <NavUser user={user} business={business} /> : <Skeleton className='w-full h-3' />}
+        {user ? (
+          <NavUser user={user} business={business} />
+        ) : (
+          <Skeleton className='w-full h-3' />
+        )}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

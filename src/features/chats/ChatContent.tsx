@@ -37,7 +37,7 @@ export function ChatContent({
   isMobileVisible,
   onBackClick,
 }: ChatContentProps) {
-  const { whatsappData } = useWhatsApp()
+  const { isConnected } = useWhatsApp()
 
   const canSendMessages = useMemo(() => {
 
@@ -46,7 +46,7 @@ export function ChatContent({
     if (!chatData) return false
 
     if (chatData.platformName === 'whatsappWeb') {
-      return whatsappData?.isConnected || false;
+      return isConnected || false;
     }
 
     const userMessages = chatData.messages.filter(
@@ -59,7 +59,7 @@ export function ChatContent({
     const lastTimestamp = lastUserMessage.timestamp
 
     return differenceInHours(Date.now(), lastTimestamp) < 24
-  }, [chatData, whatsappData?.isConnected])
+  }, [chatData, isConnected])
 
   const isWhatsAppChat = useMemo(() => {
     if (!chatData) return false
