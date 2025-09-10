@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
-import { Upload, X } from 'lucide-react'
+import { Upload, X, FileSignature } from 'lucide-react'
+import PdfSignature from '@/components/pdf/PdfSignature'
 import { getFileType, isValidFileType } from '@/lib/utils.ts'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -27,6 +28,7 @@ export function ClientAnnexesForm() {
   const [pendingAnnexes, setPendingAnnexes] = useState<PendingAnnex[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
   const [newAnnexName, setNewAnnexName] = useState('')
+  const [selectedPdfForSigning, setSelectedPdfForSigning] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const currentAnnexes = useMemo(() => watch('annexes') || [], [watch])
@@ -158,6 +160,18 @@ export function ClientAnnexesForm() {
     return pendingAnnexes.filter((pa) => !pa.error)
   }, [pendingAnnexes])
 
+  // Handle PDF signature update
+  const handlePdfUpdated = useCallback((newUrl: string) => {
+    // Update the annex with the new signed PDF URL
+    const updatedAnnexes = currentAnnexes.map(annex => 
+      annex.media.url === selectedPdfForSigning 
+        ? { ...annex, media: { ...annex.media, url: newUrl } }
+        : annex
+    )
+    setValue('annexes', updatedAnnexes)
+    setSelectedPdfForSigning(null)
+  }, [currentAnnexes, selectedPdfForSigning, setValue])
+
   // Expose function to parent component (like bundles)
   React.useEffect(() => {
     // Store function in a way parent can access it
@@ -265,6 +279,7 @@ export function ClientAnnexesForm() {
                       key={`existing-${index}`}
                       annex={annex}
                       onRemove={() => removeExistingAnnex(index)}
+                      onSign={() => setSelectedPdfForSigning(annex.media.url)}
                       isExisting
                     />
                   ))}
@@ -289,6 +304,30 @@ export function ClientAnnexesForm() {
             </FormItem>
           )}
         />
+
+        {/* PDF Signature Modal */}
+        {selectedPdfForSigning && (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+            <div className="bg-background border rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-lg">
+              <div className="flex justify-between items-center p-4 border-b">
+                <h3 className="text-lg font-semibold text-foreground">Firmar PDF</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedPdfForSigning(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="p-4 max-h-[calc(90vh-80px)] overflow-auto bg-background">
+                <PdfSignature
+                  pdfUrl={selectedPdfForSigning}
+                  onPdfUpdated={handlePdfUpdated}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
@@ -298,10 +337,12 @@ export function ClientAnnexesForm() {
 function AnnexPreview({
   annex,
   onRemove,
+  onSign,
   isExisting,
 }: {
   annex: Annex
   onRemove: () => void
+  onSign?: () => void
   isExisting?: boolean
 }) {
   return (
@@ -325,6 +366,23 @@ function AnnexPreview({
           <Badge variant='secondary' className='text-xs'>
             Guardado
           </Badge>
+        )}
+        {/* Show sign button only for PDF files */}
+        {(
+          annex.media.mimetype === 'application/pdf' ||
+          annex.media.type === 'pdf' ||
+          annex.media.url?.toLowerCase().includes('.pdf')
+        ) && onSign && (
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={onSign}
+            className='text-blue-600 hover:text-blue-700'
+            title='Firmar PDF'
+          >
+            <FileSignature className='h-4 w-4' />
+          </Button>
         )}
         <Button
           type='button'

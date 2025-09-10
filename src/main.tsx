@@ -6,6 +6,9 @@ import { queryClient, router } from '@/hooks/use-web-socket.ts'
 import { ThemeProvider } from './context/theme-context'
 import './index.css'
 
+// Initialize PDF.js configuration
+import '@/lib/pdf/pdfConfig'
+
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router
