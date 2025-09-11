@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { FileText, PenTool, Download, Save, X, RotateCcw } from 'lucide-react';
 import { defaultPdfOptions, handlePdfError } from '@/lib/pdf/pdfConfig';
+import { api } from '@/api/axiosInstance';
+import { useAuth } from '@/stores/authStore';
+import { toast } from 'sonner';
 
 interface PdfSignatureProps {
   pdfUrl: string;
@@ -32,6 +35,7 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
   const [proxiedPdfUrl, setProxiedPdfUrl] = useState<string>('');
   const signatureRef = useRef<SignatureCanvas>(null);
   const pageRef = useRef<HTMLDivElement>(null);
+  const { accessToken, isAuthenticated } = useAuth();
 
   // Verify PDF.js configuration on mount and setup proxy URL
   useEffect(() => {
@@ -98,7 +102,7 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
   // Add signature to PDF
   const addSignature = useCallback(async () => {
     if (!signatureRef.current || !pendingPosition || signatureRef.current.isEmpty()) {
-      alert('Por favor, dibuja tu firma antes de continuar.');
+      toast.info('Por favor, dibuja tu firma antes de continuar.');
       return;
     }
 
@@ -118,6 +122,16 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
     clearSignature();
   }, [pendingPosition, clearSignature]);
 
+  // Helper function to get the correct PDF URL (proxy or direct)
+  const getPdfUrl = useCallback(() => {
+    // Si es de Google Cloud Storage, usar proxy
+    if (pdfUrl.includes('storage.googleapis.com')) {
+      return `/api/pdf/proxy?url=${encodeURIComponent(pdfUrl)}`;
+    }
+    // Si no, usar URL directa
+    return pdfUrl;
+  }, [pdfUrl]);
+
   // Remove signature position
   const removeSignaturePosition = useCallback((index: number) => {
     setSignaturePositions(prev => prev.filter((_, i) => i !== index));
@@ -126,15 +140,21 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
   // Save signed PDF
   const saveSignedPdf = useCallback(async () => {
     if (signaturePositions.length === 0) {
-      alert('Agrega al menos una firma antes de guardar.');
+      toast.info('Agrega al menos una firma antes de guardar.');
+      return;
+    }
+
+    if (!isAuthenticated()) {
+      toast.error('Debes estar autenticado para guardar el PDF.');
       return;
     }
 
     setIsLoading(true);
     
     try {
-      // Fetch the original PDF
-      const pdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+      // Fetch the original PDF using proxy if needed
+      const correctPdfUrl = getPdfUrl();
+      const pdfBytes = await fetch(correctPdfUrl).then(res => res.arrayBuffer());
       
       // Load PDF with pdf-lib
       const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -162,7 +182,7 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
       // Save modified PDF
       const modifiedPdfBytes = await pdfDoc.save();
       
-      // Create blob and upload - Fix TypeScript error
+      // Create blob and upload - Use axios instance with proper auth
       const blob = new Blob([new Uint8Array(modifiedPdfBytes)], { type: 'application/pdf' });
       const formData = new FormData();
       
@@ -171,49 +191,66 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
       formData.append('file', blob, originalFilename);
       formData.append('existingUrl', pdfUrl);
       
-      // Upload to backend (update existing file)
-      const response = await fetch('/api/file/update', {
-        method: 'POST',
-        body: formData,
+      // Upload to backend using configured axios instance
+      console.log('Token from store:', accessToken);
+      console.log('Is authenticated:', isAuthenticated());
+      
+      const response = await api.post('/file/update', formData, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // Adjust based on your auth
-        }
+          'Content-Type': 'multipart/form-data',
+        },
       });
       
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-      
-      const { url: newUrl } = await response.json();
+      const { url: newUrl } = response.data;
       
       // Callback to update parent component
       if (onPdfUpdated) {
         onPdfUpdated(newUrl);
       }
       
-      alert('PDF firmado y guardado exitosamente.');
+      toast.success('PDF firmado y guardado exitosamente.');
       setSignaturePositions([]);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing PDF:', error);
-      alert('Error al firmar el PDF. Por favor intenta de nuevo.');
+      
+      // More detailed error logging
+      if (error.response) {
+        console.error('Response error:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data,
+          headers: error.response.headers
+        });
+        
+        if (error.response.status === 403) {
+          toast.error('Error de autorización: No tienes permisos para realizar esta acción. Por favor, inicia sesión nuevamente.');
+        } else if (error.response.status === 401) {
+          toast.error('Error de autenticación: Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        } else {
+          toast.error(`Error al firmar el PDF: ${error.response.data?.message || error.message}`);
+        }
+      } else {
+        toast.error('Error al firmar el PDF. Por favor intenta de nuevo.');
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [pdfUrl, signaturePositions, onPdfUpdated]);
+  }, [pdfUrl, signaturePositions, onPdfUpdated, getPdfUrl, accessToken, isAuthenticated]);
 
   // Download signed PDF locally
   const downloadSignedPdf = useCallback(async () => {
     if (signaturePositions.length === 0) {
-      alert('Agrega al menos una firma antes de descargar.');
+      toast.info('Agrega al menos una firma antes de descargar.');
       return;
     }
 
     setIsLoading(true);
     
     try {
-      // Fetch the original PDF
-      const pdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+      // Fetch the original PDF using proxy if needed
+      const correctPdfUrl = getPdfUrl();
+      const pdfBytes = await fetch(correctPdfUrl).then(res => res.arrayBuffer());
       
       // Load PDF with pdf-lib
       const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -252,11 +289,11 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
       
     } catch (error) {
       console.error('Error downloading signed PDF:', error);
-      alert('Error al descargar el PDF firmado.');
+      toast.error('Error al descargar el PDF firmado.');
     } finally {
       setIsLoading(false);
     }
-  }, [pdfUrl, signaturePositions]);
+  }, [pdfUrl, signaturePositions, getPdfUrl]);
 
   return (
     <Card className={className}>
