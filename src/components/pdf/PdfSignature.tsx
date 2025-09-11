@@ -10,11 +10,13 @@ import { defaultPdfOptions, handlePdfError } from '@/lib/pdf/pdfConfig';
 import { api } from '@/api/axiosInstance';
 import { useAuth } from '@/stores/authStore';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface PdfSignatureProps {
   pdfUrl: string;
   onPdfUpdated?: (newUrl: string) => void;
   className?: string;
+  clientId?: string; // Nuevo parámetro opcional
 }
 
 interface SignaturePosition {
@@ -24,7 +26,7 @@ interface SignaturePosition {
   signatureData: string; // Store the actual signature image data
 }
 
-export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSignatureProps) {
+export default function PdfSignature({ pdfUrl, onPdfUpdated, className, clientId }: PdfSignatureProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,9 +35,13 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
   const [pendingPosition, setPendingPosition] = useState<{ x: number; y: number; page: number } | null>(null);
   const [signaturePositions, setSignaturePositions] = useState<SignaturePosition[]>([]);
   const [proxiedPdfUrl, setProxiedPdfUrl] = useState<string>('');
+  const [forceRefresh, setForceRefresh] = useState<number>(0); // Para forzar recarga del PDF
+  const [documentKey, setDocumentKey] = useState<string>(`doc-${Date.now()}`); // Key única para el Document
+  const [tempPdfBlob, setTempPdfBlob] = useState<string | null>(null); // URL blob temporal para bypasear cache
   const signatureRef = useRef<SignatureCanvas>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const { accessToken, isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
 
   // Verify PDF.js configuration on mount and setup proxy URL
   useEffect(() => {
@@ -48,10 +54,30 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
       // Usar URL directa si no es de GCS
       setProxiedPdfUrl(pdfUrl);
     }
-  }, [pdfUrl]);
+    
+    // Reset force refresh cuando cambia la URL del PDF
+    setForceRefresh(0);
+    setDocumentKey(`doc-${Date.now()}`); // Nueva key para forzar re-mount del Document
+    
+    // Limpiar blob temporal anterior
+    if (tempPdfBlob) {
+      URL.revokeObjectURL(tempPdfBlob);
+      setTempPdfBlob(null);
+    }
+  }, [pdfUrl, tempPdfBlob]);
+
+  // Cleanup del blob al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (tempPdfBlob) {
+        URL.revokeObjectURL(tempPdfBlob);
+      }
+    };
+  }, [tempPdfBlob]);
 
   // Handle PDF load success
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+    console.log('PDF loaded successfully:', { numPages, forceRefresh, documentKey });
     setNumPages(numPages);
     setPdfLoadError(null);
   }
@@ -132,6 +158,32 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
     return pdfUrl;
   }, [pdfUrl]);
 
+  // Helper function to get PDF URL with cache busting
+  const getPdfUrlWithCacheBusting = useCallback(() => {
+    const baseUrl = proxiedPdfUrl || pdfUrl;
+    // Siempre agregar cache busting, no solo cuando forceRefresh > 0
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    const timestamp = Date.now();
+    const cacheBuster = `${separator}v=${forceRefresh}&t=${timestamp}&nocache=${Math.random()}`;
+    const finalUrl = `${baseUrl}${cacheBuster}`;
+    console.log('PDF URL with cache busting:', finalUrl);
+    return finalUrl;
+  }, [proxiedPdfUrl, pdfUrl, forceRefresh]);
+
+  // Helper function to fetch PDF with no-cache headers
+  const fetchPdfWithNoCache = useCallback(async (url: string) => {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
+      cache: 'no-store'
+    });
+    return response.arrayBuffer();
+  }, []);
+
   // Remove signature position
   const removeSignaturePosition = useCallback((index: number) => {
     setSignaturePositions(prev => prev.filter((_, i) => i !== index));
@@ -149,12 +201,18 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
       return;
     }
 
+    // Solo permitir firma de PDFs si tenemos un clientId (cliente existente)
+    if (!clientId) {
+      toast.warning('Solo se pueden firmar PDFs de clientes existentes. Por favor, guarda el cliente primero.');
+      return;
+    }
+
     setIsLoading(true);
     
     try {
-      // Fetch the original PDF using proxy if needed
+      // Fetch the original PDF using proxy if needed with no-cache headers
       const correctPdfUrl = getPdfUrl();
-      const pdfBytes = await fetch(correctPdfUrl).then(res => res.arrayBuffer());
+      const pdfBytes = await fetchPdfWithNoCache(correctPdfUrl);
       
       // Load PDF with pdf-lib
       const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -191,9 +249,15 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
       formData.append('file', blob, originalFilename);
       formData.append('existingUrl', pdfUrl);
       
+      // Add clientId if provided
+      if (clientId) {
+        formData.append('clientId', clientId);
+      }
+      
       // Upload to backend using configured axios instance
       console.log('Token from store:', accessToken);
       console.log('Is authenticated:', isAuthenticated());
+      console.log('ClientId:', clientId);
       
       const response = await api.post('/file/update', formData, {
         headers: {
@@ -207,6 +271,40 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
       if (onPdfUpdated) {
         onPdfUpdated(newUrl);
       }
+      
+      // Invalidar queries para refrescar datos en el frontend
+      if (clientId) {
+        await queryClient.invalidateQueries({ queryKey: ['clients'] });
+        await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+      }
+      
+      // Forzar actualización del visor de PDF
+      setForceRefresh(prev => prev + 1);
+      setDocumentKey(`doc-${Date.now()}`); // Nueva key para forzar re-mount
+      
+      // También resetear el estado del PDF viewer
+      setNumPages(0);
+      setPdfLoadError(null);
+      
+      // Crear blob temporal del PDF actualizado para bypasear cache
+      setTimeout(async () => {
+        try {
+          const updatedPdfBytes = await fetchPdfWithNoCache(newUrl);
+          const blob = new Blob([updatedPdfBytes], { type: 'application/pdf' });
+          const blobUrl = URL.createObjectURL(blob);
+          
+          // Limpiar blob anterior si existe
+          if (tempPdfBlob) {
+            URL.revokeObjectURL(tempPdfBlob);
+          }
+          
+          setTempPdfBlob(blobUrl);
+          setDocumentKey(`doc-blob-${Date.now()}`);
+          console.log('Using temporary blob for updated PDF:', blobUrl);
+        } catch (error) {
+          console.error('Error creating PDF blob:', error);
+        }
+      }, 500);
       
       toast.success('PDF firmado y guardado exitosamente.');
       setSignaturePositions([]);
@@ -236,7 +334,7 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
     } finally {
       setIsLoading(false);
     }
-  }, [pdfUrl, signaturePositions, onPdfUpdated, getPdfUrl, accessToken, isAuthenticated]);
+  }, [pdfUrl, signaturePositions, onPdfUpdated, getPdfUrl, accessToken, isAuthenticated, fetchPdfWithNoCache]);
 
   // Download signed PDF locally
   const downloadSignedPdf = useCallback(async () => {
@@ -248,9 +346,9 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
     setIsLoading(true);
     
     try {
-      // Fetch the original PDF using proxy if needed
+      // Fetch the original PDF using proxy if needed with no-cache headers
       const correctPdfUrl = getPdfUrl();
-      const pdfBytes = await fetch(correctPdfUrl).then(res => res.arrayBuffer());
+      const pdfBytes = await fetchPdfWithNoCache(correctPdfUrl);
       
       // Load PDF with pdf-lib
       const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -293,7 +391,7 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
     } finally {
       setIsLoading(false);
     }
-  }, [pdfUrl, signaturePositions, getPdfUrl]);
+  }, [pdfUrl, signaturePositions, getPdfUrl, fetchPdfWithNoCache]);
 
   return (
     <Card className={className}>
@@ -316,7 +414,8 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
             <Button
               size="sm"
               onClick={saveSignedPdf}
-              disabled={isLoading || signaturePositions.length === 0}
+              disabled={isLoading || signaturePositions.length === 0 || !clientId}
+              title={!clientId ? 'Solo disponible para clientes existentes' : undefined}
             >
               <Save className="h-4 w-4 mr-2" />
               {isLoading ? 'Guardando...' : 'Guardar Firmado'}
@@ -353,7 +452,8 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
         {!pdfLoadError && (
           <div className="border rounded-lg overflow-hidden">
             <Document
-              file={proxiedPdfUrl || pdfUrl}
+              key={documentKey}
+              file={tempPdfBlob || getPdfUrlWithCacheBusting()}
               onLoadSuccess={onDocumentLoadSuccess}
               onLoadError={onDocumentLoadError}
               loading={
@@ -453,6 +553,11 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className }: PdfSig
           <p className="text-red-600 dark:text-red-400 mt-2">
             <strong>Nota:</strong> Los puntos azules indican las firmas. Haz clic en ellos para eliminar.
           </p>
+          {!clientId && (
+            <p className="text-orange-600 dark:text-orange-400 mt-2">
+              <strong>Aviso:</strong> La opción "Guardar Firmado" solo está disponible para clientes existentes. Puedes descargar el PDF firmado.
+            </p>
+          )}
         </div>
 
         {/* Signature Dialog */}

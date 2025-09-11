@@ -31,12 +31,14 @@ interface ClientDetailsSectionProps {
   form: UseFormReturn<CreateClientForm>
   files: File[]
   onFilesChange: (files: File[]) => void
+  clientId?: string; // Nuevo parámetro opcional
 }
 
 export function ClientDetailsSection({
   form,
   files,
   onFilesChange,
+  clientId,
 }: ClientDetailsSectionProps) {
   return (
     <div className='space-y-8'>
@@ -146,7 +148,7 @@ export function ClientDetailsSection({
       </Card>
 
       {/* Annexes Section */}
-      <ClientAnnexesForm />
+      <ClientAnnexesForm clientId={clientId} />
     </div>
   )
 }

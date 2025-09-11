@@ -277,6 +277,7 @@ export function ClientActionDialog({
                     form={form}
                     files={photos}
                     onFilesChange={setPhotos}
+                    clientId={currentClient?.id}
                   />
                 </div>
               ) : (
@@ -305,6 +306,7 @@ export function ClientActionDialog({
                       form={form}
                       files={photos}
                       onFilesChange={setPhotos}
+                      clientId={currentClient?.id}
                     />
                   </TabsContent>
                 </Tabs>

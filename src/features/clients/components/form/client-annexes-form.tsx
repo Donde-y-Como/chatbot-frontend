@@ -23,7 +23,11 @@ interface PendingAnnex {
   error?: string
 }
 
-export function ClientAnnexesForm() {
+interface ClientAnnexesFormProps {
+  clientId?: string; // Nuevo parámetro opcional
+}
+
+export function ClientAnnexesForm({ clientId }: ClientAnnexesFormProps = {}) {
   const { control, watch, setValue } = useFormContext<CreateClientForm>()
   const [pendingAnnexes, setPendingAnnexes] = useState<PendingAnnex[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
@@ -170,6 +174,11 @@ export function ClientAnnexesForm() {
     )
     setValue('annexes', updatedAnnexes)
     setSelectedPdfForSigning(null)
+    
+    // Forzar re-render del componente con timeout para asegurar que el estado se actualice
+    setTimeout(() => {
+      setValue('annexes', [...updatedAnnexes]) // Crear nuevo array para forzar re-render
+    }, 100)
   }, [currentAnnexes, selectedPdfForSigning, setValue])
 
   // Expose function to parent component (like bundles)
@@ -323,6 +332,7 @@ export function ClientAnnexesForm() {
                 <PdfSignature
                   pdfUrl={selectedPdfForSigning}
                   onPdfUpdated={handlePdfUpdated}
+                  clientId={clientId}
                 />
               </div>
             </div>
