@@ -45,19 +45,21 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className, clientId
 
   // Verify PDF.js configuration on mount and setup proxy URL
   useEffect(() => {
-    // Intentar usar proxy si la URL es de Google Cloud Storage
+    // SIEMPRE usar proxy para Google Cloud Storage para evitar CORS
     if (pdfUrl.includes('storage.googleapis.com')) {
-      // Intentar con proxy primero para evitar CORS
       const proxyUrl = `/api/pdf/proxy?url=${encodeURIComponent(pdfUrl)}`;
       setProxiedPdfUrl(proxyUrl);
+      console.log('Setting up proxy URL for GCS:', proxyUrl);
     } else {
-      // Usar URL directa si no es de GCS
+      // Usar URL directa solo si no es de GCS
       setProxiedPdfUrl(pdfUrl);
+      console.log('Using direct URL (not GCS):', pdfUrl);
     }
     
-    // Reset force refresh cuando cambia la URL del PDF
+    // Reset estados cuando cambia la URL del PDF
     setForceRefresh(0);
-    setDocumentKey(`doc-${Date.now()}`); // Nueva key para forzar re-mount del Document
+    setDocumentKey(`doc-${Date.now()}`);
+    setPdfLoadError(null); // Limpiar errores previos
     
     // Limpiar blob temporal anterior
     if (tempPdfBlob) {
@@ -84,15 +86,18 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className, clientId
 
   // Handle PDF load error with fallback to direct URL
   function onDocumentLoadError(error: Error) {
+    console.error('PDF Load Error:', error.message, 'Current URL:', proxiedPdfUrl);
     const errorMessage = handlePdfError(error);
-    setPdfLoadError(errorMessage);
     
-    // Si el proxy falla y estamos usando proxy, intentar URL directa
-    if (proxiedPdfUrl.includes('/api/pdf/proxy') && !proxiedPdfUrl.includes('fallback=true')) {
-      setProxiedPdfUrl(pdfUrl + '?fallback=true');
-      setPdfLoadError(null);
+    // Si el proxy falla y estamos usando proxy, NO hacer fallback directo porque CORS
+    // En su lugar, mostrar error específico
+    if (proxiedPdfUrl.includes('/api/pdf/proxy')) {
+      console.error('Proxy failed, cannot fallback to direct URL due to CORS');
+      setPdfLoadError('Error del servidor proxy. El PDF no se puede cargar debido a políticas CORS. Contacta al administrador.');
       return;
     }
+    
+    setPdfLoadError(errorMessage);
     
     // Auto-reload if it's a version mismatch error
     if (error.message.includes('does not match the Worker version')) {
@@ -150,7 +155,7 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className, clientId
 
   // Helper function to get the correct PDF URL (proxy or direct)
   const getPdfUrl = useCallback(() => {
-    // Si es de Google Cloud Storage, usar proxy
+    // SIEMPRE usar proxy para Google Cloud Storage para evitar CORS
     if (pdfUrl.includes('storage.googleapis.com')) {
       return `/api/pdf/proxy?url=${encodeURIComponent(pdfUrl)}`;
     }
@@ -434,17 +439,31 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className, clientId
               <span className="font-semibold">Error cargando PDF</span>
             </div>
             <p className="text-red-700 dark:text-red-300 mt-2 text-sm">{pdfLoadError}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              onClick={() => {
-                setPdfLoadError(null);
-                window.location.reload();
-              }}
-            >
-              Reintentar
-            </Button>
+            <div className="mt-3 text-xs text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 p-2 rounded">
+              <strong>Debug Info:</strong><br/>
+              URL actual: {proxiedPdfUrl}<br/>
+              Es proxy: {proxiedPdfUrl.includes('/api/pdf/proxy') ? 'Sí' : 'No'}
+            </div>
+            <div className="flex gap-2 mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setPdfLoadError(null);
+                  setForceRefresh(prev => prev + 1);
+                  setDocumentKey(`doc-retry-${Date.now()}`);
+                }}
+              >
+                Reintentar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.reload()}
+              >
+                Recargar Página
+              </Button>
+            </div>
           </div>
         )}
 
@@ -533,13 +552,18 @@ export default function PdfSignature({ pdfUrl, onPdfUpdated, className, clientId
           </div>
 
           <div className="text-sm text-muted-foreground">
-            {signaturePositions.length} firma(s) agregada(s)
-            {proxiedPdfUrl.includes('/api/pdf/proxy') && (
-              <span className="ml-2 text-green-600">• Proxy activo</span>
-            )}
-            {proxiedPdfUrl.includes('fallback=true') && (
-              <span className="ml-2 text-orange-600">• URL directa</span>
-            )}
+            <div>{signaturePositions.length} firma(s) agregada(s)</div>
+            <div className="mt-1">
+              {proxiedPdfUrl.includes('/api/pdf/proxy') && !pdfLoadError && (
+                <span className="text-green-600">✓ Proxy funcionando</span>
+              )}
+              {proxiedPdfUrl.includes('/api/pdf/proxy') && pdfLoadError && (
+                <span className="text-red-600">✗ Error del proxy</span>
+              )}
+              {!proxiedPdfUrl.includes('/api/pdf/proxy') && (
+                <span className="text-orange-600">⚠ URL directa</span>
+              )}
+            </div>
           </div>
         </div>
 
