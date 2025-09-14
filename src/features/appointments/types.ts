@@ -27,6 +27,7 @@ export interface Service {
   // Campos de equipos y consumibles
   equipmentIds?: string[]
   consumableUsages?: ConsumableUsage[]
+  reminders?: Reminder
 }
 
 export interface Schedule {
@@ -72,6 +73,12 @@ export interface ConsumableUsage {
   quantity: number
 }
 
+export interface Reminder {
+  day: Date
+  time: string
+  message: string
+  reminderSent: boolean
+}
 
 export type EmployeeAvailable = Pick<
   Employee,
@@ -102,6 +109,12 @@ export const appointmentCreated = z.object({
     consumableId: z.string(),
     quantity: z.number(),
   })).optional(),
+  reminder: z.object({
+    day: z.date(),
+    time: z.string(),
+    message: z.string(),
+    reminderSent: z.boolean(),
+  }).optional(),
 })
 
 export type AppointmentCreated = z.infer<typeof appointmentCreated>
@@ -133,6 +146,12 @@ export const appointment = z.object({
     consumableId: z.string(),
     quantity: z.number(),
   })).default([]),
+  reminder: z.object({
+    day: z.date(),
+    time: z.string(),
+    message: z.string(),
+    reminderSent: z.boolean(),
+  }).optional(),
   createdAt: z.string().default(""),
 })
 
