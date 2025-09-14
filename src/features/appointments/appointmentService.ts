@@ -5,6 +5,7 @@ import {
   AvailabilityResult,
   Schedule,
   Service,
+  AppointmentApiData,
 } from '@/features/appointments/types.ts'
 import { ClientPrimitives } from '../clients/types'
 import { isValid } from 'date-fns'
@@ -19,15 +20,38 @@ export const appointmentService = {
   },
 
   makeAppointment: async (appointment: Partial<Appointment>) => {
+    // Convertir a formato de API si es necesario
+    const apiData: any = { ...appointment }
+    
+    // Convertir reminder.day de Date a string si existe
+    if (appointment.reminder && appointment.reminder.day instanceof Date) {
+      apiData.reminder = {
+        ...appointment.reminder,
+        day: appointment.reminder.day.toISOString().split('T')[0]
+      }
+    }
+    
     const response = await api.post<AppointmentCreated>(
       '/appointments',
-      appointment
+      apiData
     )
     return response.data
   },
 
   editAppointment: async (id: string, appointment: Partial<Appointment>) => {
-    const response = await api.put(`/appointments/${id}`, appointment)
+    // Convertir Appointment a AppointmentApiData si tiene reminder con Date
+    const apiData: any = { ...appointment }
+    
+    if (appointment.reminder && appointment.reminder.day instanceof Date) {
+      apiData.reminder = {
+        ...appointment.reminder,
+        day: appointment.reminder.day.toISOString().split('T')[0]
+      }
+    }
+    
+    // No verificar date instanceof Date porque en Appointment.date es string
+    
+    const response = await api.put(`/appointments/${id}`, apiData)
     return response.data as AppointmentCreated
   },
 

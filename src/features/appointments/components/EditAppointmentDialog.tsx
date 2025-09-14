@@ -86,6 +86,10 @@ export function EditAppointmentDialog({
     inheritedEquipmentIds,
     inheritedConsumableUsages,
 
+    // Campos de recordatorio
+    reminder,
+    setReminder,
+
     setActiveStep,
     setClientId,
     setServiceIds,
@@ -262,6 +266,8 @@ export function EditAppointmentDialog({
                 paymentStatus={paymentStatus}
                 deposit={deposit}
                 notes={notes}
+                reminder={reminder}
+                onReminderChange={setReminder}
                 loading={loading}
                 onSubmit={handleSubmit}
                 onBack={() => setActiveStep(5)}

@@ -6,7 +6,7 @@ import { appointmentService } from '@/features/appointments/appointmentService.t
 import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
-import { Appointment, MinutesTimeRange, AppointmentStatus, PaymentStatus, Deposit, ConsumableUsage } from '@/features/appointments/types.ts'
+import { Appointment, MinutesTimeRange, AppointmentStatus, PaymentStatus, Deposit, ConsumableUsage, Reminder, AppointmentApiData, ReminderApiData } from '@/features/appointments/types.ts'
 import { isValidAppointmentDate, getPastDateErrorMessage, canChangeDateTo } from '@/features/appointments/utils/formatters'
 import { useCheckAvailability } from './useCheckAvailability'
 
@@ -54,6 +54,11 @@ export function useAppointmentForm(
   )
   const [notes, setNotes] = useState<string>(
     appointment?.notes || ''
+  )
+  
+  // Estado para recordatorios
+  const [reminder, setReminder] = useState<Reminder | null>(
+    appointment?.reminder || null
   )
   
   // Nuevos estados para equipos y consumibles
@@ -195,6 +200,7 @@ export function useAppointmentForm(
       setPaymentStatus(appointment.paymentStatus || 'pendiente')
       setDeposit(appointment.deposit || null)
       setNotes(appointment.notes || '')
+      setReminder(appointment.reminder || null)
       setManualEquipmentIds(appointment.equipmentIds || [])
       setManualConsumableUsages(appointment.consumableUsages || [])
       setRemovedInheritedEquipmentIds([])
@@ -217,6 +223,7 @@ export function useAppointmentForm(
       setPaymentStatus('pendiente')
       setDeposit(null)
       setNotes('')
+      setReminder(null)
       setManualEquipmentIds([])
       setManualConsumableUsages([])
       setRemovedInheritedEquipmentIds([])
@@ -246,17 +253,19 @@ export function useAppointmentForm(
 
     setLoading(true)
 
-    const appointmentData = {
+    const appointmentData: Partial<Appointment> = {
       clientId,
       serviceIds,
       employeeIds: selectedEmployeeIds,
-      date: date.toISOString(),
+      date: date.toISOString().split('T')[0], // Backend espera string YYYY-MM-DD
       timeRange,
       notes,
       // Nuevos campos
       status,
       paymentStatus,
       deposit,
+      // Reminder - solo si está configurado (mantener day como Date, se convierte en appointmentService)
+      ...(reminder ? { reminder } : {}),
       // Solo enviar equipos y consumibles si el usuario hizo cambios manuales
       ...(hasManualResourceChanges ? {
         equipmentIds: [
@@ -271,7 +280,10 @@ export function useAppointmentForm(
         ).filter(([, quantity]) => quantity > 0)
          .map(([consumableId, quantity]) => ({ consumableId, quantity })),
       } : {}),
-    } satisfies Partial<Appointment>
+    }
+
+    // Debug: Ver exactamente qué se envía al backend
+    console.log('appointmentData que se envía:', JSON.stringify(appointmentData, null, 2))
 
     try {
       const result = appointment
@@ -307,6 +319,11 @@ export function useAppointmentForm(
         toast.error(`Error al ${appointment ? 'editar' : 'agendar'} la cita`)
       }
     } catch (error: any) {
+      // Debug: Ver el error completo del backend
+      console.error('Error completo del backend:', error)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
+      
       // Manejar errores específicos de fechas pasadas
       if (error?.status === 400) {
         if (error?.detail && (error.detail.includes('cita que ya pasó') || error.detail.includes('fechas pasadas'))) {
@@ -314,7 +331,7 @@ export function useAppointmentForm(
         } else if (error?.detail && error.detail.includes('fechas pasadas')) {
           toast.error(getPastDateErrorMessage())
         } else {
-          toast.error(`Error al ${appointment ? 'editar' : 'agendar'} la cita: ${error.detail || 'Error desconocido'}`)
+          toast.error(`Error al ${appointment ? 'editar' : 'agendar'} la cita: ${error.response?.data?.detail || error.detail || 'Error desconocido'}`)
         }
       } else if (error?.title === 'Cannot edit past appointment' || error?.title === 'Invalid appointment date') {
         toast.error('No se puede agendar una cita en fecha pasada')
@@ -488,6 +505,10 @@ export function useAppointmentForm(
     setPaymentStatus,
     setDeposit,
     setNotes,
+
+    // Campos de recordatorio
+    reminder,
+    setReminder,
 
     // Campos de equipos y consumibles
     selectedEquipmentIds, // Para UI (combinados)

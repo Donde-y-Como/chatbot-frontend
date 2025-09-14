@@ -80,6 +80,14 @@ export interface Reminder {
   reminderSent: boolean
 }
 
+// Reminder para enviar al API (con day como string)
+export interface ReminderApiData {
+  day: string // YYYY-MM-DD format
+  time: string
+  message: string
+  reminderSent: boolean
+}
+
 export type EmployeeAvailable = Pick<
   Employee,
   'id' | 'name' | 'email' | 'photo'
@@ -110,7 +118,7 @@ export const appointmentCreated = z.object({
     quantity: z.number(),
   })).optional(),
   reminder: z.object({
-    day: z.date(),
+    day: z.date(), // Mantener como Date para consistencia con interface Reminder
     time: z.string(),
     message: z.string(),
     reminderSent: z.boolean(),
@@ -180,6 +188,22 @@ export const getPaymentStatusConfig = (paymentStatus: PaymentStatus) => {
   return configs[paymentStatus] || configs.pendiente
 }
 
+
+// Tipo para los datos que se envían al API (con formatos de string)
+export interface AppointmentApiData {
+  clientId: string
+  serviceIds: string[]
+  employeeIds: string[]
+  date: string // YYYY-MM-DD format
+  timeRange: MinutesTimeRange
+  notes: string
+  status: AppointmentStatus
+  paymentStatus: PaymentStatus
+  deposit: Deposit | null
+  equipmentIds?: string[]
+  consumableUsages?: ConsumableUsage[]
+  reminder?: ReminderApiData
+}
 
 export type AvailabilityResult = {
   availableSlots: {

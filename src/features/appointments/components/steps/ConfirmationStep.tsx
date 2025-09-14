@@ -1,10 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
-import { CalendarIcon, DollarSignIcon, Scissors, User, CreditCard, FileText, CheckCircle, Wrench, Package } from 'lucide-react'
+import { CalendarIcon, DollarSignIcon, Scissors, User, CreditCard, FileText, CheckCircle, Wrench, Package, Bell } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Card,
   CardContent,
@@ -21,7 +25,7 @@ import { ClientPrimitives } from '@/features/clients/types'
 import { useGetEmployees } from '../../hooks/useGetEmployees'
 import { useEquipment } from '@/features/tools/hooks/useEquipment'
 import { useConsumables } from '@/features/tools/hooks/useConsumables'
-import { MinutesTimeRange, Service, AppointmentStatus, PaymentStatus, Deposit, ConsumableUsage } from '../../types'
+import { MinutesTimeRange, Service, AppointmentStatus, PaymentStatus, Deposit, ConsumableUsage, Reminder, Appointment } from '../../types'
 import { formatSlotHour } from '../../utils/formatters'
 import { AppointmentStatusBadge, PaymentStatusBadge } from '../StatusBadges'
 
@@ -39,6 +43,9 @@ interface ConfirmationStepProps {
   // Nuevos campos para equipos y consumibles
   selectedEquipmentIds?: string[]
   consumableUsages?: ConsumableUsage[]
+  // Campos de recordatorio
+  reminder?: Reminder | null
+  onReminderChange: (reminder: Reminder | null) => void
   loading: boolean
   onSubmit: () => void
   onBack: () => void
@@ -60,11 +67,15 @@ export function ConfirmationStep({
   notes,
   selectedEquipmentIds = [],
   consumableUsages = [],
+  reminder,
+  onReminderChange,
   loading,
   onSubmit,
   onBack,
   onCancel,
 }: ConfirmationStepProps) {
+  const [enableReminders, setEnableReminders] = useState<boolean>(!!reminder)
+  
   const formattedTimeRange = `${formatSlotHour(timeRange.startAt)} - ${formatSlotHour(timeRange.endAt)}`
   const { data: employees } = useGetEmployees()
   const { equipment } = useEquipment()
@@ -84,6 +95,79 @@ export function ConfirmationStep({
         return consumable ? { ...consumable, quantity: usage.quantity } : null
       }).filter(Boolean)
     : []
+
+  // Funciones para manejar recordatorios
+  const handleEnableRemindersChange = (checked: boolean | string) => {
+    const isChecked = checked === true || checked === 'true'
+    setEnableReminders(isChecked)
+    
+    if (!isChecked) {
+      // Si se desactiva el checkbox, enviar null para no incluir recordatorio
+      onReminderChange(null)
+    } else {
+      // Inicializar con valores por defecto
+      const today = new Date()
+      const appointmentDate = new Date(date)
+      
+      // Calcular fecha por defecto: un día antes de la cita, pero no antes de hoy
+      let defaultDate = new Date(appointmentDate)
+      defaultDate.setDate(appointmentDate.getDate() - 1)
+      
+      // Si la fecha calculada es anterior a hoy, usar hoy como fecha mínima
+      if (defaultDate < today) {
+        defaultDate = new Date(today)
+      }
+      
+      onReminderChange({
+        day: defaultDate,
+        time: '10:00',
+        message: `¡Recordatorio de tu próxima cita!
+📅 Fecha: ${format(date, 'PPPP', { locale: es })}
+⏰ Horario: ${formattedTimeRange}
+💼 Servicio(s): ${selectedServices.map(s => s.name).join(', ')}
+Si necesitas cancelar o reagendar tu cita, por favor contáctanos con tiempo.
+¡Te esperamos! 😊`,
+        reminderSent: false
+      })
+    }
+  }
+
+  const handleReminderChange = (field: keyof Reminder, value: any) => {
+    if (reminder) {
+      onReminderChange({
+        ...reminder,
+        [field]: value
+      })
+    } else {
+      // Si no hay reminder, crear uno nuevo con valores por defecto
+      const today = new Date()
+      const appointmentDate = new Date(date)
+      
+      // Calcular fecha por defecto: un día antes de la cita, pero no antes de hoy
+      let defaultDate = new Date(appointmentDate)
+      defaultDate.setDate(appointmentDate.getDate() - 1)
+      
+      // Si la fecha calculada es anterior a hoy, usar hoy como fecha mínima
+      if (defaultDate < today) {
+        defaultDate = new Date(today)
+      }
+      
+      const newReminder: Reminder = {
+        day: defaultDate,
+        time: '10:00',
+        message: `¡Recordatorio de tu próxima cita!
+📅 Fecha: ${format(date, 'PPPP', { locale: es })}
+⏰ Horario: ${formattedTimeRange}
+💼 Servicio(s): ${selectedServices.map(s => s.name).join(', ')}
+Si necesitas cancelar o reagendar tu cita, por favor contáctanos con tiempo.
+¡Te esperamos! 😊`,
+        reminderSent: false,
+        [field]: value
+      }
+      
+      onReminderChange(newReminder)
+    }
+  }
 
   return (
     <div className='space-y-4 '>
@@ -303,6 +387,72 @@ export function ConfirmationStep({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Sección de Recordatorios */}
+          <div className='border-t pt-4 mt-4'>
+            <div className='space-y-4'>
+              <div className='flex items-center gap-2'>
+                <Checkbox 
+                  id='enable-reminders'
+                  checked={enableReminders}
+                  onCheckedChange={handleEnableRemindersChange}
+                />
+                <Label htmlFor='enable-reminders' className='text-sm font-medium cursor-pointer'>
+                  <div className='flex items-center gap-2'>
+                    <Bell className='h-4 w-4 text-primary' />
+                    Configurar recordatorio
+                  </div>
+                </Label>
+              </div>
+
+              {enableReminders && (
+                <div className='ml-6 space-y-3 p-3 bg-muted/30 rounded-lg border'>
+                  <div className='grid grid-cols-2 gap-3'>
+                    <div>
+                      <Label htmlFor='reminder-date' className='text-xs text-muted-foreground'>Fecha del recordatorio</Label>
+                      <Input
+                        id='reminder-date'
+                        type='date'
+                        min={new Date().toISOString().split('T')[0]}
+                        max={date.toISOString().split('T')[0]}
+                        value={reminder?.day instanceof Date ? reminder.day.toISOString().split('T')[0] : ''}
+                        onChange={(e) => handleReminderChange('day', new Date(e.target.value))}
+                        className='mt-1'
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor='reminder-time' className='text-xs text-muted-foreground'>Hora del recordatorio</Label>
+                      <Input
+                        id='reminder-time'
+                        type='time'
+                        value={reminder?.time || '10:00'}
+                        onChange={(e) => handleReminderChange('time', e.target.value)}
+                        className='mt-1'
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor='reminder-message' className='text-xs text-muted-foreground'>Mensaje del recordatorio</Label>
+                    <Textarea
+                      id="reminder-message"
+                      value={reminder?.message || `¡Recordatorio de tu próxima cita!
+📅 Fecha: ${format(date, 'PPPP', { locale: es })}
+⏰ Horario: ${formattedTimeRange}
+💼 Servicio(s): ${selectedServices.map(s => s.name).join(', ')}
+Si necesitas cancelar o reagendar tu cita, por favor contáctanos con tiempo.
+¡Te esperamos! 😊`}
+                      onChange={(e) => handleReminderChange('message', e.target.value)}
+                      rows={6}
+                      className="mt-1 w-full border p-2"
+                    />
+                  </div>
+                  {/* <div className='text-xs text-muted-foreground'>
+                    💡 El recordatorio se enviará automáticamente en la fecha y hora especificada.
+                  </div> */}
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
