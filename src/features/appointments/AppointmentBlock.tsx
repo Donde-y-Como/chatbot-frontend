@@ -123,11 +123,9 @@ export function AppointmentBlock({
     { locale: es }
   )
   
-  const formattedDateReminder = format(
-    new Date(appointment.reminder?.day!),
-    "eeee d 'de' MMMM 'del' y",
-    { locale: es }
-  )
+  const formattedDateReminder = appointment.reminder?.day
+    ? format(new Date(appointment.reminder.day), "eeee d 'de' MMMM 'del' y", { locale: es })
+    : 'Sin recordatorio';
 
   const shortFormattedDate = format(new Date(appointment.date), 'dd MMM yyyy', {
     locale: es,
@@ -651,6 +649,7 @@ export function AppointmentBlock({
               </div>
             </div>
 
+            {/* Reminder Section */}  
             <div>              
               <h3 className='text-sm font-medium mb-2 flex items-center text-muted-foreground'>
                 <Clock className='h-4 w-4 mr-2 text-primary' />
