@@ -122,6 +122,12 @@ export function AppointmentBlock({
     "eeee d 'de' MMMM 'del' y",
     { locale: es }
   )
+  
+  const formattedDateReminder = format(
+    new Date(appointment.reminder?.day!),
+    "eeee d 'de' MMMM 'del' y",
+    { locale: es }
+  )
 
   const shortFormattedDate = format(new Date(appointment.date), 'dd MMM yyyy', {
     locale: es,
@@ -644,6 +650,46 @@ export function AppointmentBlock({
                 </div>
               </div>
             </div>
+
+            <div>              
+              <h3 className='text-sm font-medium mb-2 flex items-center text-muted-foreground'>
+                <Clock className='h-4 w-4 mr-2 text-primary' />
+                Recordatorio
+              </h3>
+              <div className='grid grid-cols-1 gap-4'>
+                <div className='p-4 rounded-lg border border-border/50 bg-primary/5'>
+                  <div className='flex items-center mb-2'>
+                    <Calendar className='h-5 w-5 mr-2 text-primary' />
+                    <h4 className='font-medium'>Fecha</h4>
+                  </div>
+                  <p className='text-sm first-letter:uppercase'>
+                    {formattedDateReminder}
+                  </p>
+                  
+                  <div className='flex items-center mb-2 mt-4'>
+                    <Clock className='h-5 w-5 mr-2 text-primary' />
+                    <h4 className='font-medium'>Horario</h4>
+                  </div>
+                  <p className='text-sm'>
+                    <span className='font-medium'>
+                      {appointment.reminder?.time!}
+                    </span>
+                  </p>
+
+                  <div className='flex items-center mb-2 mt-4'>
+                    <MessageSquare className='h-5 w-5 mr-2 text-primary' />
+                    <h4 className='font-medium'>Mensaje</h4>
+                  </div>
+                  <p className='text-sm'>
+                    <span className='font-medium'>
+                      {appointment.reminder?.message}
+                    </span>
+                  </p>
+
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
