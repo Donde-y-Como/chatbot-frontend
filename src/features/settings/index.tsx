@@ -9,6 +9,7 @@ import {
   IconTags,
   IconTool,
   IconUser,
+  IconRobot,
 } from '@tabler/icons-react'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx'
@@ -118,5 +119,10 @@ const sidebarNavItems = [
     title: 'Roles',
     icon: <IconShield size={18} />,
     href: '/settings/roles',
+  },
+  {
+    title: 'Asistente IA',
+    icon: <IconRobot size={18} />,
+    href: '/settings/ai-assistant',
   },
 ]

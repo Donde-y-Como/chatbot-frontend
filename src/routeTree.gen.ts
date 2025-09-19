@@ -89,6 +89,9 @@ const AuthenticatedSettingsQuickResponsesLazyImport = createFileRoute(
 const AuthenticatedSettingsCategoriesLazyImport = createFileRoute(
   '/_authenticated/settings/categories',
 )()
+const AuthenticatedSettingsAiAssistantLazyImport = createFileRoute(
+  '/_authenticated/settings/ai-assistant',
+)()
 const AuthenticatedSettingsAccountLazyImport = createFileRoute(
   '/_authenticated/settings/account',
 )()
@@ -367,6 +370,17 @@ const AuthenticatedSettingsCategoriesLazyRoute =
     ),
   )
 
+const AuthenticatedSettingsAiAssistantLazyRoute =
+  AuthenticatedSettingsAiAssistantLazyImport.update({
+    id: '/ai-assistant',
+    path: '/ai-assistant',
+    getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/settings/ai-assistant.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+
 const AuthenticatedSettingsAccountLazyRoute =
   AuthenticatedSettingsAccountLazyImport.update({
     id: '/account',
@@ -525,6 +539,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsAccountLazyImport
       parentRoute: typeof AuthenticatedSettingsRouteLazyImport
     }
+    '/_authenticated/settings/ai-assistant': {
+      id: '/_authenticated/settings/ai-assistant'
+      path: '/ai-assistant'
+      fullPath: '/settings/ai-assistant'
+      preLoaderRoute: typeof AuthenticatedSettingsAiAssistantLazyImport
+      parentRoute: typeof AuthenticatedSettingsRouteLazyImport
+    }
     '/_authenticated/settings/categories': {
       id: '/_authenticated/settings/categories'
       path: '/categories'
@@ -658,6 +679,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedSettingsRouteLazyRouteChildren {
   AuthenticatedSettingsAccountLazyRoute: typeof AuthenticatedSettingsAccountLazyRoute
+  AuthenticatedSettingsAiAssistantLazyRoute: typeof AuthenticatedSettingsAiAssistantLazyRoute
   AuthenticatedSettingsCategoriesLazyRoute: typeof AuthenticatedSettingsCategoriesLazyRoute
   AuthenticatedSettingsQuickResponsesLazyRoute: typeof AuthenticatedSettingsQuickResponsesLazyRoute
   AuthenticatedSettingsRolesLazyRoute: typeof AuthenticatedSettingsRolesLazyRoute
@@ -671,6 +693,8 @@ const AuthenticatedSettingsRouteLazyRouteChildren: AuthenticatedSettingsRouteLaz
   {
     AuthenticatedSettingsAccountLazyRoute:
       AuthenticatedSettingsAccountLazyRoute,
+    AuthenticatedSettingsAiAssistantLazyRoute:
+      AuthenticatedSettingsAiAssistantLazyRoute,
     AuthenticatedSettingsCategoriesLazyRoute:
       AuthenticatedSettingsCategoriesLazyRoute,
     AuthenticatedSettingsQuickResponsesLazyRoute:
@@ -746,6 +770,7 @@ export interface FileRoutesByFullPath {
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/orden/historial': typeof AuthenticatedOrdenHistorialLazyRoute
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
+  '/settings/ai-assistant': typeof AuthenticatedSettingsAiAssistantLazyRoute
   '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
   '/settings/roles': typeof AuthenticatedSettingsRolesLazyRoute
@@ -782,6 +807,7 @@ export interface FileRoutesByTo {
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/orden/historial': typeof AuthenticatedOrdenHistorialLazyRoute
   '/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
+  '/settings/ai-assistant': typeof AuthenticatedSettingsAiAssistantLazyRoute
   '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
   '/settings/roles': typeof AuthenticatedSettingsRolesLazyRoute
@@ -821,6 +847,7 @@ export interface FileRoutesById {
   '/(auth)/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
   '/_authenticated/orden/historial': typeof AuthenticatedOrdenHistorialLazyRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountLazyRoute
+  '/_authenticated/settings/ai-assistant': typeof AuthenticatedSettingsAiAssistantLazyRoute
   '/_authenticated/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/_authenticated/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
   '/_authenticated/settings/roles': typeof AuthenticatedSettingsRolesLazyRoute
@@ -861,6 +888,7 @@ export interface FileRouteTypes {
     | '/restablecer-contrasena/$token'
     | '/orden/historial'
     | '/settings/account'
+    | '/settings/ai-assistant'
     | '/settings/categories'
     | '/settings/quick-responses'
     | '/settings/roles'
@@ -896,6 +924,7 @@ export interface FileRouteTypes {
     | '/restablecer-contrasena/$token'
     | '/orden/historial'
     | '/settings/account'
+    | '/settings/ai-assistant'
     | '/settings/categories'
     | '/settings/quick-responses'
     | '/settings/roles'
@@ -933,6 +962,7 @@ export interface FileRouteTypes {
     | '/(auth)/restablecer-contrasena/$token'
     | '/_authenticated/orden/historial'
     | '/_authenticated/settings/account'
+    | '/_authenticated/settings/ai-assistant'
     | '/_authenticated/settings/categories'
     | '/_authenticated/settings/quick-responses'
     | '/_authenticated/settings/roles'
@@ -1036,6 +1066,7 @@ export const routeTree = rootRoute
       "parent": "/_authenticated",
       "children": [
         "/_authenticated/settings/account",
+        "/_authenticated/settings/ai-assistant",
         "/_authenticated/settings/categories",
         "/_authenticated/settings/quick-responses",
         "/_authenticated/settings/roles",
@@ -1089,6 +1120,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/settings/account": {
       "filePath": "_authenticated/settings/account.lazy.tsx",
+      "parent": "/_authenticated/settings"
+    },
+    "/_authenticated/settings/ai-assistant": {
+      "filePath": "_authenticated/settings/ai-assistant.lazy.tsx",
       "parent": "/_authenticated/settings"
     },
     "/_authenticated/settings/categories": {
