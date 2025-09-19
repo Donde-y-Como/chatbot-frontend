@@ -29,8 +29,8 @@ interface CategorySelectorProps {
 }
 
 export function CategorySelector({
-  selectedCategoryIds,
-  selectedSubcategoryIds,
+  selectedCategoryIds = [],
+  selectedSubcategoryIds= [],
   onCategoryChange,
   onSubcategoryChange,
   className

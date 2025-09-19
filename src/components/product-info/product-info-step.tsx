@@ -17,7 +17,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { CreatableEvent } from '@/features/events/types'
 import { ProductStatus } from '@/features/products/types'
 import { CategorySelector } from './category-selector'
 import { TagSelector } from './tag-selector'
@@ -27,7 +26,7 @@ interface ProductInfoStepProps {
 }
 
 export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
-  const { control, watch, setValue } = useFormContext<CreatableEvent>()
+  const { control, watch, setValue } = useFormContext<any>()
 
   // Watch para validaciones cruzadas
   const selectedCategoryIds = watch('productInfo.categoryIds')
