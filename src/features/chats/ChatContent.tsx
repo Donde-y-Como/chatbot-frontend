@@ -24,6 +24,7 @@ interface ChatContentProps {
   mobileSelectedChatId: string | null
   isMobileVisible: boolean
   onBackClick: () => void
+  isModal?: boolean
 }
 const IS_DEVELOPMENT_ENV= import.meta.env.VITE_APP_DEBUG === "true"
 
@@ -36,6 +37,7 @@ export function ChatContent({
   mobileSelectedChatId,
   isMobileVisible,
   onBackClick,
+  isModal = false,
 }: ChatContentProps) {
   const { isConnected } = useWhatsApp()
 
@@ -93,8 +95,10 @@ export function ChatContent({
   return (
     <div
       className={cn(
-        'absolute inset-0 hidden left-full z-50 w-full flex-1 flex-col rounded-md border bg-primary-foreground shadow-sm transition-all duration-200 sm:static sm:z-auto sm:flex sm:mr-2',
-        isMobileVisible && 'left-0 flex'
+        isModal
+          ? 'flex flex-1 flex-col h-full bg-primary-foreground'
+          : 'absolute inset-0 hidden left-full z-50 w-full flex-1 flex-col rounded-md border bg-primary-foreground shadow-sm transition-all duration-200 sm:static sm:z-auto sm:flex sm:mr-2',
+        !isModal && isMobileVisible && 'left-0 flex'
       )}
     >
       {/* Header Section */}

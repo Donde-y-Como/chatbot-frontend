@@ -8,12 +8,15 @@ export type Template = {
   status: string
 }
 
+export type ChatStatus = 'new' | 'in_progress' | 'done'
+
 export type Chat = {
   id: string
   platformName: PlatformName
   client?: ClientPrimitives
   lastMessage: Message | null
   newClientMessagesCount: number
+  status: ChatStatus
 }
 
 export type MessageRole = 'business' | 'user' | 'assistant' | 'system'

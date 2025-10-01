@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { InfiniteData } from '@tanstack/react-query'
 import { sortByLastMessageTimestamp } from '@/lib/utils.ts'
 import { chatService } from '../ChatService'
-import { Chat, ChatMessages } from '../ChatTypes'
+import { Chat, ChatMessages, ChatStatus, ChatResponse } from '../ChatTypes'
 
 export function useChatMutations() {
   const queryClient = useQueryClient()
@@ -41,9 +42,47 @@ export function useChatMutations() {
     },
   })
 
+  const updateStatusMutation = useMutation({
+    mutationKey: ['update-chat-status'],
+    mutationFn: async ({ chatId, status }: { chatId: string; status: ChatStatus }) => {
+      await chatService.updateConversation(chatId, { status })
+    },
+    onMutate: async ({ chatId, status }) => {
+      // Optimistically update the cache
+      queryClient.setQueryData<InfiniteData<ChatResponse>>(
+        ['chats'],
+        (cachedData) => {
+          if (!cachedData) return cachedData
+
+          const updatedPages = cachedData.pages.map((page) => ({
+            ...page,
+            conversations: page.conversations.map((conv) =>
+              conv.id === chatId ? { ...conv, status } : conv
+            ),
+          }))
+
+          return { ...cachedData, pages: updatedPages }
+        }
+      )
+    },
+    onError: (_error, { chatId, status }) => {
+      // Revert optimistic update on error
+      queryClient.invalidateQueries({ queryKey: ['chats'] })
+    },
+  })
+
   const markAsUnread = (chatId: string) => {
     markAsUnreadMutation.mutate({ chatId })
   }
 
-  return { markAsUnreadMutation, markAsUnread }
+  const updateChatStatus = (chatId: string, status: ChatStatus) => {
+    updateStatusMutation.mutate({ chatId, status })
+  }
+
+  return {
+    markAsUnreadMutation,
+    markAsUnread,
+    updateStatusMutation,
+    updateChatStatus
+  }
 }

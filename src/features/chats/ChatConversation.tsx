@@ -21,6 +21,7 @@ import { useMessageGroups } from './hooks/useMessageGroups'
 interface ChatConversationProps {
   messages: Message[]
   mobileSelectedChatId: string | null
+  autoScrollToBottom?: boolean
 }
 
 /**

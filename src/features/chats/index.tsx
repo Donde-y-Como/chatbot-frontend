@@ -15,7 +15,8 @@ import EmptyChatSelectedState from '@/features/chats/EmptyChatSelectedState'
 import ClientsProvider from '@/features/clients/context/clients-context.tsx'
 import { ClientDialogs } from '../clients/components/client-dialogs'
 import { ChatMessages, Client } from './ChatTypes'
-import { ChatBarUnlimited } from './chatBarUnlimited'
+import { ChatBarWithViews } from './ChatBarWithViews'
+import { ChatModal } from './ChatModal'
 
 const route = getRouteApi('/_authenticated/chats/')
 
@@ -31,6 +32,8 @@ function ChatsInner() {
   const [mobileSelectedChatId, setMobileSelectedChatId] = useState<
     string | null
   >(null)
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
+  const [showChatModal, setShowChatModal] = useState(false)
 
   const { isOpenConnectionClient, closeConnectionClient, selectedClientData } =
     useDialogState()
@@ -147,31 +150,59 @@ function ChatsInner() {
   }
 
   // Determine which component to show based on selection state and device type
-  const showEmptyState = selectedChatId === null && !isMobile
+  const showEmptyState = selectedChatId === null && !isMobile && viewMode === 'list'
+  const showChatContent = selectedChatId !== null && viewMode === 'list'
+
+  const handleChatModalOpen = () => {
+    setShowChatModal(true)
+  }
+
+  const handleChatModalClose = () => {
+    setShowChatModal(false)
+  }
 
   return (
-    <section className='flex h-full gap-2'>
-      <ChatBarUnlimited
+    <section className={`flex h-full ${viewMode === 'kanban' ? 'gap-0' : 'gap-2'}`}>
+      <ChatBarWithViews
         navigate={navigate}
         selectedChatId={selectedChatId}
         setSelectedChatId={setSelectedChatId}
         setMobileSelectedChatId={setMobileSelectedChatId}
+        onViewModeChange={setViewMode}
+        onChatOpenModal={handleChatModalOpen}
       />
 
-      {showEmptyState ? (
-        <EmptyChatSelectedState />
-      ) : (
-        <ChatContent
-          isLoading={isMessagesLoading}
-          isError={isChatError}
-          error={chatError}
-          chatData={chatMessages}
-          selectedChatId={selectedChatId || ''}
-          mobileSelectedChatId={mobileSelectedChatId}
-          isMobileVisible={!!mobileSelectedChatId}
-          onBackClick={handleBackClick}
-        />
+      {/* Show content only in list view */}
+      {viewMode === 'list' && (
+        <>
+          {showEmptyState ? (
+            <EmptyChatSelectedState />
+          ) : showChatContent ? (
+            <ChatContent
+              isLoading={isMessagesLoading}
+              isError={isChatError}
+              error={chatError}
+              chatData={chatMessages}
+              selectedChatId={selectedChatId || ''}
+              mobileSelectedChatId={mobileSelectedChatId}
+              isMobileVisible={!!mobileSelectedChatId}
+              onBackClick={handleBackClick}
+            />
+          ) : null}
+        </>
       )}
+
+      {/* Modal for kanban view */}
+      <ChatModal
+        open={showChatModal && viewMode === 'kanban'}
+        onOpenChange={handleChatModalClose}
+        isLoading={isMessagesLoading}
+        isError={isChatError}
+        error={chatError}
+        chatData={chatMessages}
+        selectedChatId={selectedChatId || ''}
+        onBackClick={handleChatModalClose}
+      />
 
       <ConnectClient
         isDialog={true}

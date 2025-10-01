@@ -47,6 +47,7 @@ export const chatService = {
     currentIntention?: string
     assistantEnabled?: boolean
     newClientMessagesCount?: number
+    status?: string
   }) => {
     const response = await api.put(`/chats/${chatId}`, updateData)
     return response.data
