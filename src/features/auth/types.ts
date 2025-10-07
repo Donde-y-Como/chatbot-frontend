@@ -89,3 +89,35 @@ export interface BillingPlan {
   status: 'active' | 'inactive'
   type: string
 }
+
+export interface BusinessRegisterRequest {
+  email: string
+  password: string
+  name: string
+  address?: string
+  phone?: string
+  assistantConfig?: {
+    id?: string
+    name: string
+    prompt?: string
+    vectorStorageId?: string
+    enabled: boolean
+    batchTimeout?: number
+  }
+  socialPlatforms?: PlatformConfig[]
+  plan?: {
+    active: boolean
+    endTimestamp: number
+    startTimestamp: number
+    name: string
+    type: 'monthly' | 'yearly'
+    totalMessages: number
+    usedMessages: number
+  }
+  notificationsEnabled?: boolean
+  logo?: string
+}
+
+export interface BusinessRegisterResponse {
+  message: string
+}

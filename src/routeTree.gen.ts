@@ -31,6 +31,9 @@ const errors404LazyImport = createFileRoute('/(errors)/404')()
 const errors403LazyImport = createFileRoute('/(errors)/403')()
 const errors401LazyImport = createFileRoute('/(errors)/401')()
 const authSignUpLazyImport = createFileRoute('/(auth)/sign-up')()
+const authRegistrarNegocioLazyImport = createFileRoute(
+  '/(auth)/registrar-negocio',
+)()
 const authRecuperarCuentaLazyImport = createFileRoute(
   '/(auth)/recuperar-cuenta',
 )()
@@ -169,6 +172,16 @@ const authSignUpLazyRoute = authSignUpLazyImport
     getParentRoute: () => rootRoute,
   } as any)
   .lazy(() => import('./routes/(auth)/sign-up.lazy').then((d) => d.Route))
+
+const authRegistrarNegocioLazyRoute = authRegistrarNegocioLazyImport
+  .update({
+    id: '/(auth)/registrar-negocio',
+    path: '/registrar-negocio',
+    getParentRoute: () => rootRoute,
+  } as any)
+  .lazy(() =>
+    import('./routes/(auth)/registrar-negocio.lazy').then((d) => d.Route),
+  )
 
 const authRecuperarCuentaLazyRoute = authRecuperarCuentaLazyImport
   .update({
@@ -453,6 +466,13 @@ declare module '@tanstack/react-router' {
       path: '/recuperar-cuenta'
       fullPath: '/recuperar-cuenta'
       preLoaderRoute: typeof authRecuperarCuentaLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/(auth)/registrar-negocio': {
+      id: '/(auth)/registrar-negocio'
+      path: '/registrar-negocio'
+      fullPath: '/registrar-negocio'
+      preLoaderRoute: typeof authRegistrarNegocioLazyImport
       parentRoute: typeof rootRoute
     }
     '/(auth)/sign-up': {
@@ -758,6 +778,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRouteLazyRouteWithChildren
   '/iniciar-sesion': typeof authIniciarSesionLazyRoute
   '/recuperar-cuenta': typeof authRecuperarCuentaLazyRoute
+  '/registrar-negocio': typeof authRegistrarNegocioLazyRoute
   '/sign-up': typeof authSignUpLazyRoute
   '/401': typeof errors401LazyRoute
   '/403': typeof errors403LazyRoute
@@ -795,6 +816,7 @@ export interface FileRoutesByTo {
   '/otp': typeof authOtpRoute
   '/iniciar-sesion': typeof authIniciarSesionLazyRoute
   '/recuperar-cuenta': typeof authRecuperarCuentaLazyRoute
+  '/registrar-negocio': typeof authRegistrarNegocioLazyRoute
   '/sign-up': typeof authSignUpLazyRoute
   '/401': typeof errors401LazyRoute
   '/403': typeof errors403LazyRoute
@@ -835,6 +857,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteLazyRouteWithChildren
   '/(auth)/iniciar-sesion': typeof authIniciarSesionLazyRoute
   '/(auth)/recuperar-cuenta': typeof authRecuperarCuentaLazyRoute
+  '/(auth)/registrar-negocio': typeof authRegistrarNegocioLazyRoute
   '/(auth)/sign-up': typeof authSignUpLazyRoute
   '/(errors)/401': typeof errors401LazyRoute
   '/(errors)/403': typeof errors403LazyRoute
@@ -876,6 +899,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/iniciar-sesion'
     | '/recuperar-cuenta'
+    | '/registrar-negocio'
     | '/sign-up'
     | '/401'
     | '/403'
@@ -912,6 +936,7 @@ export interface FileRouteTypes {
     | '/otp'
     | '/iniciar-sesion'
     | '/recuperar-cuenta'
+    | '/registrar-negocio'
     | '/sign-up'
     | '/401'
     | '/403'
@@ -950,6 +975,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/(auth)/iniciar-sesion'
     | '/(auth)/recuperar-cuenta'
+    | '/(auth)/registrar-negocio'
     | '/(auth)/sign-up'
     | '/(errors)/401'
     | '/(errors)/403'
@@ -989,6 +1015,7 @@ export interface RootRouteChildren {
   authOtpRoute: typeof authOtpRoute
   authIniciarSesionLazyRoute: typeof authIniciarSesionLazyRoute
   authRecuperarCuentaLazyRoute: typeof authRecuperarCuentaLazyRoute
+  authRegistrarNegocioLazyRoute: typeof authRegistrarNegocioLazyRoute
   authSignUpLazyRoute: typeof authSignUpLazyRoute
   errors401LazyRoute: typeof errors401LazyRoute
   errors403LazyRoute: typeof errors403LazyRoute
@@ -1004,6 +1031,7 @@ const rootRouteChildren: RootRouteChildren = {
   authOtpRoute: authOtpRoute,
   authIniciarSesionLazyRoute: authIniciarSesionLazyRoute,
   authRecuperarCuentaLazyRoute: authRecuperarCuentaLazyRoute,
+  authRegistrarNegocioLazyRoute: authRegistrarNegocioLazyRoute,
   authSignUpLazyRoute: authSignUpLazyRoute,
   errors401LazyRoute: errors401LazyRoute,
   errors403LazyRoute: errors403LazyRoute,
@@ -1028,6 +1056,7 @@ export const routeTree = rootRoute
         "/(auth)/otp",
         "/(auth)/iniciar-sesion",
         "/(auth)/recuperar-cuenta",
+        "/(auth)/registrar-negocio",
         "/(auth)/sign-up",
         "/(errors)/401",
         "/(errors)/403",
@@ -1081,6 +1110,9 @@ export const routeTree = rootRoute
     },
     "/(auth)/recuperar-cuenta": {
       "filePath": "(auth)/recuperar-cuenta.lazy.tsx"
+    },
+    "/(auth)/registrar-negocio": {
+      "filePath": "(auth)/registrar-negocio.lazy.tsx"
     },
     "/(auth)/sign-up": {
       "filePath": "(auth)/sign-up.lazy.tsx"

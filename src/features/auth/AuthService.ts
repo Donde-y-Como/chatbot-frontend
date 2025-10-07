@@ -1,15 +1,17 @@
 import { api } from '@/api/axiosInstance'
 import { useAuthStore } from '@/stores/authStore.ts'
-import { 
-  LoginData, 
-  LoginResponse, 
-  UserData, 
-  BusinessData, 
+import {
+  LoginData,
+  LoginResponse,
+  UserData,
+  BusinessData,
   UpdateCredentialsData,
   Role,
   CreateRoleData,
   UpdateRoleData,
-  PermissionsResponse
+  PermissionsResponse,
+  BusinessRegisterRequest,
+  BusinessRegisterResponse
 } from '@/features/auth/types.ts'
 
 export const authService = {
@@ -104,6 +106,11 @@ export const authService = {
 
   deleteRole: async (roleId: string): Promise<{ message: string }> => {
     const response = await api.delete<{ message: string }>(`/roles/${roleId}`);
+    return response.data;
+  },
+
+  registerBusiness: async (data: BusinessRegisterRequest): Promise<BusinessRegisterResponse> => {
+    const response = await api.post<BusinessRegisterResponse>('/business/register', data);
     return response.data;
   }
 }
