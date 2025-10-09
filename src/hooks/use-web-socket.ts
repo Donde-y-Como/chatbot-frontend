@@ -39,6 +39,25 @@ socket.on(
   }
 )
 
+socket.on('messageUpdated', async (data: { conversationId: string; message: Message }) => {
+  queryClient.setQueryData<ChatMessages>(
+    ['chat', data.conversationId],
+    (cachedChat) => {
+      if (cachedChat === undefined) return cachedChat
+      return {
+        ...cachedChat,
+        messages: cachedChat.messages.map((msg) =>
+          msg.id === data.message.id ? data.message : msg
+        ),
+      }
+    }
+  )
+
+  await queryClient.invalidateQueries({
+    queryKey: ['chats'],
+  })
+})
+
 socket.on('assistantFailed', (data: { conversationId: string }) => {
   toast.error('El asistente tuvo un problema al ejecutar una accion')
 })
