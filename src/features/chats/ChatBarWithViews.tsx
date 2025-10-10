@@ -15,6 +15,8 @@ import { ChatKanban } from './ChatKanban'
 import { ChatViewToggle, ChatViewMode } from './ChatViewToggle'
 import { MessagesFound } from './MessagesFound'
 import { usePaginatedChats } from './hooks/usePaginatedChats'
+import { ConversationStatus } from './conversationStatus/types'
+import { useGetConversationStatuses } from './conversationStatus/hooks/useConversationStatus'
 
 interface ChatBarWithViewsProps {
   selectedChatId: string | null
@@ -56,13 +58,45 @@ export function ChatBarWithViews({
   } = usePaginatedChats()
 
   const { data: tags } = useGetTags()
+  const { data: conversationStatuses = [], isLoading: isLoadingStatuses } = useGetConversationStatuses()
   const filteredChatList = useFilteredChats(chats, search, activeFilter, tags)
 
+  console.log('ChatBarWithViews - Conversation statuses loading:', isLoadingStatuses)
+  console.log('ChatBarWithViews - Conversation statuses count:', conversationStatuses.length)
+
   // Add default status to chats that don't have one
-  const chatsWithStatus = filteredChatList.map((chat) => ({
-    ...chat,
-    status: chat.status || 'new',
-  }))
+  const chatsWithStatus = filteredChatList.map((chat) => {
+    // Debug: Log raw chat data for ALL chats
+    console.log(`ChatBarWithViews - Processing chat ${chat.id}:`)
+    console.log('  - Raw chat object:', chat)
+    console.log('  - chat.status:', chat.status)
+    console.log('  - chat.status type:', typeof chat.status)
+    console.log('  - chat.status?.id:', chat.status?.id)
+    console.log('  - Has status?:', !!chat.status)
+    console.log('  - Has status.id?:', !!(chat.status && chat.status.id))
+
+    // Check if chat has a valid status with an id
+    if (chat.status && chat.status.id) {
+      console.log(`✓ Chat ${chat.id} has valid status:`, chat.status.id, '-', chat.status.name)
+      return chat
+    }
+
+    // Find the first status by order number, or create a fallback
+    const defaultStatus = conversationStatuses.sort((a, b) => a.orderNumber - b.orderNumber)[0] || {
+      id: 'new',
+      businessId: '',
+      name: 'Nuevo',
+      orderNumber: 1,
+      color: '#3b82f6'
+    }
+
+    console.log(`✗ Chat ${chat.id} missing status, assigning default:`, defaultStatus.id, '-', defaultStatus.name)
+
+    return {
+      ...chat,
+      status: defaultStatus,
+    }
+  })
 
   const handleIntersection = useCallback(
     async (entries: IntersectionObserverEntry[]) => {
@@ -106,7 +140,8 @@ export function ChatBarWithViews({
     }
   }
 
-  const handleChatStatusChange = (chatId: string, newStatus: string) => {
+  const handleChatStatusChange = (chatId: string, newStatus: ConversationStatus) => {
+    // Send only the ID to the backend, but update cache with full object
     updateChatStatus(chatId, newStatus)
   }
 

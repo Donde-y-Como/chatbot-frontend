@@ -38,7 +38,7 @@ interface ChatKanbanProps {
   chats: Chat[]
   selectedChatId: string | null
   onChatSelect: (chatId: string) => void
-  onChatStatusChange: (chatId: string, newStatus: string) => void
+  onChatStatusChange: (chatId: string, newStatus: ConversationStatus) => void
   onChatClick: (chatId: string, messageId?: string) => void
   filteredChatList: Chat[]
 }
@@ -87,22 +87,51 @@ export function ChatKanban({
   }, [conversationStatuses])
 
   const chatsByStatus = useMemo(() => {
-    const grouped = filteredChatList.reduce(
-      (acc, chat) => {
-        const status = chat.status || (columns[0]?.id || 'new') // Default to first status or 'new'
-        if (!acc[status]) {
-          acc[status] = []
-        }
-        acc[status].push(chat)
-        return acc
-      },
-      {} as Record<string, Chat[]>
-    )
-
-    // Ensure all statuses have arrays
+    // Initialize empty arrays for all columns
+    const grouped: Record<string, Chat[]> = {}
     columns.forEach((column) => {
-      if (!grouped[column.id]) {
-        grouped[column.id] = []
+      grouped[column.id] = []
+    })
+
+    // Debug: Log data for troubleshooting
+    if (filteredChatList.length > 0) {
+      console.log('ChatKanban - Columns:', columns.map(c => ({ id: c.id, name: c.name })))
+      console.log('ChatKanban - Sample chat status:', filteredChatList[0]?.status)
+    }
+
+    // Group chats by matching their status.id to column.id
+    filteredChatList.forEach((chat) => {
+      // Ensure we have a valid status object
+      const chatStatus = chat.status
+
+      // Debug individual chat matching
+      if (chatStatus) {
+        const matchingColumn = columns.find((col) => col.id === chatStatus.id)
+        console.log(`Chat ${chat.id} status:`, chatStatus.id, 'matches column:', matchingColumn?.name || 'NONE')
+      }
+
+      if (!chatStatus || !chatStatus.id) {
+        // If chat has no status or invalid status, assign to first column (default)
+        const firstColumn = columns[0]
+        if (firstColumn) {
+          grouped[firstColumn.id].push(chat)
+        }
+        return
+      }
+
+      // Check if the chat's status ID matches any column ID
+      const matchingColumn = columns.find((col) => col.id === chatStatus.id)
+
+      if (matchingColumn) {
+        // Chat status matches a column - add to that column
+        grouped[chatStatus.id].push(chat)
+      } else {
+        // Chat has a status but it doesn't match any column
+        console.warn('No matching column for chat', chat.id, 'with status', chatStatus)
+        const firstColumn = columns[0]
+        if (firstColumn) {
+          grouped[firstColumn.id].push(chat)
+        }
       }
     })
 
@@ -127,11 +156,14 @@ export function ChatKanban({
     }
 
     const chatId = active.id as string
-    const newStatus = over.id as string
+    const newStatusId = over.id as string
 
-    // Check if we're dropping over a column
-    if (columns.some((col) => col.id === newStatus)) {
-      onChatStatusChange(chatId, newStatus)
+    // Find the full status object for the column
+    const newStatusObject = columns.find((col) => col.id === newStatusId)
+
+    // Check if we're dropping over a column and have the status object
+    if (newStatusObject) {
+      onChatStatusChange(chatId, newStatusObject)
     }
 
     setActiveId(null)

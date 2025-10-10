@@ -11,13 +11,21 @@ export type Template = {
 // Legacy type for backward compatibility
 export type ChatStatus = 'new' | 'in_progress' | 'done'
 
+export type ConversationStatusPrimitives = {
+  id: string
+  businessId: string
+  name: string
+  orderNumber: number
+  color?: string
+}
+
 export type Chat = {
   id: string
   platformName: PlatformName
   client?: ClientPrimitives
   lastMessage: Message | null
   newClientMessagesCount: number
-  status: string // Changed from ChatStatus to support dynamic statuses
+  status?: ConversationStatusPrimitives
 }
 
 export type MessageRole = 'business' | 'user' | 'assistant' | 'system'

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { InfiniteData } from '@tanstack/react-query'
 import { sortByLastMessageTimestamp } from '@/lib/utils.ts'
 import { chatService } from '../ChatService'
-import { Chat, ChatMessages, ChatStatus, ChatResponse } from '../ChatTypes'
+import { Chat, ChatMessages, ChatResponse, ConversationStatusPrimitives } from '../ChatTypes'
 
 export function useChatMutations() {
   const queryClient = useQueryClient()
@@ -44,11 +44,18 @@ export function useChatMutations() {
 
   const updateStatusMutation = useMutation({
     mutationKey: ['update-chat-status'],
-    mutationFn: async ({ chatId, status }: { chatId: string; status: string }) => {
+    mutationFn: async ({
+      chatId,
+      status,
+    }: {
+      chatId: string
+      status: ConversationStatusPrimitives
+    }) => {
+      // Send the full status object to the backend
       await chatService.updateConversation(chatId, { status })
     },
     onMutate: async ({ chatId, status }) => {
-      // Optimistically update the cache
+      // Optimistically update the cache with the full status object
       queryClient.setQueryData<InfiniteData<ChatResponse>>(
         ['chats'],
         (cachedData) => {
@@ -75,7 +82,7 @@ export function useChatMutations() {
     markAsUnreadMutation.mutate({ chatId })
   }
 
-  const updateChatStatus = (chatId: string, status: string) => {
+  const updateChatStatus = (chatId: string, status: ConversationStatusPrimitives) => {
     updateStatusMutation.mutate({ chatId, status })
   }
 
