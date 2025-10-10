@@ -15,7 +15,6 @@ import { ChatKanban } from './ChatKanban'
 import { ChatViewToggle, ChatViewMode } from './ChatViewToggle'
 import { MessagesFound } from './MessagesFound'
 import { usePaginatedChats } from './hooks/usePaginatedChats'
-import { ChatStatus } from './ChatTypes'
 
 interface ChatBarWithViewsProps {
   selectedChatId: string | null
@@ -62,7 +61,7 @@ export function ChatBarWithViews({
   // Add default status to chats that don't have one
   const chatsWithStatus = filteredChatList.map((chat) => ({
     ...chat,
-    status: chat.status || 'new' as ChatStatus,
+    status: chat.status || 'new',
   }))
 
   const handleIntersection = useCallback(
@@ -107,7 +106,7 @@ export function ChatBarWithViews({
     }
   }
 
-  const handleChatStatusChange = (chatId: string, newStatus: ChatStatus) => {
+  const handleChatStatusChange = (chatId: string, newStatus: string) => {
     updateChatStatus(chatId, newStatus)
   }
 

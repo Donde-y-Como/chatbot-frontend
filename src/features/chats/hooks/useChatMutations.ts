@@ -44,7 +44,7 @@ export function useChatMutations() {
 
   const updateStatusMutation = useMutation({
     mutationKey: ['update-chat-status'],
-    mutationFn: async ({ chatId, status }: { chatId: string; status: ChatStatus }) => {
+    mutationFn: async ({ chatId, status }: { chatId: string; status: string }) => {
       await chatService.updateConversation(chatId, { status })
     },
     onMutate: async ({ chatId, status }) => {
@@ -75,7 +75,7 @@ export function useChatMutations() {
     markAsUnreadMutation.mutate({ chatId })
   }
 
-  const updateChatStatus = (chatId: string, status: ChatStatus) => {
+  const updateChatStatus = (chatId: string, status: string) => {
     updateStatusMutation.mutate({ chatId, status })
   }
 

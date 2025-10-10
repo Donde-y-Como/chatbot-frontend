@@ -37,8 +37,6 @@ export function useSearchMessages({
   enabled = true,
   limit = 20,
 }: UseSearchMessagesParams) {
-  const queryKey = ['search-messages', query] as const
-
   const {
     data: infiniteData,
     fetchNextPage,
@@ -49,7 +47,7 @@ export function useSearchMessages({
     error,
     refetch,
   } = useInfiniteQuery({
-    queryKey: queryKey,
+    queryKey: ['search-messages', query] as const,
     queryFn: async ({ pageParam = 0 }) => {
       const params = new URLSearchParams({
         query,
