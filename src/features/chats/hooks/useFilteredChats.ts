@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { formatWhatsAppPhone } from '@/lib/utils'
 import { Chat } from '@/features/chats/ChatTypes'
 import { Tag } from '../../clients/types'
 import { UNREAD_LABEL_FILTER } from '../ChatBarHeader'
@@ -10,6 +11,19 @@ const PLATFORM_NAMES = [
   'whatsappweb',
 ] as const
 type PlatformName = (typeof PLATFORM_NAMES)[number]
+
+// Helper function to extract raw phone number digits for search
+function extractPhoneDigits(platformId: string): string {
+  const phoneMatch = platformId.match(/^(\d+)@s\.whatsapp\.net$/)
+  if (!phoneMatch) return ''
+
+  const phoneNumber = phoneMatch[1]
+  // For 521XXXXXXXXX, return the last 10 digits (the actual phone number without country code)
+  if (phoneNumber.startsWith('521') && phoneNumber.length === 13) {
+    return phoneNumber.slice(3) // Remove 521 prefix, return 10 digits
+  }
+  return phoneNumber
+}
 
 export function useFilteredChats(
   chats: Chat[] | undefined,
@@ -29,8 +43,20 @@ export function useFilteredChats(
     return chats.filter((chat) => {
       if (!chat) return false
 
-      const matchesSearch =
-        !hasSearch || chat.client?.name.toLowerCase().includes(trimmedSearch)
+      // Search in client name
+      const matchesName = chat.client?.name.toLowerCase().includes(trimmedSearch)
+      
+      // Search in phone numbers from platformIdentities
+      const matchesPhone = chat.client?.platformIdentities?.some((identity) => {
+        const platformId = identity.platformId.toLowerCase()
+        return (
+          platformId.includes(trimmedSearch) ||
+          formatWhatsAppPhone(identity.platformId).toLowerCase().includes(trimmedSearch) ||
+          extractPhoneDigits(identity.platformId).includes(trimmedSearch)
+        )
+      }) || false
+
+      const matchesSearch = !hasSearch || matchesName || matchesPhone
 
       if (!matchesSearch) return false
       if (!hasFilter) return true

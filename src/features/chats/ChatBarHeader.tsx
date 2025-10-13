@@ -195,7 +195,7 @@ export function ChatBarHeader({
         <input
           type='search'
           className='w-full flex-1 bg-inherit text-sm focus-visible:outline-none'
-          placeholder='Buscar conversación...'
+          placeholder='Buscar por nombre o teléfono...'
           value={value}
           onChange={(e) => onInputChange(e.target.value)}
         />
