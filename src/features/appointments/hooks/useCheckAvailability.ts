@@ -46,7 +46,8 @@ export function useCheckAvailability(
   selectedServices: Service[],
   date: Date,
   activeStep: number,
-  timeRange: MinutesTimeRange
+  timeRange: MinutesTimeRange,
+  isEditMode?: boolean // Nuevo parámetro para indicar si estamos en modo edición
 ) {
   const [availableEmployees, setAvailableEmployees] = useState<
     EmployeeAvailable[]
@@ -54,7 +55,7 @@ export function useCheckAvailability(
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (selectedServices.length === 0 || activeStep != 3) {
+    if (selectedServices.length === 0 || (!isEditMode && activeStep != 3)) {
       setAvailableEmployees([])
       setLoading(false)
       return
@@ -91,7 +92,9 @@ export function useCheckAvailability(
             const slotsForEmployee = employeeApiSlots.map(s => s.slotData).sort((a, b) => a.startAt - b.startAt);
             const originalEmployeeObject = employeeApiSlots.length > 0 ? employeeApiSlots[0].employee : undefined;
 
-            if (originalEmployeeObject && checkSlotsCoverTimeRange(slotsForEmployee, timeRange)) {
+            const covers = checkSlotsCoverTimeRange(slotsForEmployee, timeRange)
+            
+            if (originalEmployeeObject && covers) {
               currentServiceAvailableEmployees.set(employeeId, originalEmployeeObject);
             }
           });
@@ -119,12 +122,13 @@ export function useCheckAvailability(
           break;
         }
       }
-      setAvailableEmployees(Array.from(employeesAvailableForAllServices.values()));
+      const finalEmployees = Array.from(employeesAvailableForAllServices.values())
+      setAvailableEmployees(finalEmployees);
       setLoading(false);
     };
 
     void checkAvailability()
-  }, [selectedServices, date, activeStep, timeRange])
+  }, [selectedServices, date, activeStep, timeRange, isEditMode])
 
   return { availableEmployees, loading }
 }
