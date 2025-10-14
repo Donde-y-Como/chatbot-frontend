@@ -401,7 +401,7 @@ export function useAppointmentForm(
   )
 
   const { availableEmployees, loading: loadingEmployees } =
-    useCheckAvailability(selectedServices, date, activeStep, timeRange, !!appointment)
+    useCheckAvailability(selectedServices, date, activeStep, timeRange, !!appointment, appointment?.id)
 
   const toggleServiceSelection = (serviceId: string) => {
     setServiceIds((prev) =>

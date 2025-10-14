@@ -56,13 +56,14 @@ export const appointmentService = {
     return response.data
   },
 
-  checkAvailability: async (serviceId: string, date: Date) => {
+  checkAvailability: async (serviceId: string, date: Date, appointmentId?: string) => {
     const response = await api.get<AvailabilityResult>(
       `/appointments/availability`,
       {
         params: {
           serviceId,
           date: date.toISOString(),
+          ...(appointmentId && { appointmentId }),
         },
       }
     )

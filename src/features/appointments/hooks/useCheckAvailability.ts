@@ -47,7 +47,8 @@ export function useCheckAvailability(
   date: Date,
   activeStep: number,
   timeRange: MinutesTimeRange,
-  isEditMode?: boolean // Nuevo parámetro para indicar si estamos en modo edición
+  isEditMode?: boolean,
+  appointmentId?: string
 ) {
   const [availableEmployees, setAvailableEmployees] = useState<
     EmployeeAvailable[]
@@ -76,7 +77,7 @@ export function useCheckAvailability(
       for (const service of servicesToProcess) {
         const currentServiceAvailableEmployees = new Map<string, EmployeeAvailable>();
         try {
-          const result = await appointmentService.checkAvailability(service.id, date);
+          const result = await appointmentService.checkAvailability(service.id, date, appointmentId);
 
           const employeeSlotsMap = new Map<string, { slotData: { startAt: number; endAt: number }; employee: EmployeeAvailable }[]>();
           result.availableSlots.forEach(apiSlot => {
@@ -128,7 +129,7 @@ export function useCheckAvailability(
     };
 
     void checkAvailability()
-  }, [selectedServices, date, activeStep, timeRange, isEditMode])
+  }, [selectedServices, date, activeStep, timeRange, isEditMode, appointmentId])
 
   return { availableEmployees, loading }
 }
