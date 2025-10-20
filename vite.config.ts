@@ -15,4 +15,38 @@ export default defineConfig({
       '@tabler/icons-react': '@tabler/icons-react/dist/esm/icons/index.mjs',
     },
   },
+  build: {
+     // Use esbuild for minification (faster than terser)
+    minify: 'esbuild',
+
+    // Increase chunk size warning limit for large apps
+    chunkSizeWarningLimit: 10000,
+
+    // Optimize chunk splitting
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Split node_modules into separate chunks
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react-vendor';
+            }
+            if (id.includes('@mui') || id.includes('@emotion')) {
+              return 'ui-vendor';
+            }
+            return 'vendor';
+          }
+        }
+      }
+    },
+
+    // Enable source maps only if needed
+    sourcemap: false, // Set to true for debugging production
+
+    // Target modern browsers for smaller bundles
+    target: 'es2015',
+
+    // Increase CPU usage for faster builds
+    cssCodeSplit: true,
+  }
 })

@@ -20,21 +20,6 @@ function formatMinutesToTime(minutes: number): string {
   return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
 }
 
-// Helper function to check if two time ranges overlap
-function timeRangesOverlap(range1: MinutesTimeRange, range2: MinutesTimeRange): boolean {
-  return range1.startAt < range2.endAt && range2.startAt < range1.endAt
-}
-
-// Helper function to filter unavailable slots that overlap with requested time
-function filterRelevantUnavailableSlots(
-  unavailableSlots: UnavailableSlot[],
-  requestedTimeRange: MinutesTimeRange
-): UnavailableSlot[] {
-  return unavailableSlots.filter(slot =>
-    timeRangesOverlap(slot, requestedTimeRange)
-  )
-}
-
 interface EmployeeResourcesSelectionStepProps {
   // Employee props
   availableEmployees: EmployeeAvailabilityInfo[]
@@ -78,25 +63,17 @@ export function EmployeeResourcesSelectionStep({
   const [equipmentSearchQuery, setEquipmentSearchQuery] = useState('')
   const [consumablesSearchQuery, setConsumablesSearchQuery] = useState('')
 
-  // Filter employees to only show relevant unavailable slots (those that overlap with requested time)
-  const employeesWithFilteredSlots = useMemo(() => {
-    return availableEmployees.map(employee => ({
-      ...employee,
-      unavailableSlots: filterRelevantUnavailableSlots(employee.unavailableSlots, requestedTimeRange)
-    }))
-  }, [availableEmployees, requestedTimeRange])
-  
   const { equipment, loading: loadingEquipment } = useEquipment()
   const { consumables, loading: loadingConsumables } = useConsumables()
 
-  // Filtrar empleados por búsqueda (using filtered slots)
+  // Filtrar empleados por búsqueda
   const filteredEmployees = useMemo(() => {
-    if (!employeeSearchQuery.trim()) return employeesWithFilteredSlots
+    if (!employeeSearchQuery.trim()) return availableEmployees
 
-    return employeesWithFilteredSlots.filter((employee) =>
+    return availableEmployees.filter((employee) =>
       employee.name.toLowerCase().includes(employeeSearchQuery.toLowerCase())
     )
-  }, [employeesWithFilteredSlots, employeeSearchQuery])
+  }, [availableEmployees, employeeSearchQuery])
 
   // Filtrar solo equipos activos
   const activeEquipment = useMemo(() => {
@@ -295,7 +272,7 @@ export function EmployeeResourcesSelectionStep({
                                 <div className='mt-2 space-y-1'>
                                   <p className='text-xs font-medium text-muted-foreground flex items-center gap-1'>
                                     <AlertCircle className='h-3 w-3' />
-                                    No disponible:
+                                    No disponible en estos horarios:
                                   </p>
                                   <div className='space-y-1'>
                                     {employee.unavailableSlots.slice(0, 3).map((slot, idx) => (
