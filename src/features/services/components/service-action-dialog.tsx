@@ -493,8 +493,7 @@ export function ServiceActionDialog({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit, (errors) => {
-              console.log('Errores de validación:', errors)
-              toast.error('Por favor, completa los campos obligatorios')
+               toast.error('Por favor, completa los campos obligatorios')
             })}
           >
             <DialogHeader>
@@ -513,7 +512,7 @@ export function ServiceActionDialog({
               </DialogDescription>
             </DialogHeader>
 
-            <Tabs defaultValue='general' className='w-full mt-4'>
+            <Tabs defaultValue='general' className='w-full mt-4 p-2'>
               <TabsList className='grid w-full grid-cols-6'>
                 <TabsTrigger value='general'>General</TabsTrigger>
                 <TabsTrigger value='pricing'>Precio</TabsTrigger>
@@ -524,9 +523,9 @@ export function ServiceActionDialog({
               </TabsList>
 
               {/* General Tab */}
-              <TabsContent value='general' className='space-y-4 pt-4'>
+              <TabsContent value='general' className='space-y-4 pt-4 pb-3'>
                 <ScrollArea className='h-[400px] pr-4'>
-                  <div className='space-y-4'>
+                  <div className='space-y-4 px-2'>
                     <FormField
                       control={form.control}
                       name='name'
@@ -703,7 +702,7 @@ export function ServiceActionDialog({
               {/* Pricing Tab */}
               <TabsContent value='pricing' className='space-y-4 pt-4'>
                 <ScrollArea className='h-[400px] pr-4'>
-                  <div className='space-y-4'>
+                  <div className='space-y-4 px-2'>
                     <div className='grid grid-cols-2 gap-4'>
                       <FormField
                         control={form.control}
@@ -772,7 +771,7 @@ export function ServiceActionDialog({
               {/* Resources Tab */}
               <TabsContent value='resources' className='space-y-4 pt-4'>
                 <ScrollArea className='h-[400px] pr-4'>
-                  <div className='space-y-6'>
+                  <div className='space-y-6 px-2'>
                     <div>
                       <h3 className='text-lg font-medium mb-4 flex items-center'>
                         <Wrench className='h-5 w-5 mr-2' />

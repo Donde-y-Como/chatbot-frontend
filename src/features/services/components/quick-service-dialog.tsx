@@ -158,7 +158,7 @@ export function QuickServiceDialog({ open, onOpenChange }: Props) {
             </DialogHeader>
 
             <ScrollArea className='h-[500px] pr-4 mt-4'>
-              <div className='space-y-6'>
+              <div className='space-y-6 px-2'>
                 {/* Información básica */}
                 <div className='space-y-4'>
                   <h3 className='text-lg font-medium'>Información Básica</h3>

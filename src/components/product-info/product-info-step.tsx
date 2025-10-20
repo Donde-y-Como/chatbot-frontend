@@ -33,7 +33,7 @@ export function ProductInfoStep({ type = 'product' }: ProductInfoStepProps) {
   const selectedSubcategoryIds = watch('productInfo.subcategoryIds')
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 px-2'>
       {/* SKU y Estado */}
       <div className='grid grid-cols-2 gap-4'>
         <FormField
