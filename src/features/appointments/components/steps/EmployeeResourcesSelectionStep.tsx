@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { CheckCircle, Loader2, Search, X, Package, Wrench, AlertCircle, Plus, Minus, User } from 'lucide-react'
+import { CheckCircle, Loader2, Search, X, Package, Wrench, AlertCircle, Plus, Minus, User, Clock, CalendarX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -11,11 +11,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useEquipment } from '@/features/tools/hooks/useEquipment'
 import { useConsumables } from '@/features/tools/hooks/useConsumables'
 import { Equipment, EquipmentStatus, Consumable } from '@/features/tools/types'
-import { ConsumableUsage, EmployeeAvailable } from '../../types'
+import { ConsumableUsage, EmployeeAvailabilityInfo } from '../../types'
+
+// Helper function to format time in minutes to HH:MM format
+function formatMinutesToTime(minutes: number): string {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
+}
 
 interface EmployeeResourcesSelectionStepProps {
   // Employee props
-  availableEmployees: EmployeeAvailable[]
+  availableEmployees: EmployeeAvailabilityInfo[]
   loadingEmployees: boolean
   selectedEmployeeIds: string[]
   onEmployeeToggle: (employeeId: string) => void
@@ -219,43 +226,88 @@ export function EmployeeResourcesSelectionStep({
               {filteredEmployees.length > 0 ? (
                 <ScrollArea className='h-40 w-full rounded-md border'>
                   <div className='p-4'>
-                    <div className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
-                      {filteredEmployees.map((employee) => (
-                        <Card
-                          key={employee.id}
-                          className={cn(
-                            'cursor-pointer hover:border-primary transition-all',
-                            {
-                              'border-primary bg-primary/5':
-                                selectedEmployeeIds.includes(employee.id),
-                            }
-                          )}
-                          onClick={() => onEmployeeToggle(employee.id)}
-                        >
-                          <CardContent className='p-2'>
-                            <div className='flex items-center justify-between'>
-                              <div className='flex items-center gap-2'>
-                                <Avatar className='h-7 w-7'>
-                                  <AvatarImage
-                                    src={employee.photo}
-                                    alt={employee.name}
-                                    className='object-cover'
-                                  />
-                                  <AvatarFallback>
-                                    {employee.name.charAt(0)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className='text-sm'>{employee.name}</p>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                      {filteredEmployees.map((employee) => {
+                        const hasUnavailableSlots = employee.unavailableSlots && employee.unavailableSlots.length > 0
+                        return (
+                          <Card
+                            key={employee.id}
+                            className={cn(
+                              'cursor-pointer hover:border-primary transition-all',
+                              {
+                                'border-primary bg-primary/5':
+                                  selectedEmployeeIds.includes(employee.id),
+                                'border-orange-400 bg-orange-50 dark:bg-orange-950':
+                                  hasUnavailableSlots && !selectedEmployeeIds.includes(employee.id),
+                              }
+                            )}
+                            onClick={() => onEmployeeToggle(employee.id)}
+                          >
+                            <CardContent className='p-3'>
+                              <div className='flex items-start justify-between mb-2'>
+                                <div className='flex items-center gap-2'>
+                                  <Avatar className='h-8 w-8'>
+                                    <AvatarImage
+                                      src={employee.photo}
+                                      alt={employee.name}
+                                      className='object-cover'
+                                    />
+                                    <AvatarFallback>
+                                      {employee.name.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className='text-sm font-medium'>{employee.name}</p>
+                                  </div>
                                 </div>
+                                {selectedEmployeeIds.includes(employee.id) && (
+                                  <CheckCircle className='h-5 w-5 text-primary flex-shrink-0' />
+                                )}
                               </div>
-                              {selectedEmployeeIds.includes(employee.id) && (
-                                <CheckCircle className='h-5 w-5 text-primary' />
+
+                              {/* Unavailable slots information */}
+                              {hasUnavailableSlots && (
+                                <div className='mt-2 space-y-1'>
+                                  <p className='text-xs font-medium text-muted-foreground flex items-center gap-1'>
+                                    <AlertCircle className='h-3 w-3' />
+                                    No disponible:
+                                  </p>
+                                  <div className='space-y-1'>
+                                    {employee.unavailableSlots.slice(0, 3).map((slot, idx) => (
+                                      <div key={idx} className='flex items-center gap-1 text-xs'>
+                                        {slot.reason === 'appointment' ? (
+                                          <Clock className='h-3 w-3 text-orange-600' />
+                                        ) : (
+                                          <CalendarX className='h-3 w-3 text-orange-600' />
+                                        )}
+                                        <span className='text-orange-700 dark:text-orange-400'>
+                                          {formatMinutesToTime(slot.startAt)} - {formatMinutesToTime(slot.endAt)}
+                                        </span>
+                                        <Badge variant='outline' className='text-[10px] px-1 py-0 h-4'>
+                                          {slot.reason === 'appointment' ? 'Cita' : 'Horario'}
+                                        </Badge>
+                                      </div>
+                                    ))}
+                                    {employee.unavailableSlots.length > 3 && (
+                                      <p className='text-[10px] text-muted-foreground'>
+                                        +{employee.unavailableSlots.length - 3} más
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
                               )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+
+                              {!hasUnavailableSlots && (
+                                <div className='mt-2'>
+                                  <Badge variant='outline' className='text-xs bg-green-100 border-green-400 dark:bg-green-900 dark:border-green-500 dark:text-green-300'>
+                                    Completamente disponible
+                                  </Badge>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
                     </div>
                   </div>
                 </ScrollArea>

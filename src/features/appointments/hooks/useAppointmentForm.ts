@@ -8,7 +8,7 @@ import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import { Appointment, MinutesTimeRange, AppointmentStatus, PaymentStatus, Deposit, ConsumableUsage } from '@/features/appointments/types.ts'
 import { isValidAppointmentDate, getPastDateErrorMessage, canChangeDateTo } from '@/features/appointments/utils/formatters'
-import { useCheckAvailability } from './useCheckAvailability'
+import { useEmployeeAvailability } from './useEmployeeAvailability'
 
 export function useAppointmentForm(
   defaultClientName?: string,
@@ -400,8 +400,21 @@ export function useAppointmentForm(
     [serviceIds, services]
   )
 
-  const { availableEmployees, loading: loadingEmployees } =
-    useCheckAvailability(selectedServices, date, activeStep, timeRange, !!appointment, appointment?.id)
+  // Calculate fromDate and toDate based on the selected date and time range
+  const { fromDate, toDate } = useMemo(() => {
+    const from = new Date(date)
+    from.setHours(0, 0, 0, 0)
+    from.setMinutes(timeRange.startAt)
+
+    const to = new Date(date)
+    to.setHours(0, 0, 0, 0)
+    to.setMinutes(timeRange.endAt)
+
+    return { fromDate: from, toDate: to }
+  }, [date, timeRange])
+
+  const { employeesWithAvailability, loading: loadingEmployees } =
+    useEmployeeAvailability(fromDate, toDate, activeStep, undefined, appointment?.id)
 
   const toggleServiceSelection = (serviceId: string) => {
     setServiceIds((prev) =>
@@ -500,7 +513,7 @@ export function useAppointmentForm(
     services,
     selectedClient,
     selectedServices,
-    availableEmployees,
+    availableEmployees: employeesWithAvailability,
     loadingEmployees,
 
     setActiveStep,

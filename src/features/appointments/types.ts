@@ -78,6 +78,23 @@ export type EmployeeAvailable = Pick<
   'id' | 'name' | 'email' | 'photo'
 >
 
+export type UnavailableSlotReason = "outside_schedule" | "appointment"
+
+export interface UnavailableSlot extends MinutesTimeRange {
+  reason: UnavailableSlotReason
+}
+
+export interface EmployeeAvailabilityInfo {
+  id: string
+  name: string
+  photo?: string
+  unavailableSlots: UnavailableSlot[]
+}
+
+export interface EmployeeAvailabilityResult {
+  employees: EmployeeAvailabilityInfo[]
+}
+
 export const appointmentCreated = z.object({
   id: z.string(),
   clientId: z.string(),

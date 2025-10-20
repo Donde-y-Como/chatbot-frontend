@@ -3,6 +3,7 @@ import {
   Appointment,
   AppointmentCreated,
   AvailabilityResult,
+  EmployeeAvailabilityResult,
   Schedule,
   Service,
 } from '@/features/appointments/types.ts'
@@ -63,6 +64,27 @@ export const appointmentService = {
         params: {
           serviceId,
           date: date.toISOString(),
+          ...(appointmentId && { appointmentId }),
+        },
+      }
+    )
+
+    return response.data
+  },
+
+  checkEmployeeAvailability: async (
+    fromDate: Date,
+    toDate: Date,
+    employeeIds?: string[],
+    appointmentId?: string
+  ) => {
+    const response = await api.get<EmployeeAvailabilityResult>(
+      `/appointments/employees/availability`,
+      {
+        params: {
+          fromDate: fromDate.toISOString(),
+          toDate: toDate.toISOString(),
+          ...(employeeIds && employeeIds.length > 0 && { employeeIds: employeeIds.join(',') }),
           ...(appointmentId && { appointmentId }),
         },
       }
