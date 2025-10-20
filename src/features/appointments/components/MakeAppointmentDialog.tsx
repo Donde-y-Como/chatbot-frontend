@@ -198,6 +198,7 @@ export function MakeAppointmentDialog({
                   loadingEmployees={loadingEmployees}
                   selectedEmployeeIds={selectedEmployeeIds}
                   onEmployeeToggle={toggleEmployeeSelection}
+                  requestedTimeRange={timeRange}
                   selectedEquipmentIds={selectedEquipmentIds}
                   consumableUsages={consumableUsages}
                   inheritedEquipmentIds={inheritedEquipmentIds}

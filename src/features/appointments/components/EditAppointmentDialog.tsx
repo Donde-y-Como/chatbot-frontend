@@ -210,6 +210,7 @@ export function EditAppointmentDialog({
                 loadingEmployees={loadingEmployees}
                 selectedEmployeeIds={selectedEmployeeIds}
                 onEmployeeToggle={toggleEmployeeSelection}
+                requestedTimeRange={timeRange}
                 selectedEquipmentIds={selectedEquipmentIds}
                 consumableUsages={consumableUsages}
                 inheritedEquipmentIds={inheritedEquipmentIds}

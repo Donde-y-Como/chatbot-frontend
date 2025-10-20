@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useEquipment } from '@/features/tools/hooks/useEquipment'
 import { useConsumables } from '@/features/tools/hooks/useConsumables'
 import { Equipment, EquipmentStatus, Consumable } from '@/features/tools/types'
-import { ConsumableUsage, EmployeeAvailabilityInfo } from '../../types'
+import { ConsumableUsage, EmployeeAvailabilityInfo, MinutesTimeRange, UnavailableSlot } from '../../types'
 
 // Helper function to format time in minutes to HH:MM format
 function formatMinutesToTime(minutes: number): string {
@@ -20,12 +20,28 @@ function formatMinutesToTime(minutes: number): string {
   return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
 }
 
+// Helper function to check if two time ranges overlap
+function timeRangesOverlap(range1: MinutesTimeRange, range2: MinutesTimeRange): boolean {
+  return range1.startAt < range2.endAt && range2.startAt < range1.endAt
+}
+
+// Helper function to filter unavailable slots that overlap with requested time
+function filterRelevantUnavailableSlots(
+  unavailableSlots: UnavailableSlot[],
+  requestedTimeRange: MinutesTimeRange
+): UnavailableSlot[] {
+  return unavailableSlots.filter(slot =>
+    timeRangesOverlap(slot, requestedTimeRange)
+  )
+}
+
 interface EmployeeResourcesSelectionStepProps {
   // Employee props
   availableEmployees: EmployeeAvailabilityInfo[]
   loadingEmployees: boolean
   selectedEmployeeIds: string[]
   onEmployeeToggle: (employeeId: string) => void
+  requestedTimeRange: MinutesTimeRange
   // Equipment & Consumables props
   selectedEquipmentIds: string[]
   consumableUsages: ConsumableUsage[]
@@ -47,6 +63,7 @@ export function EmployeeResourcesSelectionStep({
   loadingEmployees,
   selectedEmployeeIds,
   onEmployeeToggle,
+  requestedTimeRange,
   selectedEquipmentIds,
   consumableUsages,
   inheritedEquipmentIds,
@@ -60,18 +77,26 @@ export function EmployeeResourcesSelectionStep({
   const [employeeSearchQuery, setEmployeeSearchQuery] = useState('')
   const [equipmentSearchQuery, setEquipmentSearchQuery] = useState('')
   const [consumablesSearchQuery, setConsumablesSearchQuery] = useState('')
+
+  // Filter employees to only show relevant unavailable slots (those that overlap with requested time)
+  const employeesWithFilteredSlots = useMemo(() => {
+    return availableEmployees.map(employee => ({
+      ...employee,
+      unavailableSlots: filterRelevantUnavailableSlots(employee.unavailableSlots, requestedTimeRange)
+    }))
+  }, [availableEmployees, requestedTimeRange])
   
   const { equipment, loading: loadingEquipment } = useEquipment()
   const { consumables, loading: loadingConsumables } = useConsumables()
 
-  // Filtrar empleados por búsqueda
+  // Filtrar empleados por búsqueda (using filtered slots)
   const filteredEmployees = useMemo(() => {
-    if (!employeeSearchQuery.trim()) return availableEmployees
+    if (!employeeSearchQuery.trim()) return employeesWithFilteredSlots
 
-    return availableEmployees.filter((employee) =>
+    return employeesWithFilteredSlots.filter((employee) =>
       employee.name.toLowerCase().includes(employeeSearchQuery.toLowerCase())
     )
-  }, [availableEmployees, employeeSearchQuery])
+  }, [employeesWithFilteredSlots, employeeSearchQuery])
 
   // Filtrar solo equipos activos
   const activeEquipment = useMemo(() => {
