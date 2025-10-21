@@ -47,7 +47,7 @@ export function CalendarHeader({
                   : 'text-muted-foreground'
               )}
             >
-              Day
+              Día
             </button>
             <button
               role='tab'
@@ -60,7 +60,7 @@ export function CalendarHeader({
                   : 'text-muted-foreground'
               )}
             >
-              Week
+              Semana
             </button>
           </div>
 
@@ -115,7 +115,7 @@ export function CalendarHeader({
             <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground' />
             <Input
               type='text'
-              placeholder='Buscar citas, eventos o personas'
+              placeholder='Buscar por cliente, empleado o servicio'
               className='pl-8 h-8 text-xs bg-muted/50 border-0'
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
@@ -141,7 +141,7 @@ export function CalendarHeader({
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
-                Day
+                Dia
               </button>
               <button
                 role='tab'
@@ -154,16 +154,16 @@ export function CalendarHeader({
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
-                Week
+                Semana
               </button>
-              <button
-                role='tab'
-                aria-selected={false}
-                disabled
-                className='px-4 py-1 text-sm font-medium rounded-md text-muted-foreground/50 cursor-not-allowed'
-              >
-                Month
-              </button>
+              {/*<button*/}
+              {/*  role='tab'*/}
+              {/*  aria-selected={false}*/}
+              {/*  disabled*/}
+              {/*  className='px-4 py-1 text-sm font-medium rounded-md text-muted-foreground/50 cursor-not-allowed'*/}
+              {/*>*/}
+              {/*  Mes*/}
+              {/*</button>*/}
             </div>
 
             {/* Navigation */}
