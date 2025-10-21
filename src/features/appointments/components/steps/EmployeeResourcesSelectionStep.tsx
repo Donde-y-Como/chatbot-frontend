@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { CheckCircle, Loader2, Search, X, Package, Wrench, AlertCircle, Plus, Minus, User, Clock, CalendarX } from 'lucide-react'
+import { CheckCircle, Loader2, Search, X, Package, Wrench, AlertCircle, Plus, Minus, User, Clock, CalendarX, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -35,6 +35,7 @@ interface EmployeeResourcesSelectionStepProps {
   selectedEmployeeIds: string[]
   onEmployeeToggle: (employeeId: string) => void
   requestedTimeRange: MinutesTimeRange
+  favoriteEmployeeId?: string // Add favorite employee ID
   // Equipment & Consumables props
   selectedEquipmentIds: string[]
   consumableUsages: ConsumableUsage[]
@@ -57,6 +58,7 @@ export function EmployeeResourcesSelectionStep({
   selectedEmployeeIds,
   onEmployeeToggle,
   requestedTimeRange,
+  favoriteEmployeeId,
   selectedEquipmentIds,
   consumableUsages,
   inheritedEquipmentIds,
@@ -239,6 +241,7 @@ export function EmployeeResourcesSelectionStep({
                     <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                       {filteredEmployees.map((employee) => {
                         const hasUnavailableSlots = employee.unavailableSlots && employee.unavailableSlots.length > 0
+                        const isFavorite = favoriteEmployeeId === employee.id
                         return (
                           <Card
                             key={employee.id}
@@ -267,7 +270,12 @@ export function EmployeeResourcesSelectionStep({
                                     </AvatarFallback>
                                   </Avatar>
                                   <div>
-                                    <p className='text-sm font-medium'>{employee.name}</p>
+                                    <div className='flex items-center gap-1'>
+                                      <p className='text-sm font-medium'>{employee.name}</p>
+                                      {isFavorite && (
+                                        <Star className='h-4 w-4 text-yellow-500 fill-yellow-500' />
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                                 {selectedEmployeeIds.includes(employee.id) && (

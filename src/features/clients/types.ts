@@ -38,6 +38,7 @@ export const createClientSchema = z.object({
         { message: "El correo electrónico no es válido" }
     ).default(""),
     address: z.string().default(""),
+    favoriteEmployeeId: z.string().optional(),
     birthdate: z.string().optional(),
 })
 
@@ -56,6 +57,7 @@ export type ClientPrimitives = {
     email: string;
     address: string;
     birthdate?: string;
+    favoriteEmployeeId?: string
     createdAt: string;
     updatedAt: string;
 }

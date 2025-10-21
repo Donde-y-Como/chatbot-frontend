@@ -63,8 +63,8 @@ export function ClientActionDialog({
       }
       await ClientApiService.create(values)
     },
-    onSuccess: () => {
-      queryClient.refetchQueries({ queryKey: ['clients'] })
+    onSuccess: async() => {
+      await queryClient.refetchQueries({ queryKey: ['clients'] })
       toast.success('Cliente guardado correctamente')
 
       // Clear pending annexes
@@ -102,6 +102,7 @@ export function ClientActionDialog({
           email: currentClient.email,
           address: currentClient.address,
           birthdate: currentClient.birthdate,
+          favoriteEmployeeId: currentClient.favoriteEmployeeId,
         }
       : {
           name: '',

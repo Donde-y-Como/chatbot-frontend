@@ -17,7 +17,9 @@ import {
   MapPin,
   MapPinned,
   Paperclip,
+  Star,
   Tag,
+  User2,
   Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils.ts'
@@ -45,6 +47,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
 import { PlatformName } from '@/features/chats/ChatTypes'
 import { useGetTags } from '@/features/clients/hooks/useGetTags.ts'
+import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees'
 import { useClientAppointments } from '../hooks/useClientAppointments'
 import { useClientEvents } from '../hooks/useClientEvents'
 import { usePendingServices } from '../hooks/usePendingServices'
@@ -68,6 +71,7 @@ export function ClientViewDialog({
     useClientAppointments(currentClient.id, open)
 
   const { data: tags = [] } = useGetTags()
+  const { data: employees = [] } = useGetEmployees()
 
   const {
     clientEvents,
@@ -181,6 +185,19 @@ export function ClientViewDialog({
                           <Calendar className='h-5 w-5 mr-2 text-muted-foreground flex-shrink-0' />
                           <span>
                             Nacimiento: {formatDate(currentClient.birthdate)}
+                          </span>
+                        </div>
+                      )}
+
+                      {currentClient.favoriteEmployeeId && (
+                        <div className='flex items-center'>
+                          <User2 className='h-5 w-5 mr-2 text-muted-foreground flex-shrink-0' />
+                          <span className='flex items-center gap-1'>
+                            Empleado preferido:
+                            <span className='font-medium flex items-center gap-1'>
+                              {employees.find(e => e.id === currentClient.favoriteEmployeeId)?.name || 'Desconocido'}
+                              <Star className='h-4 w-4 text-yellow-500 fill-yellow-500' />
+                            </span>
                           </span>
                         </div>
                       )}

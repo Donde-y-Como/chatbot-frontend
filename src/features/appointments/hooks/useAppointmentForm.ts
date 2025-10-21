@@ -400,6 +400,14 @@ export function useAppointmentForm(
     [serviceIds, services]
   )
 
+  // Auto-select favorite employee when client is selected
+  useEffect(() => {
+    if (!appointment && selectedClient?.favoriteEmployeeId && selectedEmployeeIds.length === 0) {
+      // Only auto-select if we're not editing an appointment and no employees are selected yet
+      setSelectedEmployeeIds([selectedClient.favoriteEmployeeId])
+    }
+  }, [selectedClient, appointment, selectedEmployeeIds.length])
+
   // Calculate fromDate and toDate based on the selected date and time range
   const { fromDate, toDate } = useMemo(() => {
     const from = new Date(date)
