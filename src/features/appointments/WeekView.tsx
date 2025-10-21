@@ -238,9 +238,9 @@ export function WeekView({
           <div className='flex relative bg-background min-w-fit'>
             {/* Time Column */}
             <div className='w-12 md:w-16 flex-shrink-0 bg-muted/20 sticky left-0 z-10'>
-              <div className='h-8 md:h-10 bg-card flex items-center justify-center'>
+              <div className='h-16 bg-background flex items-center justify-center border-b border-border'>
                 <span className='text-xs font-medium text-muted-foreground'>
-                  Hora
+
                 </span>
               </div>
               <div style={{ height: `${totalHeight}px` }}>
@@ -284,20 +284,21 @@ export function WeekView({
                   className='flex-1 min-w-[120px] md:min-w-[150px] lg:min-w-[180px]'
                 >
                   {/* Day Header */}
-                  <div className='h-8 md:h-10 bg-card flex flex-col items-center justify-center px-1 md:px-2'>
-                    <span className='text-[10px] md:text-xs font-medium text-muted-foreground uppercase'>
-                      {format(day, 'EEE', { locale: es })}
-                    </span>
-                    <span
-                      className={`text-xs md:text-sm font-semibold ${
-                        isSameDay(day, new Date())
-                          ? 'text-primary'
-                          : isSameDay(day, date)
-                            ? 'text-foreground'
-                            : 'text-muted-foreground'
-                      }`}
+                  <div className='relative h-16 bg-background flex flex-col items-center justify-center px-1 md:px-2 border-b-4'
+                    style={{
+                      borderBottomColor: isSameDay(day, date)
+                        ? 'hsl(var(--primary))'
+                        : 'transparent'
+                    }}
+                  >
+                    <span className='text-sm font-bold'
+                      style={{
+                        color: isSameDay(day, date)
+                          ? 'hsl(var(--primary))'
+                          : 'hsl(var(--muted-foreground))'
+                      }}
                     >
-                      {format(day, 'd', { locale: es })}
+                      {format(day, 'd', { locale: es })} {format(day, 'EEE', { locale: es })}
                     </span>
                   </div>
 

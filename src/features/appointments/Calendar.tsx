@@ -34,6 +34,7 @@ export function Calendar() {
     new Set()
   )
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Get appointments based on current view
   const startDate = view === 'week' 
@@ -56,13 +57,34 @@ export function Calendar() {
     if (!appointments) return []
 
     return appointments.filter((appointment) => {
-      if (appointment.employeeIds.length === 0) {
-        return true
-      }
+      // Filter by selected employees
+      const matchesEmployeeFilter =
+        appointment.employeeIds.length === 0 ||
+        appointment.employeeIds.some((id) => selectedEmployees.has(id))
 
-      return appointment.employeeIds.some((id) => selectedEmployees.has(id))
+      if (!matchesEmployeeFilter) return false
+
+      // Filter by search query
+      if (searchQuery.trim() === '') return true
+
+      const query = searchQuery.toLowerCase().trim()
+
+      // Search in client name
+      const matchesClient = appointment.clientName?.toLowerCase().includes(query)
+
+      // Search in service names (array of strings)
+      const matchesServices = appointment.serviceNames?.some(
+        (serviceName) => serviceName.toLowerCase().includes(query)
+      )
+
+      // Search in employee names (array of strings)
+      const matchesEmployees = appointment.employeesNames?.some(
+        (employeeName) => employeeName.toLowerCase().includes(query)
+      )
+
+      return matchesClient || matchesServices || matchesEmployees
     })
-  }, [appointments, selectedEmployees])
+  }, [appointments, selectedEmployees, searchQuery])
 
   return (
     <div className='flex flex-col h-full w-full bg-background'>
@@ -108,6 +130,8 @@ export function Calendar() {
               setSelectedDate={setSelectedDate}
               view={view}
               setView={setView}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
             />
           </header>
 

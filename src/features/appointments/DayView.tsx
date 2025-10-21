@@ -399,15 +399,30 @@ export function DayView({
       <div className='flex-1 overflow-hidden flex flex-col'>
         <ScrollArea className='h-full'>
           <div className='flex relative'>
+            {/* Time column on the left */}
             <div className='w-12 md:w-16 lg:w-20 flex-shrink-0 bg-muted/20'>
-              <TimeSlots 
-                startAt={workHours.startAt} 
-                endAt={workHours.endAt} 
+              {/* Empty header space above time slots */}
+              <div className='h-16 border-b border-border bg-background' />
+              <TimeSlots
+                startAt={workHours.startAt}
+                endAt={workHours.endAt}
                 timeSlotHeight={TIME_SLOT_HEIGHT}
               />
             </div>
 
-            <div
+            {/* Main calendar column */}
+            <div className='flex-1 flex flex-col'>
+              {/* Day header */}
+              <div className='h-16 border-b-4 border-primary bg-background px-4 flex items-center'>
+                <div>
+                  <div className='text-xl font-bold text-primary'>
+                    {format(date, 'd', { locale: es })} {format(date, 'EEE', { locale: es })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Time grid */}
+              <div
               ref={timeSlotAreaRef}
               className={`flex-1 relative transition-all duration-200 ${
                 hasOpenDialogs 
@@ -534,6 +549,7 @@ export function DayView({
                   />
                 )
               })}
+              </div>
             </div>
           </div>
           <ScrollBar orientation='vertical' />

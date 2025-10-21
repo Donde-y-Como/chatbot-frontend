@@ -214,9 +214,9 @@ export function AppointmentBlock({
       <DialogTrigger asChild>
         <div
           className={cn(
-            'absolute rounded-md overflow-hidden cursor-pointer transition-all hover:opacity-90 border-2 border-background group',
+            'absolute rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] border-l-4 group',
             appointment.status === 'cancelada' &&
-              'opacity-60 border-dashed'
+              'opacity-60'
           )}
           style={{
             ...{
@@ -225,6 +225,14 @@ export function AppointmentBlock({
               left: `calc(${leftPercent}% + 2px)`,
               width: `calc(${widthPercent}% - 4px)`,
               backgroundColor: backgroundColor,
+              borderLeftColor: backgroundColor,
+              backgroundImage: `repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255, 255, 255, 0.1) 10px,
+                rgba(255, 255, 255, 0.1) 20px
+              )`,
             },
             ...(appointment.status === 'cancelada' && {
               borderColor: backgroundColor,
@@ -233,17 +241,44 @@ export function AppointmentBlock({
           onClick={(e) => e.stopPropagation()}
         >
           {duration > 60 ? (
-            <div className='p-2 flex flex-col h-full min-w-0'>
-              <div className='flex items-center justify-between text-white text-sm font-semibold min-w-0'>
-                <span className='truncate flex-1 mr-2'>{displayText}</span>
-                <Badge
-                  variant='outline'
-                  className='bg-white/20 text-white border-0 text-xs flex-shrink-0'
-                >
-                  {formatTime(appointment.timeRange.startAt)} -{' '}
-                  {formatTime(appointment.timeRange.endAt)}
-                </Badge>
+            <div className='p-3 flex flex-col h-full min-w-0 relative bg-white/5'>
+              <div className='flex items-start justify-between min-w-0 mb-2'>
+                <div className='flex-1 min-w-0'>
+                  <div className='text-white font-semibold text-sm truncate mb-1'>
+                    {primaryService}
+                  </div>
+                  <div className='text-white/90 text-xs'>
+                    {formatTime(appointment.timeRange.startAt)} - {formatTime(appointment.timeRange.endAt)}
+                  </div>
+                </div>
               </div>
+
+              {/* Participant avatars - stacked */}
+              {employees.length > 0 && (
+                <div className='flex items-center mt-auto'>
+                  {employees.slice(0, 3).map((emp, idx) => (
+                    <Avatar
+                      key={emp.id}
+                      className='h-6 w-6 border-2 border-white'
+                      style={{ marginLeft: idx > 0 ? '-8px' : '0' }}
+                    >
+                      <AvatarImage src={emp.photo} alt={emp.name} />
+                      <AvatarFallback className='text-xs bg-white/20 text-white'>
+                        {emp.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                  {employees.length > 3 && (
+                    <div
+                      className='h-6 w-6 rounded-full bg-white/20 border-2 border-white flex items-center justify-center text-white text-xs font-medium'
+                      style={{ marginLeft: '-8px' }}
+                    >
+                      +{employees.length - 3}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className='text-white/90 text-xs mt-1 min-w-0'>
                 {appointment.status === 'cancelada' && (
                   <span className='bg-red-500/80 text-white text-xs px-1 py-0.5 rounded mr-1 inline-block'>
@@ -266,18 +301,41 @@ export function AppointmentBlock({
               )}
             </div>
           ) : (
-            <div className='p-1 flex items-center text-white text-xs font-semibold h-full min-w-0'>
-              <div className='flex items-center gap-1 flex-1 min-w-0'>
-                <span className='truncate'>{displayText}</span>
+            <div className='p-2 flex items-center text-white text-xs font-semibold h-full min-w-0 bg-white/5'>
+              <div className='flex items-center gap-2 flex-1 min-w-0'>
+                <div className='flex-1 min-w-0'>
+                  <div className='truncate font-semibold'>{primaryService}</div>
+                </div>
+                {employees.length > 0 && (
+                  <div className='flex items-center flex-shrink-0'>
+                    {employees.slice(0, 2).map((emp, idx) => (
+                      <Avatar
+                        key={emp.id}
+                        className='h-5 w-5 border border-white'
+                        style={{ marginLeft: idx > 0 ? '-6px' : '0' }}
+                      >
+                        <AvatarImage src={emp.photo} alt={emp.name} />
+                        <AvatarFallback className='text-[10px] bg-white/20 text-white'>
+                          {emp.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                    {employees.length > 2 && (
+                      <div
+                        className='h-5 w-5 rounded-full bg-white/20 border border-white flex items-center justify-center text-white text-[10px] font-medium'
+                        style={{ marginLeft: '-6px' }}
+                      >
+                        +{employees.length - 2}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {appointment.status === 'cancelada' && (
                   <span className='bg-red-500/80 text-white text-xs px-1 py-0.5 rounded flex-shrink-0'>
-                    CANCELADA
+                    ✕
                   </span>
                 )}
               </div>
-              <span className='text-white/90 text-xs ml-1 flex-shrink-0'>
-                {formatTime(appointment.timeRange.startAt)}
-              </span>
             </div>
           )}
           <div className='absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity'>

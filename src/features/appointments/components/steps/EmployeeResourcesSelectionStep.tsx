@@ -20,6 +20,14 @@ function formatMinutesToTime(minutes: number): string {
   return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
 }
 
+// Helper function to check if unavailable slots overlap with requested time range
+function hasOverlappingSlots(unavailableSlots: UnavailableSlot[], requestedTimeRange: MinutesTimeRange): boolean {
+  return unavailableSlots.some(slot => {
+    // Two time ranges overlap if one starts before the other ends
+    return slot.startAt < requestedTimeRange.endAt && slot.endAt > requestedTimeRange.startAt
+  })
+}
+
 interface EmployeeResourcesSelectionStepProps {
   // Employee props
   availableEmployees: EmployeeAvailabilityInfo[]
@@ -240,7 +248,7 @@ export function EmployeeResourcesSelectionStep({
                                 'border-primary bg-primary/5':
                                   selectedEmployeeIds.includes(employee.id),
                                 'border-orange-400 bg-orange-50 dark:bg-orange-950':
-                                  hasUnavailableSlots && !selectedEmployeeIds.includes(employee.id),
+                                  hasUnavailableSlots && hasOverlappingSlots(employee.unavailableSlots, requestedTimeRange) && !selectedEmployeeIds.includes(employee.id),
                               }
                             )}
                             onClick={() => onEmployeeToggle(employee.id)}
@@ -268,7 +276,7 @@ export function EmployeeResourcesSelectionStep({
                               </div>
 
                               {/* Unavailable slots information */}
-                              {hasUnavailableSlots && (
+                              {hasUnavailableSlots && hasOverlappingSlots(employee.unavailableSlots, requestedTimeRange) && (
                                 <div className='mt-2 space-y-1'>
                                   <p className='text-xs font-medium text-muted-foreground flex items-center gap-1'>
                                     <AlertCircle className='h-3 w-3' />
@@ -299,7 +307,7 @@ export function EmployeeResourcesSelectionStep({
                                 </div>
                               )}
 
-                              {!hasUnavailableSlots && (
+                              {!hasOverlappingSlots(employee.unavailableSlots, requestedTimeRange) && (
                                 <div className='mt-2'>
                                   <Badge variant='outline' className='text-xs bg-green-100 border-green-400 dark:bg-green-900 dark:border-green-500 dark:text-green-300'>
                                     Completamente disponible
