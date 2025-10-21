@@ -2,16 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { format, isSameDay } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
 import { es } from 'date-fns/locale'
-import { Calendar, CalendarX, Clock, Loader2, Minus, Plus } from 'lucide-react'
+import { Calendar, CalendarX, Clock, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AppointmentBlock } from '@/features/appointments/AppointmentBlock'
-import {
-  ServiceFilter,
-  ServiceFilterProps,
-} from '@/features/appointments/ServiceFilter.tsx'
 import { TimeSlots } from '@/features/appointments/TimeSlots.tsx'
 import { appointmentService } from '@/features/appointments/appointmentService.ts'
 import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
@@ -44,21 +40,21 @@ type TimeBlock = {
 export function DayView({
   appointments,
   date,
+  zoomIndex = DEFAULT_ZOOM_INDEX,
+  selectedService = 'all',
 }: {
   appointments: Appointment[]
   date: Date
+  zoomIndex?: number
+  selectedService?: string | 'all'
 }) {
   const { workHours, isLoading: isWorkHoursLoading } = useGetWorkSchedule(date)
   const { data: allEmployees = [], isLoading: isEmployeesLoading } = useGetEmployees()
   const { data: allServices = [], isLoading: isServicesLoading } = useGetServices()
   const { data: clients = [], isLoading: isClientsLoading } = useGetClients()
 
-  const [selectedService, setSelectedService] = useState<ServiceFilterProps['selectedService']>('all')
   const [currentTime, setCurrentTime] = useState(date)
-  
-  // Zoom state
-  const [zoomIndex, setZoomIndex] = useState(DEFAULT_ZOOM_INDEX)
-  
+
   // Simple time block state
   const [timeBlock, setTimeBlock] = useState<TimeBlock | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -73,22 +69,6 @@ export function DayView({
   // Computed zoom values
   const currentZoom = ZOOM_LEVELS[zoomIndex]
   const TIME_SLOT_HEIGHT = BASE_TIME_SLOT_HEIGHT * currentZoom
-
-  // Zoom controls
-  const handleZoomIn = useCallback(() => {
-    setZoomIndex(prev => Math.min(prev + 1, ZOOM_LEVELS.length - 1))
-  }, [])
-
-  const handleZoomOut = useCallback(() => {
-    setZoomIndex(prev => Math.max(prev - 1, 0))
-  }, [])
-
-  const canZoomIn = zoomIndex < ZOOM_LEVELS.length - 1
-  const canZoomOut = zoomIndex > 0
-
-  const handleSelectedService = (serviceId: string | 'all') => {
-    setSelectedService(serviceId)
-  }
 
   const positionedEvents = usePositionedEvents({
     appointments,
@@ -358,44 +338,6 @@ export function DayView({
 
   return (
     <div className='flex flex-col h-full'>
-      <div className='sticky top-0 z-20 bg-card shrink-0'>
-        <div className='p-2 md:p-3 space-y-3'>
-          <ServiceFilter
-            services={allServices}
-            selectedService={selectedService}
-            onServiceSelect={handleSelectedService}
-          />
-          
-          {/* Zoom Controls */}
-          <div className='flex items-center gap-2 justify-end'>
-            <span className='text-xs text-muted-foreground mr-2'>Zoom:</span>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={handleZoomOut}
-              disabled={!canZoomOut}
-              className='h-8 w-8 p-0'
-              title='Zoom out'
-            >
-              <Minus className='h-3 w-3' />
-            </Button>
-            <span className='text-xs font-medium min-w-12 text-center'>
-              {Math.round(currentZoom * 100)}%
-            </span>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={handleZoomIn}
-              disabled={!canZoomIn}
-              className='h-8 w-8 p-0'
-              title='Zoom in'
-            >
-              <Plus className='h-3 w-3' />
-            </Button>
-          </div>
-        </div>
-      </div>
-
       <div className='flex-1 overflow-hidden flex flex-col'>
         <ScrollArea className='h-full'>
           <div className='flex relative'>

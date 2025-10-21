@@ -1,53 +1,33 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  eachDayOfInterval,
-  endOfWeek,
-  format,
-  isSameDay,
-  startOfWeek,
-} from 'date-fns'
-import { useQueryClient } from '@tanstack/react-query'
-import { es } from 'date-fns/locale'
-import { Clock, Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { AppointmentBlock } from '@/features/appointments/AppointmentBlock'
-import {
-  ServiceFilter,
-  ServiceFilterProps,
-} from '@/features/appointments/ServiceFilter.tsx'
-import { appointmentService } from '@/features/appointments/appointmentService.ts'
-import { useDialogState } from '@/features/appointments/contexts/DialogStateContext'
-import {
-  useGetAppointments,
-  UseGetAppointmentsQueryKey,
-} from '@/features/appointments/hooks/useGetAppointments.ts'
-import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
-import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
-import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
-import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
-import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts'
-import type { Appointment } from './types'
+import { useEffect, useState } from 'react';
+import { eachDayOfInterval, endOfWeek, format, isSameDay, startOfWeek } from 'date-fns';
+import { useQueryClient } from '@tanstack/react-query';
+import { es } from 'date-fns/locale';
+import { Clock, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { AppointmentBlock } from '@/features/appointments/AppointmentBlock';
+import { appointmentService } from '@/features/appointments/appointmentService.ts';
+import { useGetAppointments, UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts';
+import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts';
+import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts';
+import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts';
+import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts';
+import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts';
+import type { Appointment } from './types';
+
 
 // Simple constants
 const TIME_SLOT_HEIGHT = 64
-const MINUTES_PER_HOUR = 60// 1 hour
-const MIN_DURATION = 15 // 15 minutes
-const SNAP_MINUTES = 15
-
-// Time block type
-type TimeBlock = {
-  startAt: number
-  endAt: number
-  dayIndex: number
-}
+const MINUTES_PER_HOUR = 60 // 1 hour
 
 export function WeekView({
   appointments,
   date,
+  selectedService = 'all',
 }: {
   appointments: Appointment[]
   date: Date
+  selectedService?: string | 'all'
 }) {
   const weekStart = startOfWeek(date, { weekStartsOn: 1 }) // Monday as first day
   const weekEnd = endOfWeek(date, { weekStartsOn: 1 })
@@ -65,24 +45,9 @@ export function WeekView({
     useGetServices()
   const { data: clients = [], isLoading: isClientsLoading } = useGetClients()
 
-  const [selectedService, setSelectedService] =
-    useState<ServiceFilterProps['selectedService']>('all')
   const [currentTime, setCurrentTime] = useState(new Date())
 
-  // Simple time block state
-  const [timeBlock, setTimeBlock] = useState<TimeBlock | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragHandle, setDragHandle] = useState<'top' | 'bottom' | null>(null)
-  const [isQuickDialogOpen, setIsQuickDialogOpen] = useState(false)
-  const [dialogTimeRange, setDialogTimeRange] = useState<TimeBlock | null>(null)
-
-  const timeSlotAreaRef = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
-  const { hasOpenDialogs } = useDialogState()
-
-  const handleSelectedService = (serviceId: string | 'all') => {
-    setSelectedService(serviceId)
-  }
 
   // Use week appointments if available, fallback to passed appointments
   const appointmentsToUse = weekAppointments || appointments
@@ -99,58 +64,10 @@ export function WeekView({
     return () => clearInterval(interval)
   }, [])
 
-  // Time utility functions
-  const getTimeFromY = useCallback(
-    (clientY: number): number => {
-      if (!workHours || !timeSlotAreaRef.current)
-        return workHours?.startAt || 540
-
-      const rect = timeSlotAreaRef.current.getBoundingClientRect()
-      const relativeY = Math.max(0, clientY - rect.top)
-      const minutesFromStart = (relativeY / TIME_SLOT_HEIGHT) * MINUTES_PER_HOUR
-      const snappedMinutes =
-        Math.round(minutesFromStart / SNAP_MINUTES) * SNAP_MINUTES
-
-      return Math.max(
-        workHours.startAt,
-        Math.min(
-          workHours.endAt - MIN_DURATION,
-          snappedMinutes + workHours.startAt
-        )
-      )
-    },
-    [workHours]
-  )
-
   const formatTime = (minutes: number): string => {
     const hours = Math.floor(minutes / MINUTES_PER_HOUR)
     const mins = minutes % MINUTES_PER_HOUR
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
-  }
-
-  const formatDuration = (startAt: number, endAt: number): string => {
-    const duration = endAt - startAt
-    const hours = Math.floor(duration / MINUTES_PER_HOUR)
-    const minutes = duration % MINUTES_PER_HOUR
-
-    if (hours === 0) return `${minutes}min`
-    if (minutes === 0) return `${hours}h`
-    return `${hours}h ${minutes}m`
-  }
-
-  const getBlockPosition = (block: TimeBlock) => {
-    if (!workHours) return { top: 0, height: TIME_SLOT_HEIGHT }
-
-    const top =
-      ((block.startAt - workHours.startAt) / MINUTES_PER_HOUR) *
-      TIME_SLOT_HEIGHT
-    const height =
-      ((block.endAt - block.startAt) / MINUTES_PER_HOUR) * TIME_SLOT_HEIGHT
-
-    return {
-      top: Math.max(0, top),
-      height: Math.max(TIME_SLOT_HEIGHT * 0.25, height),
-    }
   }
 
   const getCurrentTimePosition = () => {
@@ -221,17 +138,6 @@ export function WeekView({
 
   return (
     <div className='flex flex-col h-full'>
-      {/* Service Filter Header */}
-      <div className='sticky top-0 z-20 bg-card shrink-0'>
-        <div className='p-2 md:p-3'>
-          <ServiceFilter
-            services={allServices}
-            selectedService={selectedService}
-            onServiceSelect={handleSelectedService}
-          />
-        </div>
-      </div>
-
       {/* Week Calendar Grid */}
       <div className='flex-1 overflow-hidden'>
         <ScrollArea className='h-full'>
@@ -268,11 +174,7 @@ export function WeekView({
             </div>
 
             {/* Week Days Columns */}
-            {weekDays.map((day, dayIndex) => {
-              const dayAppointments = appointmentsToUse.filter((appointment) =>
-                isSameDay(new Date(appointment.date), day)
-              )
-
+            {weekDays.map((day) => {
               // Filter positioned events for this specific day
               const dayPositionedEvents = positionedEvents.filter((event) =>
                 isSameDay(new Date(event.appointment.date), day)
@@ -345,16 +247,14 @@ export function WeekView({
                           appointment.serviceIds.includes(a.id)
                         )
 
+                        const client = clients.find((c) => c.id === appointment.clientId)!
+
                         return (
                           <AppointmentBlock
                             cancelAppointment={handleCancel}
                             key={appointment.id}
                             appointment={appointment}
-                            client={
-                              clients.find(
-                                (c) => c.id === appointment.clientId
-                              )!
-                            }
+                            client={client}
                             employees={employees}
                             services={services}
                             column={column}

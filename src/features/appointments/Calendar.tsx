@@ -26,6 +26,10 @@ function CalendarSidebarToggle({ isOpen, onToggle }: { isOpen: boolean; onToggle
   )
 }
 
+// Zoom constants (matching DayView)
+const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3]
+const DEFAULT_ZOOM_INDEX = 2 // 100%
+
 export function Calendar() {
   const { data: employees } = useGetEmployees()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
@@ -35,6 +39,8 @@ export function Calendar() {
   )
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [zoomIndex, setZoomIndex] = useState(DEFAULT_ZOOM_INDEX)
+  const [selectedService, setSelectedService] = useState<string | 'all'>('all')
 
   // Get appointments based on current view
   const startDate = view === 'week' 
@@ -132,6 +138,11 @@ export function Calendar() {
               setView={setView}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
+              zoomIndex={zoomIndex}
+              onZoomChange={setZoomIndex}
+              zoomLevels={ZOOM_LEVELS}
+              selectedService={selectedService}
+              onServiceChange={setSelectedService}
             />
           </header>
 
@@ -139,9 +150,18 @@ export function Calendar() {
           <section className='flex-1 overflow-hidden p-2 md:p-4' aria-label={view === 'day' ? 'Vista de citas del día' : 'Vista de citas de la semana'}>
             <div className='h-full rounded-lg md:rounded-xl bg-card overflow-hidden'>
               {view === 'day' ? (
-                <DayView appointments={filteredAppointments} date={selectedDate} />
+                <DayView
+                  appointments={filteredAppointments}
+                  date={selectedDate}
+                  zoomIndex={zoomIndex}
+                  selectedService={selectedService}
+                />
               ) : (
-                <WeekView appointments={filteredAppointments} date={selectedDate} />
+                <WeekView
+                  appointments={filteredAppointments}
+                  date={selectedDate}
+                  selectedService={selectedService}
+                />
               )}
             </div>
           </section>

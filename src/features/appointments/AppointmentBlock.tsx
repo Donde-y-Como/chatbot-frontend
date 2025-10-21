@@ -192,8 +192,7 @@ export function AppointmentBlock({
 
   // Handle null client case
   if (!client) {
-    console.warn('AppointmentBlock: client is null for appointment', appointment.id)
-    return null
+     return null;
   }
 
   // Format display text: FirstName - ServiceName

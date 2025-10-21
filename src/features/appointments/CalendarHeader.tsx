@@ -8,8 +8,10 @@ import {
 } from "@/components/ui/tooltip"
 import { addDays, addWeeks, format } from 'date-fns'
 import { es } from 'date-fns/locale/es'
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Search, Minus, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ServiceFilter } from './ServiceFilter'
+import { useGetServices } from './hooks/useGetServices'
 
 interface CalendarHeaderProps {
   selectedDate: Date
@@ -18,6 +20,11 @@ interface CalendarHeaderProps {
   setView: (view: 'day' | 'week') => void
   searchQuery: string
   onSearchChange: (query: string) => void
+  zoomIndex: number
+  onZoomChange: (index: number) => void
+  zoomLevels: number[]
+  selectedService: string | 'all'
+  onServiceChange: (serviceId: string | 'all') => void
 }
 
 export function CalendarHeader({
@@ -27,7 +34,24 @@ export function CalendarHeader({
   setView,
   searchQuery,
   onSearchChange,
+  zoomIndex,
+  onZoomChange,
+  zoomLevels,
+  selectedService,
+  onServiceChange,
 }: CalendarHeaderProps) {
+  const { data: allServices = [] } = useGetServices()
+  const currentZoom = zoomLevels[zoomIndex]
+  const canZoomIn = zoomIndex < zoomLevels.length - 1
+  const canZoomOut = zoomIndex > 0
+
+  const handleZoomIn = () => {
+    if (canZoomIn) onZoomChange(zoomIndex + 1)
+  }
+
+  const handleZoomOut = () => {
+    if (canZoomOut) onZoomChange(zoomIndex - 1)
+  }
   return (
     <div className='border-b bg-background'>
       {/* Mobile Layout - Super Compact */}
@@ -248,6 +272,48 @@ export function CalendarHeader({
                 onChange={(e) => onSearchChange(e.target.value)}
               />
             </div>
+
+            {/* Spacer to push zoom controls to the right */}
+            <div className='flex-1' />
+
+            {/* Zoom Controls - Only show in Day view */}
+            {view === 'day' && (
+              <div className='flex items-center gap-2'>
+                <span className='text-xs text-muted-foreground'>Zoom:</span>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleZoomOut}
+                  disabled={!canZoomOut}
+                  className='h-8 w-8 p-0'
+                  title='Alejar'
+                >
+                  <Minus className='h-3 w-3' />
+                </Button>
+                <span className='text-xs font-medium min-w-12 text-center'>
+                  {Math.round(currentZoom * 100)}%
+                </span>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleZoomIn}
+                  disabled={!canZoomIn}
+                  className='h-8 w-8 p-0'
+                  title='Acercar'
+                >
+                  <Plus className='h-3 w-3' />
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Second row: Service Filter */}
+          <div className='mt-3'>
+            <ServiceFilter
+              services={allServices}
+              selectedService={selectedService}
+              onServiceSelect={onServiceChange}
+            />
           </div>
         </div>
       </div>
