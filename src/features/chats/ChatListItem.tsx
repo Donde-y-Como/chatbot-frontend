@@ -415,20 +415,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                               return
                             }
                             setCurrentRow({
-                              id: chat.client.id,
-                              businessId: chat.client.businessId,
-                              name: chat.client.name,
-                              platformIdentities:
-                                chat.client.platformIdentities,
-                              tagIds: chat.client.tagIds,
-                              annexes: chat.client.annexes,
-                              photo: chat.client.photo,
-                              notes: chat.client.notes,
-                              email: chat.client.email,
-                              address: chat.client.address,
-                              birthdate: chat.client.birthdate,
-                              createdAt: chat.client.createdAt,
-                              updatedAt: chat.client.updatedAt,
+                              ...chat.client
                             })
                             setOpen('view')
                           }}

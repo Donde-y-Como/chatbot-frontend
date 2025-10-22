@@ -256,51 +256,42 @@ export function AppointmentBlock({
               </div>
 
               {/* Participant avatars - stacked */}
-              {employees.length > 0 && (
-                <div className='flex items-center mt-auto'>
-                  {employees.slice(0, 3).map((emp, idx) => (
-                    <Avatar
-                      key={emp.id}
-                      className='h-6 w-6 border-2 border-white'
-                      style={{ marginLeft: idx > 0 ? '-8px' : '0' }}
-                    >
-                      <AvatarImage src={emp.photo} alt={emp.name} />
-                      <AvatarFallback className='text-xs bg-white/20 text-white'>
-                        {emp.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
-                  {employees.length > 3 && (
-                    <div
-                      className='h-6 w-6 rounded-full bg-white/20 border-2 border-white flex items-center justify-center text-white text-xs font-medium'
-                      style={{ marginLeft: '-8px' }}
-                    >
-                      +{employees.length - 3}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className='text-white/90 text-xs mt-1 min-w-0'>
+              <div className='flex items-center mt-auto'>
                 {appointment.status === 'cancelada' && (
-                  <span className='bg-red-500/80 text-white text-xs px-1 py-0.5 rounded mr-1 inline-block'>
+                  <span className='bg-red-500/80 text-white text-xs px-1.5 py-0.5 rounded mr-2 inline-block'>
                     CANCELADA
                   </span>
                 )}
-                <span className='truncate block'>
-                  {appointment.serviceNames
-                    .map((s) =>
-                      s.length > 20 ? `${s.substring(0, 20)}...` : s
-                    )
-                    .join(', ')}
-                </span>
+                {employees.length > 0 ? (
+                  <>
+                    {employees.slice(0, 3).map((emp, idx) => (
+                      <Avatar
+                        key={emp.id}
+                        className='h-6 w-6 border-2 border-white'
+                        style={{ marginLeft: idx > 0 ? '-8px' : '0' }}
+                      >
+                        <AvatarImage src={emp.photo} alt={emp.name} />
+                        <AvatarFallback className='text-xs bg-white/20 text-white'>
+                          {emp.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                    {employees.length > 3 && (
+                      <div
+                        className='h-6 w-6 rounded-full bg-white/20 border-2 border-white flex items-center justify-center text-white text-xs font-medium'
+                        style={{ marginLeft: '-8px' }}
+                      >
+                        +{employees.length - 3}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className='text-white/80 text-xs flex items-center min-w-0'>
+                    <Users className='w-3 h-3 mr-1 flex-shrink-0' />
+                    <span className='truncate'>Sin asignar</span>
+                  </div>
+                )}
               </div>
-              {employees.length === 0 && (
-                <div className='mt-auto text-white/80 text-xs flex items-center min-w-0'>
-                  <Users className='w-3 h-3 mr-1 flex-shrink-0' />
-                  <span className='truncate'>Sin asignar</span>
-                </div>
-              )}
             </div>
           ) : (
             <div className='p-2 flex items-center text-white text-xs font-semibold h-full min-w-0 bg-white/5'>

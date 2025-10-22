@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button.tsx'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils.ts'
 import { Checkbox } from '@/components/ui/checkbox.tsx'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Employee } from '../employees/types'
 
 type EmployeesSelectorProps = {
@@ -103,6 +104,16 @@ export function EmployeesSelector({
               </div>
 
               <div className='flex items-center gap-2 md:gap-3 ml-2 md:ml-3'>
+                <Avatar className='h-6 w-6 md:h-7 md:w-7'>
+                  <AvatarImage
+                    src={employee.photo}
+                    alt={employee.name}
+                    className='object-cover'
+                  />
+                  <AvatarFallback className='text-xs'>
+                    {employee.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
                 <span className='select-none cursor-pointer text-xs md:text-sm font-medium transition-colors duration-200 group-hover:text-primary truncate'>
                   {employee.name}
                 </span>

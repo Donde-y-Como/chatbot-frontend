@@ -120,19 +120,7 @@ export function ConversationHeader({
   const handleViewClientClick = () => {
     // Open client view dialog with current client data
     setCurrentRow({
-      id: chatData.client.id,
-      businessId: chatData.client.businessId,
-      name: chatData.client.name,
-      platformIdentities: chatData.client.platformIdentities,
-      tagIds: chatData.client.tagIds,
-      annexes: chatData.client.annexes,
-      photo: chatData.client.photo,
-      notes: chatData.client.notes,
-      email: chatData.client.email,
-      address: chatData.client.address,
-      birthdate: chatData.client.birthdate,
-      createdAt: chatData.client.createdAt,
-      updatedAt: chatData.client.updatedAt,
+      ...chatData.client
     })
     setOpen('view')
   }

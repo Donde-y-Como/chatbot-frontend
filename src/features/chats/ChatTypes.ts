@@ -52,7 +52,7 @@ export type ChatMessages = {
   thread: Thread
   newClientMessagesCount: number
   currentIntention: string
-  client: Client
+  client: ClientPrimitives
 }
 
 export enum PlatformName {

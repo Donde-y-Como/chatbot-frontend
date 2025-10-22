@@ -275,10 +275,13 @@ export function EmployeeResourcesSelectionStep({
                                     </AvatarFallback>
                                   </Avatar>
                                   <div>
-                                    <div className='flex items-center gap-1'>
+                                    <div className='flex items-center gap-1.5'>
                                       <p className='text-sm font-medium'>{employee.name}</p>
                                       {isFavorite && (
-                                        <Star className='h-4 w-4 text-yellow-500 fill-yellow-500' />
+                                        <Badge variant='secondary' className='text-[10px] px-1.5 py-0 h-4 bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-200 flex items-center gap-0.5'>
+                                          <Star className='h-2.5 w-2.5 fill-yellow-500 text-yellow-500' />
+                                          Favorito
+                                        </Badge>
                                       )}
                                     </div>
                                   </div>
