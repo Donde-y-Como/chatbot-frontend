@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
@@ -36,6 +37,8 @@ interface EmployeeResourcesSelectionStepProps {
   onEmployeeToggle: (employeeId: string) => void
   requestedTimeRange: MinutesTimeRange
   favoriteEmployeeId?: string // Add favorite employee ID
+  markEmployeeAsFavorite: boolean
+  onMarkEmployeeAsFavoriteChange: (checked: boolean) => void
   // Equipment & Consumables props
   selectedEquipmentIds: string[]
   consumableUsages: ConsumableUsage[]
@@ -59,6 +62,8 @@ export function EmployeeResourcesSelectionStep({
   onEmployeeToggle,
   requestedTimeRange,
   favoriteEmployeeId,
+  markEmployeeAsFavorite,
+  onMarkEmployeeAsFavoriteChange,
   selectedEquipmentIds,
   consumableUsages,
   inheritedEquipmentIds,
@@ -338,6 +343,29 @@ export function EmployeeResourcesSelectionStep({
                   <Button variant='link' onClick={clearEmployeeSearch} className='mt-2'>
                     Limpiar búsqueda
                   </Button>
+                </div>
+              )}
+
+              {/* Mark as favorite checkbox */}
+              {selectedEmployeeIds.length > 0 && (
+                <div className='mt-3 p-3 border rounded-md bg-muted/30'>
+                  <div className='flex items-center space-x-2'>
+                    <Checkbox
+                      id='markFavorite'
+                      checked={markEmployeeAsFavorite}
+                      onCheckedChange={onMarkEmployeeAsFavoriteChange}
+                    />
+                    <label
+                      htmlFor='markFavorite'
+                      className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-1.5'
+                    >
+                      <Star className='h-4 w-4 text-yellow-500' />
+                      Marcar como empleado favorito para este cliente
+                    </label>
+                  </div>
+                  <p className='text-xs text-muted-foreground mt-1.5 ml-6'>
+                    Este empleado será pre-seleccionado automáticamente en futuras citas para este cliente
+                  </p>
                 </div>
               )}
             </>

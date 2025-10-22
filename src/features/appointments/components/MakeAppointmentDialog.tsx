@@ -67,6 +67,10 @@ export function MakeAppointmentDialog({
     setDeposit,
     setNotes,
 
+    // Favorite employee
+    markEmployeeAsFavorite,
+    setMarkEmployeeAsFavorite,
+
     // Campos de equipos y consumibles
     selectedEquipmentIds,
     consumableUsages,
@@ -200,6 +204,8 @@ export function MakeAppointmentDialog({
                   onEmployeeToggle={toggleEmployeeSelection}
                   requestedTimeRange={timeRange}
                   favoriteEmployeeId={selectedClient?.favoriteEmployeeId}
+                  markEmployeeAsFavorite={markEmployeeAsFavorite}
+                  onMarkEmployeeAsFavoriteChange={setMarkEmployeeAsFavorite}
                   selectedEquipmentIds={selectedEquipmentIds}
                   consumableUsages={consumableUsages}
                   inheritedEquipmentIds={inheritedEquipmentIds}

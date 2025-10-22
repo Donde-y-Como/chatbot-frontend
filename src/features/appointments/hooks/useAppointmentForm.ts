@@ -6,6 +6,7 @@ import { appointmentService } from '@/features/appointments/appointmentService.t
 import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
+import { ClientApiService } from '@/features/clients/ClientApiService'
 import { Appointment, MinutesTimeRange, AppointmentStatus, PaymentStatus, Deposit, ConsumableUsage } from '@/features/appointments/types.ts'
 import { isValidAppointmentDate, getPastDateErrorMessage, canChangeDateTo } from '@/features/appointments/utils/formatters'
 import { useEmployeeAvailability } from './useEmployeeAvailability'
@@ -41,6 +42,8 @@ export function useAppointmentForm(
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>(
     appointment?.employeeIds || []
   )
+
+  const [markEmployeeAsFavorite, setMarkEmployeeAsFavorite] = useState(false)
 
   // Nuevos estados para estados y pago
   const [status, setStatus] = useState<AppointmentStatus>(
@@ -283,7 +286,21 @@ export function useAppointmentForm(
 
       if (result.id) {
         toast.success(`Cita ${appointment ? 'editada' : 'agendada'} con éxito`)
-        
+
+        // Update client's favorite employee if checkbox is checked and this is a new appointment
+        if (!appointment && markEmployeeAsFavorite && selectedEmployeeIds.length > 0 && clientId) {
+          try {
+            await ClientApiService.update(clientId, {
+              favoriteEmployeeId: selectedEmployeeIds[0] // Use the first selected employee
+            })
+            // Invalidate clients query to refresh the data
+            queryClient.invalidateQueries({ queryKey: ['clients'] })
+          } catch (error) {
+            console.error('Error updating favorite employee:', error)
+            // Don't show error to user as appointment was created successfully
+          }
+        }
+
         // Invalidar y refetch queries para actualizar la vista inmediatamente
         await Promise.all([
           queryClient.invalidateQueries({
@@ -510,9 +527,13 @@ export function useAppointmentForm(
     setDeposit,
     setNotes,
 
+    // Favorite employee
+    markEmployeeAsFavorite,
+    setMarkEmployeeAsFavorite,
+
     // Campos de equipos y consumibles
     selectedEquipmentIds, // Para UI (combinados)
-    consumableUsages,     // Para UI (combinados) 
+    consumableUsages,     // Para UI (combinados)
     inheritedEquipmentIds, // Para distinguir heredados
     inheritedConsumableUsages, // Para distinguir heredados
     hasManualResourceChanges, // Para saber si hubo cambios manuales
