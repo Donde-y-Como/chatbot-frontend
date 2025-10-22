@@ -243,10 +243,13 @@ export function AppointmentBlock({
             <div className='p-3 flex flex-col h-full min-w-0 relative bg-white/5'>
               <div className='flex items-start justify-between min-w-0 mb-2'>
                 <div className='flex-1 min-w-0'>
-                  <div className='text-white font-semibold text-sm truncate mb-1'>
+                  <div className='text-white font-bold text-base truncate mb-0.5'>
+                    {client.name}
+                  </div>
+                  <div className='text-white/90 text-xs truncate mb-1'>
                     {primaryService}
                   </div>
-                  <div className='text-white/90 text-xs'>
+                  <div className='text-white/80 text-xs'>
                     {formatTime(appointment.timeRange.startAt)} - {formatTime(appointment.timeRange.endAt)}
                   </div>
                 </div>
@@ -303,7 +306,8 @@ export function AppointmentBlock({
             <div className='p-2 flex items-center text-white text-xs font-semibold h-full min-w-0 bg-white/5'>
               <div className='flex items-center gap-2 flex-1 min-w-0'>
                 <div className='flex-1 min-w-0'>
-                  <div className='truncate font-semibold'>{primaryService}</div>
+                  <div className='truncate font-bold text-sm'>{client.name}</div>
+                  <div className='truncate text-xs font-normal text-white/80'>{primaryService}</div>
                 </div>
                 {employees.length > 0 && (
                   <div className='flex items-center flex-shrink-0'>
