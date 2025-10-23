@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { GET_CLIENTS_QUERY_KEY } from '@/features/appointments/hooks/useGetClients.ts'
 import { PlatformIdentity, PlatformName } from '@/features/chats/ChatTypes.ts'
 import { ClientApiService } from '@/features/clients/ClientApiService'
 
@@ -34,8 +35,8 @@ export function useCreateClient() {
         address: '',
       })
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['clients'] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: GET_CLIENTS_QUERY_KEY })
     },
   })
 }

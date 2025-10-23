@@ -19,6 +19,7 @@ import { useCreateClient } from '../hooks/useCreateClient'
 import { useGetClients } from '../hooks/useGetClients'
 import { useInfiniteClientSearch } from '../hooks/useInfiniteClientSearch'
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver'
+import { AxiosError } from 'axios'
 
 interface CreateOrSelectClientProps {
   value: string // Selected client ID
@@ -139,10 +140,10 @@ export function CreateOrSelectClient({
     // Limit to 10 digits
     const limitedDigits = digits.slice(0, 10)
 
-    // Apply XXX-XXX-XXXX format
-    if (limitedDigits.length >= 6) {
+    // Apply XXX-XXX-XXXX format only when enough digits exist
+    if (limitedDigits.length > 6) {
       return `${limitedDigits.slice(0, 3)}-${limitedDigits.slice(3, 6)}-${limitedDigits.slice(6)}`
-    } else if (limitedDigits.length >= 3) {
+    } else if (limitedDigits.length > 3) {
       return `${limitedDigits.slice(0, 3)}-${limitedDigits.slice(3)}`
     }
     return limitedDigits
@@ -203,24 +204,21 @@ export function CreateOrSelectClient({
     try {
       const result = await createClientMutation.mutateAsync({
         name: trimmedName,
-        phoneNumber: cleanPhone || undefined,
+        phoneNumber: cleanPhone,
       })
       if (result?.id) {
         onChange(result.id)
         const phoneMessage = cleanPhone
           ? ` con teléfono ${formatPhoneNumber(cleanPhone)}`
           : ''
-        toast.success(`Cliente ${trimmedName}${phoneMessage} creado con éxito`)
+        toast.success(`Cliente ${trimmedName}${phoneMessage} guardado exitosamente`)
         setNewClientName('')
         setNewClientPhone('')
         setIsCreatingNew(false)
-        setSearchQueryInput('') // Clear search if any
-      } else {
-        toast.error('No se pudo obtener el ID del cliente creado.')
+        setSearchQueryInput('')
       }
     } catch (error) {
       toast.error('Error al crear el cliente')
-      console.error('Error creating client:', error)
     }
   }, [
     newClientName,
@@ -281,7 +279,9 @@ export function CreateOrSelectClient({
           <Button
             onClick={handleCreateClient}
             disabled={
-              createClientMutation.isPending || newClientName.trim() === ''
+              createClientMutation.isPending ||
+              newClientName.trim() === '' ||
+              (newClientPhone.length > 0 && getCleanPhoneNumber(newClientPhone).length !== 10)
             }
           >
             {createClientMutation.isPending ? 'Creando...' : 'Guardar'}
