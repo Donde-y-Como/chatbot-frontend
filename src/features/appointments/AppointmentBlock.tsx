@@ -195,10 +195,15 @@ export function AppointmentBlock({
      return null;
   }
 
-  // Format display text: FirstName - ServiceName
-  const firstName = client.name.split(' ')[0]
-  const primaryService = services.length > 0 ? services[0].name : 'Sin servicio'
-  const displayText = `${firstName} - ${primaryService}`
+  // Format services display: show up to 2 services, then count remaining
+  const appointmentServices = services.filter((service) =>
+    appointment.serviceIds.includes(service.id)
+  )
+  const displayServices = appointmentServices.slice(0, 3)
+  const remainingServicesCount = appointmentServices.length - 3
+
+  // Format time range
+  const timeRangeText = `${formatTime(appointment.timeRange.startAt)}-${formatTime(appointment.timeRange.endAt)}`
 
   return (
     <Dialog
@@ -228,9 +233,9 @@ export function AppointmentBlock({
               backgroundImage: `repeating-linear-gradient(
                 45deg,
                 transparent,
-                transparent 10px,
-                rgba(255, 255, 255, 0.1) 10px,
-                rgba(255, 255, 255, 0.1) 20px
+                transparent 15px,
+                rgba(255, 255, 255, 0.03) 15px,
+                rgba(255, 255, 255, 0.03) 30px
               )`,
             },
             ...(appointment.status === 'cancelada' && {
@@ -239,70 +244,57 @@ export function AppointmentBlock({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {duration > 60 ? (
-            <div className='p-3 flex flex-col h-full min-w-0 relative bg-white/5'>
-              <div className='flex items-start justify-between min-w-0 mb-2'>
-                <div className='flex-1 min-w-0'>
-                  <div className='text-white font-bold text-base truncate mb-0.5'>
-                    {client.name}
-                  </div>
-                  <div className='text-white/90 text-xs truncate mb-1'>
-                    {primaryService}
-                  </div>
-                  <div className='text-white/80 text-xs'>
-                    {formatTime(appointment.timeRange.startAt)} - {formatTime(appointment.timeRange.endAt)}
-                  </div>
-                </div>
+          {/* Unified responsive layout */}
+          <div className='p-2.5 flex flex-col h-full min-w-0 relative bg-white/5'>
+            {/* Top section: Client name & time */}
+            <div className='flex-1 min-w-0 space-y-1'>
+              {/* Client name */}
+              <div className='text-white font-bold text-sm truncate'>
+                {client.name}
               </div>
 
-              {/* Participant avatars - stacked */}
-              <div className='flex items-center mt-auto'>
+              {/* Services display - adapts based on space */}
+              <div className='text-white/90 text-xs leading-tight min-w-0'>
+                {displayServices.length > 0 ? (
+                  <div className='flex items-center gap-1 flex-wrap'>
+                    <span className='truncate'>
+                      {displayServices.map((s, idx) => (
+                        <React.Fragment key={s.id}>
+                          {s.name}
+                          {idx < displayServices.length - 1 && ', '}
+                        </React.Fragment>
+                      ))}
+                    </span>
+                    {remainingServicesCount > 0 && (
+                      <span className='inline-flex items-center gap-0.5 bg-white/20 text-white px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0'>
+                        <Package className='w-2.5 h-2.5' />
+                        +{remainingServicesCount}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <span className='text-white/70'>Sin servicios</span>
+                )}
+              </div>
+
+              {/* Time range - always visible */}
+              <div className='flex items-center gap-1 text-white/80 text-xs'>
+                <Clock className='w-3 h-3 flex-shrink-0' />
+                <span className='font-medium'>{timeRangeText}</span>
+              </div>
+            </div>
+
+            {/* Bottom section: Employees & status */}
+            <div className='flex items-center justify-between mt-2 gap-2'>
+              <div className='flex items-center min-w-0 flex-1'>
                 {appointment.status === 'cancelada' && (
-                  <span className='bg-red-500/80 text-white text-xs px-1.5 py-0.5 rounded mr-2 inline-block'>
+                  <span className='bg-red-500/80 text-white text-[10px] px-1.5 py-0.5 rounded mr-2 inline-block flex-shrink-0'>
                     CANCELADA
                   </span>
                 )}
-                {employees.length > 0 ? (
-                  <>
-                    {employees.slice(0, 3).map((emp, idx) => (
-                      <Avatar
-                        key={emp.id}
-                        className='h-6 w-6 border-2 border-white'
-                        style={{ marginLeft: idx > 0 ? '-8px' : '0' }}
-                      >
-                        <AvatarImage src={emp.photo} alt={emp.name} />
-                        <AvatarFallback className='text-xs bg-white/20 text-white'>
-                          {emp.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                    {employees.length > 3 && (
-                      <div
-                        className='h-6 w-6 rounded-full bg-white/20 border-2 border-white flex items-center justify-center text-white text-xs font-medium'
-                        style={{ marginLeft: '-8px' }}
-                      >
-                        +{employees.length - 3}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className='text-white/80 text-xs flex items-center min-w-0'>
-                    <Users className='w-3 h-3 mr-1 flex-shrink-0' />
-                    <span className='truncate'>Sin asignar</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className='p-2 flex items-center text-white text-xs font-semibold h-full min-w-0 bg-white/5'>
-              <div className='flex items-center gap-2 flex-1 min-w-0'>
-                <div className='flex-1 min-w-0'>
-                  <div className='truncate font-bold text-sm'>{client.name}</div>
-                  <div className='truncate text-xs font-normal text-white/80'>{primaryService}</div>
-                </div>
-                {employees.length > 0 && (
+                {employees.length > 0 && duration >= 45 && (
                   <div className='flex items-center flex-shrink-0'>
-                    {employees.slice(0, 2).map((emp, idx) => (
+                    {employees.slice(0, 3).map((emp, idx) => (
                       <Avatar
                         key={emp.id}
                         className='h-5 w-5 border border-white'
@@ -314,24 +306,20 @@ export function AppointmentBlock({
                         </AvatarFallback>
                       </Avatar>
                     ))}
-                    {employees.length > 2 && (
+                    {employees.length > 3 && (
                       <div
                         className='h-5 w-5 rounded-full bg-white/20 border border-white flex items-center justify-center text-white text-[10px] font-medium'
                         style={{ marginLeft: '-6px' }}
                       >
-                        +{employees.length - 2}
+                        +{employees.length - 3}
                       </div>
                     )}
                   </div>
                 )}
-                {appointment.status === 'cancelada' && (
-                  <span className='bg-red-500/80 text-white text-xs px-1 py-0.5 rounded flex-shrink-0'>
-                    ✕
-                  </span>
-                )}
               </div>
             </div>
-          )}
+          </div>
+
           <div className='absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity'>
             <Button
               size='sm'
