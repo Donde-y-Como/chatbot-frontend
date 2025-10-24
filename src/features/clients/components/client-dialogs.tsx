@@ -2,15 +2,22 @@ import { useClients } from "../context/clients-context"
 import { ClientActionDialog } from "./client-action-dialog"
 import { ClientDeleteDialog } from "./client-delete-dialog"
 import { ClientViewDialog } from "./client-view-dialog"
+import { ClientImportDialog } from "./client-import-dialog"
 
 export function ClientDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useClients()
   return (
     <>
+      <ClientImportDialog
+        key='client-import'
+        open={open === 'import'}
+        onOpenChange={() => setOpen(null)}
+      />
+
       <ClientActionDialog
         key='client-add'
         open={open === 'add'}
-        onOpenChange={() => setOpen('add')}
+        onOpenChange={() => setOpen(null)}
       />
 
       {currentRow && (
@@ -19,7 +26,7 @@ export function ClientDialogs() {
             key={`client-edit-${currentRow.id}`}
             open={open === 'edit'}
             onOpenChange={() => {
-              setOpen('edit')
+              setOpen(null)
               setTimeout(() => {
                 setCurrentRow(null)
               }, 500)
@@ -31,7 +38,7 @@ export function ClientDialogs() {
             key={`client-view-${currentRow.id}`}
             open={open === 'view'}
             onOpenChange={() => {
-              setOpen('view')
+              setOpen(null)
               setTimeout(() => {
                 setCurrentRow(null)
               }, 500)
