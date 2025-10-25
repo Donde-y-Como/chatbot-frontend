@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { appointmentService } from '../appointmentService';
 import { EmployeeAvailable, MinutesTimeRange, Service } from '../types';
+import { handleAvailabilityError } from '../utils/errorHandler';
 
 // Helper function to check if a sorted list of time slots can cover a target time range
 function checkSlotsCoverTimeRange(
@@ -100,7 +102,16 @@ export function useCheckAvailability(
             }
           });
 
-        } catch (error) {
+        } catch (error: any) {
+          const errorResult = handleAvailabilityError(error);
+
+          if (errorResult.type === 'warning') {
+            toast.warning(errorResult.message);
+          } else {
+            toast.error(errorResult.message);
+          }
+
+          console.error('Error checking availability:', error);
           setAvailableEmployees([]);
           setLoading(false);
           return;

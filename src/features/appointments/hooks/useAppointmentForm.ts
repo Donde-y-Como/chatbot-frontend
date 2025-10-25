@@ -10,6 +10,7 @@ import { ClientApiService } from '@/features/clients/ClientApiService'
 import { Appointment, MinutesTimeRange, AppointmentStatus, PaymentStatus, Deposit, ConsumableUsage } from '@/features/appointments/types.ts'
 import { isValidAppointmentDate, getPastDateErrorMessage, canChangeDateTo } from '@/features/appointments/utils/formatters'
 import { useEmployeeAvailability } from './useEmployeeAvailability'
+import { handleAppointmentError } from '@/features/appointments/utils/errorHandler'
 
 export function useAppointmentForm(
   defaultClientName?: string,
@@ -324,20 +325,14 @@ export function useAppointmentForm(
         toast.error(`Error al ${appointment ? 'editar' : 'agendar'} la cita`)
       }
     } catch (error: any) {
-      // Manejar errores específicos de fechas pasadas
-      if (error?.status === 400) {
-        if (error?.detail && (error.detail.includes('cita que ya pasó') || error.detail.includes('fechas pasadas'))) {
-          toast.error('No se puede editar una cita que ya pasó')
-        } else if (error?.detail && error.detail.includes('fechas pasadas')) {
-          toast.error(getPastDateErrorMessage())
-        } else {
-          toast.error(`Error al ${appointment ? 'editar' : 'agendar'} la cita: ${error.detail || 'Error desconocido'}`)
-        }
-      } else if (error?.title === 'Cannot edit past appointment' || error?.title === 'Invalid appointment date') {
-        toast.error('No se puede agendar una cita en fecha pasada')
+      const errorResult = handleAppointmentError(error)
+
+      if (errorResult.type === 'warning') {
+        toast.warning(errorResult.message)
       } else {
-        toast.error('Error al conectar con el servidor')
+        toast.error(errorResult.message)
       }
+
       console.error('Error in appointment form:', error)
     } finally {
       setLoading(false)

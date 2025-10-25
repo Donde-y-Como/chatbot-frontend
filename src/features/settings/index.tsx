@@ -10,6 +10,7 @@ import {
   IconTool,
   IconUser,
   IconRobot,
+  IconTemplate,
 } from '@tabler/icons-react'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx'
@@ -99,6 +100,11 @@ const sidebarNavItems = [
     title: 'Respuestas Rápidas',
     icon: <IconMessage size={18} />,
     href: '/settings/quick-responses',
+  },
+  {
+    title: 'Plantillas de Mensajes',
+    icon: <IconTemplate size={18} />,
+    href: '/settings/message-templates',
   },
   {
     title: 'Unidades de Medida',

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { appointmentService } from '../appointmentService';
 import { EmployeeAvailabilityInfo } from '../types';
+import { handleAvailabilityError } from '../utils/errorHandler';
 
 export function useEmployeeAvailability(
   fromDate: Date,
@@ -30,7 +32,15 @@ export function useEmployeeAvailability(
           appointmentId
         );
         setEmployeesWithAvailability(result.employees);
-      } catch (error) {
+      } catch (error: any) {
+        const errorResult = handleAvailabilityError(error);
+
+        if (errorResult.type === 'warning') {
+          toast.warning(errorResult.message);
+        } else {
+          toast.error(errorResult.message);
+        }
+
         console.error('Error fetching employee availability:', error);
         setEmployeesWithAvailability([]);
       } finally {

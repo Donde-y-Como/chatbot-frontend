@@ -89,6 +89,9 @@ const AuthenticatedSettingsRolesLazyImport = createFileRoute(
 const AuthenticatedSettingsQuickResponsesLazyImport = createFileRoute(
   '/_authenticated/settings/quick-responses',
 )()
+const AuthenticatedSettingsMessageTemplatesLazyImport = createFileRoute(
+  '/_authenticated/settings/message-templates',
+)()
 const AuthenticatedSettingsConversationStatusesLazyImport = createFileRoute(
   '/_authenticated/settings/conversation-statuses',
 )()
@@ -375,6 +378,17 @@ const AuthenticatedSettingsQuickResponsesLazyRoute =
     ),
   )
 
+const AuthenticatedSettingsMessageTemplatesLazyRoute =
+  AuthenticatedSettingsMessageTemplatesLazyImport.update({
+    id: '/message-templates',
+    path: '/message-templates',
+    getParentRoute: () => AuthenticatedSettingsRouteLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/settings/message-templates.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+
 const AuthenticatedSettingsConversationStatusesLazyRoute =
   AuthenticatedSettingsConversationStatusesLazyImport.update({
     id: '/conversation-statuses',
@@ -594,6 +608,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsConversationStatusesLazyImport
       parentRoute: typeof AuthenticatedSettingsRouteLazyImport
     }
+    '/_authenticated/settings/message-templates': {
+      id: '/_authenticated/settings/message-templates'
+      path: '/message-templates'
+      fullPath: '/settings/message-templates'
+      preLoaderRoute: typeof AuthenticatedSettingsMessageTemplatesLazyImport
+      parentRoute: typeof AuthenticatedSettingsRouteLazyImport
+    }
     '/_authenticated/settings/quick-responses': {
       id: '/_authenticated/settings/quick-responses'
       path: '/quick-responses'
@@ -723,6 +744,7 @@ interface AuthenticatedSettingsRouteLazyRouteChildren {
   AuthenticatedSettingsAiAssistantLazyRoute: typeof AuthenticatedSettingsAiAssistantLazyRoute
   AuthenticatedSettingsCategoriesLazyRoute: typeof AuthenticatedSettingsCategoriesLazyRoute
   AuthenticatedSettingsConversationStatusesLazyRoute: typeof AuthenticatedSettingsConversationStatusesLazyRoute
+  AuthenticatedSettingsMessageTemplatesLazyRoute: typeof AuthenticatedSettingsMessageTemplatesLazyRoute
   AuthenticatedSettingsQuickResponsesLazyRoute: typeof AuthenticatedSettingsQuickResponsesLazyRoute
   AuthenticatedSettingsRolesLazyRoute: typeof AuthenticatedSettingsRolesLazyRoute
   AuthenticatedSettingsTagsLazyRoute: typeof AuthenticatedSettingsTagsLazyRoute
@@ -741,6 +763,8 @@ const AuthenticatedSettingsRouteLazyRouteChildren: AuthenticatedSettingsRouteLaz
       AuthenticatedSettingsCategoriesLazyRoute,
     AuthenticatedSettingsConversationStatusesLazyRoute:
       AuthenticatedSettingsConversationStatusesLazyRoute,
+    AuthenticatedSettingsMessageTemplatesLazyRoute:
+      AuthenticatedSettingsMessageTemplatesLazyRoute,
     AuthenticatedSettingsQuickResponsesLazyRoute:
       AuthenticatedSettingsQuickResponsesLazyRoute,
     AuthenticatedSettingsRolesLazyRoute: AuthenticatedSettingsRolesLazyRoute,
@@ -818,6 +842,7 @@ export interface FileRoutesByFullPath {
   '/settings/ai-assistant': typeof AuthenticatedSettingsAiAssistantLazyRoute
   '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/conversation-statuses': typeof AuthenticatedSettingsConversationStatusesLazyRoute
+  '/settings/message-templates': typeof AuthenticatedSettingsMessageTemplatesLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
   '/settings/roles': typeof AuthenticatedSettingsRolesLazyRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
@@ -857,6 +882,7 @@ export interface FileRoutesByTo {
   '/settings/ai-assistant': typeof AuthenticatedSettingsAiAssistantLazyRoute
   '/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/settings/conversation-statuses': typeof AuthenticatedSettingsConversationStatusesLazyRoute
+  '/settings/message-templates': typeof AuthenticatedSettingsMessageTemplatesLazyRoute
   '/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
   '/settings/roles': typeof AuthenticatedSettingsRolesLazyRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
@@ -899,6 +925,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/ai-assistant': typeof AuthenticatedSettingsAiAssistantLazyRoute
   '/_authenticated/settings/categories': typeof AuthenticatedSettingsCategoriesLazyRoute
   '/_authenticated/settings/conversation-statuses': typeof AuthenticatedSettingsConversationStatusesLazyRoute
+  '/_authenticated/settings/message-templates': typeof AuthenticatedSettingsMessageTemplatesLazyRoute
   '/_authenticated/settings/quick-responses': typeof AuthenticatedSettingsQuickResponsesLazyRoute
   '/_authenticated/settings/roles': typeof AuthenticatedSettingsRolesLazyRoute
   '/_authenticated/settings/tags': typeof AuthenticatedSettingsTagsLazyRoute
@@ -942,6 +969,7 @@ export interface FileRouteTypes {
     | '/settings/ai-assistant'
     | '/settings/categories'
     | '/settings/conversation-statuses'
+    | '/settings/message-templates'
     | '/settings/quick-responses'
     | '/settings/roles'
     | '/settings/tags'
@@ -980,6 +1008,7 @@ export interface FileRouteTypes {
     | '/settings/ai-assistant'
     | '/settings/categories'
     | '/settings/conversation-statuses'
+    | '/settings/message-templates'
     | '/settings/quick-responses'
     | '/settings/roles'
     | '/settings/tags'
@@ -1020,6 +1049,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/ai-assistant'
     | '/_authenticated/settings/categories'
     | '/_authenticated/settings/conversation-statuses'
+    | '/_authenticated/settings/message-templates'
     | '/_authenticated/settings/quick-responses'
     | '/_authenticated/settings/roles'
     | '/_authenticated/settings/tags'
@@ -1128,6 +1158,7 @@ export const routeTree = rootRoute
         "/_authenticated/settings/ai-assistant",
         "/_authenticated/settings/categories",
         "/_authenticated/settings/conversation-statuses",
+        "/_authenticated/settings/message-templates",
         "/_authenticated/settings/quick-responses",
         "/_authenticated/settings/roles",
         "/_authenticated/settings/tags",
@@ -1195,6 +1226,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/settings/conversation-statuses": {
       "filePath": "_authenticated/settings/conversation-statuses.lazy.tsx",
+      "parent": "/_authenticated/settings"
+    },
+    "/_authenticated/settings/message-templates": {
+      "filePath": "_authenticated/settings/message-templates.lazy.tsx",
       "parent": "/_authenticated/settings"
     },
     "/_authenticated/settings/quick-responses": {

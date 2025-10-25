@@ -46,6 +46,7 @@ export const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/settings/account': ['business.read'],
   '/settings/categories': ['category.read'],
   '/settings/quick-responses': ['quick_reply.read'],
+  '/settings/message-templates': ['business.read'],
   '/settings/roles': ['role.read'],
   '/settings/tags': ['product_tag.read'],
   '/settings/units': ['unit.read'],
