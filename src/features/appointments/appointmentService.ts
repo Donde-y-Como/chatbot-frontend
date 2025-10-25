@@ -12,10 +12,8 @@ import { isValid } from 'date-fns'
 
 export const appointmentService = {
   cancelAppointment: async (appointmentId: string) => {
-    // En lugar de eliminar, cambiar el estado a cancelada
-    const response = await api.put(`/appointments/${appointmentId}`, {
-      status: 'cancelada',
-    })
+    // Ahora el backend maneja el status == cancelada en lugar de eliminar
+    const response = await api.delete(`/appointments/${appointmentId}`)
     return response.data
   },
 
