@@ -22,7 +22,12 @@ export function AppointmentsList({ token }: AppointmentsListProps) {
 
   const formatAppointmentDate = (dateString: string): string => {
     try {
-      const date = new Date(dateString)
+      // Parse the date string and ensure we use the date as-is without timezone conversion
+      // Extract just the date part (YYYY-MM-DD) to avoid timezone issues
+      const datePart = dateString.split('T')[0]
+      const [year, month, day] = datePart.split('-').map(Number)
+      // Create date using local timezone (month is 0-indexed in JavaScript)
+      const date = new Date(year, month - 1, day)
       return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
     } catch {
       return dateString
