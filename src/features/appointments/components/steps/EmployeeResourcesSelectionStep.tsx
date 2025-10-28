@@ -310,7 +310,7 @@ export function EmployeeResourcesSelectionStep({
                                           {formatMinutesToTime(slot.startAt)} - {formatMinutesToTime(slot.endAt)}
                                         </span>
                                         <Badge variant='outline' className='text-[10px] px-1 py-0 h-4'>
-                                          {slot.reason === 'appointment' ? 'Cita' : 'Horario'}
+                                          {slot.reason === 'appointment' ? 'Tiene cita' : 'Horario no laboral'}
                                         </Badge>
                                       </div>
                                     ))}
