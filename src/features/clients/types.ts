@@ -127,3 +127,18 @@ export interface ScheduleClientServicesResponse {
   success: boolean;
   message: string;
 }
+
+// Portal Access Types
+export interface SendPortalAccessLinkRequest {
+  businessId: string;
+  clientId: string;
+  expirationTimeInHours?: number;
+  customMessage?: string;
+}
+
+export interface GenerateAccessLinkResponse {
+  accessToken: string;
+  accessLink: string;
+  expiresAt: string;
+  clientId: string;
+}

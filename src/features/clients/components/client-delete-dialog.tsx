@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ClientApiService } from '../ClientApiService'
+import { ClientApiService } from '../services/ClientApiService'
 import { ClientPrimitives } from '../types'
 
 interface Props {

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { TagApiService } from '../TagApiService';
+import { TagApiService } from '../services/TagApiService';
 
 
 export function useGetTags() {

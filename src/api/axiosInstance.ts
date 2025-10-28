@@ -5,6 +5,11 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
 })
 
+// Instancia separada para validación del portal del cliente (sin autenticación)
+export const portalApi = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
+})
+
 api.interceptors.request.use((config) => {
   const { auth } = useAuthStore.getState()
   if (auth.accessToken) {

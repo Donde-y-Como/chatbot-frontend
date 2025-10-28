@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClientApiService } from "@/features/clients/ClientApiService";
+import { ClientApiService } from "@/features/clients/services/ClientApiService";
 import { toast } from "sonner";
 
 export function useUpdateClientTags() {

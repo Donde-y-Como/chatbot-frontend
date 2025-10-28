@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ClientApiService } from '../ClientApiService'
+import { ClientApiService } from '../services/ClientApiService'
 import { ScheduleClientServicesRequest } from '../types'
 
 export function usePendingServices(clientId: string, enabled: boolean = true) {

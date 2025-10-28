@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { PlatformIdentity, Client } from '../../chats/ChatTypes'
-import { ClientApiService } from '../ClientApiService'
+import { ClientApiService } from '../services/ClientApiService'
 import { ClientPrimitives } from '../types'
 
 interface UpdateClientPlatformIdentitiesParams {

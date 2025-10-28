@@ -1,10 +1,12 @@
-import { api } from '@/api/axiosInstance.ts'
-import { 
-    ClientPrimitives, 
-    GetPendingServicesResponse, 
-    ScheduleClientServicesRequest, 
-    ScheduleClientServicesResponse 
-} from "./types"
+import { api, portalApi } from '@/api/axiosInstance.ts'
+import {
+    ClientPrimitives,
+    GetPendingServicesResponse,
+    ScheduleClientServicesRequest,
+    ScheduleClientServicesResponse,
+    SendPortalAccessLinkRequest,
+    GenerateAccessLinkResponse
+} from "../types"
 
 export const ClientApiService = {
     findAll: async () => {
@@ -55,6 +57,22 @@ export const ClientApiService = {
         const response = await api.put<ScheduleClientServicesResponse>(`/clients/${clientId}/schedule-services`, request)
         if (response.status !== 200) {
             throw new Error("Error al agendar los servicios")
+        }
+        return response.data
+    },
+
+    sendPortalAccessLink: async (clientId: string, request: SendPortalAccessLinkRequest): Promise<GenerateAccessLinkResponse> => {
+        const response = await api.post<GenerateAccessLinkResponse>(`/clients/${clientId}/portal/send-access-link`, request)
+        if (response.status !== 200 && response.status !== 201) {
+            throw new Error("Error al enviar el enlace de acceso al portal")
+        }
+        return response.data
+    },
+
+    validatePortalToken: async (token: string) => {
+        const response = await portalApi.get(`/clients/portal/validate-token/${token}`)
+        if (response.status !== 200) {
+            throw new Error("Token de acceso inválido")
         }
         return response.data
     }

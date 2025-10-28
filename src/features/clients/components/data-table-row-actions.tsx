@@ -1,6 +1,6 @@
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
 import { Row } from '@tanstack/react-table'
-import { IconEdit, IconEye } from '@tabler/icons-react'
+import { IconEdit, IconEye, IconLink } from '@tabler/icons-react'
 import { PERMISSIONS } from '@/api/permissions.ts'
 import { RenderIfCan } from '@/lib/Can.tsx'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -57,7 +58,20 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
               </DropdownMenuShortcut>
             </DropdownMenuItem>
           </RenderIfCan>
-          {/* <DropdownMenuSeparator /> */}
+          <DropdownMenuSeparator />
+          <RenderIfCan permission={PERMISSIONS.CLIENT_READ}>
+            <DropdownMenuItem
+              onClick={() => {
+                setCurrentRow(row.original)
+                setOpen('portal')
+              }}
+            >
+              Enviar enlace del portal
+              <DropdownMenuShortcut>
+                <IconLink size={16} />
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </RenderIfCan>
           {/* <DropdownMenuItem
             onClick={() => {
               setCurrentRow(row.original)

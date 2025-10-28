@@ -3,6 +3,7 @@ import { ClientActionDialog } from "./client-action-dialog"
 import { ClientDeleteDialog } from "./client-delete-dialog"
 import { ClientViewDialog } from "./client-view-dialog"
 import { ClientImportDialog } from "./client-import-dialog"
+import { SendPortalAccessDialog } from "./send-portal-access-dialog"
 
 export function ClientDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useClients()
@@ -44,6 +45,17 @@ export function ClientDialogs() {
               }, 500)
             }}
             currentClient={currentRow}
+          />
+
+          <SendPortalAccessDialog
+            client={currentRow}
+            open={open === 'portal'}
+            onOpenChange={() => {
+              setOpen('portal')
+              setTimeout(() => {
+                setCurrentRow(null)
+              }, 500)
+            }}
           />
 
           {/* <ClientDeleteDialog

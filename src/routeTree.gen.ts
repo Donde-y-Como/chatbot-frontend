@@ -22,6 +22,7 @@ import { Route as authLinkIniciarSesionTokenImport } from './routes/(auth)/link-
 
 // Create Virtual Routes
 
+const ClientPortalAccessLazyImport = createFileRoute('/client-portal/access')()
 const AuthenticatedDashboardLazyImport = createFileRoute(
   '/_authenticated/dashboard',
 )()
@@ -120,6 +121,14 @@ const AuthenticatedIndexRoute = AuthenticatedIndexImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+
+const ClientPortalAccessLazyRoute = ClientPortalAccessLazyImport.update({
+  id: '/client-portal/access',
+  path: '/client-portal/access',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/client-portal/access.lazy').then((d) => d.Route),
+)
 
 const AuthenticatedDashboardLazyRoute = AuthenticatedDashboardLazyImport.update(
   {
@@ -552,6 +561,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardLazyImport
       parentRoute: typeof AuthenticatedRouteImport
     }
+    '/client-portal/access': {
+      id: '/client-portal/access'
+      path: '/client-portal/access'
+      fullPath: '/client-portal/access'
+      preLoaderRoute: typeof ClientPortalAccessLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/_authenticated/': {
       id: '/_authenticated/'
       path: '/'
@@ -834,6 +850,7 @@ export interface FileRoutesByFullPath {
   '/500': typeof errors500LazyRoute
   '/503': typeof errors503LazyRoute
   '/dashboard': typeof AuthenticatedDashboardLazyRoute
+  '/client-portal/access': typeof ClientPortalAccessLazyRoute
   '/': typeof AuthenticatedIndexRoute
   '/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
@@ -874,6 +891,7 @@ export interface FileRoutesByTo {
   '/500': typeof errors500LazyRoute
   '/503': typeof errors503LazyRoute
   '/dashboard': typeof AuthenticatedDashboardLazyRoute
+  '/client-portal/access': typeof ClientPortalAccessLazyRoute
   '/': typeof AuthenticatedIndexRoute
   '/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
@@ -917,6 +935,7 @@ export interface FileRoutesById {
   '/(errors)/500': typeof errors500LazyRoute
   '/(errors)/503': typeof errors503LazyRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardLazyRoute
+  '/client-portal/access': typeof ClientPortalAccessLazyRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/(auth)/link-iniciar-sesion/$token': typeof authLinkIniciarSesionTokenRoute
   '/(auth)/restablecer-contrasena/$token': typeof authRestablecerContrasenaTokenRoute
@@ -961,6 +980,7 @@ export interface FileRouteTypes {
     | '/500'
     | '/503'
     | '/dashboard'
+    | '/client-portal/access'
     | '/'
     | '/link-iniciar-sesion/$token'
     | '/restablecer-contrasena/$token'
@@ -1000,6 +1020,7 @@ export interface FileRouteTypes {
     | '/500'
     | '/503'
     | '/dashboard'
+    | '/client-portal/access'
     | '/'
     | '/link-iniciar-sesion/$token'
     | '/restablecer-contrasena/$token'
@@ -1041,6 +1062,7 @@ export interface FileRouteTypes {
     | '/(errors)/500'
     | '/(errors)/503'
     | '/_authenticated/dashboard'
+    | '/client-portal/access'
     | '/_authenticated/'
     | '/(auth)/link-iniciar-sesion/$token'
     | '/(auth)/restablecer-contrasena/$token'
@@ -1082,6 +1104,7 @@ export interface RootRouteChildren {
   errors404LazyRoute: typeof errors404LazyRoute
   errors500LazyRoute: typeof errors500LazyRoute
   errors503LazyRoute: typeof errors503LazyRoute
+  ClientPortalAccessLazyRoute: typeof ClientPortalAccessLazyRoute
   authLinkIniciarSesionTokenRoute: typeof authLinkIniciarSesionTokenRoute
   authRestablecerContrasenaTokenRoute: typeof authRestablecerContrasenaTokenRoute
 }
@@ -1098,6 +1121,7 @@ const rootRouteChildren: RootRouteChildren = {
   errors404LazyRoute: errors404LazyRoute,
   errors500LazyRoute: errors500LazyRoute,
   errors503LazyRoute: errors503LazyRoute,
+  ClientPortalAccessLazyRoute: ClientPortalAccessLazyRoute,
   authLinkIniciarSesionTokenRoute: authLinkIniciarSesionTokenRoute,
   authRestablecerContrasenaTokenRoute: authRestablecerContrasenaTokenRoute,
 }
@@ -1123,6 +1147,7 @@ export const routeTree = rootRoute
         "/(errors)/404",
         "/(errors)/500",
         "/(errors)/503",
+        "/client-portal/access",
         "/(auth)/link-iniciar-sesion/$token",
         "/(auth)/restablecer-contrasena/$token"
       ]
@@ -1197,6 +1222,9 @@ export const routeTree = rootRoute
     "/_authenticated/dashboard": {
       "filePath": "_authenticated/dashboard.lazy.tsx",
       "parent": "/_authenticated"
+    },
+    "/client-portal/access": {
+      "filePath": "client-portal/access.lazy.tsx"
     },
     "/_authenticated/": {
       "filePath": "_authenticated/index.tsx",

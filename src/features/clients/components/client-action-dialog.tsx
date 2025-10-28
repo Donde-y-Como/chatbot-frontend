@@ -20,7 +20,7 @@ import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useUploadMedia } from '../../chats/hooks/useUploadMedia'
-import { ClientApiService } from '../ClientApiService'
+import { ClientApiService } from '../services/ClientApiService'
 import { useGetTags } from '../hooks/useGetTags'
 import {
   Annex,

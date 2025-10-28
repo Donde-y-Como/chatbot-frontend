@@ -1,5 +1,5 @@
 import { api } from '@/api/axiosInstance.ts'
-import { ClientPrimitives, Tag } from "./types"
+import { ClientPrimitives, Tag } from "../types"
 
 export const TagApiService = {
     findAll: async () => {

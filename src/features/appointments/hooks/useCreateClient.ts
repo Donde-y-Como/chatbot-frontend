@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { GET_CLIENTS_QUERY_KEY } from '@/features/appointments/hooks/useGetClients.ts'
 import { PlatformIdentity, PlatformName } from '@/features/chats/ChatTypes.ts'
-import { ClientApiService } from '@/features/clients/ClientApiService'
+import { ClientApiService } from '@/features/clients/services/ClientApiService'
 
 interface CreateClientData {
   name: string
