@@ -23,16 +23,6 @@ export function TargetSelector({
       hoverGradient: 'hover:from-blue-600 hover:to-blue-700',
       iconBg: 'bg-blue-100 dark:bg-blue-900/30',
       iconColor: 'text-blue-600 dark:text-blue-400'
-    },
-    {
-      target: 'other' as const,
-      icon: Users,
-      title: 'Para otra persona',
-      description: 'Voy a agendar en nombre de alguien más',
-      gradient: 'from-green-500 to-green-600',
-      hoverGradient: 'hover:from-green-600 hover:to-green-700',
-      iconBg: 'bg-green-100 dark:bg-green-900/30',
-      iconColor: 'text-green-600 dark:text-green-400'
     }
   ]
 
