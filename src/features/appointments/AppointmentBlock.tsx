@@ -708,7 +708,7 @@ export function AppointmentBlock({
           </DialogClose>
 
           <RenderIfCan permission={PERMISSIONS.APPOINTMENT_DELETE}>
-            {isUpcoming && appointment.status !== 'cancelada' && (
+            {appointment.status !== 'cancelada' && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant='destructive'>
