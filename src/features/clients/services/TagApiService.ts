@@ -35,5 +35,12 @@ export const TagApiService = {
         if (response.status !== 200) {
             throw new Error("Error al eliminar el tag")
         }
+    },
+    importFromWhatsApp: async (override: boolean = false) => {
+        const response = await api.post('/tags/import/whatsapp', { override })
+        if (response.status !== 200) {
+            throw new Error("Error al importar tags desde WhatsApp")
+        }
+        return response.data
     }
 }

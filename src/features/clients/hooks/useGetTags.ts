@@ -24,9 +24,31 @@ export function useTagMutations() {
     },
   })
 
+  const importMutation = useMutation({
+    mutationKey: ['tags', 'import'],
+    async mutationFn({ override }: { override: boolean }) {
+      return await TagApiService.importFromWhatsApp(override)
+    },
+    onSuccess: (_, variables) => {
+      if (variables.override) {
+        toast.success('Etiquetas sincronizadas correctamente con WhatsApp')
+      } else {
+        toast.success('Etiquetas importadas correctamente desde WhatsApp')
+      }
+      queryClient.refetchQueries({ queryKey: ['tags'] })
+    },
+    onError: () => {
+      toast.error('Error al importar etiquetas desde WhatsApp')
+    },
+  })
+
   const create = async (name: string) => {
     await createMutation.mutateAsync({ name })
   }
 
-  return { create, createMutation }
+  const importFromWhatsApp = async (override: boolean = false) => {
+    await importMutation.mutateAsync({ override })
+  }
+
+  return { create, createMutation, importFromWhatsApp, importMutation }
 }
