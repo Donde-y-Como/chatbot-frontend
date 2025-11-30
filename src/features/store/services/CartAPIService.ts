@@ -7,12 +7,43 @@ import {
   UpdateCartItemPriceRequest,
 } from '../types'
 
+/**
+ * Generate or retrieve unique terminal ID for this POS browser instance
+ * Format: "terminal-{location}-{random}" where location should be set in env
+ * Falls back to timestamp-based ID if location is not configured
+ */
+const getTerminalId = (): string => {
+  const STORAGE_KEY = 'pos_terminal_id';
+
+  // Check if we already have a terminal ID
+  let terminalId = localStorage.getItem(STORAGE_KEY);
+
+  if (!terminalId) {
+    // Get location from environment or use default
+    const location = import.meta.env.VITE_TERMINAL_LOCATION || 'default';
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 9);
+
+    terminalId = `terminal-${location}-${timestamp}-${random}`;
+    localStorage.setItem(STORAGE_KEY, terminalId);
+  }
+
+  return terminalId;
+};
+
+const TERMINAL_ID = getTerminalId();
+
 export const CartAPIService = {
   getCart: async (
     includeDetails: boolean = false
   ): Promise<GetCartSuccessResponse> => {
+    const queryParams = new URLSearchParams({
+      terminalId: TERMINAL_ID,
+      ...(includeDetails && { includeDetails: 'true' })
+    });
+
     const response = await api.get<GetCartSuccessResponse>(
-      includeDetails ? '/cart?includeDetails=true' : '/cart'
+      `/cart?${queryParams.toString()}`
     )
 
     if (response.status !== 200) {
@@ -26,7 +57,10 @@ export const CartAPIService = {
     try {
       const response = await api.post<AddCartItemResponse | ProblemDetails>(
         '/cart/items',
-        item
+        {
+          ...item,
+          terminalId: TERMINAL_ID
+        }
       )
 
       if (response.status !== 200) {
@@ -56,6 +90,7 @@ export const CartAPIService = {
       quantity: request.quantity,
       notes: request.notes,
       eventDate: request.eventDate,
+      terminalId: TERMINAL_ID
     })
 
     if (response.status !== 200) {
@@ -69,6 +104,7 @@ export const CartAPIService = {
     const response = await api.put(`/cart/items/${request.itemId}/price`, {
       itemType: request.itemType,
       newPrice: request.newPrice,
+      terminalId: TERMINAL_ID
     })
 
     if (response.status !== 200) {
@@ -79,7 +115,10 @@ export const CartAPIService = {
 
   removeCartItemFromCart: async (itemId: string, itemType: string) => {
     const response = await api.delete(`/cart/items/${itemId}`, {
-      data: { itemType },
+      data: {
+        itemType,
+        terminalId: TERMINAL_ID
+      },
     })
 
     if (response.status !== 200) {
@@ -90,7 +129,7 @@ export const CartAPIService = {
   },
 
   clearCart: async () => {
-    const response = await api.delete('/cart')
+    const response = await api.delete(`/cart?terminalId=${TERMINAL_ID}`)
 
     if (response.status !== 200) {
       throw new Error('No se pudo limpiar el carrito')

@@ -11,6 +11,24 @@ import {
   SaleWithDetails,
 } from '../types'
 
+/**
+ * Get or generate unique terminal ID for this POS browser instance
+ */
+const getTerminalId = (): string => {
+  const STORAGE_KEY = 'pos_terminal_id';
+  let terminalId = localStorage.getItem(STORAGE_KEY);
+
+  if (!terminalId) {
+    const location = import.meta.env.VITE_TERMINAL_LOCATION || 'default';
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 9);
+    terminalId = `terminal-${location}-${timestamp}-${random}`;
+    localStorage.setItem(STORAGE_KEY, terminalId);
+  }
+
+  return terminalId;
+};
+
 interface ConvertToSaleData {
   cart: CartState
   paymentMethod: PaymentMethod
@@ -37,7 +55,8 @@ const convertCartToSale = async (data: ConvertToSaleData) => {
   const orderResponse = await api.post<{ success: boolean; data: OrderWithDetails }>(
     '/orders/convert-cart',
     {
-      clientId: data.cart.selectedClientId,
+      terminalId: getTerminalId(),        // For cart lookup (which terminal's cart)
+      clientId: data.cart.selectedClientId, // For order customer (who is buying)
     }
   )
 
@@ -66,7 +85,8 @@ const convertCartToOrder = async (data: ConvertToOrderData) => {
   const response = await api.post<{ success: boolean; data: OrderWithDetails }>(
     '/orders/convert-cart',
     {
-      clientId: data.cart.selectedClientId,
+      terminalId: getTerminalId(),        // For cart lookup (which terminal's cart)
+      clientId: data.cart.selectedClientId, // For order customer (who is buying)
     }
   )
 
