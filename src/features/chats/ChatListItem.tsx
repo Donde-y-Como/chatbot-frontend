@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,9 +40,11 @@ interface ChatListItemProps {
   chat: Chat
   isSelected: boolean
   onClick: () => void
+  isChecked?: boolean
+  onToggleCheck?: () => void
 }
 
-export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
+export function ChatListItem({ chat, isSelected, onClick, isChecked = false, onToggleCheck }: ChatListItemProps) {
   const { openConnectionClient } = useDialogState()
   const { emit } = useWebSocket()
   const [isEditing, setIsEditing] = useState(false)
@@ -230,27 +233,51 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
     onClick()
   }
 
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onToggleCheck?.()
+  }
+
+  const [isHovering, setIsHovering] = useState(false)
+
   return (
     <div
       className={cn(
-        'flex w-full rounded-md px-2 py-2 text-left text-sm hover:bg-secondary/75 cursor-pointer',
+        'flex w-full rounded-md px-2 py-2 text-left text-sm hover:bg-secondary/75 cursor-pointer group',
         isSelected && 'sm:bg-muted'
       )}
       onClick={handleOnClick}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
     >
-      <div className='flex gap-2 w-full'>
+      <div className='flex gap-2 w-full items-start'>
         <div className='relative flex-shrink-0'>
-          <Avatar>
-            {hasPhoto && (
-              <AvatarImage
-                src={chat.client?.photo}
-                alt={chat.client?.name || 'Desconocido'}
-                className='object-cover w-full'
+          {/* Show checkbox on hover or when checked, replace avatar */}
+          {onToggleCheck && (isHovering || isChecked) ? (
+            <div
+              className='flex items-center justify-center w-10 h-10 rounded-full bg-secondary'
+              onClick={handleCheckboxClick}
+            >
+              <Checkbox
+                checked={isChecked}
+                onCheckedChange={onToggleCheck}
+                aria-label='Seleccionar chat'
+                onClick={(e) => e.stopPropagation()}
               />
-            )}
-            <AvatarFallback>{clientInitial}</AvatarFallback>
-          </Avatar>
-          {PlatformIcon && (
+            </div>
+          ) : (
+            <Avatar>
+              {hasPhoto && (
+                <AvatarImage
+                  src={chat.client?.photo}
+                  alt={chat.client?.name || 'Desconocido'}
+                  className='object-cover w-full'
+                />
+              )}
+              <AvatarFallback>{clientInitial}</AvatarFallback>
+            </Avatar>
+          )}
+          {PlatformIcon && !((isHovering || isChecked) && onToggleCheck) && (
             <div className='absolute -bottom-0.5 -right-0.5 rounded-full bg-white p-0.5 shadow-md'>
               <PlatformIcon
                 className={cn(
@@ -422,6 +449,16 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                         >
                           Ver perfil
                         </DropdownMenuItem>
+                        {onToggleCheck && (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onToggleCheck()
+                            }}
+                          >
+                            {isChecked ? 'Deseleccionar' : 'Seleccionar'}
+                          </DropdownMenuItem>
+                        )}
                       </>
                     ) : (
                       <DropdownMenuItem disabled>

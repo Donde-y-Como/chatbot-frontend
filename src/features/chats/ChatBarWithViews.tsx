@@ -41,6 +41,7 @@ export function ChatBarWithViews({
   const [search, setSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ChatViewMode>('list')
+  const [selectedChatIds, setSelectedChatIds] = useState<string[]>([])
   const { data: user } = useGetBusiness()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const loadingRef = useRef<HTMLDivElement>(null)
@@ -161,6 +162,18 @@ export function ChatBarWithViews({
     onViewModeChange?.(newViewMode)
   }
 
+  const handleToggleChatSelection = (chatId: string) => {
+    setSelectedChatIds((prev) =>
+      prev.includes(chatId)
+        ? prev.filter((id) => id !== chatId)
+        : [...prev, chatId]
+    )
+  }
+
+  const handleClearSelection = () => {
+    setSelectedChatIds([])
+  }
+
   return (
     <div className={`flex ${viewMode === 'kanban' ? 'w-full' : 'w-full sm:w-[30rem]'} flex-col h-full min-w-0`}>
       {/* Header - Fixed at top */}
@@ -186,6 +199,8 @@ export function ChatBarWithViews({
             onFilterChange={setActiveFilter}
             onToggleAllAI={onToggleAllAI}
             onRefresh={handleRefresh}
+            selectedChatIds={selectedChatIds}
+            onClearSelection={handleClearSelection}
           />
         </div>
       )}
@@ -242,6 +257,8 @@ export function ChatBarWithViews({
                           chat={chat}
                           isSelected={selectedChatId === chat.id}
                           onClick={() => handleSelectChat(chat.id)}
+                          isChecked={selectedChatIds.includes(chat.id)}
+                          onToggleCheck={() => handleToggleChatSelection(chat.id)}
                         />
                         <Separator className='mx-3' />
                       </Fragment>

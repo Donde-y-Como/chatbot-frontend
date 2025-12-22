@@ -53,6 +53,8 @@ export type ChatMessages = {
   newClientMessagesCount: number
   currentIntention: string
   client: ClientPrimitives
+  aiMessageLimit: number;
+  aiMessageCount: number;
 }
 
 export enum PlatformName {

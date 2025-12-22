@@ -8,6 +8,8 @@ import {
   IconBrandWhatsapp,
   IconChecklist,
   IconUser,
+  IconPlus,
+  IconRefresh,
 } from '@tabler/icons-react'
 import { CalendarFold } from 'lucide-react'
 import { PERMISSIONS } from '@/api/permissions.ts'
@@ -23,6 +25,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
 import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
 import { MakeAppointmentDialog } from '@/features/appointments/components/MakeAppointmentDialog.tsx'
 import { chatService } from '@/features/chats/ChatService.ts'
@@ -87,6 +96,78 @@ export function ConversationHeader({
   const onToggleIA = (enabled: boolean) => {
     toggleIAMutation.mutate({ enabled, conversationId: selectedChatId })
   }
+
+  const increaseAiLimitMutation = useMutation({
+    mutationKey: ['increase-ai-limit', selectedChatId],
+    mutationFn: async (amount: number) => {
+      return await chatService.increaseAiMessageLimit([selectedChatId], amount)
+    },
+    onMutate: async (amount) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['chat', selectedChatId] })
+
+      // Snapshot the previous value
+      const previousChat = queryClient.getQueryData<ChatMessages>(['chat', selectedChatId])
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<ChatMessages>(['chat', selectedChatId], (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          aiMessageLimit: old.aiMessageLimit + amount,
+        }
+      })
+
+      // Return a context object with the snapshotted value
+      return { previousChat }
+    },
+    onError: (_err, _amount, context) => {
+      // Rollback on error
+      if (context?.previousChat) {
+        queryClient.setQueryData(['chat', selectedChatId], context.previousChat)
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ['chat', selectedChatId] })
+    },
+  })
+
+  const resetAiLimitMutation = useMutation({
+    mutationKey: ['reset-ai-limit', selectedChatId],
+    mutationFn: async () => {
+      return await chatService.resetAiMessageLimit([selectedChatId])
+    },
+    onMutate: async () => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['chat', selectedChatId] })
+
+      // Snapshot the previous value
+      const previousChat = queryClient.getQueryData<ChatMessages>(['chat', selectedChatId])
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<ChatMessages>(['chat', selectedChatId], (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          aiMessageCount: 0,
+        }
+      })
+
+      // Return a context object with the snapshotted value
+      return { previousChat }
+    },
+    onError: (_err, _variables, context) => {
+      // Rollback on error
+      if (context?.previousChat) {
+        queryClient.setQueryData(['chat', selectedChatId], context.previousChat)
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ['chat', selectedChatId] })
+    },
+  })
 
   const PlatformIcon = {
     whatsappweb: WhatsAppBusinessIcon,
@@ -246,7 +327,7 @@ export function ConversationHeader({
 
       <div className='flex items-center gap-3'>
         {/* IA Toggle - Secondary Action */}
-        <div className='flex items-center'>
+        <div className='flex items-center gap-2'>
           <IconIaEnabled
             bgColor={'bg-background'}
             iconColor={'bg-secondary'}
@@ -254,6 +335,82 @@ export function ConversationHeader({
             onToggle={onToggleIA}
             tooltip={chatData.thread.enabled ? 'Desactivar IA' : 'Activar IA'}
           />
+
+          {/* AI Message Limit Indicator with Actions */}
+          {chatData.thread.enabled && (
+            <DropdownMenu>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className={cn(
+                          'px-2 py-1 rounded-md text-xs font-medium transition-all hover:ring-2 hover:ring-offset-1',
+                          'disabled:opacity-50 disabled:cursor-not-allowed',
+                          chatData.aiMessageCount >= chatData.aiMessageLimit
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 hover:ring-red-300'
+                            : chatData.aiMessageCount >= chatData.aiMessageLimit * 0.8
+                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 hover:ring-amber-300'
+                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 hover:ring-blue-300'
+                        )}
+                        disabled={increaseAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                      >
+                        <span className='font-semibold'>{chatData.aiMessageCount}</span>
+                        <span className='opacity-60'>/{chatData.aiMessageLimit}</span>
+                      </button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side='bottom'
+                    className='bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-gray-700'
+                    sideOffset={8}
+                  >
+                    Mensajes IA: {chatData.aiMessageCount} de {chatData.aiMessageLimit} usados
+                    {chatData.aiMessageCount >= chatData.aiMessageLimit && (
+                      <div className='text-xs text-red-300 mt-1'>Límite alcanzado</div>
+                    )}
+                    <div className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-700 rotate-45'></div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <DropdownMenuContent align='end' className='w-48'>
+                <DropdownMenuItem
+                  onClick={() => increaseAiLimitMutation.mutate(10)}
+                  disabled={increaseAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                  className='cursor-pointer'
+                >
+                  <IconPlus size={16} className='mr-2' />
+                  Aumentar +10
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => increaseAiLimitMutation.mutate(50)}
+                  disabled={increaseAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                  className='cursor-pointer'
+                >
+                  <IconPlus size={16} className='mr-2' />
+                  Aumentar +50
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => increaseAiLimitMutation.mutate(100)}
+                  disabled={increaseAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                  className='cursor-pointer'
+                >
+                  <IconPlus size={16} className='mr-2' />
+                  Aumentar +100
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => resetAiLimitMutation.mutate()}
+                  disabled={increaseAiLimitMutation.isPending || resetAiLimitMutation.isPending || chatData.aiMessageCount === 0}
+                  className='cursor-pointer text-orange-600 dark:text-orange-400'
+                >
+                  <IconRefresh size={16} className='mr-2' />
+                  Reiniciar contador
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           <RenderIfCan permission={PERMISSIONS.CONVERSATION_UPDATE}>
             <TooltipProvider>

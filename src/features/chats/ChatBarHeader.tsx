@@ -6,6 +6,8 @@ import {
   IconBrandWhatsapp,
   IconRefresh,
   IconSearch,
+  IconPlus,
+  IconX,
 } from '@tabler/icons-react'
 import { CheckCheckIcon, TagIcon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -14,9 +16,17 @@ import { PERMISSIONS } from '@/api/permissions.ts'
 import { RenderIfCan } from '@/lib/Can.tsx'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
+import { chatService } from '@/features/chats/ChatService.ts'
 import { IconIaEnabled } from '@/features/chats/IconIaEnabled.tsx'
 import {
   NewConversation,
@@ -34,6 +44,8 @@ interface ChatSearchInputProps {
   onToggleAllAI: (enabled: boolean) => void
   onRefresh?: () => void
   AIEnabled: boolean
+  selectedChatIds?: string[]
+  onClearSelection?: () => void
 }
 
 export const UNREAD_LABEL_FILTER = 'No leídos'
@@ -45,6 +57,8 @@ export function ChatBarHeader({
   onFilterChange,
   onToggleAllAI,
   onRefresh,
+  selectedChatIds = [],
+  onClearSelection,
 }: ChatSearchInputProps) {
   const [allAIEnabled, setAllAIEnabled] = useState(AIEnabled)
   const { data: tags, isLoading: isTagsLoading } = useGetTags()
@@ -59,6 +73,36 @@ export function ChatBarHeader({
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['chats'] })
+    },
+  })
+
+  const bulkIncreaseAiLimitMutation = useMutation({
+    mutationKey: ['bulk-increase-ai-limit'],
+    mutationFn: async (amount: number) => {
+      return await chatService.increaseAiMessageLimit(selectedChatIds, amount)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chats'] })
+      toast.success(`Límite aumentado en ${selectedChatIds.length} conversaciones`)
+      onClearSelection?.()
+    },
+    onError: () => {
+      toast.error('Error al aumentar el límite')
+    },
+  })
+
+  const bulkResetAiLimitMutation = useMutation({
+    mutationKey: ['bulk-reset-ai-limit'],
+    mutationFn: async () => {
+      return await chatService.resetAiMessageLimit(selectedChatIds)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chats'] })
+      toast.success(`Contador reiniciado en ${selectedChatIds.length} conversaciones`)
+      onClearSelection?.()
+    },
+    onError: () => {
+      toast.error('Error al reiniciar el contador')
     },
   })
 
@@ -136,6 +180,8 @@ export function ChatBarHeader({
   }
   const { isConnected: isWhatsAppWebConnected } = useWhatsApp()
 
+  const isLoadingBulkActions = bulkIncreaseAiLimitMutation.isPending || bulkResetAiLimitMutation.isPending
+
   return (
     <div className='sticky top-0 z-10 bg-background pb-3 w-full shadow-sm sm:pt-2'>
       <div className='flex items-center justify-between px-3  mb-2'>
@@ -145,6 +191,74 @@ export function ChatBarHeader({
           <h1 className='text-2xl font-bold'>Chats</h1>
         </div>
         <div className='flex items-center gap-2'>
+          {selectedChatIds.length > 0 && (
+            <>
+              <div className='flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30'>
+                <span className='text-xs font-medium text-blue-700 dark:text-blue-400'>
+                  {selectedChatIds.length}
+                </span>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='h-4 w-4 hover:bg-blue-200 dark:hover:bg-blue-800'
+                  onClick={onClearSelection}
+                >
+                  <IconX size={12} />
+                </Button>
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='default'
+                    size='sm'
+                    disabled={isLoadingBulkActions}
+                    className='h-7 px-2 text-xs'
+                  >
+                    <IconPlus size={14} className='mr-1' />
+                    IA
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end' className='w-48'>
+                  <DropdownMenuItem
+                    onClick={() => bulkIncreaseAiLimitMutation.mutate(10)}
+                    disabled={isLoadingBulkActions}
+                    className='cursor-pointer'
+                  >
+                    <IconPlus size={16} className='mr-2' />
+                    Aumentar +10
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => bulkIncreaseAiLimitMutation.mutate(50)}
+                    disabled={isLoadingBulkActions}
+                    className='cursor-pointer'
+                  >
+                    <IconPlus size={16} className='mr-2' />
+                    Aumentar +50
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => bulkIncreaseAiLimitMutation.mutate(100)}
+                    disabled={isLoadingBulkActions}
+                    className='cursor-pointer'
+                  >
+                    <IconPlus size={16} className='mr-2' />
+                    Aumentar +100
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => bulkResetAiLimitMutation.mutate()}
+                    disabled={isLoadingBulkActions}
+                    className='cursor-pointer text-orange-600 dark:text-orange-400'
+                  >
+                    <IconRefresh size={16} className='mr-2' />
+                    Reiniciar contador
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Separator orientation='vertical' className='h-7' />
+            </>
+          )}
           {onRefresh && (
             <Button
               variant='ghost'

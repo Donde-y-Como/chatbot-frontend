@@ -2,8 +2,8 @@ import { api } from '@/api/axiosInstance'
 import {
   Chat,
   ChatMessages,
-  ChatResponse,
   ChatParams,
+  ChatResponse,
   ConversationStatusPrimitives,
 } from '@/features/chats/ChatTypes.ts'
 
@@ -22,15 +22,18 @@ export const chatService = {
   },
 
   getChatsByClientId: async (clientId: string, platformName?: string) => {
-    const params: any = {};
+    const params: any = {}
     if (platformName) {
-      params.platformName = platformName;
+      params.platformName = platformName
     }
-    
-    const response = await api.get<{ conversations: Chat[] }>(`/clients/${clientId}/chats`, {
-      params
-    });
-    return response.data.conversations;
+
+    const response = await api.get<{ conversations: Chat[] }>(
+      `/clients/${clientId}/chats`,
+      {
+        params,
+      }
+    )
+    return response.data.conversations
   },
 
   getChatById: async (id: string) => {
@@ -42,15 +45,31 @@ export const chatService = {
     await api.post(`/chats/${data.chatId}/mark-as-unread`)
   },
 
-  updateConversation: async (chatId: string, updateData: {
-    clientId?: string
-    platformName?: string
-    currentIntention?: string
-    assistantEnabled?: boolean
-    newClientMessagesCount?: number
-    status?: ConversationStatusPrimitives
-  }) => {
+  updateConversation: async (
+    chatId: string,
+    updateData: {
+      clientId?: string
+      platformName?: string
+      currentIntention?: string
+      assistantEnabled?: boolean
+      newClientMessagesCount?: number
+      status?: ConversationStatusPrimitives
+    }
+  ) => {
     const response = await api.put(`/chats/${chatId}`, updateData)
     return response.data
+  },
+
+  increaseAiMessageLimit: async (conversationIds: string[], amount: number = 10): Promise<void> => {
+    await api.post(`/chats/ai-message-limit`, {
+      conversationIds,
+      limit: amount,
+    })
+  },
+
+  resetAiMessageLimit: async (conversationIds: string[]): Promise<void> => {
+    await api.post(`/chats/ai-message-count/reset`, {
+      conversationIds,
+    })
   },
 }
