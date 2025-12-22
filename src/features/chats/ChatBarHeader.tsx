@@ -6,8 +6,8 @@ import {
   IconBrandWhatsapp,
   IconRefresh,
   IconSearch,
-  IconPlus,
   IconX,
+  IconEdit,
 } from '@tabler/icons-react'
 import { CheckCheckIcon, TagIcon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -17,12 +17,15 @@ import { RenderIfCan } from '@/lib/Can.tsx'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
@@ -61,6 +64,8 @@ export function ChatBarHeader({
   onClearSelection,
 }: ChatSearchInputProps) {
   const [allAIEnabled, setAllAIEnabled] = useState(AIEnabled)
+  const [customLimitDialogOpen, setCustomLimitDialogOpen] = useState(false)
+  const [customLimitValue, setCustomLimitValue] = useState('')
   const { data: tags, isLoading: isTagsLoading } = useGetTags()
   const queryClient = useQueryClient()
   const { data: templates } = useGetTemplates()
@@ -76,18 +81,18 @@ export function ChatBarHeader({
     },
   })
 
-  const bulkIncreaseAiLimitMutation = useMutation({
-    mutationKey: ['bulk-increase-ai-limit'],
-    mutationFn: async (amount: number) => {
-      return await chatService.increaseAiMessageLimit(selectedChatIds, amount)
+  const bulkSetAiLimitMutation = useMutation({
+    mutationKey: ['bulk-set-ai-limit'],
+    mutationFn: async (limit: number) => {
+      return await chatService.setAiMessageLimit(selectedChatIds, limit)
     },
-    onSuccess: () => {
+    onSuccess: (_data, limit) => {
       queryClient.invalidateQueries({ queryKey: ['chats'] })
-      toast.success(`Límite aumentado en ${selectedChatIds.length} conversaciones`)
+      toast.success(`Límite establecido a ${limit} en ${selectedChatIds.length} conversaciones`)
       onClearSelection?.()
     },
     onError: () => {
-      toast.error('Error al aumentar el límite')
+      toast.error('Error al establecer el límite')
     },
   })
 
@@ -180,7 +185,22 @@ export function ChatBarHeader({
   }
   const { isConnected: isWhatsAppWebConnected } = useWhatsApp()
 
-  const isLoadingBulkActions = bulkIncreaseAiLimitMutation.isPending || bulkResetAiLimitMutation.isPending
+  const handleCustomLimitClick = () => {
+    setCustomLimitValue('')
+    setCustomLimitDialogOpen(true)
+  }
+
+  const handleSaveCustomLimit = () => {
+    const newLimit = parseInt(customLimitValue, 10)
+    if (isNaN(newLimit) || newLimit < 0) {
+      toast.error('Por favor ingresa un número válido')
+      return
+    }
+    bulkSetAiLimitMutation.mutate(newLimit)
+    setCustomLimitDialogOpen(false)
+  }
+
+  const isLoadingBulkActions = bulkSetAiLimitMutation.isPending || bulkResetAiLimitMutation.isPending
 
   return (
     <div className='sticky top-0 z-10 bg-background pb-3 w-full shadow-sm sm:pt-2'>
@@ -207,54 +227,16 @@ export function ChatBarHeader({
                 </Button>
               </div>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant='default'
-                    size='sm'
-                    disabled={isLoadingBulkActions}
-                    className='h-7 px-2 text-xs'
-                  >
-                    <IconPlus size={14} className='mr-1' />
-                    IA
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-48'>
-                  <DropdownMenuItem
-                    onClick={() => bulkIncreaseAiLimitMutation.mutate(10)}
-                    disabled={isLoadingBulkActions}
-                    className='cursor-pointer'
-                  >
-                    <IconPlus size={16} className='mr-2' />
-                    Aumentar +10
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => bulkIncreaseAiLimitMutation.mutate(50)}
-                    disabled={isLoadingBulkActions}
-                    className='cursor-pointer'
-                  >
-                    <IconPlus size={16} className='mr-2' />
-                    Aumentar +50
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => bulkIncreaseAiLimitMutation.mutate(100)}
-                    disabled={isLoadingBulkActions}
-                    className='cursor-pointer'
-                  >
-                    <IconPlus size={16} className='mr-2' />
-                    Aumentar +100
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => bulkResetAiLimitMutation.mutate()}
-                    disabled={isLoadingBulkActions}
-                    className='cursor-pointer text-orange-600 dark:text-orange-400'
-                  >
-                    <IconRefresh size={16} className='mr-2' />
-                    Reiniciar contador
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant='default'
+                size='sm'
+                disabled={isLoadingBulkActions}
+                className='h-7 px-2 text-xs'
+                onClick={handleCustomLimitClick}
+              >
+                <IconEdit size={14} className='mr-1' />
+                Límite IA
+              </Button>
 
               <Separator orientation='vertical' className='h-7' />
             </>
@@ -338,6 +320,51 @@ export function ChatBarHeader({
           </Badge>
         ))}
       </div>
+
+      {/* Custom AI Message Limit Dialog for Bulk Operations */}
+      <Dialog open={customLimitDialogOpen} onOpenChange={setCustomLimitDialogOpen}>
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Establecer límite personalizado</DialogTitle>
+            <DialogDescription>
+              Ingresa el nuevo límite de mensajes IA para las {selectedChatIds.length} conversaciones seleccionadas.
+            </DialogDescription>
+          </DialogHeader>
+          <div className='grid gap-4 py-4'>
+            <div className='grid gap-2'>
+              <Label htmlFor='bulk-custom-limit'>Nuevo límite</Label>
+              <Input
+                id='bulk-custom-limit'
+                type='number'
+                min='0'
+                value={customLimitValue}
+                onChange={(e) => setCustomLimitValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSaveCustomLimit()
+                  }
+                }}
+                placeholder='Ej: 150'
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setCustomLimitDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSaveCustomLimit}
+              disabled={bulkSetAiLimitMutation.isPending}
+            >
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

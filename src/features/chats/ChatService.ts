@@ -60,10 +60,10 @@ export const chatService = {
     return response.data
   },
 
-  increaseAiMessageLimit: async (conversationIds: string[], amount: number = 10): Promise<void> => {
+  setAiMessageLimit: async (conversationIds: string[], limit: number): Promise<void> => {
     await api.post(`/chats/ai-message-limit`, {
       conversationIds,
-      limit: amount,
+      limit,
     })
   },
 

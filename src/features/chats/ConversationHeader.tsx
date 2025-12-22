@@ -10,8 +10,10 @@ import {
   IconUser,
   IconPlus,
   IconRefresh,
+  IconEdit,
 } from '@tabler/icons-react'
 import { CalendarFold } from 'lucide-react'
+import { toast } from 'sonner'
 import { PERMISSIONS } from '@/api/permissions.ts'
 import { RenderIfCan } from '@/lib/Can.tsx'
 import { cn } from '@/lib/utils.ts'
@@ -31,7 +33,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
 import { MakeAppointmentDialog } from '@/features/appointments/components/MakeAppointmentDialog.tsx'
 import { chatService } from '@/features/chats/ChatService.ts'
@@ -66,6 +79,8 @@ export function ConversationHeader({
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false)
   const [eventDialogOpen, setEventDialogOpen] = useState(false)
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false)
+  const [customLimitDialogOpen, setCustomLimitDialogOpen] = useState(false)
+  const [customLimitValue, setCustomLimitValue] = useState('')
   const appointmentButtonRef = useRef<HTMLButtonElement>(null)
 
   const toggleIAMutation = useMutation({
@@ -97,12 +112,12 @@ export function ConversationHeader({
     toggleIAMutation.mutate({ enabled, conversationId: selectedChatId })
   }
 
-  const increaseAiLimitMutation = useMutation({
-    mutationKey: ['increase-ai-limit', selectedChatId],
-    mutationFn: async (amount: number) => {
-      return await chatService.increaseAiMessageLimit([selectedChatId], amount)
+  const setAiLimitMutation = useMutation({
+    mutationKey: ['set-ai-limit', selectedChatId],
+    mutationFn: async (newLimit: number) => {
+      return await chatService.setAiMessageLimit([selectedChatId], newLimit)
     },
-    onMutate: async (amount) => {
+    onMutate: async (newLimit) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['chat', selectedChatId] })
 
@@ -114,14 +129,14 @@ export function ConversationHeader({
         if (!old) return old
         return {
           ...old,
-          aiMessageLimit: old.aiMessageLimit + amount,
+          aiMessageLimit: newLimit,
         }
       })
 
       // Return a context object with the snapshotted value
       return { previousChat }
     },
-    onError: (_err, _amount, context) => {
+    onError: (_err, _newLimit, context) => {
       // Rollback on error
       if (context?.previousChat) {
         queryClient.setQueryData(['chat', selectedChatId], context.previousChat)
@@ -277,6 +292,23 @@ export function ConversationHeader({
     setEventDialogOpen(true)
   }
 
+  // Función para abrir el diálogo de límite personalizado
+  const handleCustomLimitClick = () => {
+    setCustomLimitValue(chatData.aiMessageLimit.toString())
+    setCustomLimitDialogOpen(true)
+  }
+
+  // Función para guardar el límite personalizado
+  const handleSaveCustomLimit = () => {
+    const newLimit = parseInt(customLimitValue, 10)
+    if (isNaN(newLimit) || newLimit < 0) {
+      toast.error('Por favor ingresa un número válido')
+      return
+    }
+    setAiLimitMutation.mutate(newLimit)
+    setCustomLimitDialogOpen(false)
+  }
+
   return (
     <div className='mb-1 flex flex-none justify-between rounded-t-md bg-secondary p-4 shadow-lg'>
       <div className='flex gap-3'>
@@ -353,7 +385,7 @@ export function ConversationHeader({
                             ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 hover:ring-amber-300'
                             : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 hover:ring-blue-300'
                         )}
-                        disabled={increaseAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                        disabled={setAiLimitMutation.isPending || resetAiLimitMutation.isPending}
                       >
                         <span className='font-semibold'>{chatData.aiMessageCount}</span>
                         <span className='opacity-60'>/{chatData.aiMessageLimit}</span>
@@ -375,34 +407,43 @@ export function ConversationHeader({
               </TooltipProvider>
 
               <DropdownMenuContent align='end' className='w-48'>
+                <DropdownMenuLabel>Ajustar límite</DropdownMenuLabel>
                 <DropdownMenuItem
-                  onClick={() => increaseAiLimitMutation.mutate(10)}
-                  disabled={increaseAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                  onClick={() => setAiLimitMutation.mutate(chatData.aiMessageLimit + 5)}
+                  disabled={setAiLimitMutation.isPending || resetAiLimitMutation.isPending}
                   className='cursor-pointer'
                 >
                   <IconPlus size={16} className='mr-2' />
-                  Aumentar +10
+                  +5 mensajes
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => increaseAiLimitMutation.mutate(50)}
-                  disabled={increaseAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                  onClick={() => setAiLimitMutation.mutate(chatData.aiMessageLimit + 10)}
+                  disabled={setAiLimitMutation.isPending || resetAiLimitMutation.isPending}
                   className='cursor-pointer'
                 >
                   <IconPlus size={16} className='mr-2' />
-                  Aumentar +50
+                  +10 mensajes
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => increaseAiLimitMutation.mutate(100)}
-                  disabled={increaseAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                  onClick={() => setAiLimitMutation.mutate(chatData.aiMessageLimit + 20)}
+                  disabled={setAiLimitMutation.isPending || resetAiLimitMutation.isPending}
                   className='cursor-pointer'
                 >
                   <IconPlus size={16} className='mr-2' />
-                  Aumentar +100
+                  +20 mensajes
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleCustomLimitClick}
+                  disabled={setAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                  className='cursor-pointer'
+                >
+                  <IconEdit size={16} className='mr-2' />
+                  Límite personalizado
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => resetAiLimitMutation.mutate()}
-                  disabled={increaseAiLimitMutation.isPending || resetAiLimitMutation.isPending || chatData.aiMessageCount === 0}
+                  disabled={setAiLimitMutation.isPending || resetAiLimitMutation.isPending || chatData.aiMessageCount === 0}
                   className='cursor-pointer text-orange-600 dark:text-orange-400'
                 >
                   <IconRefresh size={16} className='mr-2' />
@@ -557,6 +598,52 @@ export function ConversationHeader({
             defaultClientName={chatData.client.id}
           />
         </RenderIfCan>
+
+        {/* Custom AI Message Limit Dialog */}
+        <Dialog open={customLimitDialogOpen} onOpenChange={setCustomLimitDialogOpen}>
+          <DialogContent className='sm:max-w-md'>
+            <DialogHeader>
+              <DialogTitle>Establecer límite personalizado</DialogTitle>
+              <DialogDescription>
+                Ingresa el nuevo límite de mensajes IA para esta conversación.
+                Límite actual: {chatData.aiMessageLimit} mensajes
+              </DialogDescription>
+            </DialogHeader>
+            <div className='grid gap-4 py-4'>
+              <div className='grid gap-2'>
+                <Label htmlFor='custom-limit'>Nuevo límite</Label>
+                <Input
+                  id='custom-limit'
+                  type='number'
+                  min='0'
+                  value={customLimitValue}
+                  onChange={(e) => setCustomLimitValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSaveCustomLimit()
+                    }
+                  }}
+                  placeholder='Ej: 50'
+                  autoFocus
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant='outline'
+                onClick={() => setCustomLimitDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSaveCustomLimit}
+                disabled={setAiLimitMutation.isPending}
+              >
+                Guardar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
