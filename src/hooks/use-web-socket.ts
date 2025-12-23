@@ -109,10 +109,39 @@ socket.on('newEventBooked', () => {
   toast.success('Un nuevo evento ha sido reservado.')
 })
 
-socket.on('newAppointmentCreated', async ({ appointment }: { appointment: AppointmentCreated }) => {
+// Appointment Created
+socket.on('appointmentCreated', async ({ appointment }: { appointment: AppointmentCreated }) => {
+  console.log('[WebSocket] Appointment created:', appointment)
   toast.success('Una nueva cita ha sido creada.')
   await queryClient.invalidateQueries({
     queryKey: [UseGetAppointmentsQueryKey, appointment.date, appointment.date],
+  })
+  await queryClient.invalidateQueries({
+    queryKey: [UseGetAppointmentsQueryKey],
+  })
+})
+
+// Appointment Updated
+socket.on('appointmentUpdated', async ({ appointment }: { appointment: AppointmentCreated }) => {
+  console.log('[WebSocket] Appointment updated:', appointment)
+  toast.info('Una cita ha sido actualizada.')
+  await queryClient.invalidateQueries({
+    queryKey: [UseGetAppointmentsQueryKey, appointment.date, appointment.date],
+  })
+  await queryClient.invalidateQueries({
+    queryKey: [UseGetAppointmentsQueryKey],
+  })
+})
+
+// Appointment Canceled
+socket.on('appointmentCanceled', async ({ appointment }: { appointment: AppointmentCreated }) => {
+  console.log('[WebSocket] Appointment canceled:', appointment)
+  toast.warning('Una cita ha sido cancelada.')
+  await queryClient.invalidateQueries({
+    queryKey: [UseGetAppointmentsQueryKey, appointment.date, appointment.date],
+  })
+  await queryClient.invalidateQueries({
+    queryKey: [UseGetAppointmentsQueryKey],
   })
 })
 
