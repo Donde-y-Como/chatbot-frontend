@@ -6,29 +6,62 @@ import { handleServerError } from '@/utils/handle-server-error.ts'
 import { QueryCache, QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
 import { AxiosError } from 'axios'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { io } from 'socket.io-client'
 import { toast } from 'sonner'
 import { UserQueryKey } from '../components/layout/hooks/useGetUser'
 import { UseGetAppointmentsQueryKey } from '../features/appointments/hooks/useGetAppointments'
 import { AppointmentCreated } from '../features/appointments/types'
 
-export const socket = io(import.meta.env.VITE_WS_URL || 'http://localhost:3000')
+export const socket = io(import.meta.env.VITE_WS_URL || 'http://localhost:3000', {
+  autoConnect: true,
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  timeout: 20000,
+})
+
+/**
+ * Normalizes message data from backend to match frontend Message type
+ * Ensures media field is always present (null if not provided)
+ */
+const normalizeMessage = (message: any): Message => {
+  return {
+    id: message.id,
+    content: message.content,
+    role: message.role,
+    timestamp: message.timestamp,
+    media: message.media ?? null, // Convert undefined to null
+  }
+}
 
 socket.on(
   'newClientMessage',
-  async (data: { conversationId: string; message: Message }) => {
-    if (data.message.role === 'user') {
+  async (data: { conversationId: string; message: any }) => {
+    const normalizedMessage = normalizeMessage(data.message)
+
+    console.log('[WebSocket] Received new message:', {
+      conversationId: data.conversationId,
+      messageId: normalizedMessage.id,
+      role: normalizedMessage.role,
+      hasMedia: !!normalizedMessage.media,
+    })
+
+    if (normalizedMessage.role === 'user') {
       playNotification()
     }
 
     queryClient.setQueryData<ChatMessages>(
       ['chat', data.conversationId],
       (cachedChat) => {
-        if (cachedChat === undefined) return cachedChat
+        if (cachedChat === undefined) {
+          console.warn('[WebSocket] No cached chat found for conversation:', data.conversationId)
+          return cachedChat
+        }
         return {
           ...cachedChat,
-          messages: [...cachedChat.messages, data.message],
+          messages: [...cachedChat.messages, normalizedMessage],
         }
       }
     )
@@ -39,15 +72,25 @@ socket.on(
   }
 )
 
-socket.on('messageUpdated', async (data: { conversationId: string; message: Message }) => {
+socket.on('messageUpdated', async (data: { conversationId: string; message: any }) => {
+  const normalizedMessage = normalizeMessage(data.message)
+
+  console.log('[WebSocket] Message updated:', {
+    conversationId: data.conversationId,
+    messageId: normalizedMessage.id,
+  })
+
   queryClient.setQueryData<ChatMessages>(
     ['chat', data.conversationId],
     (cachedChat) => {
-      if (cachedChat === undefined) return cachedChat
+      if (cachedChat === undefined) {
+        console.warn('[WebSocket] No cached chat found for conversation:', data.conversationId)
+        return cachedChat
+      }
       return {
         ...cachedChat,
         messages: cachedChat.messages.map((msg) =>
-          msg.id === data.message.id ? data.message : msg
+          msg.id === normalizedMessage.id ? normalizedMessage : msg
         ),
       }
     }
@@ -86,18 +129,94 @@ socket.on('creditsUpdated', async () => {
 socket.on('productStockUpdated', () => {
 })
 
+// Connection status handlers
+socket.on('connect', () => {
+  console.log('[WebSocket] Connected successfully')
+})
+
+socket.on('disconnect', (reason) => {
+  console.log('[WebSocket] Disconnected:', reason)
+  if (reason === 'io server disconnect') {
+    // Server forcefully disconnected, manually reconnect
+    socket.connect()
+  }
+})
+
+socket.on('connect_error', (error) => {
+  console.error('[WebSocket] Connection error:', error)
+})
+
+socket.on('reconnect', (attemptNumber) => {
+  console.log('[WebSocket] Reconnected after', attemptNumber, 'attempts')
+  // Re-join business room after reconnection
+  const auth = useAuthStore.getState().auth
+  if (auth.user?.businessId) {
+    socket.emit('joinBusinessRoom', auth.user.businessId)
+  }
+})
+
+socket.on('reconnect_failed', () => {
+  console.error('[WebSocket] Failed to reconnect after all attempts')
+  toast.error('No se pudo establecer conexión con el servidor en tiempo real')
+})
+
 export const useWebSocket = () => {
-  const [isConnected, setIsConnected] = useState(false)
+  const [isConnected, setIsConnected] = useState(socket.connected)
+  const [reconnecting, setReconnecting] = useState(false)
+
+  useEffect(() => {
+    const handleConnect = () => {
+      setIsConnected(true)
+      setReconnecting(false)
+    }
+
+    const handleDisconnect = () => {
+      setIsConnected(false)
+    }
+
+    const handleReconnecting = () => {
+      setReconnecting(true)
+    }
+
+    const handleReconnectFailed = () => {
+      setReconnecting(false)
+    }
+
+    // Attach local handlers
+    socket.on('connect', handleConnect)
+    socket.on('disconnect', handleDisconnect)
+    socket.on('reconnect_attempt', handleReconnecting)
+    socket.on('reconnect_failed', handleReconnectFailed)
+
+    // Set initial state
+    setIsConnected(socket.connected)
+
+    // Cleanup on unmount
+    return () => {
+      socket.off('connect', handleConnect)
+      socket.off('disconnect', handleDisconnect)
+      socket.off('reconnect_attempt', handleReconnecting)
+      socket.off('reconnect_failed', handleReconnectFailed)
+    }
+  }, [])
 
   const sendMessage = (data: { conversationId: string; message: Message }) => {
+    if (!socket.connected) {
+      toast.error('No hay conexión con el servidor')
+      return
+    }
     socket.emit('newBusinessMessage', data)
   }
 
   const emit = (event: string, data: unknown) => {
+    if (!socket.connected) {
+      console.warn('[WebSocket] Cannot emit, socket not connected')
+      return
+    }
     socket.emit(event, data)
   }
 
-  return { socket, isConnected, setIsConnected, sendMessage, emit }
+  return { socket, isConnected, reconnecting, setIsConnected, sendMessage, emit }
 }
 
 export const queryClient = new QueryClient({

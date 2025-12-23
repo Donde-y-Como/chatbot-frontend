@@ -8,6 +8,7 @@ import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import SkipToMain from '@/components/skip-to-main'
 import { RouteGuard } from '@/components/auth/route-guard'
+import { useEffect, useRef } from 'react'
 
 export const Route = createFileRoute('/_authenticated')({
   component: RouteComponent,
@@ -15,12 +16,23 @@ export const Route = createFileRoute('/_authenticated')({
 
 function RouteComponent() {
   const defaultOpen = Cookies.get('sidebar:state') !== 'false'
-  const { socket, isConnected, setIsConnected } = useWebSocket()
+  const { socket, isConnected } = useWebSocket()
   const auth = useAuth()
-  if (auth.user && !isConnected) {
-    socket.emit('joinBusinessRoom', auth.user.id)
-    setIsConnected(true)
-  }
+  const hasJoinedRoom = useRef(false)
+
+  // Join business room when socket is connected and user is authenticated
+  useEffect(() => {
+    if (isConnected && auth.user?.businessId && !hasJoinedRoom.current) {
+      console.log('[Auth Route] Joining business room:', auth.user.businessId)
+      socket.emit('joinBusinessRoom', auth.user.businessId)
+      hasJoinedRoom.current = true
+    }
+
+    // Reset flag when socket disconnects
+    if (!isConnected) {
+      hasJoinedRoom.current = false
+    }
+  }, [isConnected, auth.user?.businessId, socket])
 
   if (!auth.user) {
     return <Navigate to='/iniciar-sesion' />
