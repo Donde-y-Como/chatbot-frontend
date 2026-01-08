@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react'
+import * as z from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { Loader2, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronDown, ChevronUp, Loader2, Plus, Trash2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -14,33 +22,30 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
+import { AVAILABLE_TOOLS } from '@/features/settings/aiAssistant/available-tools.ts'
+import { ToolsSelector } from '@/features/settings/aiAssistant/components/ToolsSelector.tsx'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { AIAssistantConfig, CreateAIAssistantData, IntentPrompt } from '../types'
+  AIAssistantConfig,
+  CreateAIAssistantData,
+  IntentPrompt,
+} from '../types'
 
-// Form validation schema
 const intentPromptSchema = z.object({
   intentName: z.string().min(1, 'El nombre del intent es requerido'),
   prompt: z.string().min(1, 'El prompt es requerido'),
   priority: z.number().min(1).default(1),
   enabled: z.boolean().default(true),
+  tools: z.array(z.string()).default([]),
 })
 
 const formSchema = z.object({
   basePrompt: z.string().min(1, 'El prompt base es requerido'),
   contextPrompt: z.string().min(1, 'El prompt de contexto es requerido'),
-  quickReplyPrompt: z.string().min(1, 'El prompt de respuesta rápida es requerido'),
-  assistantId: z
+  quickReplyPrompt: z
     .string()
-    .min(1, 'El ID del asistente es requerido')
-    .regex(/^asst_/, 'El ID debe comenzar con "asst_"'),
+    .min(1, 'El prompt de respuesta rápida es requerido'),
   intentPrompts: z.array(intentPromptSchema).optional(),
 })
 
@@ -56,27 +61,34 @@ interface AIAssistantFormProps {
 const defaultIntents: IntentPrompt[] = [
   {
     intentName: 'booking',
-    prompt: 'Ayuda al usuario a reservar una cita. Pregunta por fecha, hora y tipo de servicio preferido.',
+    prompt:
+      'Ayuda al usuario a reservar una cita. Pregunta por fecha, hora y tipo de servicio preferido.',
     priority: 1,
     enabled: true,
+    tools: ['getServicesInfo', 'checkAvailability', 'makeAppointment'],
   },
   {
     intentName: 'services',
-    prompt: 'Proporciona información sobre servicios disponibles, precios y descripciones.',
+    prompt:
+      'Proporciona información sobre servicios disponibles, precios y descripciones.',
     priority: 2,
     enabled: true,
+    tools: ['getServicesInfo', 'checkAvailability', 'makeAppointment'],
   },
   {
     intentName: 'pricing',
-    prompt: 'Responde preguntas sobre precios, descuentos y promociones disponibles.',
+    prompt:
+      'Responde preguntas sobre precios, descuentos y promociones disponibles.',
     priority: 3,
     enabled: true,
+    tools: ['getServicesInfo', 'checkAvailability', 'makeAppointment'],
   },
   {
     intentName: 'general',
     prompt: 'Maneja consultas generales con respuestas útiles y amigables.',
     priority: 4,
     enabled: true,
+    tools: [],
   },
 ]
 
@@ -101,7 +113,6 @@ export function AIAssistantForm({
       quickReplyPrompt:
         initialData?.quickReplyPrompt ||
         'Basándote en el mensaje del usuario y las respuestas rápidas disponibles, devuelve la respuesta más apropiada o una cadena vacía si ninguna coincide.',
-      assistantId: initialData?.assistantId || '',
       intentPrompts: intentPrompts,
     },
   })
@@ -123,6 +134,7 @@ export function AIAssistantForm({
       prompt: '',
       priority: intentPrompts.length + 1,
       enabled: true,
+      tools: [],
     }
     setIntentPrompts([...intentPrompts, newIntent])
   }
@@ -131,7 +143,11 @@ export function AIAssistantForm({
     setIntentPrompts(intentPrompts.filter((_, i) => i !== index))
   }
 
-  const updateIntent = (index: number, field: keyof IntentPrompt, value: any) => {
+  const updateIntent = (
+    index: number,
+    field: keyof IntentPrompt,
+    value: any
+  ) => {
     const updated = [...intentPrompts]
     updated[index] = { ...updated[index], [field]: value }
     setIntentPrompts(updated)
@@ -177,7 +193,7 @@ export function AIAssistantForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
         <Card>
           <CardHeader>
             <CardTitle>Configuración Principal</CardTitle>
@@ -185,38 +201,17 @@ export function AIAssistantForm({
               Define los prompts principales para tu asistente de IA
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className='space-y-4'>
             <FormField
               control={form.control}
-              name="assistantId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ID del Asistente de OpenAI</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="asst_abc123xyz456"
-                      {...field}
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    El ID de tu asistente configurado en OpenAI
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="basePrompt"
+              name='basePrompt'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Prompt Base</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Define la personalidad y rol del asistente..."
-                      className="min-h-[150px]"
+                      placeholder='Define la personalidad y rol del asistente...'
+                      className='min-h-[150px]'
                       {...field}
                       disabled={isSubmitting}
                     />
@@ -231,20 +226,21 @@ export function AIAssistantForm({
 
             <FormField
               control={form.control}
-              name="contextPrompt"
+              name='contextPrompt'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Prompt de Contexto</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Instrucciones para detectar intenciones..."
-                      className="min-h-[120px]"
+                      placeholder='Instrucciones para detectar intenciones...'
+                      className='min-h-[120px]'
                       {...field}
                       disabled={isSubmitting}
                     />
                   </FormControl>
                   <FormDescription>
-                    Usado para la detección de intenciones y análisis de contexto
+                    Usado para la detección de intenciones y análisis de
+                    contexto
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -253,14 +249,14 @@ export function AIAssistantForm({
 
             <FormField
               control={form.control}
-              name="quickReplyPrompt"
+              name='quickReplyPrompt'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Prompt de Respuesta Rápida</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Instrucciones para respuestas rápidas..."
-                      className="min-h-[120px]"
+                      placeholder='Instrucciones para respuestas rápidas...'
+                      className='min-h-[120px]'
                       {...field}
                       disabled={isSubmitting}
                     />
@@ -277,7 +273,7 @@ export function AIAssistantForm({
 
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className='flex items-center justify-between'>
               <div>
                 <CardTitle>Prompts de Intención</CardTitle>
                 <CardDescription>
@@ -285,65 +281,67 @@ export function AIAssistantForm({
                 </CardDescription>
               </div>
               <Button
-                type="button"
-                variant="outline"
-                size="sm"
+                type='button'
+                variant='outline'
+                size='sm'
                 onClick={addIntent}
                 disabled={isSubmitting}
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar Intent
+                <Plus className='h-4 w-4 mr-2' />
+                Agregar Intencion
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className='space-y-4'>
             {intentPrompts.map((intent, index) => (
-              <Card key={index} className="relative">
-                <CardContent className="pt-6">
-                  <div className="absolute top-2 right-2 flex items-center gap-1">
+              <Card key={index} className='relative'>
+                <CardContent className='pt-6'>
+                  <div className='absolute top-2 right-2 flex items-center gap-1'>
                     <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
+                      type='button'
+                      variant='ghost'
+                      size='icon'
                       onClick={() => moveIntentUp(index)}
                       disabled={index === 0 || isSubmitting}
-                      className="h-7 w-7"
-                      title="Mover arriba"
+                      className='h-7 w-7'
+                      title='Mover arriba'
                     >
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className='h-4 w-4' />
                     </Button>
                     <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
+                      type='button'
+                      variant='ghost'
+                      size='icon'
                       onClick={() => moveIntentDown(index)}
-                      disabled={index >= intentPrompts.length - 1 || isSubmitting}
-                      className="h-7 w-7"
-                      title="Mover abajo"
+                      disabled={
+                        index >= intentPrompts.length - 1 || isSubmitting
+                      }
+                      className='h-7 w-7'
+                      title='Mover abajo'
                     >
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className='h-4 w-4' />
                     </Button>
                     <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
+                      type='button'
+                      variant='ghost'
+                      size='icon'
                       onClick={() => removeIntent(index)}
                       disabled={isSubmitting}
-                      className="h-7 w-7 text-destructive hover:text-destructive"
-                      title="Eliminar"
+                      className='h-7 w-7 text-destructive hover:text-destructive'
+                      title='Eliminar'
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className='h-4 w-4' />
                     </Button>
                   </div>
 
-                  <div className="space-y-4 pr-20">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
+                  <div className='space-y-4 pr-20'>
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                      <div className='space-y-2'>
+                        <label className='text-sm font-medium'>
                           Nombre de Intención
                         </label>
                         <Input
-                          placeholder="booking, services, etc."
+                          placeholder='booking, services, etc.'
                           value={intent.intentName}
                           onChange={(e) =>
                             updateIntent(index, 'intentName', e.target.value)
@@ -352,7 +350,7 @@ export function AIAssistantForm({
                         />
                       </div>
 
-                      <div className="flex items-center space-x-2">
+                      <div className='flex items-center space-x-2'>
                         <Switch
                           checked={intent.enabled}
                           onCheckedChange={(checked) =>
@@ -360,24 +358,59 @@ export function AIAssistantForm({
                           }
                           disabled={isSubmitting}
                         />
-                        <label className="text-sm font-medium">
+                        <label className='text-sm font-medium'>
                           {intent.enabled ? 'Habilitado' : 'Deshabilitado'}
                         </label>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">
+                    <div className='space-y-2'>
+                      <label className='text-sm font-medium'>
                         Prompt de Manejo
                       </label>
                       <Textarea
-                        placeholder="Describe cómo manejar esta intención..."
+                        placeholder='Describe cómo manejar esta intención...'
                         value={intent.prompt}
                         onChange={(e) =>
                           updateIntent(index, 'prompt', e.target.value)
                         }
                         disabled={isSubmitting}
-                        className="min-h-[100px]"
+                        className='min-h-[100px]'
+                      />
+                    </div>
+
+                    <div className='space-y-3'>
+                      <label className='text-sm font-medium'>
+                        Herramientas
+                      </label>
+
+                      {/* Chips resumen */}
+                      <div className='flex flex-wrap gap-2'>
+                        {intent.tools.length === 0 && (
+                          <span className='text-sm text-muted-foreground'>
+                            Ninguna herramienta seleccionada
+                          </span>
+                        )}
+
+                        {intent.tools.map((toolId) => {
+                          const tool = AVAILABLE_TOOLS.find(
+                            (t) => t.id === toolId
+                          )
+
+                          return (
+                            <Badge key={toolId} variant='secondary'>
+                              {tool?.title ?? toolId}
+                            </Badge>
+                          )
+                        })}
+                      </div>
+
+                      {/* Selector */}
+                      <ToolsSelector
+                        value={intent.tools}
+                        onChange={(tools) =>
+                          updateIntent(index, 'tools', tools)
+                        }
                       />
                     </div>
                   </div>
@@ -386,7 +419,7 @@ export function AIAssistantForm({
             ))}
 
             {intentPrompts.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className='text-center py-8 text-muted-foreground'>
                 No hay intents configurados. Haz clic en "Agregar Intent" para
                 comenzar.
               </div>
@@ -394,9 +427,9 @@ export function AIAssistantForm({
           </CardContent>
         </Card>
 
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <div className='flex justify-end'>
+          <Button type='submit' disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             {initialData ? 'Actualizar Configuración' : 'Crear Configuración'}
           </Button>
         </div>

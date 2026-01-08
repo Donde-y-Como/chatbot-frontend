@@ -98,10 +98,7 @@ export function ConversationHeader({
           if (oldChats === undefined) return oldChats
           return {
             ...oldChats,
-            thread: {
-              ...oldChats.thread,
-              enabled: variables.enabled,
-            },
+            assistantEnabled: variables.enabled
           }
         }
       )
@@ -363,13 +360,13 @@ export function ConversationHeader({
           <IconIaEnabled
             bgColor={'bg-background'}
             iconColor={'bg-secondary'}
-            enabled={chatData.thread.enabled}
+            enabled={chatData.assistantEnabled}
             onToggle={onToggleIA}
-            tooltip={chatData.thread.enabled ? 'Desactivar IA' : 'Activar IA'}
+            tooltip={chatData.assistantEnabled ? 'Desactivar IA' : 'Activar IA'}
           />
 
           {/* AI Message Limit Indicator with Actions */}
-          {chatData.thread.enabled && (
+          {chatData.assistantEnabled && (
             <DropdownMenu>
               <TooltipProvider>
                 <Tooltip>

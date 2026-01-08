@@ -1,9 +1,12 @@
 // Intent prompt configuration
+import { AvailableToolId } from '@/features/settings/aiAssistant/available-tools.ts'
+
 export interface IntentPrompt {
   intentName: string
   prompt: string
   priority: number
   enabled: boolean
+  tools: AvailableToolId[]
 }
 
 // AI Assistant configuration data
@@ -13,7 +16,6 @@ export interface AIAssistantConfig {
   basePrompt: string
   contextPrompt: string
   quickReplyPrompt: string
-  assistantId: string
   intentPrompts?: IntentPrompt[]
   createdAt?: string
   updatedAt?: string
@@ -24,7 +26,6 @@ export interface CreateAIAssistantData {
   basePrompt: string
   contextPrompt: string
   quickReplyPrompt: string
-  assistantId: string
   intentPrompts?: IntentPrompt[]
 }
 
@@ -33,7 +34,6 @@ export interface UpdateAIAssistantData {
   basePrompt?: string
   contextPrompt?: string
   quickReplyPrompt?: string
-  assistantId?: string
   intentPrompts?: IntentPrompt[]
 }
 

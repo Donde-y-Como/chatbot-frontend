@@ -1,4 +1,5 @@
-import { ClientPrimitives } from '../clients/types'
+import { ClientPrimitives } from '../clients/types';
+
 
 export type Template = {
   businessId: string
@@ -38,23 +39,18 @@ export type Message = {
   media: Media | null
 }
 
-export type Thread = {
-  id: string
-  enabled: boolean
-}
-
 export type ChatMessages = {
   id: string
   clientId: string
   businessId: string
   platformName: string
   messages: Message[]
-  thread: Thread
+  assistantEnabled: boolean
   newClientMessagesCount: number
   currentIntention: string
   client: ClientPrimitives
-  aiMessageLimit: number;
-  aiMessageCount: number;
+  aiMessageLimit: number
+  aiMessageCount: number
 }
 
 export enum PlatformName {
