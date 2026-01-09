@@ -101,6 +101,21 @@ socket.on('messageUpdated', async (data: { conversationId: string; message: any 
   })
 })
 
+socket.on('assistantStatusChange', (data: { conversationId: string; enabled: boolean }) => {
+  console.log('[WebSocket] Assistant status changed:', data)
+
+  queryClient.setQueryData<ChatMessages>(
+    ['chat', data.conversationId],
+    (cachedChat) => {
+      if (cachedChat === undefined) return cachedChat
+      return {
+        ...cachedChat,
+        assistantEnabled: data.enabled,
+      }
+    }
+  )
+})
+
 socket.on('assistantFailed', (data: { conversationId: string }) => {
   toast.error('El asistente tuvo un problema al ejecutar una accion')
 })
