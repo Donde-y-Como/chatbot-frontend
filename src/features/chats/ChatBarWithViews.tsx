@@ -251,7 +251,15 @@ export function ChatBarWithViews({
                   </div>
                 ) : chatsWithStatus.length > 0 ? (
                   <div className='space-y-1'>
-                    {chatsWithStatus.map((chat) => (
+                    {chatsWithStatus.sort((a, b) => {
+                      if (!a.lastMessage && !b.lastMessage) return 0;
+                      if (!a.lastMessage) return 1;
+                      if (!b.lastMessage) return -1;
+                      if (b.lastMessage.timestamp > a.lastMessage.timestamp) return 1;
+                      if (b.lastMessage.timestamp < a.lastMessage.timestamp) return -1;
+                      return 0;
+                    })
+                      .map((chat) => (
                       <Fragment key={chat.id}>
                         <ChatListItem
                           chat={chat}

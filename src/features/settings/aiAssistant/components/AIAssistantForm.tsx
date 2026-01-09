@@ -386,7 +386,7 @@ export function AIAssistantForm({
 
                       {/* Chips resumen */}
                       <div className='flex flex-wrap gap-2'>
-                        {intent.tools.length === 0 && (
+                        {intent.tools?.length === 0 && (
                           <span className='text-sm text-muted-foreground'>
                             Ninguna herramienta seleccionada
                           </span>
