@@ -107,6 +107,18 @@ export const AVAILABLE_TOOLS = [
     description:
       'Permite buscar un producto utilizando su SKU o su nombre para obtener su información.',
   },
+  {
+    id: "findManyProductsBySKU",
+    title: "Buscar varios productos por SKU",
+    description:
+      "Permite buscar varios productos utilizando una lista de SKUs para obtener su información.",
+  },
+  {
+    id: 'addManyItemsToCart',
+    title: 'Agregar varios artículos al carrito',
+    description:
+      'Permite agregar varios productos, servicios o eventos al carrito de compras con cantidades determinadas.',
+  },
 ] as const
 
 export type AvailableToolId = (typeof AVAILABLE_TOOLS)[number]['id']
