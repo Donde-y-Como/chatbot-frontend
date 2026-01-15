@@ -1,41 +1,30 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { differenceInDays, format, formatDistanceToNowStrict } from 'date-fns'
-import { AvatarImage } from '@radix-ui/react-avatar'
-import {
-  InfiniteData,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query'
-import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconBrandWhatsapp,
-} from '@tabler/icons-react'
-import { es } from 'date-fns/locale/es'
-import { Check, MoreVertical } from 'lucide-react'
-import { toast } from 'sonner'
-import { PERMISSIONS } from '@/api/permissions.ts'
-import { RenderIfCan } from '@/lib/Can.tsx'
-import { cn } from '@/lib/utils'
-import { useWebSocket } from '@/hooks/use-web-socket.ts'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input.tsx'
-import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx'
-import { useDialogState } from '@/features/appointments/contexts/DialogStateContext.tsx'
-import { Chat, ChatMessages, ChatResponse } from '@/features/chats/ChatTypes'
-import { useClients } from '@/features/clients/context/clients-context.tsx'
-import { AddTagsModal } from './components/AddTagsModal'
-import { useChatMutations } from './hooks/useChatMutations'
-import { useUpdateClientTags } from './hooks/useUpdateClientTags'
-import { RemoveChatConfirmationModal } from '@/features/chats/components/RemoveChatConfirmationModal.tsx'
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { differenceInDays, format, formatDistanceToNowStrict } from 'date-fns';
+import { AvatarImage } from '@radix-ui/react-avatar';
+import { InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getRouteApi } from '@tanstack/react-router';
+import { IconBrandFacebook, IconBrandInstagram, IconBrandWhatsapp } from '@tabler/icons-react';
+import { es } from 'date-fns/locale/es';
+import { Check, MoreVertical } from 'lucide-react';
+import { toast } from 'sonner';
+import { PERMISSIONS } from '@/api/permissions.ts';
+import { RenderIfCan } from '@/lib/Can.tsx';
+import { cn } from '@/lib/utils';
+import { useWebSocket } from '@/hooks/use-web-socket.ts';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input.tsx';
+import { WhatsAppBusinessIcon } from '@/components/ui/whatsAppBusinessIcon.tsx';
+import { useDialogState } from '@/features/appointments/contexts/DialogStateContext.tsx';
+import { Chat, ChatMessages, ChatResponse } from '@/features/chats/ChatTypes';
+import { RemoveChatConfirmationModal } from '@/features/chats/components/RemoveChatConfirmationModal.tsx';
+import { useClients } from '@/features/clients/context/clients-context.tsx';
+import { AddTagsModal } from './components/AddTagsModal';
+import { useChatMutations } from './hooks/useChatMutations';
+import { useUpdateClientTags } from './hooks/useUpdateClientTags';
+
 
 interface ChatListItemProps {
   chat: Chat
@@ -44,6 +33,8 @@ interface ChatListItemProps {
   isChecked?: boolean
   onToggleCheck?: () => void
 }
+
+const route = getRouteApi('/_authenticated/chats/')
 
 export function ChatListItem({
   chat,
@@ -54,12 +45,13 @@ export function ChatListItem({
 }: ChatListItemProps) {
   const { openConnectionClient } = useDialogState()
   const { emit } = useWebSocket()
+  const navigate = route.useNavigate()
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState(chat.client?.name || 'Unknown')
   const [shouldHighlight, setShouldHighlight] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
-  const { markAsUnread, remove} = useChatMutations()
+  const { markAsUnread, remove } = useChatMutations()
   const { setOpen, setCurrentRow } = useClients()
   const updateProfileNameMutation = useMutation({
     mutationKey: ['set-profile-name'],
@@ -203,9 +195,11 @@ export function ChatListItem({
   }
 
   const removeConversation = async () => {
-    if (chat) {
-      await remove(chat.id)
-    }
+    await remove(chat.id)
+    void navigate({
+      search: () => ({ chatId: undefined }),
+      replace: true,
+    })
   }
 
   const clientInitial = useMemo(
