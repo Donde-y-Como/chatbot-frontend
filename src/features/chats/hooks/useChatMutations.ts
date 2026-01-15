@@ -1,8 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { InfiniteData } from '@tanstack/react-query'
-import { sortByLastMessageTimestamp } from '@/lib/utils.ts'
-import { chatService } from '../ChatService'
-import { Chat, ChatMessages, ChatResponse, ConversationStatusPrimitives } from '../ChatTypes'
+import { InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query';
+import { sortByLastMessageTimestamp } from '@/lib/utils.ts';
+import { chatService } from '../ChatService';
+import { Chat, ChatMessages, ChatResponse, ConversationStatusPrimitives } from '../ChatTypes';
+
 
 export function useChatMutations() {
   const queryClient = useQueryClient()
@@ -78,18 +78,37 @@ export function useChatMutations() {
     },
   })
 
+  const removeChatMutation = useMutation({
+    mutationKey: ['remove-chat'],
+    mutationFn: async (chatId: string) => {
+      await chatService.removeChat(chatId)
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['chats'] })
+    },
+  })
+
   const markAsUnread = (chatId: string) => {
     markAsUnreadMutation.mutate({ chatId })
   }
 
-  const updateChatStatus = (chatId: string, status: ConversationStatusPrimitives) => {
+  const updateChatStatus = (
+    chatId: string,
+    status: ConversationStatusPrimitives
+  ) => {
     updateStatusMutation.mutate({ chatId, status })
+  }
+
+  const remove = async (chatId: string) => {
+    await removeChatMutation.mutateAsync(chatId)
   }
 
   return {
     markAsUnreadMutation,
     markAsUnread,
     updateStatusMutation,
-    updateChatStatus
+    updateChatStatus,
+    remove,
+    removeChatMutation
   }
 }

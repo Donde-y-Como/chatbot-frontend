@@ -7,16 +7,16 @@ import { useGetBusiness } from '@/components/layout/hooks/useGetUser.ts'
 import { ChatBarHeader } from '@/features/chats/ChatBarHeader.tsx'
 import { ChatListItem } from '@/features/chats/ChatListItem.tsx'
 import { ChatListItemSkeleton } from '@/features/chats/ChatListItemSkeleton.tsx'
+import { useChatMutations } from '@/features/chats/hooks/useChatMutations.ts'
 import { useFilteredChats } from '@/features/chats/hooks/useFilteredChats.ts'
 import { useToggleAllAIMutation } from '@/features/chats/hooks/useToggleAllAIMutation.ts'
-import { useChatMutations } from '@/features/chats/hooks/useChatMutations.ts'
 import { useGetTags } from '../clients/hooks/useGetTags'
 import { ChatKanban } from './ChatKanban'
-import { ChatViewToggle, ChatViewMode } from './ChatViewToggle'
+import { ChatViewMode, ChatViewToggle } from './ChatViewToggle'
 import { MessagesFound } from './MessagesFound'
-import { usePaginatedChats } from './hooks/usePaginatedChats'
-import { ConversationStatus } from './conversationStatus/types'
 import { useGetConversationStatuses } from './conversationStatus/hooks/useConversationStatus'
+import { ConversationStatus } from './conversationStatus/types'
+import { usePaginatedChats } from './hooks/usePaginatedChats'
 
 interface ChatBarWithViewsProps {
   selectedChatId: string | null
@@ -59,39 +59,24 @@ export function ChatBarWithViews({
   } = usePaginatedChats()
 
   const { data: tags } = useGetTags()
-  const { data: conversationStatuses = [], isLoading: isLoadingStatuses } = useGetConversationStatuses()
+  const { data: conversationStatuses = [] } = useGetConversationStatuses()
   const filteredChatList = useFilteredChats(chats, search, activeFilter, tags)
 
-  console.log('ChatBarWithViews - Conversation statuses loading:', isLoadingStatuses)
-  console.log('ChatBarWithViews - Conversation statuses count:', conversationStatuses.length)
-
-  // Add default status to chats that don't have one
   const chatsWithStatus = filteredChatList.map((chat) => {
-    // Debug: Log raw chat data for ALL chats
-    console.log(`ChatBarWithViews - Processing chat ${chat.id}:`)
-    console.log('  - Raw chat object:', chat)
-    console.log('  - chat.status:', chat.status)
-    console.log('  - chat.status type:', typeof chat.status)
-    console.log('  - chat.status?.id:', chat.status?.id)
-    console.log('  - Has status?:', !!chat.status)
-    console.log('  - Has status.id?:', !!(chat.status && chat.status.id))
-
-    // Check if chat has a valid status with an id
     if (chat.status && chat.status.id) {
-      console.log(`✓ Chat ${chat.id} has valid status:`, chat.status.id, '-', chat.status.name)
       return chat
     }
 
     // Find the first status by order number, or create a fallback
-    const defaultStatus = conversationStatuses.sort((a, b) => a.orderNumber - b.orderNumber)[0] || {
+    const defaultStatus = conversationStatuses.sort(
+      (a, b) => a.orderNumber - b.orderNumber
+    )[0] || {
       id: 'new',
       businessId: '',
       name: 'Nuevo',
       orderNumber: 1,
-      color: '#3b82f6'
+      color: '#3b82f6',
     }
-
-    console.log(`✗ Chat ${chat.id} missing status, assigning default:`, defaultStatus.id, '-', defaultStatus.name)
 
     return {
       ...chat,
@@ -141,7 +126,10 @@ export function ChatBarWithViews({
     }
   }
 
-  const handleChatStatusChange = (chatId: string, newStatus: ConversationStatus) => {
+  const handleChatStatusChange = (
+    chatId: string,
+    newStatus: ConversationStatus
+  ) => {
     // Send only the ID to the backend, but update cache with full object
     updateChatStatus(chatId, newStatus)
   }
@@ -175,7 +163,9 @@ export function ChatBarWithViews({
   }
 
   return (
-    <div className={`flex ${viewMode === 'kanban' ? 'w-full' : 'w-full sm:w-[30rem]'} flex-col h-full min-w-0`}>
+    <div
+      className={`flex ${viewMode === 'kanban' ? 'w-full' : 'w-full sm:w-[30rem]'} flex-col h-full min-w-0`}
+    >
       {/* Header - Fixed at top */}
       {user && (
         <div className='flex-shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
@@ -251,26 +241,31 @@ export function ChatBarWithViews({
                   </div>
                 ) : chatsWithStatus.length > 0 ? (
                   <div className='space-y-1'>
-                    {chatsWithStatus.sort((a, b) => {
-                      if (!a.lastMessage && !b.lastMessage) return 0;
-                      if (!a.lastMessage) return 1;
-                      if (!b.lastMessage) return -1;
-                      if (b.lastMessage.timestamp > a.lastMessage.timestamp) return 1;
-                      if (b.lastMessage.timestamp < a.lastMessage.timestamp) return -1;
-                      return 0;
-                    })
+                    {chatsWithStatus
+                      .sort((a, b) => {
+                        if (!a.lastMessage && !b.lastMessage) return 0
+                        if (!a.lastMessage) return 1
+                        if (!b.lastMessage) return -1
+                        if (b.lastMessage.timestamp > a.lastMessage.timestamp)
+                          return 1
+                        if (b.lastMessage.timestamp < a.lastMessage.timestamp)
+                          return -1
+                        return 0
+                      })
                       .map((chat) => (
-                      <Fragment key={chat.id}>
-                        <ChatListItem
-                          chat={chat}
-                          isSelected={selectedChatId === chat.id}
-                          onClick={() => handleSelectChat(chat.id)}
-                          isChecked={selectedChatIds.includes(chat.id)}
-                          onToggleCheck={() => handleToggleChatSelection(chat.id)}
-                        />
-                        <Separator className='mx-3' />
-                      </Fragment>
-                    ))}
+                        <Fragment key={chat.id}>
+                          <ChatListItem
+                            chat={chat}
+                            isSelected={selectedChatId === chat.id}
+                            onClick={() => handleSelectChat(chat.id)}
+                            isChecked={selectedChatIds.includes(chat.id)}
+                            onToggleCheck={() =>
+                              handleToggleChatSelection(chat.id)
+                            }
+                          />
+                          <Separator className='mx-3' />
+                        </Fragment>
+                      ))}
                   </div>
                 ) : (
                   <div className='py-8 text-center text-sm text-muted-foreground'>

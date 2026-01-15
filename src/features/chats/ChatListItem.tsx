@@ -35,6 +35,7 @@ import { useClients } from '@/features/clients/context/clients-context.tsx'
 import { AddTagsModal } from './components/AddTagsModal'
 import { useChatMutations } from './hooks/useChatMutations'
 import { useUpdateClientTags } from './hooks/useUpdateClientTags'
+import { RemoveChatConfirmationModal } from '@/features/chats/components/RemoveChatConfirmationModal.tsx'
 
 interface ChatListItemProps {
   chat: Chat
@@ -44,7 +45,13 @@ interface ChatListItemProps {
   onToggleCheck?: () => void
 }
 
-export function ChatListItem({ chat, isSelected, onClick, isChecked = false, onToggleCheck }: ChatListItemProps) {
+export function ChatListItem({
+  chat,
+  isSelected,
+  onClick,
+  isChecked = false,
+  onToggleCheck,
+}: ChatListItemProps) {
   const { openConnectionClient } = useDialogState()
   const { emit } = useWebSocket()
   const [isEditing, setIsEditing] = useState(false)
@@ -52,7 +59,7 @@ export function ChatListItem({ chat, isSelected, onClick, isChecked = false, onT
   const [shouldHighlight, setShouldHighlight] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
-  const { markAsUnread } = useChatMutations()
+  const { markAsUnread, remove} = useChatMutations()
   const { setOpen, setCurrentRow } = useClients()
   const updateProfileNameMutation = useMutation({
     mutationKey: ['set-profile-name'],
@@ -187,9 +194,17 @@ export function ChatListItem({ chat, isSelected, onClick, isChecked = false, onT
   const [isAddTagsModalOpen, setIsAddTagsModalOpen] = useState(false)
   const { updateClientTags } = useUpdateClientTags()
 
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false)
+
   const handleAddTags = async (tagIds: string[]) => {
     if (chat.client) {
       await updateClientTags(chat.client.id, tagIds)
+    }
+  }
+
+  const removeConversation = async () => {
+    if (chat) {
+      await remove(chat.id)
     }
   }
 
@@ -388,6 +403,17 @@ export function ChatListItem({ chat, isSelected, onClick, isChecked = false, onT
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align='end' className='w-44'>
+                    <RenderIfCan permission={PERMISSIONS.CONVERSATION_DELETE}>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setIsRemoveModalOpen(true)
+                        }}
+                        className={'text-red-500 hover:text-red-700'}
+                      >
+                        Eliminar
+                      </DropdownMenuItem>
+                    </RenderIfCan>
                     {chat.client ? (
                       <>
                         <RenderIfCan permission={PERMISSIONS.CLIENT_UPDATE}>
@@ -442,7 +468,7 @@ export function ChatListItem({ chat, isSelected, onClick, isChecked = false, onT
                               return
                             }
                             setCurrentRow({
-                              ...chat.client
+                              ...chat.client,
                             })
                             setOpen('view')
                           }}
@@ -482,6 +508,15 @@ export function ChatListItem({ chat, isSelected, onClick, isChecked = false, onT
             onSave={handleAddTags}
           />
         )}
+      </RenderIfCan>
+
+      <RenderIfCan permission={PERMISSIONS.CONVERSATION_DELETE}>
+        <RemoveChatConfirmationModal
+          open={isRemoveModalOpen}
+          setOpen={setIsRemoveModalOpen}
+          onConfirm={removeConversation}
+          onCancel={() => setIsRemoveModalOpen(false)}
+        />
       </RenderIfCan>
     </div>
   )

@@ -21,6 +21,10 @@ export const chatService = {
     return response.data.conversations
   },
 
+  removeChat: async (chatId: string) => {
+    await api.delete(`/chats/${chatId}`)
+  },
+
   getChatsByClientId: async (clientId: string, platformName?: string) => {
     const params: any = {}
     if (platformName) {
