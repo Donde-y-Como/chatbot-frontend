@@ -12,7 +12,7 @@ import {
   IconRefresh,
   IconEdit,
 } from '@tabler/icons-react'
-import { CalendarFold } from 'lucide-react'
+import { Bot, CalendarFold, MoreVertical } from 'lucide-react'
 import { toast } from 'sonner'
 import { PERMISSIONS } from '@/api/permissions.ts'
 import { RenderIfCan } from '@/lib/Can.tsx'
@@ -34,6 +34,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
   Dialog,
@@ -356,7 +359,7 @@ export function ConversationHeader({
 
       <div className='flex items-center gap-3'>
         {/* IA Toggle - Secondary Action */}
-        <div className='flex items-center gap-2'>
+        <div className='hidden sm:flex items-center gap-2'>
           <IconIaEnabled
             bgColor={'bg-background'}
             iconColor={'bg-secondary'}
@@ -459,6 +462,7 @@ export function ConversationHeader({
                     variant='ghost'
                     className='size-8 rounded-full sm:inline-flex lg:size-10'
                     onClick={handleConnectionClick}
+                    aria-label='Vincular perfil'
                   >
                     <IconAffiliate
                       size={22}
@@ -490,15 +494,16 @@ export function ConversationHeader({
         </div>
 
         {/* Primary Actions Group - Appointments & Events */}
-        <div className='flex items-center gap-2 p-1 rounded-lg bg-background/50 border border-border/50'>
+        <div className='hidden sm:flex items-center gap-2 p-1 rounded-lg bg-background/50 border border-border/50'>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  size='sm'
+                  size='icon'
                   variant='ghost'
                   className='h-9 w-9 rounded-md hover:bg-purple-50 hover:text-purple-600 transition-all duration-200 group'
                   onClick={handleViewClientClick}
+                  aria-label='Ver cliente'
                 >
                   <IconUser
                     size={18}
@@ -523,10 +528,11 @@ export function ConversationHeader({
                 <TooltipTrigger asChild>
                   <Button
                     ref={appointmentButtonRef}
-                    size='sm'
+                    size='icon'
                     variant='ghost'
                     className='h-9 w-9 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group'
                     onClick={handleAppointmentClick}
+                    aria-label='Agendar cita'
                   >
                     <IconChecklist
                       size={18}
@@ -551,10 +557,11 @@ export function ConversationHeader({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    size='sm'
+                    size='icon'
                     variant='ghost'
                     className='h-9 w-9 rounded-md hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-200 group'
                     onClick={handleEventClick}
+                    aria-label='Agendar evento'
                   >
                     <CalendarFold
                       size={18}
@@ -573,6 +580,113 @@ export function ConversationHeader({
               </Tooltip>
             </TooltipProvider>
           </RenderIfCan>
+        </div>
+
+        {/* Mobile actions: collapse into 3-dots menu */}
+        <div className='sm:hidden'>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size='icon' variant='ghost' aria-label='Abrir menú de acciones'>
+                <MoreVertical className='h-5 w-5' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end' className='w-64'>
+              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+
+              <DropdownMenuItem onClick={handleViewClientClick}>
+                <IconUser size={18} />
+                Ver cliente
+              </DropdownMenuItem>
+
+              <RenderIfCan permission={PERMISSIONS.APPOINTMENT_CREATE}>
+                <DropdownMenuItem onClick={handleAppointmentClick}>
+                  <IconChecklist size={18} />
+                  Agendar cita
+                </DropdownMenuItem>
+              </RenderIfCan>
+
+              <RenderIfCan permission={PERMISSIONS.EVENT_CREATE}>
+                <DropdownMenuItem onClick={handleEventClick}>
+                  <CalendarFold className='h-4 w-4' />
+                  Agendar evento
+                </DropdownMenuItem>
+              </RenderIfCan>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onClick={() => onToggleIA(!chatData.assistantEnabled)}
+                disabled={toggleIAMutation.isPending}
+              >
+                <Bot className='h-4 w-4' />
+                {chatData.assistantEnabled ? 'Desactivar IA' : 'Activar IA'}
+              </DropdownMenuItem>
+
+              {chatData.assistantEnabled && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Bot className='h-4 w-4' />
+                    Mensajes IA
+                    <span className='ml-auto text-xs opacity-60'>
+                      {chatData.aiMessageCount}/{chatData.aiMessageLimit}
+                    </span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className='w-56'>
+                    <DropdownMenuLabel>Ajustar límite</DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onClick={() => setAiLimitMutation.mutate(chatData.aiMessageLimit + 5)}
+                      disabled={setAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                    >
+                      <IconPlus size={16} />
+                      +5 mensajes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setAiLimitMutation.mutate(chatData.aiMessageLimit + 10)}
+                      disabled={setAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                    >
+                      <IconPlus size={16} />
+                      +10 mensajes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setAiLimitMutation.mutate(chatData.aiMessageLimit + 20)}
+                      disabled={setAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                    >
+                      <IconPlus size={16} />
+                      +20 mensajes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleCustomLimitClick}
+                      disabled={setAiLimitMutation.isPending || resetAiLimitMutation.isPending}
+                    >
+                      <IconEdit size={16} />
+                      Límite personalizado
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => resetAiLimitMutation.mutate()}
+                      disabled={
+                        setAiLimitMutation.isPending ||
+                        resetAiLimitMutation.isPending ||
+                        chatData.aiMessageCount === 0
+                      }
+                      className='text-orange-600 dark:text-orange-400'
+                    >
+                      <IconRefresh size={16} />
+                      Reiniciar contador
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
+
+              <RenderIfCan permission={PERMISSIONS.CONVERSATION_UPDATE}>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleConnectionClick}>
+                  <IconAffiliate size={18} />
+                  Vincular perfil
+                </DropdownMenuItem>
+              </RenderIfCan>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Dialogs */}

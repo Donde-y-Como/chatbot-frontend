@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils.ts'
-import { Paperclip } from 'lucide-react'
+import { FileText, Headphones, Image as ImageIcon, Paperclip, Video } from 'lucide-react'
 import {
   Command,
   CommandEmpty,
@@ -12,6 +12,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import { ChatMessage } from '@/features/chats/ChatMessage.tsx'
 import { Message } from '@/features/chats/ChatTypes'
 import { useGetQuickResponses } from '@/features/settings/quickResponse/hooks/useQuickResponses'
@@ -85,6 +86,17 @@ export function QuickResponseDropdown({
 
   if (!isOpen) return null
 
+  const getMediaBadgeIcon = (medias: QuickResponse['medias']) => {
+    const types = (medias ?? []).map((m) => (m.type ?? '').toLowerCase())
+    if (types.some((t) => t.includes('video'))) return Video
+    if (types.some((t) => t.includes('audio'))) return Headphones
+    if (types.some((t) => t.includes('document') || t.includes('pdf'))) return FileText
+    if (types.some((t) => t.includes('image') || t.includes('imagemessage') || t.includes('sticker'))) {
+      return ImageIcon
+    }
+    return Paperclip
+  }
+
   return (
     <div className='absolute bottom-full left-0 mb-1 w-96 max-h-96 z-50'>
       <div className='bg-popover rounded-md border shadow-md overflow-hidden'>
@@ -142,7 +154,10 @@ export function QuickResponseDropdown({
                           <div className='font-medium'>{response.title}</div>
                           {response.medias && response.medias.length > 0 && (
                             <Badge variant="secondary" className="text-xs">
-                              <Paperclip className="h-3 w-3 mr-1" />
+                              {(() => {
+                                const Icon = getMediaBadgeIcon(response.medias)
+                                return <Icon className="h-3 w-3 mr-1" />
+                              })()}
                               {response.medias.length}
                             </Badge>
                           )}
@@ -166,9 +181,11 @@ export function QuickResponseDropdown({
 export function ChatConversation({
   messages,
   mobileSelectedChatId,
+  autoScrollToBottom = true,
 }: ChatConversationProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messageGroups = useMessageGroups(messages)
+
   useEffect(() => {
     if (!mobileSelectedChatId) return
     const scroll = () => {
@@ -177,23 +194,38 @@ export function ChatConversation({
     requestAnimationFrame(() => requestAnimationFrame(scroll))
   }, [messages, mobileSelectedChatId])
 
+  useEffect(() => {
+    if (!autoScrollToBottom) return
+    if (!mobileSelectedChatId) return
+
+    const scroll = () => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+      })
+    }
+
+    requestAnimationFrame(() => requestAnimationFrame(scroll))
+  }, [autoScrollToBottom, messages.length, mobileSelectedChatId])
+
   return (
     <div className='flex size-full flex-1 overflow-hidden'>
       <div className='chat-text-container relative flex flex-1 flex-col w-full'>
         <ScrollArea
           key={mobileSelectedChatId}
-          className='chat-flex flex h-40 w-full flex-grow flex-col'
+          className='chat-flex flex h-full w-full flex-grow flex-col'
         >
-          <div className='flex flex-col min-h-full pt-4 pb-6'>
+          <div className='flex flex-col min-h-full px-1 sm:px-2 md:px-4 pt-4 pb-6'>
             {Object.entries(messageGroups).map(([date, groupMessages]) => {
               return (
                 <Fragment key={date}>
-                  <div className='flex items-center justify-center py-4'>
-                    <span className='bg-gray-100/80 backdrop-blur-sm text-gray-600 text-xs font-medium rounded-full px-3 py-1.5 shadow-sm'>
+                  <div className='relative my-6 flex items-center justify-center'>
+                    <Separator className='absolute inset-x-0' />
+                    <span className='relative rounded-full border bg-background px-3 py-1 text-xs text-muted-foreground shadow-sm'>
                       {date}
                     </span>
                   </div>
-                  <div className='space-y-1'>
+                  <div className='space-y-1.5'>
                     {groupMessages.map((message) => {
                       return (
                         <ChatMessage key={`${message.id}`} message={message} />

@@ -14,8 +14,9 @@ interface QuickResponsePreviewProps {
 }
 
 const MediaIcon = ({ type }: { type: string }) => {
-  switch (type) {
+  switch ((type || '').toLowerCase()) {
     case 'image':
+    case 'imagemessage':
       return <Image className="h-4 w-4" />
     case 'video':
       return <Video className="h-4 w-4" />
@@ -27,8 +28,9 @@ const MediaIcon = ({ type }: { type: string }) => {
 }
 
 const MediaPreviewItem = ({ media }: { media: Media }) => {
-  const isImage = media.type === 'image'
-  const isVideo = media.type === 'video'
+  const type = (media.type || '').toLowerCase()
+  const isImage = type === 'image' || type === 'imagemessage'
+  const isVideo = type === 'video'
 
   return (
     <div className="relative group">
@@ -40,7 +42,7 @@ const MediaPreviewItem = ({ media }: { media: Media }) => {
             className="w-16 h-16 object-cover rounded-lg border"
           />
           <div className="absolute inset-0 bg-black/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <MediaIcon type={media.type} />
+            <MediaIcon type={type} />
           </div>
         </div>
       ) : isVideo ? (
@@ -52,12 +54,12 @@ const MediaPreviewItem = ({ media }: { media: Media }) => {
             preload="metadata"
           />
           <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center">
-            <MediaIcon type={media.type} />
+            <MediaIcon type={type} />
           </div>
         </div>
       ) : (
         <div className="w-16 h-16 bg-muted rounded-lg border flex items-center justify-center">
-          <MediaIcon type={media.type} />
+          <MediaIcon type={type} />
         </div>
       )}
       

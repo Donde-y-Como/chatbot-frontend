@@ -179,8 +179,9 @@ export function ViewQuickResponseDialog({
 
 function MediaCard({ media }: { media: Media }) {
   const getMediaIcon = () => {
-    switch (media.type.toLowerCase()) {
+    switch ((media.type || '').toLowerCase()) {
       case 'image':
+      case 'imagemessage':
         return <ImageIcon className='w-5 h-5' />
       case 'video':
         return <Video className='w-5 h-5' />
@@ -194,19 +195,19 @@ function MediaCard({ media }: { media: Media }) {
   return (
     <Card className='overflow-hidden'>
       <div className='aspect-video bg-muted relative'>
-        {media.type.toLowerCase() === 'image' ? (
+        {(media.type || '').toLowerCase() === 'image' || (media.type || '').toLowerCase() === 'imagemessage' ? (
           <img
             src={media.url || '/placeholder.svg'}
             alt={media.caption || 'Media'}
             className='w-full h-full object-cover'
           />
-        ) : media.type.toLowerCase() === 'video' ? (
+        ) : (media.type || '').toLowerCase() === 'video' ? (
           <video
             src={media.url}
             controls
             className='w-full h-full object-cover'
           />
-        ) : media.type.toLowerCase() === 'audio' ? (
+        ) : (media.type || '').toLowerCase() === 'audio' ? (
           <div className='flex items-center justify-center h-full bg-primary/10'>
             <audio src={media.url} controls className='w-11/12' />
           </div>
@@ -220,7 +221,13 @@ function MediaCard({ media }: { media: Media }) {
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-1.5'>
             {getMediaIcon()}
-            <span className='text-sm font-medium capitalize'>{media.type === "image" ? "Foto" : media.type=== "document" ? "Documento" : media.type}</span>
+            <span className='text-sm font-medium capitalize'>
+              {(media.type || '').toLowerCase() === 'image' || (media.type || '').toLowerCase() === 'imagemessage'
+                ? 'Foto'
+                : (media.type || '').toLowerCase() === 'document'
+                  ? 'Documento'
+                  : media.type}
+            </span>
           </div>
           <a
             href={media.url}
