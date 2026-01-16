@@ -178,38 +178,39 @@ export function ViewQuickResponseDialog({
 }
 
 function MediaCard({ media }: { media: Media }) {
+  const normalizedType = (media.type || '').toLowerCase()
+  const isImage = normalizedType === 'image' || normalizedType === 'imagemessage' || normalizedType.includes('image')
+  const isVideo = normalizedType === 'video' || normalizedType.includes('video')
+  const isDocument = normalizedType === 'document' || normalizedType.includes('pdf') || normalizedType.includes('application/')
+
   const getMediaIcon = () => {
-    switch ((media.type || '').toLowerCase()) {
-      case 'image':
-      case 'imagemessage':
-        return <ImageIcon className='w-5 h-5' />
-      case 'video':
-        return <Video className='w-5 h-5' />
-      case 'audio':
-        return <FileAudio className='w-5 h-5' />
-      default:
-        return <File className='w-5 h-5' />
-    }
+    if (isImage) return <ImageIcon className='w-5 h-5' />
+    if (isVideo) return <Video className='w-5 h-5' />
+    if (isDocument) return <FileText className='w-5 h-5' />
+    return <File className='w-5 h-5' />
   }
 
   return (
     <Card className='overflow-hidden'>
       <div className='aspect-video bg-muted relative'>
-        {(media.type || '').toLowerCase() === 'image' || (media.type || '').toLowerCase() === 'imagemessage' ? (
+        {isImage ? (
           <img
             src={media.url || '/placeholder.svg'}
-            alt={media.caption || 'Media'}
+            alt={media.caption || media.filename || 'Media'}
             className='w-full h-full object-cover'
           />
-        ) : (media.type || '').toLowerCase() === 'video' ? (
+        ) : isVideo ? (
           <video
             src={media.url}
             controls
             className='w-full h-full object-cover'
           />
-        ) : (media.type || '').toLowerCase() === 'audio' ? (
-          <div className='flex items-center justify-center h-full bg-primary/10'>
-            <audio src={media.url} controls className='w-11/12' />
+        ) : isDocument ? (
+          <div className='flex flex-col items-center justify-center h-full bg-primary/10 gap-2 p-3'>
+            <FileText className='w-16 h-16 text-primary/50' />
+            <div className='text-xs text-center break-words text-muted-foreground'>
+              {media.filename || 'Documento'}
+            </div>
           </div>
         ) : (
           <div className='flex items-center justify-center h-full bg-primary/10'>
@@ -222,11 +223,7 @@ function MediaCard({ media }: { media: Media }) {
           <div className='flex items-center gap-1.5'>
             {getMediaIcon()}
             <span className='text-sm font-medium capitalize'>
-              {(media.type || '').toLowerCase() === 'image' || (media.type || '').toLowerCase() === 'imagemessage'
-                ? 'Foto'
-                : (media.type || '').toLowerCase() === 'document'
-                  ? 'Documento'
-                  : media.type}
+              {isImage ? 'Foto' : isVideo ? 'Video' : isDocument ? 'Documento' : media.type}
             </span>
           </div>
           <a
@@ -235,7 +232,7 @@ function MediaCard({ media }: { media: Media }) {
             rel='noopener noreferrer'
             className='text-xs underline text-primary hover:underline'
           >
-            Ver
+            Abrir
           </a>
         </div>
         {media.caption && (

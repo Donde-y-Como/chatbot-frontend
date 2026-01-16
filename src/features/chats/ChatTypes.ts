@@ -60,12 +60,19 @@ export enum PlatformName {
   WhatsappWeb = 'whatsappWeb',
 }
 
+export type MediaType = 'image' | 'video' | 'document'
+
 export type Media = {
+  // Note: backend may send additional/legacy values; outgoing flow uses `MediaType`.
   type: string
   url: string
   caption?: string
-  filename?: string;
-  mimetype?: string;
+  filename?: string
+  mimetype?: string
+}
+
+export type OutgoingMedia = Omit<Media, 'type'> & {
+  type: MediaType
 }
 
 export type PlatformIdentity = {

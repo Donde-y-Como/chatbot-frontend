@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { api } from '@/api/axiosInstance.ts'
+import type { MediaType } from '@/features/chats/ChatTypes'
 
 const VALID_DOCS = {
   'text/plain': 'txt',
+  'application/pdf': 'pdf',
   'application/vnd.ms-excel': 'xls',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
   'application/msword': 'doc',
@@ -24,7 +26,7 @@ export const useUploadMedia = () => {
     file: File
   ): {
     isValid: boolean
-    type: 'image' | 'video' | 'audio' | 'document' | null
+    type: MediaType | null
   } => {
     if (VALID_DOCS[file.type as keyof typeof VALID_DOCS]) {
       return { isValid: true, type: 'document' }

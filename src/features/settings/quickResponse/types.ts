@@ -24,8 +24,11 @@ export const quickResponseSchema = z.object({
   medias: z
     .array(
       z.object({
-        type: z.string(),
+        type: z.enum(['image', 'video', 'document']),
         url: z.string(),
+        caption: z.string().optional(),
+        filename: z.string().optional(),
+        mimetype: z.string().optional(),
       })
     )
     .default([]),

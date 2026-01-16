@@ -2,6 +2,47 @@ import { uid } from 'uid'
 import { Message, Media } from '@/features/chats/ChatTypes'
 import { QuickResponse } from '@/features/settings/quickResponse/types'
 
+function inferFilenameFromUrl(url: string, mimetype?: string) {
+  const mt = (mimetype || '').toLowerCase()
+  const extFromMime = (() => {
+    if (mt === 'application/pdf') return '.pdf'
+    if (mt === 'text/plain') return '.txt'
+    if (mt === 'application/vnd.ms-excel') return '.xls'
+    if (mt === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') return '.xlsx'
+    if (mt === 'application/msword') return '.doc'
+    if (mt === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return '.docx'
+    if (mt === 'application/vnd.ms-powerpoint') return '.ppt'
+    if (mt === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') return '.pptx'
+    if (mt === 'video/mp4') return '.mp4'
+    if (mt === 'image/png') return '.png'
+    if (mt === 'image/jpg' || mt === 'image/jpeg') return '.jpg'
+    return ''
+  })()
+
+  const fromUrl = (() => {
+    try {
+      const parsed = new URL(url)
+      const last = parsed.pathname.split('/').filter(Boolean).pop()
+      return last ? decodeURIComponent(last) : 'archivo'
+    } catch {
+      const last = url.split('/').pop()
+      return last || 'archivo'
+    }
+  })()
+
+  if (fromUrl.includes('.')) return fromUrl
+  return `${fromUrl}${extFromMime}`
+}
+
+function ensureMediaFilename(media: Media): Media {
+  if (media.filename) return media
+  if (!media.url) return media
+  return {
+    ...media,
+    filename: inferFilenameFromUrl(media.url, media.mimetype),
+  }
+}
+
 export interface MessageSenderService {
   createTextMessage(content: string): Message
   createMediaMessage(media: Media): Message
@@ -26,10 +67,11 @@ export class DefaultMessageSenderService implements MessageSenderService {
   }
 
   createMediaMessage(media: Media): Message {
+    const normalizedMedia = ensureMediaFilename(media)
     return {
       id: uid(),
-      content: media.caption || '',
-      media,
+      content: normalizedMedia.caption || '',
+      media: normalizedMedia,
       ...this.createBaseMessage(),
     }
   }
@@ -45,7 +87,7 @@ export class DefaultMessageSenderService implements MessageSenderService {
     // Create individual messages for each media item
     if (quickResponse.medias && quickResponse.medias.length > 0) {
       quickResponse.medias.forEach((media) => {
-        messages.push(this.createMediaMessage(media))
+        messages.push(this.createMediaMessage(ensureMediaFilename(media)))
       })
     }
 

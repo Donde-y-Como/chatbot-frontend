@@ -188,21 +188,63 @@ export const MediaPreview: React.FC<MediaProps> = ({ media, triggerClassName }) 
   const [isFullscreen, setIsFullscreen] = useState(false)
   const zoomRef = useRef<ZoomableImageHandle | null>(null)
 
-  const displayName = useMemo(() => {
+  const inferredFilename = useMemo(() => {
     if (media.filename) return media.filename
-    try {
-      const url = new URL(media.url)
-      const last = url.pathname.split('/').filter(Boolean).pop()
-      return last ? decodeURIComponent(last) : 'archivo'
-    } catch {
-      const last = media.url.split('/').pop()
-      return last || 'archivo'
-    }
-  }, [media.filename, media.url])
+
+    const mimetype = (media.mimetype || '').toLowerCase()
+    const extFromMime = (() => {
+      if (mimetype === 'application/pdf') return '.pdf'
+      if (mimetype === 'text/plain') return '.txt'
+      if (mimetype === 'application/vnd.ms-excel') return '.xls'
+      if (
+        mimetype ===
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      )
+        return '.xlsx'
+      if (mimetype === 'application/msword') return '.doc'
+      if (
+        mimetype ===
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      )
+        return '.docx'
+      if (mimetype === 'application/vnd.ms-powerpoint') return '.ppt'
+      if (
+        mimetype ===
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      )
+        return '.pptx'
+      if (mimetype === 'video/mp4') return '.mp4'
+      if (mimetype === 'image/png') return '.png'
+      if (mimetype === 'image/jpg' || mimetype === 'image/jpeg') return '.jpg'
+      return ''
+    })()
+
+    const fromUrl = (() => {
+      try {
+        const url = new URL(media.url)
+        const last = url.pathname.split('/').filter(Boolean).pop()
+        return last ? decodeURIComponent(last) : 'archivo'
+      } catch {
+        const last = media.url.split('/').pop()
+        return last || 'archivo'
+      }
+    })()
+
+    if (fromUrl.includes('.')) return fromUrl
+    return `${fromUrl}${extFromMime}`
+  }, [media.filename, media.mimetype, media.url])
+
+  const mediaWithFilename = useMemo(() => {
+    return { ...media, filename: inferredFilename }
+  }, [inferredFilename, media])
+
+  const displayName = useMemo(() => {
+    return mediaWithFilename.filename || 'archivo'
+  }, [mediaWithFilename.filename])
 
   const mediaKind = useMemo(() => {
-    const type = (media.type || '').toLowerCase()
-    const mimetype = (media.mimetype || '').toLowerCase()
+    const type = (mediaWithFilename.type || '').toLowerCase()
+    const mimetype = (mediaWithFilename.mimetype || '').toLowerCase()
 
     const isImage =
       type.includes('image') ||
@@ -222,7 +264,7 @@ export const MediaPreview: React.FC<MediaProps> = ({ media, triggerClassName }) 
     if (isAudio) return 'audio'
     if (isDocument) return 'document'
     return 'unknown'
-  }, [media.mimetype, media.type])
+  }, [mediaWithFilename.mimetype, mediaWithFilename.type])
 
   const handleThumbLoad = useCallback(() => {
     setThumb({ isLoading: false, error: null })

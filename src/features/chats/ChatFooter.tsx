@@ -3,6 +3,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react'
@@ -18,11 +19,13 @@ import { uid } from 'uid'
 import { sortByLastMessageTimestamp } from '@/lib/utils.ts'
 import { useWebSocket } from '@/hooks/use-web-socket.ts'
 import { Button } from '@/components/ui/button.tsx'
+import { Textarea } from '@/components/ui/textarea'
 import {
   ChatMessages,
   ChatResponse,
   Message,
 } from '@/features/chats/ChatTypes.ts'
+import type { OutgoingMedia } from '@/features/chats/ChatTypes.ts'
 import { MediaUpload } from '@/features/chats/MediaUpload.tsx'
 import { EmojiPickerButton } from '@/features/chats/components/EmojiPickerButton'
 import { QuickResponseDropdown } from './ChatConversation.tsx'
@@ -47,6 +50,9 @@ const ChatFooter = memo(
     const queryClient = useQueryClient()
     const [newMessage, setNewMessage] = useState('')
     const [isSending, setIsSending] = useState(false)
+    const [isSendingQuickResponseBatch, setIsSendingQuickResponseBatch] =
+      useState(false)
+    const isSendingQuickResponseBatchRef = useRef(false)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const {
       isDropdownOpen,
@@ -69,7 +75,10 @@ const ChatFooter = memo(
       getStashedBatch,
     } = useQuickResponseStash()
 
-    const messageSenderService = new DefaultMessageSenderService()
+    const messageSenderService = useMemo(
+      () => new DefaultMessageSenderService(),
+      []
+    )
 
     const adjustTextareaHeight = useCallback((element: HTMLTextAreaElement) => {
       element.style.height = '0'
@@ -171,6 +180,8 @@ const ChatFooter = memo(
       },
     })
 
+    const { mutate: mutateSendMessage } = sendMessageMutation
+
     const handleSendMessage = useCallback((e: FormEvent) => {
       e.preventDefault()
       
@@ -187,35 +198,27 @@ const ChatFooter = memo(
         textareaRef.current.style.height = '32px'
       }
 
-      sendMessageMutation.mutate({
+      mutateSendMessage({
         conversationId: selectedChatId,
         message: newMsg,
       })
-    }, [newMessage, isSending, messageSenderService, sendMessageMutation.mutate, selectedChatId])
+    }, [newMessage, isSending, messageSenderService, mutateSendMessage, selectedChatId])
 
     const handleMediaSend = useCallback(
-      (media: {
-        type: 'image' | 'video' | 'audio' | 'document'
-        url: string
-      }) => {
+      (media: OutgoingMedia) => {
         if (isSending) {
           toast.error('Espera a que se envíe el mensaje anterior')
           return
         }
 
-        const mediaObject = {
-          type: media.type,
-          url: media.url,
-        }
-        
-        const newMsg = messageSenderService.createMediaMessage(mediaObject)
+        const newMsg = messageSenderService.createMediaMessage(media)
 
-        sendMessageMutation.mutate({
+        mutateSendMessage({
           conversationId: selectedChatId,
           message: newMsg,
         })
       },
-      [selectedChatId, sendMessageMutation.mutate, isSending, messageSenderService]
+      [selectedChatId, mutateSendMessage, isSending, messageSenderService]
     )
 
     const handleInputChange = useCallback(
@@ -254,13 +257,22 @@ const ChatFooter = memo(
 
     const handleSendQuickResponseBatch = useCallback(async () => {
       const batch = getStashedBatch()
-      if (!batch || batch.messages.length === 0 || isSending) return
+      if (
+        !batch ||
+        batch.messages.length === 0 ||
+        isSending ||
+        isSendingQuickResponseBatchRef.current
+      )
+        return
+
+      isSendingQuickResponseBatchRef.current = true
+      setIsSendingQuickResponseBatch(true)
 
       try {
         // Send messages sequentially to maintain order
         for (const message of batch.messages) {
           await new Promise<void>((resolve, reject) => {
-            sendMessageMutation.mutate(
+            mutateSendMessage(
               {
                 conversationId: selectedChatId,
                 message,
@@ -279,8 +291,11 @@ const ChatFooter = memo(
       } catch (error) {
         console.error('Failed to send quick response batch:', error)
         toast.error('Error al enviar la respuesta rápida')
+      } finally {
+        isSendingQuickResponseBatchRef.current = false
+        setIsSendingQuickResponseBatch(false)
       }
-    }, [getStashedBatch, isSending, sendMessageMutation.mutate, selectedChatId, clearStash])
+    }, [getStashedBatch, isSending, mutateSendMessage, selectedChatId, clearStash])
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -348,96 +363,83 @@ const ChatFooter = memo(
             quickResponse={stashedQuickResponse}
             onSend={handleSendQuickResponseBatch}
             onCancel={clearStash}
-            isLoading={isSending}
+            isLoading={isSending || isSendingQuickResponseBatch}
           />
         )}
         
         <form
           onSubmit={handleSendMessage}
-          className='flex w-full gap-2'
+          className='flex w-full items-end gap-2'
         >
-        <div className='flex flex-1 items-start gap-2 rounded-md border border-input px-2 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring lg:gap-4'>
-          {canSendMessage ? (
-            <>
-              <div className='self-center flex items-center gap-1'>
-                <MediaUpload onSend={handleMediaSend} />
-                <EmojiPickerButton onEmojiSelect={handleEmojiSelect} />
-              </div>
+          <div className='flex flex-1 items-end gap-2 rounded-2xl border border-input bg-background px-2 py-2 shadow-sm focus-within:ring-1 focus-within:ring-ring lg:gap-3'>
+            {canSendMessage ? (
+              <>
+                <div className='flex items-center gap-1'>
+                  <MediaUpload onSend={handleMediaSend} />
+                  <EmojiPickerButton onEmojiSelect={handleEmojiSelect} />
+                </div>
 
-              <div className='relative flex-1'>
-                <textarea
-                  ref={textareaRef}
-                  rows={1}
-                  placeholder='Escribe tu mensaje o usa "/" para respuestas rápidas'
-                  className='h-8 min-h-8 max-h-32 w-full bg-inherit resize-none overflow-y-auto md:pt-1.5 pt-1 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed'
-                  value={newMessage}
-                  onKeyDown={handleKeyDown}
-                  onChange={handleInputChange}
-                  disabled={isSending}
-                />
+                <div className='relative flex-1'>
+                  <Textarea
+                    ref={textareaRef}
+                    rows={1}
+                    placeholder='Escribe tu mensaje o usa "/" para respuestas rápidas'
+                    className='min-h-9 max-h-32 w-full resize-none border-0 bg-transparent px-2 py-1.5 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0'
+                    value={newMessage}
+                    onKeyDown={handleKeyDown}
+                    onChange={handleInputChange}
+                    disabled={isSending}
+                  />
 
-                <QuickResponseDropdown
-                  isOpen={isDropdownOpen}
-                  onClose={closeDropdown}
-                  onSelectResponse={handleSelectQuickResponse}
-                  searchTerm={searchTerm}
-                  selectedIndex={selectedIndex}
-                  responses={filteredResponses}
-                  isLoading={isLoading}
-                  anchorRef={textareaRef}
-                  onSelectionChange={setSelectedResponseIndex}
-                />
-              </div>
+                  <QuickResponseDropdown
+                    isOpen={isDropdownOpen}
+                    onClose={closeDropdown}
+                    onSelectResponse={handleSelectQuickResponse}
+                    searchTerm={searchTerm}
+                    selectedIndex={selectedIndex}
+                    responses={filteredResponses}
+                    isLoading={isLoading}
+                    anchorRef={textareaRef}
+                    onSelectionChange={setSelectedResponseIndex}
+                  />
+                </div>
 
-              <div className='self-center'>
                 <Button
-                  variant='ghost'
-                  size='icon'
-                  className='hidden sm:inline-flex'
                   type='submit'
+                  size='icon'
+                  className='shrink-0'
                   disabled={!newMessage.trim() || isSending}
+                  aria-label='Enviar mensaje'
                 >
                   {isSending ? (
-                    <div className='animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full' />
+                    <div className='animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full' />
                   ) : (
-                    <IconSend size={20} />
+                    <IconSend size={18} />
                   )}
                 </Button>
+              </>
+            ) : (
+              <div className='w-full'>
+                {isWhatsAppChat ? (
+                  <ExpiredChatTemplates selectedChatId={selectedChatId} />
+                ) : isWhatsAppWebChat ? (
+                  <div className='text-sm opacity-60 italic p-2 flex items-center gap-2'>
+                    <p>Conecta tu whatsapp web para enviar mensajes</p>
+                    <Link
+                      to='/settings/whatsapp'
+                      className='text-sm font-medium underline not-italic'
+                    >
+                      Conectar
+                    </Link>
+                  </div>
+                ) : (
+                  <p className='text-sm opacity-60 italic p-2'>
+                    Esta conversación debe ser iniciada por el cliente.
+                  </p>
+                )}
               </div>
-            </>
-          ) : (
-            <div className='w-full'>
-              {isWhatsAppChat ? (
-                <ExpiredChatTemplates selectedChatId={selectedChatId} />
-              ) : isWhatsAppWebChat ? (
-                <div className='text-sm opacity-60 italic p-2 flex items-center gap-2'>
-                  <p>Conecta tu whatsapp web para enviar mensajes</p>
-                  <Link
-                    to='/settings/whatsapp'
-                    className='text-sm font-medium underline not-italic'
-                  >
-                    Conectar
-                  </Link>
-                </div>
-              ) : (
-                <p className='text-sm opacity-60 italic p-2'>
-                  Esta conversación debe ser iniciada por el cliente.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-        <Button 
-          className='self-start h-10 sm:hidden' 
-          type='submit'
-          disabled={!newMessage.trim() || isSending}
-        >
-          {isSending ? (
-            <div className='animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full' />
-          ) : (
-            <IconSend size={18} />
-          )}
-        </Button>
+            )}
+          </div>
         </form>
       </div>
     )

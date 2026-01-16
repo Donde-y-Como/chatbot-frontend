@@ -1,7 +1,9 @@
 import React, { useRef, useState } from 'react'
-import { Paperclip, Send, X } from 'lucide-react'
+import { FileText, Paperclip, Send, X } from 'lucide-react'
 import { toast } from '@/hooks/use-toast.ts'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
@@ -10,18 +12,17 @@ import {
 } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
 import { useUploadMedia } from '@/features/chats/hooks/useUploadMedia.ts'
+import type { OutgoingMedia } from '@/features/chats/ChatTypes'
 
 interface MediaUploadProps {
-  onSend: (media: {
-    type: 'image' | 'video' | 'audio' | 'document'
-    url: string
-  }) => void
+  onSend: (media: OutgoingMedia) => void
 }
 
 export const MediaUpload: React.FC<MediaUploadProps> = ({ onSend }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
+  const [caption, setCaption] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { uploadFile, validateFile, isUploading, progress } = useUploadMedia()
 
@@ -36,6 +37,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ onSend }) => {
     }
 
     setSelectedFile(file)
+    setCaption('')
     if (type === 'image' || type === 'video') {
       const url = URL.createObjectURL(file)
       setPreview(url)
@@ -51,7 +53,14 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ onSend }) => {
 
     try {
       const url = await uploadFile(selectedFile)
-      onSend({ type, url })
+
+      onSend({
+        type,
+        url,
+        caption: caption.trim() ? caption.trim() : undefined,
+        filename: selectedFile.name,
+        mimetype: selectedFile.type,
+      })
       handleClear()
     } catch (error) {
       console.error('Upload failed:', error)
@@ -66,6 +75,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ onSend }) => {
     setSelectedFile(null)
     setPreview(null)
     setIsOpen(false)
+    setCaption('')
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -78,7 +88,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ onSend }) => {
         ref={fileInputRef}
         onChange={handleFileSelect}
         className='hidden'
-        accept='.txt,.xls,.xlsx,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.mp4'
+        accept='.pdf,.txt,.xls,.xlsx,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.mp4'
       />
 
       <Button
@@ -98,7 +108,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ onSend }) => {
             </DialogDescription>
             <div className='relative flex items-center justify-center'>
               {preview ? (
-                selectedFile.type.startsWith('image') ? (
+                validateFile(selectedFile).type === 'image' ? (
                   <img
                     src={preview}
                     alt='Preview'
@@ -112,8 +122,11 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ onSend }) => {
                   />
                 )
               ) : (
-                <div className='p-4 border rounded-lg'>
-                  <p className='text-foreground'>{selectedFile.name}</p>
+                <div className='flex flex-col items-center justify-center gap-2 p-6 border rounded-lg bg-muted/30 w-full'>
+                  <FileText className='h-10 w-10 text-muted-foreground' />
+                  <p className='text-foreground break-all text-center'>
+                    {selectedFile.name}
+                  </p>
                 </div>
               )}
               {isUploading && (
@@ -123,6 +136,20 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ onSend }) => {
                 </div>
               )}
             </div>
+
+            <div className='mt-4 grid gap-2'>
+              <div className='grid gap-1.5'>
+                <Label htmlFor='mediaCaption'>Texto para la imagen (opcional)</Label>
+                <Input
+                  id='mediaCaption'
+                  placeholder='Texto para la imagen…'
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  disabled={isUploading}
+                />
+              </div>
+            </div>
+
             <div className='flex justify-end gap-2 mt-4'>
               <Button variant='ghost' onClick={handleClear}>
                 <X className='h-4 w-4 mr-2' />

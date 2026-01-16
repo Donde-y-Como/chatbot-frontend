@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useCallback, useState } from 'react'
-import { Upload, X } from 'lucide-react'
+import { FileText, Play, Upload, Video, X } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -50,21 +50,24 @@ export function FileUpload({
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      if (previews.length + acceptedFiles.length > maxFiles) {
-        toast.error(`Solo puedes subir ${maxFiles} archivos`)
-        return
-      }
+      setPreviews((prev) => {
+        if (prev.length + acceptedFiles.length > maxFiles) {
+          toast.error(`Solo puedes subir ${maxFiles} archivos`)
+          return prev
+        }
 
-      const newPreviews = acceptedFiles.map((file) => ({
-        id: Math.random().toString(36).slice(2),
-        file,
-        preview: URL.createObjectURL(file),
-      }))
+        const newPreviews = acceptedFiles.map((file) => ({
+          id: Math.random().toString(36).slice(2),
+          file,
+          preview: URL.createObjectURL(file),
+        }))
 
-      setPreviews((prev) => [...prev, ...newPreviews])
-      onChange?.(acceptedFiles)
+        const next = [...prev, ...newPreviews]
+        onChange?.(next.map((p) => p.file))
+        return next
+      })
     },
-    [maxFiles, onChange, previews.length]
+    [maxFiles, onChange]
   )
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -118,7 +121,7 @@ export function FileUpload({
             Arrastra archivos aquí o selecciona
           </h3>
           <p className='mt-1 text-xs text-muted-foreground'>
-            PNG, JPG, GIF hasta {(maxSize / 1024 / 1024).toFixed(0)}MB
+            Archivos hasta {(maxSize / 1024 / 1024).toFixed(0)}MB
           </p>
         </div>
       </div>
@@ -126,16 +129,38 @@ export function FileUpload({
       {previews.length > 0 && (
         <div className='mt-6 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
           {previews.map((file) => {
+            const isImage = file.file.type.startsWith('image/')
+            const isVideo = file.file.type.startsWith('video/')
             return (
               <div
                 key={file.id}
                 className='group relative aspect-square overflow-hidden rounded-lg border bg-background'
               >
-                <img
-                  src={file.preview}
-                  alt={file.file.name}
-                  className='h-full w-full cursor-pointer object-cover transition-all hover:opacity-80'
-                />
+                {isImage ? (
+                  <img
+                    src={file.preview}
+                    alt={file.file.name}
+                    className='h-full w-full cursor-pointer object-cover transition-all hover:opacity-80'
+                  />
+                ) : isVideo ? (
+                  <div className='relative h-full w-full'>
+                    <video
+                      src={file.preview}
+                      className='h-full w-full object-cover'
+                      muted
+                      playsInline
+                    />
+                    <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
+                      <div className='rounded-full bg-background/70 p-2 backdrop-blur'>
+                        <Play className='h-5 w-5' />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className='flex h-full w-full items-center justify-center bg-muted'>
+                    <FileText className='h-10 w-10 text-muted-foreground' />
+                  </div>
+                )}
                 <div className='absolute inset-x-0 bottom-0 flex items-center justify-between bg-background/80 p-2.5 backdrop-blur transition-all'>
                   <div className='min-w-0 flex-1'>
                     <p className='truncate text-sm font-medium'>
@@ -155,6 +180,13 @@ export function FileUpload({
                     <X className='h-4 w-4' />
                   </Button>
                 </div>
+
+                {isVideo && (
+                  <div className='pointer-events-none absolute top-2 left-2 rounded-md bg-background/70 px-2 py-1 text-xs font-medium backdrop-blur flex items-center gap-1'>
+                    <Video className='h-3.5 w-3.5' />
+                    Video
+                  </div>
+                )}
               </div>
             )
           })}
