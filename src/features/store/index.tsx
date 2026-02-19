@@ -19,6 +19,7 @@ import {
   useAddPaymentToOrder,
   useConvertToOrder,
   useConvertToSale,
+  useEditOrder,
 } from './hooks/usePaymentMutations'
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx'
 import { Separator } from '@/components/ui/separator.tsx'
@@ -65,6 +66,15 @@ export default function Store() {
   const convertToSaleMutation = useConvertToSale()
   const convertToOrderMutation = useConvertToOrder()
   const addPaymentToOrderMutation = useAddPaymentToOrder()
+  const editOrderMutation = useEditOrder()
+
+  // Apply editing client ID from localStorage when in edit mode
+  useEffect(() => {
+    const editingClientId = localStorage.getItem('pos_editing_client_id')
+    if (editingClientId && cart.cart.editingOrderId) {
+      cart.setSelectedClient(editingClientId)
+    }
+  }, [cart.cart.editingOrderId])
 
   // Receipt fetching
   const { data: receiptsResponse } = useGetOrderReceipts(
@@ -143,19 +153,40 @@ export default function Store() {
 
   const handleSavePendingOrder = async () => {
     try {
-      const orderResult = await convertToOrderMutation.mutateAsync({
+      // === MODO EDICIÓN: guardar cambios a la orden existente sin pago ===
+      if (cart.cart.editingOrderId) {
+        await editOrderMutation.mutateAsync({
+          orderId: cart.cart.editingOrderId,
+          items: cart.cart.items,
+        })
+        // Limpiar modo edición y carrito
+        cart.clearEditingOrder()
+        localStorage.removeItem('pos_editing_client_id')
+        cart.setSelectedClient('')
+        await cart.clearCart()
+        navigate({ to: '/orden/historial' })
+        return
+      }
+
+      // === MODO NORMAL: crear nueva orden pendiente ===
+      await convertToOrderMutation.mutateAsync({
         cart: cart.cart,
-        paymentMethod: 'cash', // Default payment method for pending orders
+        paymentMethod: 'cash',
       })
-      
-      // Clear cart after saving pending order
       cart.setSelectedClient('')
-      toast.success('Orden pendiente guardada exitosamente')
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'No se pudo guardar la orden pendiente'
+        error instanceof Error ? error.message : 'No se pudo guardar la orden'
       )
     }
+  }
+
+  const handleCancelEdit = async () => {
+    cart.clearEditingOrder()
+    localStorage.removeItem('pos_editing_client_id')
+    cart.setSelectedClient('')
+    await cart.clearCart()
+    toast.info('Edición cancelada')
   }
 
   const handleViewLatestReceipt = () => {
@@ -165,7 +196,7 @@ export default function Store() {
       setIsReceiptDialogOpen(true)
     } else if (lastTransactionType === 'order' && receiptsResponse?.data && receiptsResponse.data.length > 0) {
       // For orders, get the latest payment receipt
-      const latestReceipt = receiptsResponse.data.sort((a, b) => 
+      const latestReceipt = receiptsResponse.data.sort((a, b) =>
         b.paymentData.sequence - a.paymentData.sequence
       )[0]
       setSelectedReceiptId(latestReceipt.id)
@@ -191,6 +222,44 @@ export default function Store() {
       let transactionId: string | undefined
       let transactionType: 'order' | 'sale' | null = null
 
+      // === MODO EDICIÓN: actualizar items de la orden existente y luego procesar pago ===
+      if (cart.cart.editingOrderId) {
+        const orderId = cart.cart.editingOrderId
+
+        // Paso 1: actualizar los items de la orden
+        await editOrderMutation.mutateAsync({
+          orderId,
+          items: cart.cart.items,
+        })
+
+        // Paso 2: si hay monto a pagar, aplicar el pago sobre la orden existente
+        if (amountToPay > 0) {
+          const paymentResult = await addPaymentToOrderMutation.mutateAsync({
+            orderId,
+            paymentMethod,
+            amount: { amount: amountToPay, currency: cart.cart.total.currency },
+            cashReceived,
+            changeAmount,
+          })
+          transactionId = orderId
+          // Si el pago cubre el total → queda como venta
+          transactionType = amountToPay >= cart.cart.total.amount ? 'sale' : 'order'
+        }
+
+        // Limpiar modo edición y carrito
+        cart.clearEditingOrder()
+        localStorage.removeItem('pos_editing_client_id')
+        cart.setSelectedClient('')
+        await cart.clearCart()
+
+        // Mostrar recibo si hubo pago
+        if (transactionId && amountToPay > 0) {
+          setLastTransactionId(transactionId)
+          setLastTransactionType(transactionType)
+        }
+        return
+      }
+
       // Case 1: User is paying 0 (not paying) -> convert to order
       if (amountToPay === 0) {
         const orderResult = await convertToOrderMutation.mutateAsync({
@@ -212,7 +281,7 @@ export default function Store() {
         })
         transactionId = saleResult.id
         transactionType = 'sale'
-        
+
         // For sales, also capture the superReceiptId for receipt viewing
         if (saleResult.superReceiptId) {
           setLastReceiptId(saleResult.superReceiptId)
@@ -298,6 +367,7 @@ export default function Store() {
           onConvertCart={handleConvertCart}
           onHistorialClick={handleHistorialClick}
           onSavePendingOrder={handleSavePendingOrder}
+          onCancelEdit={cart.cart.editingOrderId ? handleCancelEdit : undefined}
         />
       )}
 

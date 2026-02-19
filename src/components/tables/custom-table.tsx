@@ -25,13 +25,14 @@ import {
 import { DataTablePagination } from './data-table-pagination'
 import { DataTableToolbar } from './data-table-toolbar'
 
-declare module '@tanstack/react-table' {}
+declare module '@tanstack/react-table' { }
 
 interface DataTableProps<T> {
   columns: ColumnDef<T>[]
   data: T[]
   toolbar?: (table: Table<T>) => React.ReactNode
   globalFilterFn?: any
+  onRowClick?: (row: T) => void
 }
 
 export function CustomTable<T>({
@@ -39,6 +40,7 @@ export function CustomTable<T>({
   data,
   toolbar,
   globalFilterFn,
+  onRowClick,
 }: DataTableProps<T>) {
   const [rowSelection, setRowSelection] = useState({})
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -89,9 +91,9 @@ export function CustomTable<T>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   )
                 })}
@@ -104,11 +106,19 @@ export function CustomTable<T>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className='group/row'
+                  className={`group/row transition-colors ${onRowClick ? 'cursor-pointer hover:bg-muted/60' : ''
+                    }`}
+                  onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
+                      onClick={
+                        // Prevent row click when clicking on action cells
+                        cell.column.id === 'actions'
+                          ? (e) => e.stopPropagation()
+                          : undefined
+                      }
                     >
                       {flexRender(
                         cell.column.columnDef.cell,

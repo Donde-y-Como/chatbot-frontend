@@ -32,10 +32,10 @@ export function useCart() {
     const checkCartMobile = () => {
       setIsCartMobile(window.innerWidth < 1024)
     }
-    
+
     checkCartMobile()
     window.addEventListener('resize', checkCartMobile)
-    
+
     return () => window.removeEventListener('resize', checkCartMobile)
   }, [])
 
@@ -43,6 +43,10 @@ export function useCart() {
   const [selectedClientId, setSelectedClientId] = useState<string>('')
   // Local state for cart visibility (mobile drawer)
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false)
+  // Editing order mode
+  const [editingOrderId, setEditingOrderIdState] = useState<string | undefined>(
+    () => localStorage.getItem('pos_editing_order_id') || undefined
+  )
 
   const {
     data: cartData,
@@ -65,6 +69,7 @@ export function useCart() {
         ...getDefaultCartState(isMobile),
         selectedClientId,
         isOpen: isCartMobile ? isCartOpen : true, // Desktop always open, mobile uses state
+        editingOrderId,
       }
     }
 
@@ -73,8 +78,9 @@ export function useCart() {
       items: cartData.itemsWithDetails || [],
       selectedClientId,
       total: cartData.totalAmount || { amount: 0, currency: 'MXN' },
+      editingOrderId,
     }
-  }, [cartData, isMobile, selectedClientId, isCartOpen, isCartMobile])
+  }, [cartData, isMobile, selectedClientId, isCartOpen, isCartMobile, editingOrderId])
 
   // Add to cart mutation with optimistic update
   const addToCartMutation = useMutation({
@@ -110,7 +116,7 @@ export function useCart() {
     if (addToCartMutation.isPending) {
       return
     }
-    
+
     return new Promise((resolve, reject) => {
       addToCartMutation.mutate(item, {
         onSuccess: (data) => resolve(data),
@@ -179,7 +185,7 @@ export function useCart() {
       }
       toast.error('Sin stock suficiente')
     },
-    onSuccess: async() => {
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY })
     },
   })
@@ -247,7 +253,7 @@ export function useCart() {
     if (!item) return
 
     const newQuantity = item.quantity - 1
-    
+
     if (newQuantity <= 0) {
       return removeFromCart(itemId)
     }
@@ -291,7 +297,20 @@ export function useCart() {
   const clearCart = async () => {
     clearCartMutation.mutate()
     setSelectedClientId('') // Reset client selection when clearing cart
+    clearEditingOrder() // Also clear editing order mode
   }
+
+  // Set editing order ID and persist in localStorage
+  const setEditingOrder = useCallback((orderId: string) => {
+    localStorage.setItem('pos_editing_order_id', orderId)
+    setEditingOrderIdState(orderId)
+  }, [])
+
+  // Clear editing order mode
+  const clearEditingOrder = useCallback(() => {
+    localStorage.removeItem('pos_editing_order_id')
+    setEditingOrderIdState(undefined)
+  }, [])
 
   const toggleCart = useCallback(() => {
     if (isCartMobile) {
@@ -360,6 +379,10 @@ export function useCart() {
 
     setSelectedClient,
     formatPrice,
+
+    // Editing order mode
+    setEditingOrder,
+    clearEditingOrder,
 
     // Expose mutation states for loading indicators
     isAddingToCart: addToCartMutation.isPending,

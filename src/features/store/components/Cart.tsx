@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, X, History, BookmarkPlus } from 'lucide-react';
+import { AlertTriangle, BookmarkPlus, History, ShoppingCart, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { ScrollArea } from '@/components/ui/scroll-area.tsx';
@@ -21,6 +21,7 @@ interface CartProps {
   onConvertCart: () => void
   onHistorialClick: () => void
   onSavePendingOrder: () => void
+  onCancelEdit?: () => void
 }
 
 export function Cart({
@@ -35,6 +36,7 @@ export function Cart({
   onPaymentMethodSelect,
   onHistorialClick,
   onSavePendingOrder,
+  onCancelEdit,
 }: CartProps) {
   const formatPrice = (price: typeof cart.total) => {
     return new Intl.NumberFormat('es-MX', {
@@ -75,10 +77,9 @@ export function Cart({
           /* Móvil: panel deslizable */
           fixed right-0 top-0 h-full w-full sm:w-[90%] md:w-[70%] 
           bg-background border-l border-border transform transition-transform duration-300 z-40
-          ${
-            cart.isOpen
-              ? 'translate-x-0 lg:translate-x-0'
-              : 'translate-x-full lg:translate-x-0'
+          ${cart.isOpen
+            ? 'translate-x-0 lg:translate-x-0'
+            : 'translate-x-full lg:translate-x-0'
           }
         `}
         style={{
@@ -120,6 +121,36 @@ export function Cart({
               </Button>
             </div>
           </div>
+
+          {/* Banner: Modo Edición */}
+          {cart.editingOrderId && (
+            <div className='px-3 py-2 bg-amber-50 border-b border-amber-200 dark:bg-amber-950/30 dark:border-amber-800'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2'>
+                  <AlertTriangle className='h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0' />
+                  <div>
+                    <p className='text-xs font-semibold text-amber-700 dark:text-amber-400'>
+                      Editando Orden
+                    </p>
+                    <p className='text-xs text-amber-600 dark:text-amber-500 font-mono'>
+                      #{cart.editingOrderId.slice(-8).toUpperCase()}
+                    </p>
+                  </div>
+                </div>
+                {onCancelEdit && (
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={onCancelEdit}
+                    className='h-7 text-xs text-amber-700 hover:text-amber-900 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/40'
+                  >
+                    <X className='h-3 w-3 mr-1' />
+                    Cancelar
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Selector de cliente */}
           <div className='p-3 sm:p-4 border-b border-border bg-card/50'>
@@ -207,7 +238,7 @@ export function Cart({
                   onClick={onSavePendingOrder}
                 >
                   <BookmarkPlus className='h-4 w-4' />
-                  Guardar Orden Pendiente
+                  {cart.editingOrderId ? 'Guardar Cambios a Orden' : 'Guardar Orden Pendiente'}
                 </Button>
                 <Button
                   variant='outline'

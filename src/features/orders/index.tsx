@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { Separator } from '@/components/ui/separator.tsx'
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx'
 import { TableSkeleton } from '@/components/TableSkeleton.tsx'
@@ -7,6 +9,8 @@ import { Main } from '@/components/layout/main'
 import { CustomTable } from '@/components/tables/custom-table.tsx'
 import { DataTableToolbar } from '@/components/tables/data-table-toolbar.tsx'
 import { useAddPaymentToOrder } from '@/features/store/hooks/usePaymentMutations'
+import { useCart, CART_QUERY_KEY } from '@/features/store/hooks/useCart'
+import { CartAPIService } from '@/features/store/services/CartAPIService'
 import { OrderWithDetails, PaymentMethod } from '@/features/store/types'
 import { OrderDeleteDialog } from './components/order-delete-dialog'
 import { OrderDetailsDialog } from './components/order-details-dialog'
@@ -32,6 +36,11 @@ export default function Orders() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [orderToView, setOrderToView] = useState<OrderWithDetails | null>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [isLoadingToCart, setIsLoadingToCart] = useState(false)
+
+  const navigate = useNavigate()
+  const { setEditingOrder } = useCart()
+  const queryClient = useQueryClient()
 
   // Separate queries for stats and filtered data
   const {
@@ -79,6 +88,57 @@ export default function Orders() {
     setIsDeleteDialogOpen(true)
   }
 
+  const handleLoadToCart = async (order: OrderWithDetails) => {
+    if (isLoadingToCart) return
+    setIsLoadingToCart(true)
+
+    try {
+      toast.loading('Cargando orden al POS...', { id: 'load-to-cart' })
+
+      // 1. Limpiar carrito actual (ignorar 404 — significa que el carrito ya estaba vacío)
+      try {
+        await CartAPIService.clearCart()
+      } catch (clearError: any) {
+        const status = clearError?.response?.status
+        if (status !== 404) {
+          throw clearError // Solo re-lanzar si NO es un 404
+        }
+        // 404 = carrito inexistente = ya está vacío, continuar normalmente
+      }
+
+      // 2. Agregar items de la orden al carrito uno por uno (silencioso, sin toasts por item)
+      for (const item of order.items) {
+        await CartAPIService.addCartItem({
+          itemId: item.itemId,
+          itemType: item.itemType,
+          quantity: item.quantity,
+          notes: item.notes,
+          eventDate: item.eventMetadata?.selectedDate,
+        })
+      }
+
+      // 3. Establecer editingOrderId (persiste en localStorage)
+      setEditingOrder(order.id)
+
+      // 4. Guardar clientId para que el POS lo asigne automáticamente
+      if (order.clientId) {
+        localStorage.setItem('pos_editing_client_id', order.clientId)
+      }
+
+      // 5. Invalidar caché del carrito para que el POS cargue datos frescos
+      await queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY })
+
+      toast.success(`Orden #${order.id.slice(-6).toUpperCase()} cargada al POS`, { id: 'load-to-cart' })
+
+      // 6. Navegar al POS
+      navigate({ to: '/orden/' as any })
+    } catch (error) {
+      toast.error('No se pudo cargar la orden al carrito', { id: 'load-to-cart' })
+    } finally {
+      setIsLoadingToCart(false)
+    }
+  }
+
   const handleViewDetails = (order: OrderWithDetails) => {
     setOrderToView(order)
     setIsViewDialogOpen(true)
@@ -113,8 +173,8 @@ export default function Orders() {
 
   const columns = useMemo(
     () =>
-      createColumns(handlePayment, handleEdit, handleDelete, handleViewDetails),
-    []
+      createColumns(handlePayment, handleEdit, handleDelete, handleViewDetails, handleLoadToCart),
+    [isLoadingToCart]
   )
 
   const handleFiltersChange = (newFilters: OrdersFilters) => {
@@ -189,17 +249,26 @@ export default function Orders() {
           {isLoading ? (
             <TableSkeleton />
           ) : orders.length > 0 ? (
-            <CustomTable<OrderWithDetails>
-              data={orders}
-              columns={columns}
-              globalFilterFn={globalFilterFn}
-              toolbar={(table) => (
-                <DataTableToolbar
-                  table={table}
-                  searchPlaceholder='Buscar por ID de orden, cliente o notas...'
-                />
+            <div className='relative'>
+              {isLoadingToCart && (
+                <div className='absolute inset-0 bg-background/70 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-md gap-3'>
+                  <div className='h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin' />
+                  <p className='text-sm font-medium text-muted-foreground'>Cargando orden al POS...</p>
+                </div>
               )}
-            />
+              <CustomTable<OrderWithDetails>
+                data={orders}
+                columns={columns}
+                globalFilterFn={globalFilterFn}
+                onRowClick={handleLoadToCart}
+                toolbar={(table) => (
+                  <DataTableToolbar
+                    table={table}
+                    searchPlaceholder='Buscar por ID de orden, cliente o notas...'
+                  />
+                )}
+              />
+            </div>
           ) : (
             <div className='flex items-center justify-center h-32 border border-dashed rounded-lg'>
               <div className='text-center'>
