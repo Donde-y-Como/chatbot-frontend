@@ -35,6 +35,7 @@ import {
   NewConversation,
   StartConversation,
 } from '@/features/chats/StartConversation.tsx'
+import { BulkSendWhatsappWeb } from '@/features/chats/BulkSendWhatsappWeb'
 import { useGetTemplates } from '@/features/clients/hooks/useGetTemplates.ts'
 import { useWhatsApp } from '@/features/settings/whatsappWeb/useWhatsApp'
 import { useGetTags } from '../clients/hooks/useGetTags'
@@ -276,6 +277,7 @@ export function ChatBarHeader({
             tooltip={allAIEnabled ? 'Desactivar IAs' : 'Activar IAs'}
           />
           <RenderIfCan permission={PERMISSIONS.CONVERSATION_CREATE}>
+            {isWhatsAppWebConnected && <BulkSendWhatsappWeb />}
             {templates && (
               <StartConversation
                 templates={templates}

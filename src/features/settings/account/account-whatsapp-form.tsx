@@ -1,24 +1,3 @@
-import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import {
-  CaretSortIcon,
-  CheckIcon,
-  PlusIcon,
-  TrashIcon,
-  EnvelopeClosedIcon,
-  HomeIcon,
-  GlobeIcon,
-  TextAlignLeftIcon,
-  ImageIcon,
-  IdCardIcon,
-  UpdateIcon,
-} from '@radix-ui/react-icons'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { url } from 'inspector'
-import { Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
   Command,
@@ -44,17 +23,32 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Textarea } from '@/components/ui/textarea'
-import { AccountApiService } from './accountApiService'
+import { cn } from '@/lib/utils'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+  CaretSortIcon,
+  CheckIcon,
+  EnvelopeClosedIcon,
+  GlobeIcon,
+  HomeIcon,
+  IdCardIcon,
+  PlusIcon,
+  TextAlignLeftIcon,
+  TrashIcon,
+  UpdateIcon
+} from '@radix-ui/react-icons'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import AccountWhatsappProfilePhoto from './components/account-whatsapp-profile-photo'
-import { useGetAccount } from './hooks/useGetAccounts'
 import { useUpdateAccount } from './hooks/useUpdateAccounts'
 import {
+  AccountPrimitives,
   defaultValues,
+  PATTERNS,
+  verticals,
   whatsappFormSchema,
   WhatsAppFormValues,
-  verticals,
-  AccountPrimitives,
-  PATTERNS,
 } from './types'
 
 interface props {

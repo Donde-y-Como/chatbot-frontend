@@ -5,7 +5,14 @@ import {
   ChatParams,
   ChatResponse,
   ConversationStatusPrimitives,
+  OutgoingMedia,
 } from '@/features/chats/ChatTypes.ts'
+
+export type BulkSendWhatsappWebPayload = {
+  phoneNumbers: string[]
+  content: string
+  medias: OutgoingMedia[]
+}
 
 export const chatService = {
   getChatsPaginated: async (params?: ChatParams): Promise<ChatResponse> => {
@@ -75,5 +82,9 @@ export const chatService = {
     await api.post(`/chats/ai-message-count/reset`, {
       conversationIds,
     })
+  },
+
+  bulkSendWhatsappWeb: async (payload: BulkSendWhatsappWebPayload): Promise<void> => {
+    await api.post('/whatsapp-web/bulk-send', payload)
   },
 }
