@@ -28,6 +28,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
 import { chatService } from '@/features/chats/ChatService'
 import { useUploadMedia } from '@/features/chats/hooks/useUploadMedia'
+import { PhoneNumberSelector } from '@/features/chats/components/PhoneNumberSelector'
 import type { OutgoingMedia } from '@/features/chats/ChatTypes'
 
 type PendingFile = {
@@ -40,14 +41,14 @@ type PendingFile = {
 export const BulkSendWhatsappWeb: React.FC = () => {
   const isMobile = useMediaQuery({ maxWidth: 768 })
   const [isOpen, setIsOpen] = useState(false)
-  const [phoneNumbersRaw, setPhoneNumbersRaw] = useState('')
+  const [phoneNumbers, setPhoneNumbers] = useState<string[]>([])
   const [content, setContent] = useState('')
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { uploadFile, validateFile, isUploading, progress } = useUploadMedia()
 
   const resetForm = useCallback(() => {
-    setPhoneNumbersRaw('')
+    setPhoneNumbers([])
     setContent('')
     setPendingFiles([])
   }, [])
@@ -69,9 +70,7 @@ export const BulkSendWhatsappWeb: React.FC = () => {
         continue
       }
       const preview =
-        type === 'image' || type === 'video'
-          ? URL.createObjectURL(file)
-          : null
+        type === 'image' || type === 'video' ? URL.createObjectURL(file) : null
       newPending.push({ file, preview, caption: '', type })
     }
 
@@ -97,11 +96,6 @@ export const BulkSendWhatsappWeb: React.FC = () => {
   const bulkSendMutation = useMutation({
     mutationKey: ['bulk-send-whatsapp-web'],
     mutationFn: async () => {
-      const phoneNumbers = phoneNumbersRaw
-        .split('\n')
-        .map((n) => n.replace(/\D/g, ''))
-        .filter(Boolean)
-
       const medias: OutgoingMedia[] = []
       for (const pending of pendingFiles) {
         const url = await uploadFile(pending.file)
@@ -113,7 +107,6 @@ export const BulkSendWhatsappWeb: React.FC = () => {
           mimetype: pending.file.type,
         })
       }
-
       await chatService.bulkSendWhatsappWeb({ phoneNumbers, content, medias })
     },
     onSuccess: () => {
@@ -125,37 +118,15 @@ export const BulkSendWhatsappWeb: React.FC = () => {
     },
   })
 
-  const phoneNumbers = phoneNumbersRaw
-    .split('\n')
-    .map((n) => n.replace(/\D/g, ''))
-    .filter(Boolean)
-
   const isValid = phoneNumbers.length > 0 && content.trim().length > 0
+  const isSending = bulkSendMutation.isPending || isUploading
 
   const formContent = (
     <div className='space-y-5 p-4'>
-      <div className='space-y-1.5'>
-        <Label htmlFor='bulk-phones'>
-          Números de teléfono{' '}
-          <span className='text-muted-foreground font-normal'>
-            (uno por línea, con código de país)
-          </span>
-        </Label>
-        <Textarea
-          id='bulk-phones'
-          placeholder={'5491112345678\n5491187654321'}
-          value={phoneNumbersRaw}
-          onChange={(e) => setPhoneNumbersRaw(e.target.value)}
-          rows={4}
-          className='font-mono text-sm'
-        />
-        {phoneNumbers.length > 0 && (
-          <p className='text-xs text-muted-foreground'>
-            {phoneNumbers.length} número{phoneNumbers.length !== 1 ? 's' : ''} detectado{phoneNumbers.length !== 1 ? 's' : ''}
-          </p>
-        )}
-      </div>
+      {/* Phone number selector */}
+      <PhoneNumberSelector value={phoneNumbers} onChange={setPhoneNumbers} />
 
+      {/* Message */}
       <div className='space-y-1.5'>
         <Label htmlFor='bulk-content'>Mensaje</Label>
         <Textarea
@@ -184,10 +155,7 @@ export const BulkSendWhatsappWeb: React.FC = () => {
                     className='h-16 w-16 object-cover rounded'
                   />
                 ) : (
-                  <video
-                    src={pf.preview}
-                    className='h-16 w-16 object-cover rounded'
-                  />
+                  <video src={pf.preview} className='h-16 w-16 object-cover rounded' />
                 )
               ) : (
                 <div className='flex h-16 w-16 items-center justify-center rounded bg-muted'>
@@ -195,9 +163,7 @@ export const BulkSendWhatsappWeb: React.FC = () => {
                 </div>
               )}
               <div className='flex-1 min-w-0 space-y-1'>
-                <p className='text-xs text-muted-foreground truncate'>
-                  {pf.file.name}
-                </p>
+                <p className='text-xs text-muted-foreground truncate'>{pf.file.name}</p>
                 <Input
                   placeholder='Texto de la imagen (opcional)'
                   value={pf.caption}
@@ -233,7 +199,7 @@ export const BulkSendWhatsappWeb: React.FC = () => {
           variant='outline'
           size='sm'
           onClick={() => fileInputRef.current?.click()}
-          disabled={bulkSendMutation.isPending}
+          disabled={isSending}
         >
           <Paperclip className='h-4 w-4 mr-1' />
           Adjuntar archivo
@@ -241,16 +207,18 @@ export const BulkSendWhatsappWeb: React.FC = () => {
 
         <div className='flex items-center gap-2'>
           <DialogClose asChild>
-            <Button variant='ghost' onClick={handleClose}>
+            <Button variant='ghost' onClick={handleClose} disabled={isSending}>
               Cancelar
             </Button>
           </DialogClose>
           <Button
             onClick={() => bulkSendMutation.mutate()}
-            disabled={!isValid || bulkSendMutation.isPending || isUploading}
+            disabled={!isValid || isSending}
           >
             <Send className='h-4 w-4 mr-1' />
-            Enviar a {phoneNumbers.length > 0 ? phoneNumbers.length : '…'}
+            {isSending
+              ? 'Enviando…'
+              : `Enviar a ${phoneNumbers.length > 0 ? phoneNumbers.length : '…'}`}
           </Button>
         </div>
       </div>
@@ -270,7 +238,12 @@ export const BulkSendWhatsappWeb: React.FC = () => {
     return (
       <Drawer open={isOpen} onOpenChange={setIsOpen} modal shouldScaleBackground>
         <DrawerTrigger asChild>
-          <Button variant='outline' size='icon' onClick={() => setIsOpen(true)} title='Envío masivo WhatsApp Web'>
+          <Button
+            variant='outline'
+            size='icon'
+            onClick={() => setIsOpen(true)}
+            title='Envío masivo WhatsApp Web'
+          >
             <Users className='h-4 w-4' />
           </Button>
         </DrawerTrigger>
@@ -278,7 +251,7 @@ export const BulkSendWhatsappWeb: React.FC = () => {
           <DrawerHeader>
             <DrawerTitle>Envío masivo WhatsApp Web</DrawerTitle>
             <DrawerDescription>
-              Envía un mensaje a múltiples números de WhatsApp Web a la vez.
+              Envía un mensaje a múltiples contactos de WhatsApp Web a la vez.
             </DrawerDescription>
           </DrawerHeader>
           <ScrollArea className='h-[80vh]'>{formContent}</ScrollArea>
@@ -290,7 +263,12 @@ export const BulkSendWhatsappWeb: React.FC = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen} modal>
       <DialogTrigger asChild>
-        <Button variant='outline' size='icon' onClick={() => setIsOpen(true)} title='Envío masivo WhatsApp Web'>
+        <Button
+          variant='outline'
+          size='icon'
+          onClick={() => setIsOpen(true)}
+          title='Envío masivo WhatsApp Web'
+        >
           <Users className='h-4 w-4' />
         </Button>
       </DialogTrigger>
@@ -302,7 +280,7 @@ export const BulkSendWhatsappWeb: React.FC = () => {
         <DialogHeader>
           <DialogTitle>Envío masivo WhatsApp Web</DialogTitle>
           <DialogDescription>
-            Envía un mensaje a múltiples números de WhatsApp Web a la vez.
+            Envía un mensaje a múltiples contactos de WhatsApp Web a la vez.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className='max-h-[80vh]'>{formContent}</ScrollArea>
