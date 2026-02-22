@@ -30,6 +30,7 @@ import { chatService } from '@/features/chats/ChatService'
 import { useUploadMedia } from '@/features/chats/hooks/useUploadMedia'
 import { PhoneNumberSelector } from '@/features/chats/components/PhoneNumberSelector'
 import type { OutgoingMedia } from '@/features/chats/ChatTypes'
+import { queryClient } from '../../hooks/use-web-socket'
 
 type PendingFile = {
   file: File
@@ -109,7 +110,8 @@ export const BulkSendWhatsappWeb: React.FC = () => {
       }
       await chatService.bulkSendWhatsappWeb({ phoneNumbers, content, medias })
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({queryKey: ['chats']})
       toast.success('Mensajes enviados correctamente')
       handleClose()
     },
