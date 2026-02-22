@@ -14,7 +14,6 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PlatformName } from '@/features/chats/ChatTypes'
-import { ClientSearchService } from '@/features/appointments/services/ClientSearchService'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients'
 import { useInfiniteClientSearch } from '@/features/appointments/hooks/useInfiniteClientSearch'
 import { useIntersectionObserver } from '@/features/appointments/hooks/useIntersectionObserver'
@@ -39,7 +38,6 @@ function extractWhatsAppWebPhone(client: Client): string | null {
 }
 
 function formatDisplayPhone(phone: string): string {
-  // phone like 5211234567890 → +52 1 123-456-7890
   if (phone.startsWith('521') && phone.length === 13) {
     const local = phone.slice(3)
     return `+52 1 ${local.slice(0, 3)}-${local.slice(3, 6)}-${local.slice(6)}`
@@ -59,7 +57,7 @@ const ClientRow = React.memo(function ClientRow({
   return (
     <div
       className='flex items-center gap-3 p-3 hover:bg-accent cursor-pointer transition-colors border-b border-border/30 last:border-b-0'
-      onMouseDown={(e) => e.preventDefault()} // prevent input blur before click registers
+      onMouseDown={(e) => e.preventDefault()}
       onClick={onSelect}
     >
       <Avatar className='h-8 w-8 shrink-0'>
@@ -70,7 +68,9 @@ const ClientRow = React.memo(function ClientRow({
       </Avatar>
       <div className='flex flex-col min-w-0 flex-1'>
         <span className='font-medium text-sm truncate'>{client.name}</span>
-        <span className='text-xs text-muted-foreground'>{formatDisplayPhone(phone)}</span>
+        <span className='text-xs text-muted-foreground font-mono'>
+          {formatDisplayPhone(phone)}
+        </span>
       </div>
     </div>
   )
@@ -79,6 +79,8 @@ const ClientRow = React.memo(function ClientRow({
 export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProps) {
   const [inputValue, setInputValue] = useState('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  // Tracks client name per phone — purely for display; parent never sees this
+  const [labelMap, setLabelMap] = useState<Record<string, string>>({})
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -105,7 +107,6 @@ export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProp
     enabled: hasMore && !isLoadingMore && !isLoadingClients,
   })
 
-  // Only show clients that have a WhatsApp Web phone and aren't already selected
   const filteredResults = useMemo(
     () =>
       searchResults.filter((client) => {
@@ -115,16 +116,20 @@ export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProp
     [searchResults, value]
   )
 
-  // Detect if the user is typing a 10-digit number to manually add
   const digits = inputValue.replace(/\D/g, '')
-  const isManualEntry = digits.length > 0 && digits.length <= 10 && /^\d+$/.test(inputValue.trim())
+  const isManualEntry =
+    digits.length > 0 && digits.length <= 10 && /^\d+$/.test(inputValue.trim())
   const manualPhone = digits.length === 10 ? `521${digits}` : null
   const canAddManual = manualPhone !== null && !value.includes(manualPhone)
 
+  // label is the client name when selected from the list, undefined for manual entries
   const addPhone = useCallback(
-    (phone: string) => {
+    (phone: string, label?: string) => {
       if (!value.includes(phone)) {
         onChange([...value, phone])
+        if (label) {
+          setLabelMap((prev) => ({ ...prev, [phone]: label }))
+        }
       }
       setInputValue('')
       setIsDropdownOpen(false)
@@ -136,6 +141,11 @@ export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProp
   const removePhone = useCallback(
     (phone: string) => {
       onChange(value.filter((p) => p !== phone))
+      setLabelMap((prev) => {
+        const next = { ...prev }
+        delete next[phone]
+        return next
+      })
     },
     [value, onChange]
   )
@@ -158,7 +168,6 @@ export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProp
     setIsDropdownOpen(true)
   }
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -172,7 +181,9 @@ export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProp
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const showDropdown = isDropdownOpen && (canAddManual || filteredResults.length > 0 || isLoadingClients)
+  const showDropdown =
+    isDropdownOpen &&
+    (canAddManual || filteredResults.length > 0 || isLoadingClients)
 
   return (
     <div className='space-y-2'>
@@ -185,26 +196,41 @@ export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProp
         )}
       </Label>
 
-      {/* Chips */}
+      {/* Selected recipients chips */}
       {value.length > 0 && (
         <div className='flex flex-wrap gap-1.5 rounded-md border border-input bg-muted/20 p-2'>
-          {value.map((phone) => (
-            <Badge key={phone} variant='secondary' className='gap-1 pr-1 font-mono text-xs'>
-              {formatDisplayPhone(phone)}
-              <button
-                type='button'
-                className='ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5 transition-colors'
-                onClick={() => removePhone(phone)}
-                aria-label={`Quitar ${phone}`}
-              >
-                <X className='h-3 w-3' />
-              </button>
-            </Badge>
-          ))}
+          {value.map((phone) => {
+            const label = labelMap[phone]
+            return (
+              <div key={phone} className='group relative'>
+                <Badge variant='secondary' className='gap-1 pr-1 text-xs max-w-[160px]'>
+                  <span className='truncate'>
+                    {label ?? formatDisplayPhone(phone)}
+                  </span>
+                  <button
+                    type='button'
+                    className='ml-0.5 shrink-0 rounded-full p-0.5 hover:bg-muted-foreground/20 transition-colors'
+                    onClick={() => removePhone(phone)}
+                    aria-label={`Quitar ${label ?? phone}`}
+                  >
+                    <X className='h-3 w-3' />
+                  </button>
+                </Badge>
+                {/* Hover tooltip: shows phone when chip displays a client name */}
+                {label && (
+                  <div className='pointer-events-none absolute bottom-full left-0 z-50 mb-1.5 hidden rounded-md border bg-popover px-2 py-1 shadow-md group-hover:block'>
+                    <span className='whitespace-nowrap font-mono text-xs text-popover-foreground'>
+                      {formatDisplayPhone(phone)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
-      {/* Input + dropdown */}
+      {/* Search / number input */}
       <div className='relative' ref={dropdownRef}>
         <div className='relative'>
           <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none' />
@@ -222,10 +248,10 @@ export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProp
 
         {showDropdown && (
           <div className='absolute z-50 mt-1 w-full rounded-md border border-border bg-popover shadow-lg'>
-            {/* Manual phone quick-add */}
+            {/* Manual number quick-add */}
             {canAddManual && (
               <div
-                className='flex items-center gap-3 p-3 hover:bg-accent cursor-pointer border-b border-border/50'
+                className='flex cursor-pointer items-center gap-3 border-b border-border/50 p-3 hover:bg-accent'
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => addPhone(manualPhone!)}
               >
@@ -241,7 +267,7 @@ export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProp
               </div>
             )}
 
-            {/* Client search results */}
+            {/* Client results */}
             {isLoadingClients ? (
               <div className='flex items-center justify-center gap-2 p-4 text-sm text-muted-foreground'>
                 <div className='h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent' />
@@ -249,7 +275,6 @@ export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProp
               </div>
             ) : filteredResults.length > 0 ? (
               <div className='max-h-52 overflow-y-auto'>
-                {/* Header */}
                 <div className='sticky top-0 z-10 border-b bg-popover px-3 py-1.5'>
                   <span className='text-xs text-muted-foreground'>
                     {isDefaultList
@@ -264,11 +289,10 @@ export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProp
                       key={client.id}
                       client={client}
                       phone={phone}
-                      onSelect={() => addPhone(phone)}
+                      onSelect={() => addPhone(phone, client.name)}
                     />
                   )
                 })}
-                {/* Infinite scroll trigger */}
                 {hasMore && (
                   <div ref={targetRef} className='border-t bg-muted/20 p-3 text-center'>
                     {isLoadingMore && (
@@ -291,12 +315,15 @@ export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProp
 
       {isManualEntry && digits.length < 10 && (
         <p className='text-xs text-muted-foreground'>
-          Faltan {10 - digits.length} dígito{10 - digits.length !== 1 ? 's' : ''} — se prefijará <span className='font-mono'>521</span>
+          Faltan {10 - digits.length} dígito{10 - digits.length !== 1 ? 's' : ''} — se
+          prefijará <span className='font-mono'>521</span>
         </p>
       )}
       {canAddManual && (
         <p className='text-xs text-muted-foreground'>
-          Presiona <kbd className='rounded bg-muted px-1 font-mono text-xs'>Enter</kbd> para agregar
+          Presiona{' '}
+          <kbd className='rounded bg-muted px-1 font-mono text-xs'>Enter</kbd> para
+          agregar
         </p>
       )}
     </div>

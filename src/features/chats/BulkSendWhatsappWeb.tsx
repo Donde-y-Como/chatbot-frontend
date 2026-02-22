@@ -275,7 +275,7 @@ export const BulkSendWhatsappWeb: React.FC = () => {
         </Button>
       </DialogTrigger>
       <DialogContent
-        className='max-w-xl'
+        className='max-w-2xl'
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
