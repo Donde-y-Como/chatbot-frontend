@@ -5,6 +5,7 @@ import {
   Edit,
   Eye,
   MoreHorizontal,
+  ShoppingCart,
   Trash2,
 } from 'lucide-react'
 import { PERMISSIONS } from '@/api/permissions.ts'
@@ -25,6 +26,7 @@ interface OrderRowActionsProps {
   onEdit?: (order: OrderWithDetails) => void
   onDelete?: (order: OrderWithDetails) => void
   onViewDetails?: (order: OrderWithDetails) => void
+  onLoadToCart?: (order: OrderWithDetails) => void
 }
 
 export function OrderRowActions({
@@ -33,6 +35,7 @@ export function OrderRowActions({
   onEdit,
   onDelete,
   onViewDetails,
+  onLoadToCart,
 }: OrderRowActionsProps) {
   const order = row.original
 
@@ -71,6 +74,17 @@ export function OrderRowActions({
             >
               <Edit className='mr-2 h-4 w-4' />
               Editar
+            </DropdownMenuItem>
+          </RenderIfCan>
+        )}
+        {onLoadToCart && order.status !== 'cancelled' && (
+          <RenderIfCan permission={PERMISSIONS.ORDER_UPDATE}>
+            <DropdownMenuItem
+              onClick={() => onLoadToCart(order)}
+              className='text-purple-600 focus:text-purple-600'
+            >
+              <ShoppingCart className='mr-2 h-4 w-4' />
+              Cargar al POS
             </DropdownMenuItem>
           </RenderIfCan>
         )}

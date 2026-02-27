@@ -149,6 +149,7 @@ export interface CartState {
   items: CartItemWithDetails[]
   selectedClientId: string
   total: Price
+  editingOrderId?: string
 }
 
 // Datos auxiliares para filtros

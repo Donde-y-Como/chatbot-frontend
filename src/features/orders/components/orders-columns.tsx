@@ -146,363 +146,365 @@ export const createColumns = (
   onPayment?: (order: OrderWithDetails) => void,
   onEdit?: (order: OrderWithDetails) => void,
   onDelete?: (order: OrderWithDetails) => void,
-  onViewDetails?: (order: OrderWithDetails) => void
+  onViewDetails?: (order: OrderWithDetails) => void,
+  onLoadToCart?: (order: OrderWithDetails) => void
 ): ColumnDef<OrderWithDetails>[] => [
-  {
-    accessorKey: 'id',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='ID Orden' />
-    ),
-    cell: ({ row }) => {
-      const id = row.getValue('id') as string
-      const shortId = id.slice(-8).toUpperCase()
+    {
+      accessorKey: 'id',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='ID Orden' />
+      ),
+      cell: ({ row }) => {
+        const id = row.getValue('id') as string
+        const shortId = id.slice(-8).toUpperCase()
 
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge
-                variant='outline'
-                className='font-mono text-xs cursor-pointer'
-              >
-                #{shortId}
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className='font-mono'>{id}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )
-    },
-    enableHiding: false,
-    enableSorting: true,
-  },
-
-  {
-    accessorKey: 'status',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Estado' />
-    ),
-    cell: ({ row }) => {
-      const status = row.getValue('status') as OrderStatus
-
-      return (
-        <Badge variant={getOrderStatusVariant(status)} className='text-xs'>
-          {getOrderStatusIcon(status)}
-          <span className='ml-1'>{getOrderStatusLabel(status)}</span>
-        </Badge>
-      )
-    },
-    enableSorting: true,
-    enableHiding: false,
-  },
-
-  {
-    accessorKey: 'clientId',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Cliente' />
-    ),
-    cell: ({ row }) => {
-      const clientId = row.getValue('clientId') as string
-      const shortClientId = clientId.slice(-8).toUpperCase()
-
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge
-                variant='secondary'
-                className='font-mono text-xs cursor-pointer'
-              >
-                {shortClientId}
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className='font-mono'>{clientId}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )
-    },
-    enableSorting: true,
-  },
-
-  {
-    accessorKey: 'totalAmount',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Total' />
-    ),
-    cell: ({ row }) => {
-      const total = row.getValue('totalAmount') as {
-        amount: number
-        currency: string
-      }
-
-      return (
-        <div className='font-semibold text-lg text-blue-600'>
-          {formatCurrency(total.amount, total.currency)}
-        </div>
-      )
-    },
-    enableSorting: true,
-    enableHiding: false,
-  },
-
-  {
-    accessorKey: 'paidAmount',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Pagado' />
-    ),
-    cell: ({ row }) => {
-      const paid = row.getValue('paidAmount') as {
-        amount: number
-        currency: string
-      }
-      const total = row.original.totalAmount
-      const isFullyPaid = row.original.isFullyPaid
-
-      return (
-        <div
-          className={`font-medium ${isFullyPaid ? 'text-green-600' : 'text-orange-600'}`}
-        >
-          {formatCurrency(paid.amount, paid.currency)}
-          {paid.amount < total.amount && (
-            <div className='text-xs text-muted-foreground'>
-              de {formatCurrency(total.amount, total.currency)}
-            </div>
-          )}
-        </div>
-      )
-    },
-    enableSorting: true,
-  },
-
-  {
-    accessorKey: 'remainingAmount',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Pendiente' />
-    ),
-    cell: ({ row }) => {
-      const remaining = row.getValue('remainingAmount') as {
-        amount: number
-        currency: string
-      }
-      const isFullyPaid = row.original.isFullyPaid
-
-      if (isFullyPaid) {
-        return (
-          <Badge variant='default' className='text-xs text-green-600'>
-            Completado
-          </Badge>
-        )
-      }
-
-      return (
-        <div className='font-medium text-red-600'>
-          {formatCurrency(remaining.amount, remaining.currency)}
-        </div>
-      )
-    },
-    enableSorting: true,
-  },
-
-  {
-    accessorKey: 'itemCount',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Artículos' />
-    ),
-    cell: ({ row }) => {
-      const itemCount = row.getValue('itemCount') as number
-
-      return (
-        <Badge variant='outline' className='text-sm'>
-          {itemCount} {itemCount === 1 ? 'artículo' : 'artículos'}
-        </Badge>
-      )
-    },
-    enableSorting: true,
-  },
-
-  {
-    id: 'paymentMethods',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Métodos de Pago' />
-    ),
-    cell: ({ row }) => {
-      const payments = row.original.payments
-
-      if (payments.length === 0) {
-        return <span className='text-muted-foreground text-sm'>Sin pagos</span>
-      }
-
-      const uniqueMethods = Array.from(new Set(payments.map((p) => p.method)))
-
-      if (uniqueMethods.length === 1) {
-        const method = uniqueMethods[0]
-        return (
-          <Badge variant={getPaymentMethodVariant(method)} className='text-xs'>
-            {getPaymentMethodIcon(method)}
-            <span className='ml-1'>{getPaymentMethodLabel(method)}</span>
-          </Badge>
-        )
-      }
-
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className='flex gap-1 cursor-pointer'>
-                {uniqueMethods.slice(0, 2).map((method) => (
-                  <Badge
-                    key={method}
-                    variant={getPaymentMethodVariant(method)}
-                    className='text-xs p-1'
-                  >
-                    {getPaymentMethodIcon(method)}
-                  </Badge>
-                ))}
-                {uniqueMethods.length > 2 && (
-                  <Badge variant='outline' className='text-xs'>
-                    +{uniqueMethods.length - 2}
-                  </Badge>
-                )}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <Card className='border-0 shadow-none'>
-                <CardContent className='p-2 space-y-1'>
-                  {uniqueMethods.map((method) => {
-                    const totalForMethod = payments
-                      .filter((p) => p.method === method)
-                      .reduce((sum, p) => sum + p.amount.amount, 0)
-
-                    return (
-                      <div
-                        key={method}
-                        className='flex items-center justify-between gap-2 text-xs'
-                      >
-                        <div className='flex items-center gap-1'>
-                          {getPaymentMethodIcon(method)}
-                          <span>{getPaymentMethodLabel(method)}</span>
-                        </div>
-                        <span className='font-mono'>
-                          {formatCurrency(
-                            totalForMethod,
-                            payments[0]?.amount.currency || 'MXN'
-                          )}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </CardContent>
-              </Card>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )
-    },
-    enableSorting: false,
-  },
-
-  {
-    accessorKey: 'notes',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Notas' />
-    ),
-    cell: ({ row }) => {
-      const notes = row.original.notes
-      if (!notes)
-        return <span className='text-muted-foreground text-sm'>Sin notas</span>
-
-      const truncatedNotes =
-        notes.length > 30 ? `${notes.substring(0, 30)}...` : notes
-      const needsTooltip = notes.length > 30
-
-      const content = <div className='text-sm italic'>{truncatedNotes}</div>
-
-      if (needsTooltip) {
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>{content}</TooltipTrigger>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant='outline'
+                  className='font-mono text-xs cursor-pointer'
+                >
+                  #{shortId}
+                </Badge>
+              </TooltipTrigger>
               <TooltipContent>
-                <p className='max-w-xs whitespace-pre-wrap'>{notes}</p>
+                <p className='font-mono'>{id}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         )
-      }
-
-      return content
+      },
+      enableHiding: false,
+      enableSorting: true,
     },
-    enableSorting: false,
-    enableHiding: true,
-  },
 
-  {
-    accessorKey: 'createdAt',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Fecha Creación' />
-    ),
-    cell: ({ row }) => {
-      const createdAt = row.original.createdAt
+    {
+      accessorKey: 'status',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Estado' />
+      ),
+      cell: ({ row }) => {
+        const status = row.getValue('status') as OrderStatus
 
-      return (
-        <div className='flex flex-col gap-1'>
-          <Badge variant='secondary' className='text-xs'>
-            {format(parseISO(createdAt), 'dd/MM/yyyy', { locale: es })}
+        return (
+          <Badge variant={getOrderStatusVariant(status)} className='text-xs'>
+            {getOrderStatusIcon(status)}
+            <span className='ml-1'>{getOrderStatusLabel(status)}</span>
           </Badge>
-          <span className='text-xs text-muted-foreground'>
-            {format(parseISO(createdAt), 'HH:mm', { locale: es })}
-          </span>
-        </div>
-      )
+        )
+      },
+      enableSorting: true,
+      enableHiding: false,
     },
-    enableSorting: true,
-    enableHiding: false,
-  },
 
-  {
-    accessorKey: 'updatedAt',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Última Actualización' />
-    ),
-    cell: ({ row }) => {
-      const updatedAt = row.original.updatedAt
+    {
+      accessorKey: 'clientId',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Cliente' />
+      ),
+      cell: ({ row }) => {
+        const clientId = row.getValue('clientId') as string
+        const shortClientId = clientId.slice(-8).toUpperCase()
 
-      return (
-        <div className='flex flex-col gap-1'>
-          <Badge variant='outline' className='text-xs'>
-            {format(parseISO(updatedAt), 'dd/MM/yyyy', { locale: es })}
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant='secondary'
+                  className='font-mono text-xs cursor-pointer'
+                >
+                  {shortClientId}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className='font-mono'>{clientId}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      },
+      enableSorting: true,
+    },
+
+    {
+      accessorKey: 'totalAmount',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Total' />
+      ),
+      cell: ({ row }) => {
+        const total = row.getValue('totalAmount') as {
+          amount: number
+          currency: string
+        }
+
+        return (
+          <div className='font-semibold text-lg text-blue-600'>
+            {formatCurrency(total.amount, total.currency)}
+          </div>
+        )
+      },
+      enableSorting: true,
+      enableHiding: false,
+    },
+
+    {
+      accessorKey: 'paidAmount',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Pagado' />
+      ),
+      cell: ({ row }) => {
+        const paid = row.getValue('paidAmount') as {
+          amount: number
+          currency: string
+        }
+        const total = row.original.totalAmount
+        const isFullyPaid = row.original.isFullyPaid
+
+        return (
+          <div
+            className={`font-medium ${isFullyPaid ? 'text-green-600' : 'text-orange-600'}`}
+          >
+            {formatCurrency(paid.amount, paid.currency)}
+            {paid.amount < total.amount && (
+              <div className='text-xs text-muted-foreground'>
+                de {formatCurrency(total.amount, total.currency)}
+              </div>
+            )}
+          </div>
+        )
+      },
+      enableSorting: true,
+    },
+
+    {
+      accessorKey: 'remainingAmount',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Pendiente' />
+      ),
+      cell: ({ row }) => {
+        const remaining = row.getValue('remainingAmount') as {
+          amount: number
+          currency: string
+        }
+        const isFullyPaid = row.original.isFullyPaid
+
+        if (isFullyPaid) {
+          return (
+            <Badge variant='default' className='text-xs text-green-600'>
+              Completado
+            </Badge>
+          )
+        }
+
+        return (
+          <div className='font-medium text-red-600'>
+            {formatCurrency(remaining.amount, remaining.currency)}
+          </div>
+        )
+      },
+      enableSorting: true,
+    },
+
+    {
+      accessorKey: 'itemCount',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Artículos' />
+      ),
+      cell: ({ row }) => {
+        const itemCount = row.getValue('itemCount') as number
+
+        return (
+          <Badge variant='outline' className='text-sm'>
+            {itemCount} {itemCount === 1 ? 'artículo' : 'artículos'}
           </Badge>
-          <span className='text-xs text-muted-foreground'>
-            {format(parseISO(updatedAt), 'HH:mm', { locale: es })}
-          </span>
-        </div>
-      )
+        )
+      },
+      enableSorting: true,
     },
-    enableSorting: true,
-    enableHiding: true,
-  },
 
-  // Actions column
-  {
-    id: 'actions',
-    enableHiding: false,
-    cell: ({ row }) => {
-      if (!onPayment) return null
-      return (
-        <OrderRowActions
-          row={row}
-          onPayment={onPayment}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onViewDetails={onViewDetails}
-        />
-      )
+    {
+      id: 'paymentMethods',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Métodos de Pago' />
+      ),
+      cell: ({ row }) => {
+        const payments = row.original.payments
+
+        if (payments.length === 0) {
+          return <span className='text-muted-foreground text-sm'>Sin pagos</span>
+        }
+
+        const uniqueMethods = Array.from(new Set(payments.map((p) => p.method)))
+
+        if (uniqueMethods.length === 1) {
+          const method = uniqueMethods[0]
+          return (
+            <Badge variant={getPaymentMethodVariant(method)} className='text-xs'>
+              {getPaymentMethodIcon(method)}
+              <span className='ml-1'>{getPaymentMethodLabel(method)}</span>
+            </Badge>
+          )
+        }
+
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className='flex gap-1 cursor-pointer'>
+                  {uniqueMethods.slice(0, 2).map((method) => (
+                    <Badge
+                      key={method}
+                      variant={getPaymentMethodVariant(method)}
+                      className='text-xs p-1'
+                    >
+                      {getPaymentMethodIcon(method)}
+                    </Badge>
+                  ))}
+                  {uniqueMethods.length > 2 && (
+                    <Badge variant='outline' className='text-xs'>
+                      +{uniqueMethods.length - 2}
+                    </Badge>
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <Card className='border-0 shadow-none'>
+                  <CardContent className='p-2 space-y-1'>
+                    {uniqueMethods.map((method) => {
+                      const totalForMethod = payments
+                        .filter((p) => p.method === method)
+                        .reduce((sum, p) => sum + p.amount.amount, 0)
+
+                      return (
+                        <div
+                          key={method}
+                          className='flex items-center justify-between gap-2 text-xs'
+                        >
+                          <div className='flex items-center gap-1'>
+                            {getPaymentMethodIcon(method)}
+                            <span>{getPaymentMethodLabel(method)}</span>
+                          </div>
+                          <span className='font-mono'>
+                            {formatCurrency(
+                              totalForMethod,
+                              payments[0]?.amount.currency || 'MXN'
+                            )}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </CardContent>
+                </Card>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      },
+      enableSorting: false,
     },
-  },
-]
+
+    {
+      accessorKey: 'notes',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Notas' />
+      ),
+      cell: ({ row }) => {
+        const notes = row.original.notes
+        if (!notes)
+          return <span className='text-muted-foreground text-sm'>Sin notas</span>
+
+        const truncatedNotes =
+          notes.length > 30 ? `${notes.substring(0, 30)}...` : notes
+        const needsTooltip = notes.length > 30
+
+        const content = <div className='text-sm italic'>{truncatedNotes}</div>
+
+        if (needsTooltip) {
+          return (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>{content}</TooltipTrigger>
+                <TooltipContent>
+                  <p className='max-w-xs whitespace-pre-wrap'>{notes}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )
+        }
+
+        return content
+      },
+      enableSorting: false,
+      enableHiding: true,
+    },
+
+    {
+      accessorKey: 'createdAt',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Fecha Creación' />
+      ),
+      cell: ({ row }) => {
+        const createdAt = row.original.createdAt
+
+        return (
+          <div className='flex flex-col gap-1'>
+            <Badge variant='secondary' className='text-xs'>
+              {format(parseISO(createdAt), 'dd/MM/yyyy', { locale: es })}
+            </Badge>
+            <span className='text-xs text-muted-foreground'>
+              {format(parseISO(createdAt), 'HH:mm', { locale: es })}
+            </span>
+          </div>
+        )
+      },
+      enableSorting: true,
+      enableHiding: false,
+    },
+
+    {
+      accessorKey: 'updatedAt',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Última Actualización' />
+      ),
+      cell: ({ row }) => {
+        const updatedAt = row.original.updatedAt
+
+        return (
+          <div className='flex flex-col gap-1'>
+            <Badge variant='outline' className='text-xs'>
+              {format(parseISO(updatedAt), 'dd/MM/yyyy', { locale: es })}
+            </Badge>
+            <span className='text-xs text-muted-foreground'>
+              {format(parseISO(updatedAt), 'HH:mm', { locale: es })}
+            </span>
+          </div>
+        )
+      },
+      enableSorting: true,
+      enableHiding: true,
+    },
+
+    // Actions column
+    {
+      id: 'actions',
+      enableHiding: false,
+      cell: ({ row }) => {
+        if (!onPayment) return null
+        return (
+          <OrderRowActions
+            row={row}
+            onPayment={onPayment}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onViewDetails={onViewDetails}
+            onLoadToCart={onLoadToCart}
+          />
+        )
+      },
+    },
+  ]
 
 export const columns = createColumns()
