@@ -1,5 +1,5 @@
 import React from 'react'
-import { format, formatDistanceToNow, isBefore, setMinutes } from 'date-fns'
+import { format, formatDistanceToNow, isBefore, setMinutes, isSameDay } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import {
   Calendar,
@@ -13,6 +13,7 @@ import {
   User,
   Users,
   Wrench,
+  CalendarRange,
 } from 'lucide-react'
 import { PERMISSIONS } from '@/api/permissions.ts'
 import { RenderIfCan } from '@/lib/Can.tsx'
@@ -55,7 +56,7 @@ import {
   PaymentStatusBadge,
 } from './components/StatusBadges'
 import { ClientChatButton } from './components/client-chat-button'
-import type { Appointment, Service } from './types'
+import type { Appointment, Service } from './types.ts'
 import { getAppointmentStatusConfig } from './types'
 
 interface AppointmentBlockProps {
@@ -71,6 +72,7 @@ interface AppointmentBlockProps {
     endAt: number
   }
   zoomScale?: number
+  currentDate?: Date
 }
 
 // Constants now calculated dynamically based on zoom scale
@@ -85,6 +87,7 @@ export function AppointmentBlock({
   totalColumns,
   workHours,
   zoomScale = 1,
+  currentDate,
 }: AppointmentBlockProps) {
   // Use the same calculation as DayView: BASE_TIME_SLOT_HEIGHT (120px) * zoomScale / 60 minutes
   const BASE_TIME_SLOT_HEIGHT = 120
@@ -160,30 +163,30 @@ export function AppointmentBlock({
   // Obtener equipos asignados
   const assignedEquipment =
     equipment &&
-    equipment.length > 0 &&
-    appointment.equipmentIds &&
-    appointment.equipmentIds.length > 0
+      equipment.length > 0 &&
+      appointment.equipmentIds &&
+      appointment.equipmentIds.length > 0
       ? equipment.filter((eq) => {
-          return appointment.equipmentIds?.includes(eq.id)
-        })
+        return appointment.equipmentIds?.includes(eq.id)
+      })
       : []
 
   // Obtener consumibles asignados con su información completa
   const assignedConsumables =
     consumables &&
-    consumables.length > 0 &&
-    appointment.consumableUsages &&
-    appointment.consumableUsages.length > 0
+      consumables.length > 0 &&
+      appointment.consumableUsages &&
+      appointment.consumableUsages.length > 0
       ? appointment.consumableUsages
-          .map((usage) => {
-            const consumable = consumables.find(
-              (c) => c.id === usage.consumableId
-            )
-            return consumable
-              ? { ...consumable, quantity: usage.quantity }
-              : null
-          })
-          .filter((item): item is NonNullable<typeof item> => item !== null)
+        .map((usage) => {
+          const consumable = consumables.find(
+            (c) => c.id === usage.consumableId
+          )
+          return consumable
+            ? { ...consumable, quantity: usage.quantity }
+            : null
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null)
       : []
 
   // Get status-based background color
@@ -192,7 +195,7 @@ export function AppointmentBlock({
 
   // Handle null client case
   if (!client) {
-     return null;
+    return null;
   }
 
   // Format services display: show up to 2 services, then count remaining
@@ -204,6 +207,20 @@ export function AppointmentBlock({
 
   // Format time range
   const timeRangeText = `${formatTime(appointment.timeRange.startAt)}-${formatTime(appointment.timeRange.endAt)}`
+  const isMultiDay = appointment.endDate && !isSameDay(new Date(appointment.date), new Date(appointment.endDate))
+
+  let multidayText = 'Multidía'
+  if (isMultiDay && currentDate) {
+    if (isSameDay(currentDate, new Date(appointment.date))) {
+      multidayText = 'Inicio'
+    } else if (appointment.endDate && isSameDay(currentDate, new Date(appointment.endDate))) {
+      multidayText = 'Fin'
+    } else {
+      multidayText = 'Día cont.'
+    }
+  }
+
+  const isShort = duration <= 30
 
   return (
     <Dialog
@@ -220,7 +237,7 @@ export function AppointmentBlock({
           className={cn(
             'absolute rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] border-l-4 group',
             appointment.status === 'cancelada' &&
-              'opacity-60'
+            'opacity-60'
           )}
           style={{
             ...{
@@ -245,79 +262,120 @@ export function AppointmentBlock({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Unified responsive layout */}
-          <div className='p-2.5 flex flex-col h-full min-w-0 relative bg-white/5'>
-            {/* Top section: Client name & time */}
-            <div className='flex-1 min-w-0 space-y-1'>
-              {/* Client name */}
-              <div className='text-white font-bold text-sm truncate'>
-                {client.name}
-              </div>
-
-              {/* Services display - adapts based on space */}
-              <div className='text-white/90 text-xs leading-tight min-w-0'>
-                {displayServices.length > 0 ? (
-                  <div className='flex items-center gap-1 flex-wrap'>
-                    <span className='truncate'>
-                      {displayServices.map((s, idx) => (
-                        <React.Fragment key={s.id}>
-                          {s.name}
-                          {idx < displayServices.length - 1 && ', '}
-                        </React.Fragment>
-                      ))}
-                    </span>
-                    {remainingServicesCount > 0 && (
-                      <span className='inline-flex items-center gap-0.5 bg-white/20 text-white px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0'>
-                        <Package className='w-2.5 h-2.5' />
-                        +{remainingServicesCount}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <span className='text-white/70'>Sin servicios</span>
-                )}
-              </div>
-
-              {/* Time range - always visible */}
-              <div className='flex items-center gap-1 text-white/80 text-xs'>
-                <Clock className='w-3 h-3 flex-shrink-0' />
-                <span className='font-medium'>{timeRangeText}</span>
-              </div>
-            </div>
-
-            {/* Bottom section: Employees & status */}
-            <div className='flex items-center justify-between mt-2 gap-2'>
-              <div className='flex items-center min-w-0 flex-1'>
+          <div className={cn('flex h-full min-w-0 relative bg-white/5 overflow-hidden', isShort ? 'p-1.5 flex-row items-center' : 'p-2.5 flex-col')}>
+            {isShort ? (
+              // Horizontal layout for <= 30 minutes to fit everything in one line
+              <div className='flex items-center gap-1.5 min-w-0 w-full'>
+                <div className='text-white font-bold text-xs truncate shrink-0 max-w-[40%]'>
+                  {client.name}
+                </div>
                 {appointment.status === 'cancelada' && (
-                  <span className='bg-red-500/80 text-white text-[10px] px-1.5 py-0.5 rounded mr-2 inline-block flex-shrink-0'>
-                    CANCELADA
+                  <span className='bg-red-500/80 text-white text-[9px] px-1 py-0.5 rounded shrink-0'>
+                    CANC.
                   </span>
                 )}
-                {employees.length > 0 && duration >= 45 && (
-                  <div className='flex items-center flex-shrink-0'>
-                    {employees.slice(0, 3).map((emp, idx) => (
-                      <Avatar
-                        key={emp.id}
-                        className='h-5 w-5 border border-white'
-                        style={{ marginLeft: idx > 0 ? '-6px' : '0' }}
-                      >
-                        <AvatarImage src={emp.photo} alt={emp.name} />
-                        <AvatarFallback className='text-[10px] bg-white/20 text-white'>
-                          {emp.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                    {employees.length > 3 && (
-                      <div
-                        className='h-5 w-5 rounded-full bg-white/20 border border-white flex items-center justify-center text-white text-[10px] font-medium'
-                        style={{ marginLeft: '-6px' }}
-                      >
-                        +{employees.length - 3}
+                {isMultiDay && (
+                  <span className='inline-flex items-center gap-1 bg-white/20 text-white px-1.5 py-0.5 rounded text-[9px] font-medium shrink-0'>
+                    <CalendarRange className='w-2.5 h-2.5' />
+                    {multidayText}
+                  </span>
+                )}
+                <div className='text-white/80 text-[10px] flex items-center gap-0.5 shrink-0'>
+                  <Clock className='w-2.5 h-2.5' />
+                  {timeRangeText}
+                </div>
+                {displayServices.length > 0 && (
+                  <div className='text-white/90 text-[10px] truncate shrink min-w-0 border-l border-white/20 pl-1.5'>
+                    {displayServices.map(s => s.name).join(', ')}
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Standard vertical layout for > 30 minutes
+              <>
+                {/* Top section: Client name & time */}
+                <div className='flex-1 min-w-0 space-y-1 relative'>
+                  {/* Client name */}
+                  <div className='text-white font-bold text-sm truncate pr-[70px]'>
+                    {client.name}
+                  </div>
+
+                  {isMultiDay && (
+                    <div className='absolute top-0 right-0 z-10'>
+                      <span className='inline-flex items-center gap-1 bg-white/20 text-white px-1.5 py-0.5 rounded text-[9px] font-medium shadow-sm backdrop-blur-sm border border-white/10'>
+                        <CalendarRange className='w-2.5 h-2.5' />
+                        {multidayText}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Services display - adapts based on space */}
+                  <div className='text-white/90 text-xs leading-tight min-w-0'>
+                    {displayServices.length > 0 ? (
+                      <div className='flex items-center gap-1 flex-wrap pr-[70px]'>
+                        <span className='truncate'>
+                          {displayServices.map((s, idx) => (
+                            <React.Fragment key={s.id}>
+                              {s.name}
+                              {idx < displayServices.length - 1 && ', '}
+                            </React.Fragment>
+                          ))}
+                        </span>
+                        {remainingServicesCount > 0 && (
+                          <span className='inline-flex items-center gap-0.5 bg-white/20 text-white px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0'>
+                            <Package className='w-2.5 h-2.5' />
+                            +{remainingServicesCount}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className='text-white/70'>Sin servicios</span>
+                    )}
+                  </div>
+
+                  {/* Time range - always visible */}
+                  <div className='flex items-center gap-1 text-white/80 text-xs mb-0.5'>
+                    <Clock className='w-3 h-3 flex-shrink-0' />
+                    <span className='font-medium'>{timeRangeText}</span>
+                  </div>
+                </div>
+
+                {/* Bottom section: Employees & status */}
+                <div className='flex items-center justify-between mt-2 gap-2'>
+                  <div className='flex items-center min-w-0 flex-1'>
+                    {appointment.status === 'cancelada' && (
+                      <span className='bg-red-500/80 text-white text-[10px] px-1.5 py-0.5 rounded mr-2 inline-block flex-shrink-0'>
+                        CANCELADA
+                      </span>
+                    )}
+                    {employees.length > 0 && duration >= 45 && (
+                      <div className='flex items-center flex-shrink-0'>
+                        {employees.slice(0, 3).map((emp, idx) => (
+                          <Avatar
+                            key={emp.id}
+                            className='h-5 w-5 border border-white'
+                            style={{ marginLeft: idx > 0 ? '-6px' : '0' }}
+                          >
+                            <AvatarImage src={emp.photo} alt={emp.name} />
+                            <AvatarFallback className='text-[10px] bg-white/20 text-white'>
+                              {emp.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
+                        {employees.length > 3 && (
+                          <div
+                            className='h-5 w-5 rounded-full bg-white/20 border border-white flex items-center justify-center text-white text-[10px] font-medium'
+                            style={{ marginLeft: '-6px' }}
+                          >
+                            +{employees.length - 3}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className='absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity'>

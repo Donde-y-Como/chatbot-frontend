@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { eachDayOfInterval, endOfWeek, format, isSameDay, startOfWeek } from 'date-fns';
+import { eachDayOfInterval, endOfWeek, format, isSameDay, startOfWeek, parseISO } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
 import { es } from 'date-fns/locale';
 import { Clock, Loader2 } from 'lucide-react';
@@ -175,10 +175,18 @@ export function WeekView({
 
             {/* Week Days Columns */}
             {weekDays.map((day) => {
-              // Filter positioned events for this specific day
-              const dayPositionedEvents = positionedEvents.filter((event) =>
-                isSameDay(new Date(event.appointment.date), day)
-              )
+              // Filter positioned events for this specific day (inclusive date check for multi-day)
+              const dayPositionedEvents = positionedEvents.filter((event) => {
+                const aptStartDate = parseISO(event.appointment.date)
+                const aptEndDate = event.appointment.endDate ? parseISO(event.appointment.endDate) : aptStartDate
+
+                // Normalize to date-only comparison
+                const dayOnly = new Date(day.getFullYear(), day.getMonth(), day.getDate())
+                const startOnly = new Date(aptStartDate.getFullYear(), aptStartDate.getMonth(), aptStartDate.getDate())
+                const endOnly = new Date(aptEndDate.getFullYear(), aptEndDate.getMonth(), aptEndDate.getDate())
+
+                return dayOnly >= startOnly && dayOnly <= endOnly
+              })
 
               return (
                 <div
@@ -223,9 +231,9 @@ export function WeekView({
                     {/* Current time indicator for today */}
                     {isSameDay(currentTime, day) &&
                       currentTime.getHours() * 60 + currentTime.getMinutes() >=
-                        displayWorkHours.startAt &&
+                      displayWorkHours.startAt &&
                       currentTime.getHours() * 60 + currentTime.getMinutes() <=
-                        displayWorkHours.endAt && (
+                      displayWorkHours.endAt && (
                         <div
                           className='absolute left-0 right-0 z-20 border-t-2 border-red-500'
                           style={{ top: `${getCurrentTimePosition()}px` }}
@@ -260,6 +268,7 @@ export function WeekView({
                             column={column}
                             totalColumns={totalColumns}
                             workHours={displayWorkHours}
+                            currentDate={day}
                           />
                         )
                       }

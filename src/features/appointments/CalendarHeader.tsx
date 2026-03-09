@@ -1,3 +1,7 @@
+import { addDays, addMonths, addWeeks, format } from 'date-fns'
+import { es } from 'date-fns/locale/es'
+import { ChevronLeft, ChevronRight, Search, Minus, Plus } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -5,19 +9,15 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { addDays, addWeeks, format } from 'date-fns'
-import { es } from 'date-fns/locale/es'
-import { ChevronLeft, ChevronRight, Search, Minus, Plus } from 'lucide-react'
-import { cn } from '@/lib/utils'
+} from '@/components/ui/tooltip'
 import { ServiceFilter } from './ServiceFilter'
 import { useGetServices } from './hooks/useGetServices'
 
 interface CalendarHeaderProps {
   selectedDate: Date
   setSelectedDate: (date: Date) => void
-  view: 'day' | 'week'
-  setView: (view: 'day' | 'week') => void
+  view: 'day' | 'week' | 'month'
+  setView: (view: 'day' | 'week' | 'month') => void
   searchQuery: string
   onSearchChange: (query: string) => void
   zoomIndex: number
@@ -59,7 +59,10 @@ export function CalendarHeader({
         {/* Row 1: View tabs + Navigation (single line) */}
         <div className='flex items-center justify-between gap-2 px-3 py-2 border-b'>
           {/* View tabs - Compact */}
-          <div className='flex items-center gap-0.5 bg-muted/50 rounded-md p-0.5' role='tablist'>
+          <div
+            className='flex items-center gap-0.5 bg-muted/50 rounded-md p-0.5'
+            role='tablist'
+          >
             <button
               role='tab'
               aria-selected={view === 'day'}
@@ -86,6 +89,19 @@ export function CalendarHeader({
             >
               Semana
             </button>
+            <button
+              role='tab'
+              aria-selected={view === 'month'}
+              onClick={() => setView('month')}
+              className={cn(
+                'px-2.5 py-1 text-xs font-medium rounded transition-colors',
+                view === 'month'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground'
+              )}
+            >
+              Mes
+            </button>
           </div>
 
           {/* Navigation - Compact */}
@@ -98,10 +114,18 @@ export function CalendarHeader({
                 setSelectedDate(
                   view === 'day'
                     ? addDays(selectedDate, -1)
-                    : addWeeks(selectedDate, -1)
+                    : view === 'week'
+                      ? addWeeks(selectedDate, -1)
+                      : addMonths(selectedDate, -1)
                 )
               }
-              aria-label={view === 'day' ? 'Día anterior' : 'Semana anterior'}
+              aria-label={
+                view === 'day'
+                  ? 'Día anterior'
+                  : view === 'week'
+                    ? 'Semana anterior'
+                    : 'Mes anterior'
+              }
             >
               <ChevronLeft className='h-3.5 w-3.5' />
             </Button>
@@ -123,10 +147,18 @@ export function CalendarHeader({
                 setSelectedDate(
                   view === 'day'
                     ? addDays(selectedDate, 1)
-                    : addWeeks(selectedDate, 1)
+                    : view === 'week'
+                      ? addWeeks(selectedDate, 1)
+                      : addMonths(selectedDate, 1)
                 )
               }
-              aria-label={view === 'day' ? 'Día siguiente' : 'Semana siguiente'}
+              aria-label={
+                view === 'day'
+                  ? 'Día siguiente'
+                  : view === 'week'
+                    ? 'Semana siguiente'
+                    : 'Mes siguiente'
+              }
             >
               <ChevronRight className='h-3.5 w-3.5' />
             </Button>
@@ -153,7 +185,10 @@ export function CalendarHeader({
         <div className='p-3'>
           <div className='flex items-center gap-4'>
             {/* View tabs */}
-            <div className='flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5' role='tablist'>
+            <div
+              className='flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5'
+              role='tablist'
+            >
               <button
                 role='tab'
                 aria-selected={view === 'day'}
@@ -180,14 +215,19 @@ export function CalendarHeader({
               >
                 Semana
               </button>
-              {/*<button*/}
-              {/*  role='tab'*/}
-              {/*  aria-selected={false}*/}
-              {/*  disabled*/}
-              {/*  className='px-4 py-1 text-sm font-medium rounded-md text-muted-foreground/50 cursor-not-allowed'*/}
-              {/*>*/}
-              {/*  Mes*/}
-              {/*</button>*/}
+              <button
+                role='tab'
+                aria-selected={view === 'month'}
+                onClick={() => setView('month')}
+                className={cn(
+                  'px-4 py-1 text-sm font-medium rounded-md transition-colors',
+                  view === 'month'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                Mes
+              </button>
             </div>
 
             {/* Navigation */}
@@ -203,10 +243,18 @@ export function CalendarHeader({
                         setSelectedDate(
                           view === 'day'
                             ? addDays(selectedDate, -1)
-                            : addWeeks(selectedDate, -1)
+                            : view === 'week'
+                              ? addWeeks(selectedDate, -1)
+                              : addMonths(selectedDate, -1)
                         )
                       }
-                      aria-label={view === 'day' ? 'Día anterior' : 'Semana anterior'}
+                      aria-label={
+                        view === 'day'
+                          ? 'Día anterior'
+                          : view === 'week'
+                            ? 'Semana anterior'
+                            : 'Mes anterior'
+                      }
                     >
                       <ChevronLeft className='h-4 w-4' />
                     </Button>
@@ -246,10 +294,18 @@ export function CalendarHeader({
                         setSelectedDate(
                           view === 'day'
                             ? addDays(selectedDate, 1)
-                            : addWeeks(selectedDate, 1)
+                            : view === 'week'
+                              ? addWeeks(selectedDate, 1)
+                              : addMonths(selectedDate, 1)
                         )
                       }
-                      aria-label={view === 'day' ? 'Día siguiente' : 'Semana siguiente'}
+                      aria-label={
+                        view === 'day'
+                          ? 'Día siguiente'
+                          : view === 'week'
+                            ? 'Semana siguiente'
+                            : 'Mes siguiente'
+                      }
                     >
                       <ChevronRight className='h-4 w-4' />
                     </Button>

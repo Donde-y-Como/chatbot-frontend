@@ -1,7 +1,18 @@
 import React from 'react'
-import { format } from 'date-fns'
+import { format, isSameDay } from 'date-fns'
 import { es } from 'date-fns/locale/es'
-import { CalendarIcon, DollarSignIcon, Scissors, User, CreditCard, FileText, CheckCircle, Wrench, Package } from 'lucide-react'
+import {
+  CalendarIcon,
+  DollarSignIcon,
+  Scissors,
+  User,
+  CreditCard,
+  FileText,
+  CheckCircle,
+  Wrench,
+  Package,
+  CalendarRange,
+} from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,15 +29,23 @@ import {
   HoverCardTrigger,
 } from '@/components/ui/hover-card.tsx'
 import { ClientPrimitives } from '@/features/clients/types'
-import { useGetEmployees } from '../../hooks/useGetEmployees'
-import { useEquipment } from '@/features/tools/hooks/useEquipment'
 import { useConsumables } from '@/features/tools/hooks/useConsumables'
-import { MinutesTimeRange, Service, AppointmentStatus, PaymentStatus, Deposit, ConsumableUsage } from '../../types'
+import { useEquipment } from '@/features/tools/hooks/useEquipment'
+import { useGetEmployees } from '../../hooks/useGetEmployees'
+import {
+  MinutesTimeRange,
+  Service,
+  AppointmentStatus,
+  PaymentStatus,
+  Deposit,
+  ConsumableUsage,
+} from '../../types'
 import { formatSlotHour } from '../../utils/formatters'
 import { AppointmentStatusBadge, PaymentStatusBadge } from '../StatusBadges'
 
 interface ConfirmationStepProps {
   date: Date
+  endDate?: Date
   timeRange: MinutesTimeRange
   selectedClient: ClientPrimitives | undefined
   selectedServices: Service[] | undefined
@@ -50,6 +69,7 @@ interface ConfirmationStepProps {
  */
 export function ConfirmationStep({
   date,
+  endDate,
   timeRange,
   selectedClient,
   selectedServices = [],
@@ -69,20 +89,24 @@ export function ConfirmationStep({
   const { data: employees } = useGetEmployees()
   const { equipment } = useEquipment()
   const { consumables } = useConsumables()
-  
+
   const selectedEmployees = employees
     ? employees.filter((emp) => selectedEmployeeIds.includes(emp.id))
     : []
-    
+
   const selectedEquipment = equipment
     ? equipment.filter((eq) => selectedEquipmentIds.includes(eq.id))
     : []
-    
+
   const selectedConsumables = consumables
-    ? consumableUsages.map(usage => {
-        const consumable = consumables.find(c => c.id === usage.consumableId)
-        return consumable ? { ...consumable, quantity: usage.quantity } : null
-      }).filter(Boolean)
+    ? consumableUsages
+        .map((usage) => {
+          const consumable = consumables.find(
+            (c) => c.id === usage.consumableId
+          )
+          return consumable ? { ...consumable, quantity: usage.quantity } : null
+        })
+        .filter(Boolean)
     : []
 
   return (
@@ -135,10 +159,9 @@ export function ConfirmationStep({
               <p className='text-sm text-muted-foreground'>Precio Total</p>
               <div className='space-y-1 mt-1'>
                 <p className='font-medium text-lg'>
-                  {selectedServices.length > 0 
+                  {selectedServices.length > 0
                     ? `${selectedServices.reduce((total, service) => total + service.price.amount, 0).toFixed(2)} ${selectedServices[0]?.price.currency || ''}`
-                    : '0.00'
-                  }
+                    : '0.00'}
                 </p>
                 {selectedServices.length > 1 && (
                   <p className='text-xs text-muted-foreground'>
@@ -205,7 +228,9 @@ export function ConfirmationStep({
                         {eq.name}
                       </Badge>
                       {eq.category && (
-                        <span className='text-xs text-muted-foreground'>({eq.category})</span>
+                        <span className='text-xs text-muted-foreground'>
+                          ({eq.category})
+                        </span>
                       )}
                     </div>
                   ))}
@@ -222,12 +247,17 @@ export function ConfirmationStep({
                 <p className='text-sm text-muted-foreground'>Consumibles</p>
                 <div className='space-y-1 mt-1'>
                   {selectedConsumables.map((consumable: any) => (
-                    <div key={consumable.id} className='flex items-center gap-2'>
+                    <div
+                      key={consumable.id}
+                      className='flex items-center gap-2'
+                    >
                       <Badge variant='outline' className='text-xs'>
                         {consumable.name} x{consumable.quantity}
                       </Badge>
                       {consumable.category && (
-                        <span className='text-xs text-muted-foreground'>({consumable.category})</span>
+                        <span className='text-xs text-muted-foreground'>
+                          ({consumable.category})
+                        </span>
                       )}
                     </div>
                   ))}
@@ -243,6 +273,12 @@ export function ConfirmationStep({
               <p className='font-medium'>
                 {format(date, 'PPPP', { locale: es })} • {formattedTimeRange}
               </p>
+              {endDate && !isSameDay(date, endDate) && (
+                <p className='text-sm text-primary flex items-center gap-1 mt-1'>
+                  <CalendarRange className='h-3.5 w-3.5' />
+                  Hasta el {format(endDate, 'PPPP', { locale: es })}
+                </p>
+              )}
             </div>
           </div>
 
@@ -293,9 +329,7 @@ export function ConfirmationStep({
                           <h4 className='text-sm font-semibold truncate'>
                             {employee.name}
                           </h4>
-                          <h4 className='text-xd truncate'>
-                            {employee.email}
-                          </h4>
+                          <h4 className='text-xd truncate'>{employee.email}</h4>
                         </div>
                       </div>
                     </HoverCardContent>

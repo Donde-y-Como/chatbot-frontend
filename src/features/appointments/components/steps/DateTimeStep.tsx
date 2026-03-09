@@ -1,19 +1,27 @@
 import React, { useState } from 'react'
-import { isToday, setMinutes } from 'date-fns'
+import { isToday, setMinutes, format, isSameDay } from 'date-fns'
 import { es } from 'date-fns/locale/es'
-import { Clock, AlertCircle } from 'lucide-react'
+import { Clock, AlertCircle, CalendarRange } from 'lucide-react'
+import type { DateRange } from 'react-day-picker'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Switch } from '@/components/ui/switch'
 import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
 import { MinutesTimeRange } from '../../types'
-import { formatSlotHour, isValidAppointmentDate, getPastDateErrorMessage } from '../../utils/formatters'
+import {
+  formatSlotHour,
+  isValidAppointmentDate,
+  getPastDateErrorMessage,
+} from '../../utils/formatters'
 
 interface DateTimeStepProps {
   date: Date
+  endDate?: Date
   onDateChange: (date: Date) => void
+  onEndDateChange: (endDate: Date | undefined) => void
   timeRange: MinutesTimeRange
   onTimeRangeChange: (timeRange: MinutesTimeRange) => void
   onNext: () => void
@@ -23,11 +31,13 @@ interface DateTimeStepProps {
 
 /**
  * Step 2: Date and time selection component
- * Now allows manual input of time range
+ * Supports single-day and multi-day appointments
  */
 export function DateTimeStep({
   date,
+  endDate,
   onDateChange,
+  onEndDateChange,
   timeRange,
   onTimeRangeChange,
   onNext,
@@ -35,7 +45,10 @@ export function DateTimeStep({
   onCancel,
 }: DateTimeStepProps) {
   const [dateError, setDateError] = useState<string | null>(null)
-  
+  const [isMultiDay, setIsMultiDay] = useState<boolean>(
+    endDate !== undefined && !isSameDay(date, endDate)
+  )
+
   // Convert minutes to HH:MM format for input
   const minutesToTime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60)
@@ -63,53 +76,138 @@ export function DateTimeStep({
 
   const { workHours } = useGetWorkSchedule(date)
 
+  // Handle single date selection
   const handleDateSelect = (newDate: Date | undefined) => {
     if (!newDate) return
-    
-    // Validar que la fecha no sea en el pasado
+
     if (!isValidAppointmentDate(newDate)) {
       setDateError(getPastDateErrorMessage())
       return
     }
-    
+
     setDateError(null)
-    
+
     if (isToday(newDate)) {
       const today = new Date()
       onDateChange(
         setMinutes(newDate as Date, today.getMinutes() + today.getHours() * 60)
       )
     } else {
-      onDateChange(setMinutes(newDate as Date, workHours ? workHours.startAt : 0))
+      onDateChange(
+        setMinutes(newDate as Date, workHours ? workHours.startAt : 0)
+      )
     }
   }
-  
-  const disablePastDates = (date: Date) => {
-    return !isValidAppointmentDate(date)
+
+  // Handle date range selection for multi-day
+  const handleRangeSelect = (range: DateRange | undefined) => {
+    if (!range) return
+
+    if (range.from) {
+      if (!isValidAppointmentDate(range.from)) {
+        setDateError(getPastDateErrorMessage())
+        return
+      }
+      setDateError(null)
+
+      if (isToday(range.from)) {
+        const today = new Date()
+        onDateChange(
+          setMinutes(range.from, today.getMinutes() + today.getHours() * 60)
+        )
+      } else {
+        onDateChange(setMinutes(range.from, workHours ? workHours.startAt : 0))
+      }
+    }
+
+    if (range.to) {
+      if (!isValidAppointmentDate(range.to)) {
+        setDateError('La fecha de fin no puede ser en el pasado')
+        return
+      }
+      onEndDateChange(range.to)
+    } else {
+      onEndDateChange(undefined)
+    }
   }
+
+  const handleMultiDayToggle = (checked: boolean) => {
+    setIsMultiDay(checked)
+    if (!checked) {
+      onEndDateChange(undefined)
+    }
+  }
+
+  const disablePastDates = (checkDate: Date) => {
+    return !isValidAppointmentDate(checkDate)
+  }
+
+  const isMultiDayAppointment =
+    isMultiDay && endDate && !isSameDay(date, endDate)
 
   return (
     <div className='space-y-4'>
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         <div>
-          <label className='text-sm font-medium mb-2 block'>Fecha</label>
+          <div className='flex items-center justify-between mb-2'>
+            <label className='text-sm font-medium block'>Fecha</label>
+            <div className='flex items-center gap-2'>
+              <CalendarRange className='h-4 w-4 text-muted-foreground' />
+              <Label
+                htmlFor='multi-day-toggle'
+                className='text-xs text-muted-foreground cursor-pointer'
+              >
+                Multidía
+              </Label>
+              <Switch
+                id='multi-day-toggle'
+                checked={isMultiDay}
+                onCheckedChange={handleMultiDayToggle}
+              />
+            </div>
+          </div>
           {dateError && (
-            <Alert variant="destructive" className="mb-2">
-              <AlertCircle className="h-4 w-4" />
+            <Alert variant='destructive' className='mb-2'>
+              <AlertCircle className='h-4 w-4' />
               <AlertDescription>{dateError}</AlertDescription>
             </Alert>
           )}
           <div className='border rounded-md p-1'>
-            <Calendar
-              required
-              locale={es}
-              mode='single'
-              selected={date}
-              onSelect={handleDateSelect}
-              disabled={disablePastDates}
-              className='w-full'
-            />
+            {isMultiDay ? (
+              <Calendar
+                locale={es}
+                mode='range'
+                selected={{ from: date, to: endDate }}
+                onSelect={handleRangeSelect}
+                disabled={disablePastDates}
+                className='w-full'
+                numberOfMonths={1}
+              />
+            ) : (
+              <Calendar
+                required
+                locale={es}
+                mode='single'
+                selected={date}
+                onSelect={handleDateSelect}
+                disabled={disablePastDates}
+                className='w-full'
+              />
+            )}
           </div>
+
+          {isMultiDayAppointment && (
+            <div className='mt-2 p-3 bg-primary/5 border border-primary/20 rounded-md'>
+              <p className='text-sm font-medium text-primary flex items-center gap-2'>
+                <CalendarRange className='h-4 w-4' />
+                Cita de múltiples días
+              </p>
+              <p className='text-xs text-muted-foreground mt-1'>
+                {format(date, 'dd MMM yyyy', { locale: es })} →{' '}
+                {format(endDate, 'dd MMM yyyy', { locale: es })}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className='space-y-4'>
@@ -145,7 +243,14 @@ export function DateTimeStep({
             <p className='text-sm text-muted-foreground'>
               La cita será agendada desde las{' '}
               {formatSlotHour(timeRange.startAt)} hasta las{' '}
-              {formatSlotHour(timeRange.endAt)}.
+              {formatSlotHour(timeRange.endAt)}
+              {isMultiDayAppointment && (
+                <span className='block mt-1'>
+                  Desde el {format(date, 'dd/MM/yyyy', { locale: es })} hasta el{' '}
+                  {format(endDate, 'dd/MM/yyyy', { locale: es })}
+                </span>
+              )}
+              .
             </p>
             {timeRange.endAt <= timeRange.startAt && (
               <p className='text-sm text-destructive mt-2'>

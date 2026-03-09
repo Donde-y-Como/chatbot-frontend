@@ -3,11 +3,14 @@ import { format } from 'date-fns'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { es } from 'date-fns/locale/es'
-import { CalendarIcon } from 'lucide-react'
+import { CalendarIcon, CalendarRange } from 'lucide-react'
+import type { DateRange } from 'react-day-picker'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import {
   Dialog,
   DialogContent,
@@ -68,6 +71,7 @@ export function QuickAppointmentDialog({
   defaultEndTime,
 }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isMultiDay, setIsMultiDay] = useState(false)
   const hasPreSelectedTime =
     defaultStartTime !== undefined && defaultEndTime !== undefined
   const [userModifiedTime, setUserModifiedTime] = useState(false)
@@ -129,6 +133,7 @@ export function QuickAppointmentDialog({
     if (open) {
       openDialog()
       reset(defaultValues)
+      setIsMultiDay(false)
       setUserModifiedTime(false)
     } else {
       closeDialog()
@@ -150,6 +155,7 @@ export function QuickAppointmentDialog({
         serviceIds: values.serviceIds,
         employeeIds: [],
         date: values.date.toISOString(),
+        endDate: values.endDate ? values.endDate.toISOString() : undefined,
         timeRange: {
           startAt: values.startAt,
           endAt: values.endAt,
@@ -269,8 +275,8 @@ export function QuickAppointmentDialog({
                                 id
                               )
                                 ? currentServices.filter(
-                                    (serviceId: string) => serviceId !== id
-                                  )
+                                  (serviceId: string) => serviceId !== id
+                                )
                                 : [...currentServices, id]
 
                               field.onChange(updatedServices)
@@ -287,7 +293,23 @@ export function QuickAppointmentDialog({
 
                 {/* Fecha */}
                 <div className='space-y-4'>
-                  <h3 className='text-lg font-medium'>Fecha</h3>
+                  <div className='flex items-center justify-between'>
+                    <h3 className='text-lg font-medium'>Fecha</h3>
+                    <div className='flex items-center gap-2'>
+                      <CalendarRange className='h-4 w-4 text-muted-foreground' />
+                      <Label htmlFor='quick-multi-day' className='text-xs text-muted-foreground cursor-pointer'>
+                        Multidía
+                      </Label>
+                      <Switch
+                        id='quick-multi-day'
+                        checked={isMultiDay}
+                        onCheckedChange={(c) => {
+                          setIsMultiDay(c)
+                          if (!c) form.setValue('endDate', undefined)
+                        }}
+                      />
+                    </div>
+                  </div>
 
                   <FormField
                     control={form.control}
@@ -306,7 +328,11 @@ export function QuickAppointmentDialog({
                                 )}
                               >
                                 {field.value ? (
-                                  format(field.value, 'PPP', { locale: es })
+                                  isMultiDay && form.watch('endDate') ? (
+                                    `${format(field.value, 'dd MMM yyyy', { locale: es })} - ${format(form.watch('endDate')!, 'dd MMM yyyy', { locale: es })}`
+                                  ) : (
+                                    format(field.value, 'PPP', { locale: es })
+                                  )
                                 ) : (
                                   <span>Selecciona una fecha</span>
                                 )}
@@ -315,14 +341,29 @@ export function QuickAppointmentDialog({
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className='w-auto p-0' align='start'>
-                            <Calendar
-                              mode='single'
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => date < new Date()}
-                              initialFocus
-                              locale={es}
-                            />
+                            {isMultiDay ? (
+                              <Calendar
+                                mode='range'
+                                selected={{ from: field.value, to: form.watch('endDate') }}
+                                onSelect={(range: DateRange | undefined) => {
+                                  if (range?.from) field.onChange(range.from)
+                                  if (range?.to) form.setValue('endDate', range.to)
+                                  else form.setValue('endDate', undefined)
+                                }}
+                                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                                initialFocus
+                                locale={es}
+                              />
+                            ) : (
+                              <Calendar
+                                mode='single'
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                                initialFocus
+                                locale={es}
+                              />
+                            )}
                           </PopoverContent>
                         </Popover>
                         <FormMessage />
@@ -396,12 +437,36 @@ export function QuickAppointmentDialog({
                     />
                   </div>
 
-                  {totalDuration > 0 && (
-                    <p className='text-sm text-muted-foreground'>
-                      Duración total estimada: {Math.floor(totalDuration / 60)}h{' '}
-                      {totalDuration % 60}min
-                    </p>
-                  )}
+                  {(() => {
+                    const currentStartAt = form.watch('startAt') || 0
+                    const currentEndAt = form.watch('endAt') || 0
+                    const currentDate = form.watch('date')
+                    const currentEndDate = form.watch('endDate')
+
+                    const mins = Math.max(0, currentEndAt - currentStartAt)
+                    let durationText = `${Math.floor(mins / 60)}h ${mins % 60 > 0 ? `${mins % 60}min` : ''}`.trim()
+
+                    if (isMultiDay && currentEndDate && currentDate) {
+                      // calculate difference in days
+                      const start = new Date(currentDate)
+                      const end = new Date(currentEndDate)
+                      start.setHours(0, 0, 0, 0)
+                      end.setHours(0, 0, 0, 0)
+                      const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+
+                      // Si startAt y endAt son el comienzo y fin de un rango continuo (ej: de 24h)
+                      // podemos mostrar los días enteros
+                      if (days > 0) {
+                        durationText = `${days} día${days > 1 ? 's' : ''}${mins > 0 ? ` y ${durationText}` : ''}`
+                      }
+                    }
+
+                    return (
+                      <p className='text-sm text-muted-foreground'>
+                        Duración de la cita: {durationText}
+                      </p>
+                    )
+                  })()}
                 </div>
               </div>
             </ScrollArea>

@@ -1,19 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
+import { format } from 'date-fns'
 import { Separator } from '@radix-ui/react-separator'
-import { startOfWeek, endOfWeek } from 'date-fns'
 import { MenuIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CalendarHeader } from '@/features/appointments/CalendarHeader.tsx'
 import { CalendarSidebar } from '@/features/appointments/CalendarSidebar.tsx'
 import { DayView } from '@/features/appointments/DayView.tsx'
+import { MonthView } from '@/features/appointments/MonthView.tsx'
 import { WeekView } from '@/features/appointments/WeekView.tsx'
 import { useGetAppointments } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.ts'
 import { SidebarTrigger } from '../../components/ui/sidebar'
-import { format } from 'date-fns'
 
 // Calendar Sidebar Toggle Component
-function CalendarSidebarToggle({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
+function CalendarSidebarToggle({
+  isOpen,
+  onToggle,
+}: {
+  isOpen: boolean
+  onToggle: () => void
+}) {
   return (
     <Button
       variant='ghost'
@@ -33,7 +40,7 @@ const DEFAULT_ZOOM_INDEX = 2 // 100%
 export function Calendar() {
   const { data: employees } = useGetEmployees()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [view, setView] = useState<'day' | 'week'>('day')
+  const [view, setView] = useState<'day' | 'week' | 'month'>('day')
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(
     new Set()
   )
@@ -43,13 +50,19 @@ export function Calendar() {
   const [selectedService, setSelectedService] = useState<string | 'all'>('all')
 
   // Get appointments based on current view
-  const startDate = view === 'week' 
-    ? startOfWeek(selectedDate, { weekStartsOn: 1 })
-    : selectedDate
-  const endDate = view === 'week'
-    ? endOfWeek(selectedDate, { weekStartsOn: 1 })
-    : selectedDate
-    
+  const startDate =
+    view === 'month'
+      ? startOfMonth(selectedDate)
+      : view === 'week'
+        ? startOfWeek(selectedDate, { weekStartsOn: 1 })
+        : selectedDate
+  const endDate =
+    view === 'month'
+      ? endOfMonth(selectedDate)
+      : view === 'week'
+        ? endOfWeek(selectedDate, { weekStartsOn: 1 })
+        : selectedDate
+
   const { data: appointments } = useGetAppointments(
     startDate.toISOString(),
     endDate.toISOString()
@@ -76,11 +89,13 @@ export function Calendar() {
       const query = searchQuery.toLowerCase().trim()
 
       // Search in client name
-      const matchesClient = appointment.clientName?.toLowerCase().includes(query)
+      const matchesClient = appointment.clientName
+        ?.toLowerCase()
+        .includes(query)
 
       // Search in service names (array of strings)
-      const matchesServices = appointment.serviceNames?.some(
-        (serviceName) => serviceName.toLowerCase().includes(query)
+      const matchesServices = appointment.serviceNames?.some((serviceName) =>
+        serviceName.toLowerCase().includes(query)
       )
 
       // Search in employee names (array of strings)
@@ -99,7 +114,10 @@ export function Calendar() {
         <div className='flex items-center gap-2'>
           <SidebarTrigger variant='outline' className='shrink-0' />
           <Separator orientation='vertical' className='h-5' />
-          <CalendarSidebarToggle isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+          <CalendarSidebarToggle
+            isOpen={sidebarOpen}
+            onToggle={() => setSidebarOpen(!sidebarOpen)}
+          />
           <h1 className='text-lg font-bold'>Citas</h1>
         </div>
       </div>
@@ -109,13 +127,22 @@ export function Calendar() {
         <div className='flex items-center gap-3'>
           <SidebarTrigger variant='outline' className='shrink-0' />
           <Separator orientation='vertical' className='h-5' />
-          <CalendarSidebarToggle isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-          <h1 className='text-xl lg:text-2xl font-bold tracking-tight'>Citas</h1>
+          <CalendarSidebarToggle
+            isOpen={sidebarOpen}
+            onToggle={() => setSidebarOpen(!sidebarOpen)}
+          />
+          <h1 className='text-xl lg:text-2xl font-bold tracking-tight'>
+            Citas
+          </h1>
         </div>
       </div>
 
       {/* Main Layout */}
-      <div className='flex-1 flex overflow-hidden relative' role='application' aria-label='Sistema de citas'>
+      <div
+        className='flex-1 flex overflow-hidden relative'
+        role='application'
+        aria-label='Sistema de citas'
+      >
         {/* Sidebar - Only on desktop when open */}
         <CalendarSidebar
           selectedDate={selectedDate}
@@ -128,7 +155,11 @@ export function Calendar() {
         />
 
         {/* Main Content - Responsive */}
-        <main className='flex-1 flex flex-col overflow-hidden' role='main' aria-label='Vista principal del calendario'>
+        <main
+          className='flex-1 flex flex-col overflow-hidden'
+          role='main'
+          aria-label='Vista principal del calendario'
+        >
           {/* Calendar Header */}
           <header className='shrink-0 bg-background' role='banner'>
             <CalendarHeader
@@ -147,7 +178,16 @@ export function Calendar() {
           </header>
 
           {/* Calendar Content */}
-          <section className='flex-1 overflow-hidden p-2 md:p-4' aria-label={view === 'day' ? 'Vista de citas del día' : 'Vista de citas de la semana'}>
+          <section
+            className='flex-1 overflow-hidden p-2 md:p-4'
+            aria-label={
+              view === 'day'
+                ? 'Vista de citas del día'
+                : view === 'week'
+                  ? 'Vista de citas de la semana'
+                  : 'Vista mensual de citas'
+            }
+          >
             <div className='h-full rounded-lg md:rounded-xl bg-card overflow-hidden'>
               {view === 'day' ? (
                 <DayView
@@ -156,8 +196,14 @@ export function Calendar() {
                   zoomIndex={zoomIndex}
                   selectedService={selectedService}
                 />
-              ) : (
+              ) : view === 'week' ? (
                 <WeekView
+                  appointments={filteredAppointments}
+                  date={selectedDate}
+                  selectedService={selectedService}
+                />
+              ) : (
+                <MonthView
                   appointments={filteredAppointments}
                   date={selectedDate}
                   selectedService={selectedService}
