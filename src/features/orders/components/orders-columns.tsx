@@ -144,8 +144,7 @@ const formatCurrency = (amount: number, currency: string = 'MXN') => {
 
 export const createColumns = (
   onPayment?: (order: OrderWithDetails) => void,
-  onEdit?: (order: OrderWithDetails) => void,
-  onDelete?: (order: OrderWithDetails) => void,
+   onDelete?: (order: OrderWithDetails) => void,
   onViewDetails?: (order: OrderWithDetails) => void,
   onLoadToCart?: (order: OrderWithDetails) => void
 ): ColumnDef<OrderWithDetails>[] => [
@@ -497,8 +496,7 @@ export const createColumns = (
           <OrderRowActions
             row={row}
             onPayment={onPayment}
-            onEdit={onEdit}
-            onDelete={onDelete}
+             onDelete={onDelete}
             onViewDetails={onViewDetails}
             onLoadToCart={onLoadToCart}
           />

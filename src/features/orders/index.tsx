@@ -131,7 +131,7 @@ export default function Orders() {
       toast.success(`Orden #${order.id.slice(-6).toUpperCase()} cargada al POS`, { id: 'load-to-cart' })
 
       // 6. Navegar al POS
-      navigate({ to: '/orden/' as any })
+      navigate({ to: '/orden' })
     } catch (error) {
       toast.error('No se pudo cargar la orden al carrito', { id: 'load-to-cart' })
     } finally {
@@ -173,14 +173,14 @@ export default function Orders() {
 
   const columns = useMemo(
     () =>
-      createColumns(handlePayment, handleEdit, handleDelete, handleViewDetails, handleLoadToCart),
+      createColumns(handlePayment, handleDelete, handleViewDetails, handleLoadToCart),
     [isLoadingToCart]
   )
 
   const handleFiltersChange = (newFilters: OrdersFilters) => {
     setFilters(newFilters)
   }
-
+  
   // Show initial loading only if stats are loading and we have no data
   if (isStatsLoading && !statsResponse) {
     return <TableSkeleton />

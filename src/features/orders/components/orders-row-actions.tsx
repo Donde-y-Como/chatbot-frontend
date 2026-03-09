@@ -23,8 +23,7 @@ import { OrderWithDetails } from '@/features/store/types'
 interface OrderRowActionsProps {
   row: Row<OrderWithDetails>
   onPayment: (order: OrderWithDetails) => void
-  onEdit?: (order: OrderWithDetails) => void
-  onDelete?: (order: OrderWithDetails) => void
+   onDelete?: (order: OrderWithDetails) => void
   onViewDetails?: (order: OrderWithDetails) => void
   onLoadToCart?: (order: OrderWithDetails) => void
 }
@@ -32,8 +31,7 @@ interface OrderRowActionsProps {
 export function OrderRowActions({
   row,
   onPayment,
-  onEdit,
-  onDelete,
+   onDelete,
   onViewDetails,
   onLoadToCart,
 }: OrderRowActionsProps) {
@@ -66,17 +64,6 @@ export function OrderRowActions({
           <Eye className='mr-2 h-4 w-4' />
           Ver detalles
         </DropdownMenuItem>
-        {onEdit && (
-          <RenderIfCan permission={PERMISSIONS.ORDER_UPDATE}>
-            <DropdownMenuItem
-              onClick={() => onEdit(order)}
-              className='text-blue-600 focus:text-blue-600'
-            >
-              <Edit className='mr-2 h-4 w-4' />
-              Editar
-            </DropdownMenuItem>
-          </RenderIfCan>
-        )}
         {onLoadToCart && order.status !== 'cancelled' && (
           <RenderIfCan permission={PERMISSIONS.ORDER_UPDATE}>
             <DropdownMenuItem
