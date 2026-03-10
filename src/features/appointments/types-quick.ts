@@ -6,6 +6,7 @@ export const quickAppointmentSchema = z.object({
   clientId: z.string().min(1, { message: 'El cliente es requerido' }),
   serviceIds: z.array(z.string()).min(1, { message: 'Debe seleccionar al menos un servicio' }),
   date: z.date({ required_error: 'La fecha es requerida' }),
+  endDate: z.date().optional(),
   startAt: z.number().min(0, { message: 'Hora de inicio inválida' }),
   endAt: z.number().min(0, { message: 'Hora de fin inválida' }),
 }).refine(

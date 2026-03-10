@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { format, isSameDay } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
 import { es } from 'date-fns/locale'
@@ -16,6 +16,7 @@ import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.t
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
 import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts'
+import { getVisualAppointments } from '@/features/appointments/utils/multiday.ts'
 import { QuickAppointmentDialog } from '@/features/appointments/components/QuickAppointmentDialog'
 import { useDialogState } from '@/features/appointments/contexts/DialogStateContext'
 import type { Appointment } from './types'
@@ -61,7 +62,7 @@ export function DayView({
   const [dragHandle, setDragHandle] = useState<'top' | 'bottom' | null>(null)
   const [isQuickDialogOpen, setIsQuickDialogOpen] = useState(false)
   const [dialogTimeRange, setDialogTimeRange] = useState<TimeBlock | null>(null)
-  
+
   const timeSlotAreaRef = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
   const { hasOpenDialogs } = useDialogState()
@@ -70,8 +71,14 @@ export function DayView({
   const currentZoom = ZOOM_LEVELS[zoomIndex]
   const TIME_SLOT_HEIGHT = BASE_TIME_SLOT_HEIGHT * currentZoom
 
+  const visualAppointments = useMemo(() => {
+    const segments = getVisualAppointments(appointments, workHours || undefined)
+    // Only keep segments that belong to THIS specific day being viewed
+    return segments.filter((apt) => isSameDay(new Date(apt.date), date))
+  }, [appointments, workHours, date])
+
   const positionedEvents = usePositionedEvents({
-    appointments,
+    appointments: visualAppointments,
     selectedService,
   })
 
@@ -90,7 +97,7 @@ export function DayView({
     const relativeY = Math.max(0, clientY - rect.top)
     const minutesFromStart = (relativeY / TIME_SLOT_HEIGHT) * MINUTES_PER_HOUR
     const snappedMinutes = Math.round(minutesFromStart / SNAP_MINUTES) * SNAP_MINUTES
-    
+
     return Math.max(
       workHours.startAt,
       Math.min(workHours.endAt - MIN_DURATION, snappedMinutes + workHours.startAt)
@@ -107,7 +114,7 @@ export function DayView({
     const duration = endAt - startAt
     const hours = Math.floor(duration / MINUTES_PER_HOUR)
     const minutes = duration % MINUTES_PER_HOUR
-    
+
     if (hours === 0) return `${minutes}min`
     if (minutes === 0) return `${hours}h`
     return `${hours}h ${minutes}m`
@@ -115,19 +122,19 @@ export function DayView({
 
   const getBlockPosition = (block: TimeBlock) => {
     if (!workHours) return { top: 0, height: TIME_SLOT_HEIGHT }
-    
+
     const top = ((block.startAt - workHours.startAt) / MINUTES_PER_HOUR) * TIME_SLOT_HEIGHT
     const height = ((block.endAt - block.startAt) / MINUTES_PER_HOUR) * TIME_SLOT_HEIGHT
-    
+
     return { top: Math.max(0, top), height: Math.max(TIME_SLOT_HEIGHT * 0.25, height) }
   }
 
   // Event handlers
   const handleTimeSlotClick = useCallback((e: React.MouseEvent) => {
     if (e.target !== e.currentTarget || hasOpenDialogs) return
-    
+
     const clickTime = getTimeFromY(e.clientY)
-    
+
     if (timeBlock) {
       // Clear existing block
       setTimeBlock(null)
@@ -136,16 +143,16 @@ export function DayView({
 
     // Create new block
     if (!workHours) return
-    
+
     let startAt = clickTime
     let endAt = clickTime + DEFAULT_DURATION
-    
+
     // Ensure block fits within work hours
     if (endAt > workHours.endAt) {
       endAt = workHours.endAt
       startAt = Math.max(workHours.startAt, endAt - DEFAULT_DURATION)
     }
-    
+
     if (startAt < workHours.startAt) {
       startAt = workHours.startAt
       endAt = Math.min(workHours.endAt, startAt + DEFAULT_DURATION)
@@ -202,7 +209,7 @@ export function DayView({
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
-      
+
       return () => {
         document.removeEventListener('mousemove', handleMouseMove)
         document.removeEventListener('mouseup', handleMouseUp)
@@ -212,7 +219,7 @@ export function DayView({
 
   const handleConfirmBlock = useCallback(() => {
     if (!timeBlock) return
-    
+
     setDialogTimeRange({ ...timeBlock })
     setTimeBlock(null)
     setIsQuickDialogOpen(true)
@@ -243,7 +250,7 @@ export function DayView({
   const handleCancel = async (id: string) => {
     try {
       await appointmentService.cancelAppointment(id)
-      
+
       // Invalidar y refetch queries para actualizar la vista inmediatamente
       await Promise.all([
         queryClient.invalidateQueries({
@@ -253,7 +260,7 @@ export function DayView({
           queryKey: [UseGetAppointmentsQueryKey, date.toISOString()],
         })
       ])
-      
+
       toast.success('Estado de la cita cambiado a cancelada')
     } catch (e) {
       toast.error('No se pudo cancelar la cita')
@@ -280,12 +287,12 @@ export function DayView({
               </div>
               <div className='absolute inset-0 rounded-full border-2 border-primary/20 animate-pulse' />
             </div>
-            
+
             <div className='space-y-2'>
               <h3 className='text-xl font-semibold'>Cargando agenda del día</h3>
               <p className='text-muted-foreground'>Preparando tu calendario y citas...</p>
             </div>
-            
+
             <div className='grid grid-cols-2 gap-4 w-full'>
               <div className='space-y-3 p-4 rounded-lg bg-card/50'>
                 <Skeleton className='h-3 w-full' />
@@ -311,7 +318,7 @@ export function DayView({
           <div className='w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto'>
             <CalendarX className='h-10 w-10 text-green-600 dark:text-green-400' />
           </div>
-          
+
           <div className='space-y-3'>
             <h2 className='text-2xl font-bold text-green-700 dark:text-green-400'>¡Día libre!</h2>
             <p className='text-muted-foreground leading-relaxed'>
@@ -320,7 +327,7 @@ export function DayView({
               ¡Disfruta de tu tiempo libre!
             </p>
           </div>
-          
+
           <div className='bg-card border rounded-lg p-4 shadow-sm'>
             <div className='flex items-center justify-center gap-2'>
               <Calendar className='h-4 w-4 text-muted-foreground' />
@@ -365,132 +372,132 @@ export function DayView({
 
               {/* Time grid */}
               <div
-              ref={timeSlotAreaRef}
-              className={`flex-1 relative transition-all duration-200 ${
-                hasOpenDialogs 
-                  ? 'cursor-not-allowed opacity-60' 
+                ref={timeSlotAreaRef}
+                className={`flex-1 relative transition-all duration-200 ${hasOpenDialogs
+                  ? 'cursor-not-allowed opacity-60'
                   : isDragging
                     ? 'cursor-ns-resize'
                     : 'cursor-pointer hover:bg-primary/5 active:bg-primary/10'
-              }`}
-              role='grid'
-              aria-label='Horarios del día para crear citas'
-              style={{
-                backgroundImage: `repeating-linear-gradient(
+                  }`}
+                role='grid'
+                aria-label='Horarios del día para crear citas'
+                style={{
+                  backgroundImage: `repeating-linear-gradient(
                   to bottom,
                   transparent,
                   transparent ${TIME_SLOT_HEIGHT - 1}px,
                   hsl(var(--border) / 0.3) ${TIME_SLOT_HEIGHT - 1}px,
                   hsl(var(--border) / 0.3) ${TIME_SLOT_HEIGHT}px
                 )`,
-                backgroundSize: `100% ${TIME_SLOT_HEIGHT}px`,
-                height: `${totalHeight}px`,
-                minHeight: `${totalHeight}px`,
-              }}
-              onClick={handleTimeSlotClick}
-              onTouchStart={(e) => {
-                // Handle touch for mobile
-                if (e.touches.length === 1 && !hasOpenDialogs) {
-                  const touch = e.touches[0]
-                  handleTimeSlotClick({ clientY: touch.clientY, target: e.target, currentTarget: e.currentTarget } as any)
-                }
-              }}
-            >
-              {/* Current time indicator */}
-              {isSameDay(currentTime, date) &&
-                workHours &&
-                currentTime.getHours() * 60 + currentTime.getMinutes() >= workHours.startAt &&
-                currentTime.getHours() * 60 + currentTime.getMinutes() <= workHours.endAt && (
-                  <div
-                    className='absolute left-0 right-0 z-10 border-t-2 border-red-500'
-                    style={{ top: `${getCurrentTimePosition()}px` }}
-                  >
-                    <div className='absolute -left-3 -top-1.5 flex items-center justify-center'>
-                      <div className='w-3 h-3 rounded-full bg-red-500' />
-                      <div className='absolute text-xs font-medium text-red-500 -left-10'>
-                        {format(currentTime, 'HH:mm')}
+                  backgroundSize: `100% ${TIME_SLOT_HEIGHT}px`,
+                  height: `${totalHeight}px`,
+                  minHeight: `${totalHeight}px`,
+                }}
+                onClick={handleTimeSlotClick}
+                onTouchStart={(e) => {
+                  // Handle touch for mobile
+                  if (e.touches.length === 1 && !hasOpenDialogs) {
+                    const touch = e.touches[0]
+                    handleTimeSlotClick({ clientY: touch.clientY, target: e.target, currentTarget: e.currentTarget } as any)
+                  }
+                }}
+              >
+                {/* Current time indicator */}
+                {isSameDay(currentTime, date) &&
+                  workHours &&
+                  currentTime.getHours() * 60 + currentTime.getMinutes() >= workHours.startAt &&
+                  currentTime.getHours() * 60 + currentTime.getMinutes() <= workHours.endAt && (
+                    <div
+                      className='absolute left-0 right-0 z-10 border-t-2 border-red-500'
+                      style={{ top: `${getCurrentTimePosition()}px` }}
+                    >
+                      <div className='absolute -left-3 -top-1.5 flex items-center justify-center'>
+                        <div className='w-3 h-3 rounded-full bg-red-500' />
+                        <div className='absolute text-xs font-medium text-red-500 -left-10'>
+                          {format(currentTime, 'HH:mm')}
+                        </div>
                       </div>
+                    </div>
+                  )}
+
+                {/* Simple Time Block */}
+                {timeBlock && (
+                  <div
+                    className='absolute left-0 right-0 z-20 bg-blue-500/20 border-2 border-blue-500 rounded-lg shadow-lg'
+                    style={getBlockPosition(timeBlock)}
+                  >
+                    {/* Duration label and confirm button */}
+                    <div className='absolute inset-0 flex items-center justify-center gap-2 p-2 md:p-4'>
+                      <div className='bg-background/95 text-blue-900 px-2 md:px-3 py-1 rounded-md text-xs md:text-sm font-semibold border shadow-sm'>
+                        {formatDuration(timeBlock.startAt, timeBlock.endAt)}
+                      </div>
+                      <Button
+                        size='sm'
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleConfirmBlock()
+                        }}
+                        className='h-7 md:h-8 px-2 md:px-3 text-xs md:text-sm bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all duration-200'
+                      >
+                        Crear
+                      </Button>
+                    </div>
+
+                    {/* Resize handles */}
+                    <div
+                      className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-16 h-2 bg-blue-500 rounded-full cursor-ns-resize hover:bg-blue-600'
+                      onMouseDown={(e) => handleResizeStart('top', e)}
+                    />
+                    <div
+                      className='absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-16 h-2 bg-blue-500 rounded-full cursor-ns-resize hover:bg-blue-600'
+                      onMouseDown={(e) => handleResizeStart('bottom', e)}
+                    />
+                  </div>
+                )}
+
+                {/* Empty state */}
+                {positionedEvents.length === 0 && !timeBlock && (
+                  <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
+                    <div className='text-center p-6'>
+                      <Clock className='h-12 w-12 text-muted-foreground mx-auto mb-4' />
+                      <p className='text-muted-foreground mb-2'>
+                        No hay citas programadas para este día
+                      </p>
+                      {!hasOpenDialogs && (
+                        <p className='text-sm text-muted-foreground/70'>
+                          Haz clic en cualquier horario para crear una nueva cita
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
 
-              {/* Simple Time Block */}
-              {timeBlock && (
-                <div
-                  className='absolute left-0 right-0 z-20 bg-blue-500/20 border-2 border-blue-500 rounded-lg shadow-lg'
-                  style={getBlockPosition(timeBlock)}
-                >
-                  {/* Duration label and confirm button */}
-                  <div className='absolute inset-0 flex items-center justify-center gap-2 p-2 md:p-4'>
-                    <div className='bg-background/95 text-blue-900 px-2 md:px-3 py-1 rounded-md text-xs md:text-sm font-semibold border shadow-sm'>
-                      {formatDuration(timeBlock.startAt, timeBlock.endAt)}
-                    </div>
-                    <Button
-                      size='sm'
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleConfirmBlock()
-                      }}
-                      className='h-7 md:h-8 px-2 md:px-3 text-xs md:text-sm bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all duration-200'
-                    >
-                      Crear
-                    </Button>
-                  </div>
-                  
-                  {/* Resize handles */}
-                  <div 
-                    className='absolute -top-1 left-1/2 transform -translate-x-1/2 w-16 h-2 bg-blue-500 rounded-full cursor-ns-resize hover:bg-blue-600'
-                    onMouseDown={(e) => handleResizeStart('top', e)}
-                  />
-                  <div 
-                    className='absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-16 h-2 bg-blue-500 rounded-full cursor-ns-resize hover:bg-blue-600'
-                    onMouseDown={(e) => handleResizeStart('bottom', e)}
-                  />
-                </div>
-              )}
+                {/* Existing appointments */}
+                {positionedEvents.map(({ appointment, column, totalColumns }) => {
+                  const employees = allEmployees.filter((emp) =>
+                    appointment.employeeIds.includes(emp.id)
+                  )
 
-              {/* Empty state */}
-              {positionedEvents.length === 0 && !timeBlock && (
-                <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
-                  <div className='text-center p-6'>
-                    <Clock className='h-12 w-12 text-muted-foreground mx-auto mb-4' />
-                    <p className='text-muted-foreground mb-2'>
-                      No hay citas programadas para este día
-                    </p>
-                    {!hasOpenDialogs && (
-                      <p className='text-sm text-muted-foreground/70'>
-                        Haz clic en cualquier horario para crear una nueva cita
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-              
-              {/* Existing appointments */}
-              {positionedEvents.map(({ appointment, column, totalColumns }) => {
-                const employees = allEmployees.filter((emp) =>
-                  appointment.employeeIds.includes(emp.id)
-                )
+                  const services = allServices.filter((a) =>
+                    appointment.serviceIds.includes(a.id)
+                  )
 
-                const services = allServices.filter((a) =>
-                  appointment.serviceIds.includes(a.id)
-                )
-
-                return (
-                  <AppointmentBlock
-                    cancelAppointment={handleCancel}
-                    key={appointment.id}
-                    appointment={appointment}
-                    client={clients.find((c) => c.id === appointment.clientId)!}
-                    employees={employees}
-                    services={services}
-                    column={column}
-                    totalColumns={totalColumns}
-                    workHours={workHours}
-                    zoomScale={currentZoom}
-                  />
-                )
-              })}
+                  return (
+                    <AppointmentBlock
+                      cancelAppointment={handleCancel}
+                      key={appointment.id}
+                      appointment={appointment}
+                      client={clients.find((c) => c.id === appointment.clientId)!}
+                      employees={employees}
+                      services={services}
+                      column={column}
+                      totalColumns={totalColumns}
+                      workHours={workHours}
+                      zoomScale={currentZoom}
+                      currentDate={date}
+                    />
+                  )
+                })}
               </div>
             </div>
           </div>

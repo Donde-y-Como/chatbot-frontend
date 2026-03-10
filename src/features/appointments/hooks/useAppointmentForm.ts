@@ -6,11 +6,22 @@ import { appointmentService } from '@/features/appointments/appointmentService.t
 import { UseGetAppointmentsQueryKey } from '@/features/appointments/hooks/useGetAppointments.ts'
 import { useGetClients } from '@/features/appointments/hooks/useGetClients.ts'
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
-import { ClientApiService } from '@/features/clients/services/ClientApiService'
-import { Appointment, MinutesTimeRange, AppointmentStatus, PaymentStatus, Deposit, ConsumableUsage } from '@/features/appointments/types.ts'
-import { isValidAppointmentDate, getPastDateErrorMessage, canChangeDateTo } from '@/features/appointments/utils/formatters'
-import { useEmployeeAvailability } from './useEmployeeAvailability'
+import {
+  Appointment,
+  MinutesTimeRange,
+  AppointmentStatus,
+  PaymentStatus,
+  Deposit,
+  ConsumableUsage,
+} from '@/features/appointments/types.ts'
 import { handleAppointmentError } from '@/features/appointments/utils/errorHandler'
+import {
+  isValidAppointmentDate,
+  getPastDateErrorMessage,
+  canChangeDateTo,
+} from '@/features/appointments/utils/formatters'
+import { ClientApiService } from '@/features/clients/services/ClientApiService'
+import { useEmployeeAvailability } from './useEmployeeAvailability'
 
 export function useAppointmentForm(
   defaultClientName?: string,
@@ -26,17 +37,20 @@ export function useAppointmentForm(
     appointment ? appointment.clientId : ''
   )
   const [serviceIds, setServiceIds] = useState<string[]>(
-    appointment ? appointment.serviceIds : (defaultServiceIds || [])
+    appointment ? appointment.serviceIds : defaultServiceIds || []
   )
   const [date, setDate] = useState<Date>(
-    appointment ? new Date(appointment.date) : (defaultDate || new Date())
+    appointment ? new Date(appointment.date) : defaultDate || new Date()
+  )
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    appointment?.endDate ? new Date(appointment.endDate) : undefined
   )
   const [timeRange, setTimeRange] = useState<MinutesTimeRange>(
     appointment
       ? appointment.timeRange
       : defaultTimeRange || {
           startAt: 540, // 9:00 AM por defecto
-          endAt: 600,   // 10:00 AM por defecto
+          endAt: 600, // 10:00 AM por defecto
         }
   )
 
@@ -56,26 +70,26 @@ export function useAppointmentForm(
   const [deposit, setDeposit] = useState<Deposit | null>(
     appointment?.deposit || null
   )
-  const [notes, setNotes] = useState<string>(
-    appointment?.notes || ''
-  )
-  
+  const [notes, setNotes] = useState<string>(appointment?.notes || '')
+
   // Nuevos estados para equipos y consumibles
   // Solo almacenamos los cambios manuales, no los heredados del servicio
   const [manualEquipmentIds, setManualEquipmentIds] = useState<string[]>(
     appointment?.equipmentIds || []
   )
-  const [manualConsumableUsages, setManualConsumableUsages] = useState<ConsumableUsage[]>(
-    appointment?.consumableUsages || []
-  )
-  
+  const [manualConsumableUsages, setManualConsumableUsages] = useState<
+    ConsumableUsage[]
+  >(appointment?.consumableUsages || [])
+
   // Estado para trackear si el usuario ha hecho cambios manuales
-  const [hasManualResourceChanges, setHasManualResourceChanges] = useState<boolean>(
-    (appointment?.equipmentIds && appointment.equipmentIds.length > 0) ||
-    (appointment?.consumableUsages && appointment.consumableUsages.length > 0) ||
-    false
-  )
-  
+  const [hasManualResourceChanges, setHasManualResourceChanges] =
+    useState<boolean>(
+      (appointment?.equipmentIds && appointment.equipmentIds.length > 0) ||
+        (appointment?.consumableUsages &&
+          appointment.consumableUsages.length > 0) ||
+        false
+    )
+
   const [loading, setLoading] = useState(false)
   const { data: clients } = useGetClients()
 
@@ -83,8 +97,8 @@ export function useAppointmentForm(
   useEffect(() => {
     if (defaultClientName && clients && clients.length > 0 && !clientId) {
       // Buscar cliente por nombre
-      const matchingClient = clients.find(client => 
-        client.id && client.id === defaultClientName
+      const matchingClient = clients.find(
+        (client) => client.id && client.id === defaultClientName
       )
 
       if (matchingClient) {
@@ -121,7 +135,8 @@ export function useAppointmentForm(
         return
       }
 
-      const currentStartAt = defaultTimeRange?.startAt || (getMinutes(date) + getHours(date) * 60)
+      const currentStartAt =
+        defaultTimeRange?.startAt || getMinutes(date) + getHours(date) * 60
       let endAt = currentStartAt
 
       if (services && serviceIds.length > 0) {
@@ -195,6 +210,9 @@ export function useAppointmentForm(
       setTimeRange(appointment.timeRange)
       setSelectedEmployeeIds(appointment.employeeIds)
       setDate(new Date(appointment.date))
+      setEndDate(
+        appointment.endDate ? new Date(appointment.endDate) : undefined
+      )
       setStatus(appointment.status || 'pendiente')
       setPaymentStatus(appointment.paymentStatus || 'pendiente')
       setDeposit(appointment.deposit || null)
@@ -202,7 +220,12 @@ export function useAppointmentForm(
       setManualEquipmentIds(appointment.equipmentIds || [])
       setManualConsumableUsages(appointment.consumableUsages || [])
       setRemovedInheritedEquipmentIds([])
-      setHasManualResourceChanges(Boolean(appointment.equipmentIds?.length || appointment.consumableUsages?.length))
+      setHasManualResourceChanges(
+        Boolean(
+          appointment.equipmentIds?.length ||
+            appointment.consumableUsages?.length
+        )
+      )
     } else {
       setClientId('')
       setServiceIds([])
@@ -212,11 +235,12 @@ export function useAppointmentForm(
       } else {
         setTimeRange({
           startAt: 540, // 9:00 AM
-          endAt: 600,   // 10:00 AM
+          endAt: 600, // 10:00 AM
         })
       }
       setSelectedEmployeeIds([])
       setDate(defaultDate || new Date())
+      setEndDate(undefined)
       setStatus('pendiente')
       setPaymentStatus('pendiente')
       setDeposit(null)
@@ -255,6 +279,7 @@ export function useAppointmentForm(
       serviceIds,
       employeeIds: selectedEmployeeIds,
       date: date.toISOString(),
+      endDate: endDate ? endDate.toISOString() : undefined,
       timeRange,
       notes,
       // Nuevos campos
@@ -262,19 +287,28 @@ export function useAppointmentForm(
       paymentStatus,
       deposit,
       // Solo enviar equipos y consumibles si el usuario hizo cambios manuales
-      ...(hasManualResourceChanges ? {
-        equipmentIds: [
-          ...manualEquipmentIds,
-          ...inheritedEquipmentIds.filter(id => !removedInheritedEquipmentIds.includes(id))
-        ],
-        consumableUsages: Array.from(
-          new Map([
-            ...inheritedConsumableUsages.map(u => [u.consumableId, u.quantity] as [string, number]),
-            ...manualConsumableUsages.map(u => [u.consumableId, u.quantity] as [string, number])
-          ]).entries()
-        ).filter(([, quantity]) => quantity > 0)
-         .map(([consumableId, quantity]) => ({ consumableId, quantity })),
-      } : {}),
+      ...(hasManualResourceChanges
+        ? {
+            equipmentIds: [
+              ...manualEquipmentIds,
+              ...inheritedEquipmentIds.filter(
+                (id) => !removedInheritedEquipmentIds.includes(id)
+              ),
+            ],
+            consumableUsages: Array.from(
+              new Map([
+                ...inheritedConsumableUsages.map(
+                  (u) => [u.consumableId, u.quantity] as [string, number]
+                ),
+                ...manualConsumableUsages.map(
+                  (u) => [u.consumableId, u.quantity] as [string, number]
+                ),
+              ]).entries()
+            )
+              .filter(([, quantity]) => quantity > 0)
+              .map(([consumableId, quantity]) => ({ consumableId, quantity })),
+          }
+        : {}),
     } satisfies Partial<Appointment>
 
     try {
@@ -289,10 +323,15 @@ export function useAppointmentForm(
         toast.success(`Cita ${appointment ? 'editada' : 'agendada'} con éxito`)
 
         // Update client's favorite employee if checkbox is checked and this is a new appointment
-        if (!appointment && markEmployeeAsFavorite && selectedEmployeeIds.length > 0 && clientId) {
+        if (
+          !appointment &&
+          markEmployeeAsFavorite &&
+          selectedEmployeeIds.length > 0 &&
+          clientId
+        ) {
           try {
             await ClientApiService.update(clientId, {
-              favoriteEmployeeId: selectedEmployeeIds[0] // Use the first selected employee
+              favoriteEmployeeId: selectedEmployeeIds[0], // Use the first selected employee
             })
             // Invalidate clients query to refresh the data
             queryClient.invalidateQueries({ queryKey: ['clients'] })
@@ -309,7 +348,7 @@ export function useAppointmentForm(
           }),
           queryClient.refetchQueries({
             queryKey: [UseGetAppointmentsQueryKey],
-          })
+          }),
         ])
 
         resetForm()
@@ -342,61 +381,64 @@ export function useAppointmentForm(
   // Memoized values para obtener equipos y consumibles heredados de servicios
   const inheritedEquipmentIds = useMemo(() => {
     if (!services || serviceIds.length === 0) return []
-    
+
     const inheritedIds = new Set<string>()
-    serviceIds.forEach(serviceId => {
-      const service = services.find(s => s.id === serviceId)
+    serviceIds.forEach((serviceId) => {
+      const service = services.find((s) => s.id === serviceId)
       if (service?.equipmentIds) {
-        service.equipmentIds.forEach(id => inheritedIds.add(id))
+        service.equipmentIds.forEach((id) => inheritedIds.add(id))
       }
     })
-    
+
     return Array.from(inheritedIds)
   }, [services, serviceIds])
-  
+
   const inheritedConsumableUsages = useMemo(() => {
     if (!services || serviceIds.length === 0) return []
-    
+
     const usageMap = new Map<string, number>()
-    serviceIds.forEach(serviceId => {
-      const service = services.find(s => s.id === serviceId)
+    serviceIds.forEach((serviceId) => {
+      const service = services.find((s) => s.id === serviceId)
       if (service?.consumableUsages) {
-        service.consumableUsages.forEach(usage => {
+        service.consumableUsages.forEach((usage) => {
           const current = usageMap.get(usage.consumableId) || 0
           usageMap.set(usage.consumableId, current + usage.quantity)
         })
       }
     })
-    
+
     return Array.from(usageMap.entries()).map(([consumableId, quantity]) => ({
       consumableId,
-      quantity
+      quantity,
     }))
   }, [services, serviceIds])
-  
+
   // Lista para trackear equipos heredados que se han "quitado" manualmente
-  const [removedInheritedEquipmentIds, setRemovedInheritedEquipmentIds] = useState<string[]>([])
-  
+  const [removedInheritedEquipmentIds, setRemovedInheritedEquipmentIds] =
+    useState<string[]>([])
+
   // Combinamos heredados con manuales para la UI, excluyendo los removidos
   const selectedEquipmentIds = useMemo(() => {
-    const inherited = inheritedEquipmentIds.filter(id => !removedInheritedEquipmentIds.includes(id))
+    const inherited = inheritedEquipmentIds.filter(
+      (id) => !removedInheritedEquipmentIds.includes(id)
+    )
     const combined = new Set([...inherited, ...manualEquipmentIds])
     return Array.from(combined)
   }, [inheritedEquipmentIds, manualEquipmentIds, removedInheritedEquipmentIds])
-  
+
   const consumableUsages = useMemo(() => {
     const usageMap = new Map<string, number>()
-    
+
     // Agregar heredados
-    inheritedConsumableUsages.forEach(usage => {
+    inheritedConsumableUsages.forEach((usage) => {
       usageMap.set(usage.consumableId, usage.quantity)
     })
-    
+
     // Sobrescribir con cambios manuales
-    manualConsumableUsages.forEach(usage => {
+    manualConsumableUsages.forEach((usage) => {
       usageMap.set(usage.consumableId, usage.quantity)
     })
-    
+
     return Array.from(usageMap.entries())
       .filter(([, quantity]) => quantity > 0)
       .map(([consumableId, quantity]) => ({ consumableId, quantity }))
@@ -414,7 +456,11 @@ export function useAppointmentForm(
 
   // Auto-select favorite employee when client is selected
   useEffect(() => {
-    if (!appointment && selectedClient?.favoriteEmployeeId && selectedEmployeeIds.length === 0) {
+    if (
+      !appointment &&
+      selectedClient?.favoriteEmployeeId &&
+      selectedEmployeeIds.length === 0
+    ) {
       // Only auto-select if we're not editing an appointment and no employees are selected yet
       setSelectedEmployeeIds([selectedClient.favoriteEmployeeId])
     }
@@ -434,7 +480,13 @@ export function useAppointmentForm(
   }, [date, timeRange])
 
   const { employeesWithAvailability, loading: loadingEmployees } =
-    useEmployeeAvailability(fromDate, toDate, activeStep, undefined, appointment?.id)
+    useEmployeeAvailability(
+      fromDate,
+      toDate,
+      activeStep,
+      undefined,
+      appointment?.id
+    )
 
   const toggleServiceSelection = (serviceId: string) => {
     setServiceIds((prev) =>
@@ -454,19 +506,22 @@ export function useAppointmentForm(
 
   const toggleEquipmentSelection = (equipmentId: string) => {
     setHasManualResourceChanges(true)
-    
+
     const isInherited = inheritedEquipmentIds.includes(equipmentId)
     const isSelected = selectedEquipmentIds.includes(equipmentId)
     const isManual = manualEquipmentIds.includes(equipmentId)
-    const isRemovedInherited = removedInheritedEquipmentIds.includes(equipmentId)
-    
+    const isRemovedInherited =
+      removedInheritedEquipmentIds.includes(equipmentId)
+
     if (isInherited) {
       if (isSelected && !isRemovedInherited) {
         // Está heredado y seleccionado, lo "quitamos" (agregamos a removidos)
-        setRemovedInheritedEquipmentIds(prev => [...prev, equipmentId])
+        setRemovedInheritedEquipmentIds((prev) => [...prev, equipmentId])
       } else if (!isSelected && isRemovedInherited) {
         // Está heredado pero fue removido, lo volvemos a incluir
-        setRemovedInheritedEquipmentIds(prev => prev.filter(id => id !== equipmentId))
+        setRemovedInheritedEquipmentIds((prev) =>
+          prev.filter((id) => id !== equipmentId)
+        )
       }
     } else {
       // No es heredado, toggle normal en manuales
@@ -480,14 +535,16 @@ export function useAppointmentForm(
 
   const updateConsumableUsage = (consumableId: string, quantity: number) => {
     setHasManualResourceChanges(true)
-    
+
     setManualConsumableUsages((prev) => {
-      const existingIndex = prev.findIndex(usage => usage.consumableId === consumableId)
-      
+      const existingIndex = prev.findIndex(
+        (usage) => usage.consumableId === consumableId
+      )
+
       if (quantity === 0) {
-        return prev.filter(usage => usage.consumableId !== consumableId)
+        return prev.filter((usage) => usage.consumableId !== consumableId)
       }
-      
+
       if (existingIndex !== -1) {
         const updated = [...prev]
         updated[existingIndex] = { consumableId, quantity }
@@ -507,6 +564,7 @@ export function useAppointmentForm(
     clientId,
     serviceIds,
     date,
+    endDate,
     timeRange,
     selectedEmployeeIds,
     loading,
@@ -528,7 +586,7 @@ export function useAppointmentForm(
 
     // Campos de equipos y consumibles
     selectedEquipmentIds, // Para UI (combinados)
-    consumableUsages,     // Para UI (combinados)
+    consumableUsages, // Para UI (combinados)
     inheritedEquipmentIds, // Para distinguir heredados
     inheritedConsumableUsages, // Para distinguir heredados
     hasManualResourceChanges, // Para saber si hubo cambios manuales
@@ -545,6 +603,7 @@ export function useAppointmentForm(
     setServiceIds,
     toggleServiceSelection,
     setDate,
+    setEndDate,
     setTimeRange,
     toggleEmployeeSelection,
     toggleEquipmentSelection,

@@ -9,8 +9,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
-import { useAppointmentForm } from '../hooks/useAppointmentForm'
 import { useDialogState } from '../contexts/DialogStateContext'
+import { useAppointmentForm } from '../hooks/useAppointmentForm'
 import { MinutesTimeRange } from '../types'
 import { AppointmentStepIndicator } from './AppointmentStepIndicator'
 import {
@@ -23,13 +23,13 @@ import {
 } from './steps'
 
 interface MakeAppointmentDialogProps {
-  defaultOpen?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  defaultClientName?: string;
-  defaultDate?: Date; // Para pre-llenar fecha cuando se hace clic en calendario
-  defaultTimeRange?: MinutesTimeRange; // Para pre-llenar hora cuando se hace clic en hora específica
-  defaultServiceIds?: string[]; // Para pre-seleccionar servicios
-  onAppointmentCreated?: (appointmentId: string) => void; // Callback cuando se crea la cita
+  defaultOpen?: boolean
+  onOpenChange?: (open: boolean) => void
+  defaultClientName?: string
+  defaultDate?: Date // Para pre-llenar fecha cuando se hace clic en calendario
+  defaultTimeRange?: MinutesTimeRange // Para pre-llenar hora cuando se hace clic en hora específica
+  defaultServiceIds?: string[] // Para pre-seleccionar servicios
+  onAppointmentCreated?: (appointmentId: string) => void // Callback cuando se crea la cita
 }
 
 export function MakeAppointmentDialog({
@@ -39,7 +39,7 @@ export function MakeAppointmentDialog({
   defaultDate,
   defaultTimeRange,
   defaultServiceIds,
-  onAppointmentCreated
+  onAppointmentCreated,
 }: MakeAppointmentDialogProps = {}) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
   const { openDialog, closeDialog } = useDialogState()
@@ -48,6 +48,7 @@ export function MakeAppointmentDialog({
     clientId,
     serviceIds,
     date,
+    endDate,
     timeRange,
     selectedEmployeeIds,
     loading,
@@ -82,6 +83,7 @@ export function MakeAppointmentDialog({
     setServiceIds,
     toggleServiceSelection,
     setDate,
+    setEndDate,
     setTimeRange,
     toggleEmployeeSelection,
     toggleEquipmentSelection,
@@ -90,45 +92,45 @@ export function MakeAppointmentDialog({
     handleSubmit,
     hasFilledFields,
   } = useAppointmentForm(
-    defaultClientName, 
+    defaultClientName,
     () => {
       // Usar la función de cambio externa si está disponible, o la interna si no
       if (onOpenChange) {
-        onOpenChange(false);
+        onOpenChange(false)
       } else {
-        setInternalOpen(false);
+        setInternalOpen(false)
       }
-    }, 
-    undefined, 
-    defaultDate, 
+    },
+    undefined,
+    defaultDate,
     defaultTimeRange,
     defaultServiceIds,
     onAppointmentCreated
   )
 
   // Determinar si se usa el control externo o interno
-  const open = onOpenChange ? defaultOpen : internalOpen;
+  const open = onOpenChange ? defaultOpen : internalOpen
   const setOpen = (value: boolean) => {
     if (onOpenChange) {
-      onOpenChange(value);
+      onOpenChange(value)
     } else {
-      setInternalOpen(value);
+      setInternalOpen(value)
     }
-  };
+  }
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && hasFilledFields()) {
-      return;
+      return
     }
 
-    setOpen(newOpen);
+    setOpen(newOpen)
     if (newOpen) {
-      openDialog();
+      openDialog()
     } else {
-      closeDialog();
-      resetForm();
+      closeDialog()
+      resetForm()
     }
-  };
+  }
 
   const handleCancel = (e?: React.MouseEvent) => {
     if (e) {
@@ -152,7 +154,10 @@ export function MakeAppointmentDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className='sm:max-w-3xl  overflow-y-auto' onClick={handleDialogClick}>
+      <DialogContent
+        className='sm:max-w-3xl  overflow-y-auto'
+        onClick={handleDialogClick}
+      >
         <DialogHeader>
           <DialogTitle className='text-2xl font-bold'>Agendar Cita</DialogTitle>
           <DialogDescription>
@@ -165,7 +170,11 @@ export function MakeAppointmentDialog({
           <AppointmentStepIndicator activeStep={activeStep} />
 
           <div className='flex flex-col'>
-            <Tabs defaultValue='1' value={activeStep.toString()} className='flex-1'>
+            <Tabs
+              defaultValue='1'
+              value={activeStep.toString()}
+              className='flex-1'
+            >
               {/* Step 1: Client and Service Selection */}
               <TabsContent value='1' className='flex flex-col'>
                 <ClientServiceStep
@@ -183,7 +192,9 @@ export function MakeAppointmentDialog({
               <TabsContent value='2' className='flex flex-col h-full'>
                 <DateTimeStep
                   date={date}
+                  endDate={endDate}
                   onDateChange={setDate}
+                  onEndDateChange={setEndDate}
                   timeRange={timeRange}
                   onTimeRangeChange={setTimeRange}
                   onNext={() => setActiveStep(3)}
@@ -213,7 +224,10 @@ export function MakeAppointmentDialog({
                   onEquipmentToggle={toggleEquipmentSelection}
                   onConsumableUsageUpdate={updateConsumableUsage}
                   onNext={() => setActiveStep(4)}
-                  onBack={() => { setActiveStep(2); setSelectedEmployeeIds([]) }}
+                  onBack={() => {
+                    setActiveStep(2)
+                    setSelectedEmployeeIds([])
+                  }}
                   onCancel={handleCancel}
                 />
               </TabsContent>
@@ -248,6 +262,7 @@ export function MakeAppointmentDialog({
               <TabsContent value='6' className='flex flex-col h-full'>
                 <ConfirmationStep
                   date={date}
+                  endDate={endDate}
                   timeRange={timeRange}
                   selectedClient={selectedClient}
                   selectedServices={selectedServices}

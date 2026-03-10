@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { Appointment } from '@/features/appointments/types.ts'
-import { useAppointmentForm } from '../hooks/useAppointmentForm'
 import { useDialogState } from '../contexts/DialogStateContext'
+import { useAppointmentForm } from '../hooks/useAppointmentForm'
 import { AppointmentStepIndicator } from './AppointmentStepIndicator'
 import {
   ClientServiceStep,
@@ -56,6 +56,7 @@ export function EditAppointmentDialog({
     clientId,
     serviceIds,
     date,
+    endDate,
     timeRange,
     selectedEmployeeIds,
     loading,
@@ -88,6 +89,7 @@ export function EditAppointmentDialog({
     setServiceIds,
     toggleServiceSelection,
     setDate,
+    setEndDate,
     setTimeRange,
     toggleEmployeeSelection,
     toggleEquipmentSelection,
@@ -132,12 +134,20 @@ export function EditAppointmentDialog({
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>
-        <Button size='sm' variant='outline' className='h-9' onClick={handleButtonClick}>
+        <Button
+          size='sm'
+          variant='outline'
+          className='h-9'
+          onClick={handleButtonClick}
+        >
           <Edit className='h-4 w-4 mr-2' />
           Editar
         </Button>
       </DialogTrigger>
-      <DialogContent className='sm:max-w-3xl max-h-[90vh] overflow-auto' onClick={handleDialogClick}>
+      <DialogContent
+        className='sm:max-w-3xl max-h-[90vh] overflow-auto'
+        onClick={handleDialogClick}
+      >
         <DialogHeader>
           <DialogTitle className='text-2xl font-bold'>Editar Cita</DialogTitle>
           <DialogDescription>Cambie los detalles de la cita</DialogDescription>
@@ -163,7 +173,9 @@ export function EditAppointmentDialog({
             <TabsContent value='2'>
               <DateTimeStep
                 date={date}
+                endDate={endDate}
                 onDateChange={setDate}
+                onEndDateChange={setEndDate}
                 timeRange={timeRange}
                 onTimeRangeChange={setTimeRange}
                 onNext={() => setActiveStep(3)}
@@ -225,6 +237,7 @@ export function EditAppointmentDialog({
             <TabsContent value='6'>
               <ConfirmationStep
                 date={date}
+                endDate={endDate}
                 timeRange={timeRange}
                 selectedClient={selectedClient}
                 selectedServices={selectedServices}

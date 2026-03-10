@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { eachDayOfInterval, endOfWeek, format, isSameDay, startOfWeek } from 'date-fns';
+import { useEffect, useState, useMemo } from 'react';
+import { eachDayOfInterval, endOfWeek, format, isSameDay, startOfWeek, parseISO } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
 import { es } from 'date-fns/locale';
 import { Clock, Loader2 } from 'lucide-react';
@@ -13,6 +13,7 @@ import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.t
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts';
 import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts';
 import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts';
+import { getVisualAppointments } from '@/features/appointments/utils/multiday.ts';
 import type { Appointment } from './types';
 
 
@@ -52,8 +53,12 @@ export function WeekView({
   // Use week appointments if available, fallback to passed appointments
   const appointmentsToUse = weekAppointments || appointments
 
+  const visualAppointments = useMemo(() => {
+    return getVisualAppointments(appointmentsToUse, workHours || undefined)
+  }, [appointmentsToUse, workHours])
+
   const positionedEvents = usePositionedEvents({
-    appointments: appointmentsToUse,
+    appointments: visualAppointments,
     selectedService,
   })
 
@@ -223,9 +228,9 @@ export function WeekView({
                     {/* Current time indicator for today */}
                     {isSameDay(currentTime, day) &&
                       currentTime.getHours() * 60 + currentTime.getMinutes() >=
-                        displayWorkHours.startAt &&
+                      displayWorkHours.startAt &&
                       currentTime.getHours() * 60 + currentTime.getMinutes() <=
-                        displayWorkHours.endAt && (
+                      displayWorkHours.endAt && (
                         <div
                           className='absolute left-0 right-0 z-20 border-t-2 border-red-500'
                           style={{ top: `${getCurrentTimePosition()}px` }}
@@ -260,6 +265,8 @@ export function WeekView({
                             column={column}
                             totalColumns={totalColumns}
                             workHours={displayWorkHours}
+                            zoomScale={TIME_SLOT_HEIGHT / 120}
+                            currentDate={day}
                           />
                         )
                       }

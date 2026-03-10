@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { Employee } from '../employees/types'
 import { ProductInfo } from '@/types'
+import { Employee } from '../employees/types'
 import { Unit } from '../settings/units/types'
 
 export interface Service {
@@ -48,19 +48,15 @@ export interface MinutesTimeRange {
 }
 
 // Nuevos tipos para estados y pago
-export type AppointmentStatus = 
-  | 'pendiente' 
-  | 'confirmada' 
-  | 'reprogramada' 
-  | 'completada' 
-  | 'cancelada' 
+export type AppointmentStatus =
+  | 'pendiente'
+  | 'confirmada'
+  | 'reprogramada'
+  | 'completada'
+  | 'cancelada'
   | 'no asistió'
 
-export type PaymentStatus = 
-  | 'pendiente' 
-  | 'pagado' 
-  | 'parcial' 
-  | 'reembolsado'
+export type PaymentStatus = 'pendiente' | 'pagado' | 'parcial' | 'reembolsado'
 
 export interface Deposit {
   amount: number
@@ -72,13 +68,12 @@ export interface ConsumableUsage {
   quantity: number
 }
 
-
 export type EmployeeAvailable = Pick<
   Employee,
   'id' | 'name' | 'email' | 'photo'
 >
 
-export type UnavailableSlotReason = "outside_schedule" | "appointment"
+export type UnavailableSlotReason = 'outside_schedule' | 'appointment'
 
 export interface UnavailableSlot extends MinutesTimeRange {
   reason: UnavailableSlotReason
@@ -101,6 +96,7 @@ export const appointmentCreated = z.object({
   serviceIds: z.array(z.string()),
   employeeIds: z.array(z.string()),
   date: z.date(),
+  endDate: z.date().optional(),
   timeRange: z.object({
     startAt: z.number(),
     endAt: z.number(),
@@ -108,17 +104,35 @@ export const appointmentCreated = z.object({
   notes: z.string(),
   folio: z.string(),
   // Nuevos campos opcionales
-  status: z.enum(['pendiente', 'confirmada', 'reprogramada', 'completada', 'cancelada', 'no asistió']).optional(),
-  paymentStatus: z.enum(['pendiente', 'pagado', 'parcial', 'reembolsado']).optional(),
-  deposit: z.object({
-    amount: z.number(),
-    currency: z.string(),
-  }).nullable().optional(),
+  status: z
+    .enum([
+      'pendiente',
+      'confirmada',
+      'reprogramada',
+      'completada',
+      'cancelada',
+      'no asistió',
+    ])
+    .optional(),
+  paymentStatus: z
+    .enum(['pendiente', 'pagado', 'parcial', 'reembolsado'])
+    .optional(),
+  deposit: z
+    .object({
+      amount: z.number(),
+      currency: z.string(),
+    })
+    .nullable()
+    .optional(),
   equipmentIds: z.array(z.string()).optional(),
-  consumableUsages: z.array(z.object({
-    consumableId: z.string(),
-    quantity: z.number(),
-  })).optional(),
+  consumableUsages: z
+    .array(
+      z.object({
+        consumableId: z.string(),
+        quantity: z.number(),
+      })
+    )
+    .optional(),
 })
 
 export type AppointmentCreated = z.infer<typeof appointmentCreated>
@@ -129,6 +143,7 @@ export const appointment = z.object({
   serviceIds: z.array(z.string()),
   employeeIds: z.array(z.string()),
   date: z.string(),
+  endDate: z.string().optional(),
   timeRange: z.object({
     startAt: z.number(),
     endAt: z.number(),
@@ -139,18 +154,36 @@ export const appointment = z.object({
   serviceNames: z.array(z.string()),
   employeesNames: z.array(z.string()),
   // Nuevos campos con valores por defecto
-  status: z.enum(['pendiente', 'confirmada', 'reprogramada', 'completada', 'cancelada', 'no asistió']).default('pendiente'),
-  paymentStatus: z.enum(['pendiente', 'pagado', 'parcial', 'reembolsado']).default('pendiente'),
-  deposit: z.object({
-    amount: z.number(),
-    currency: z.string(),
-  }).nullable().default(null),
+  status: z
+    .enum([
+      'pendiente',
+      'confirmada',
+      'reprogramada',
+      'completada',
+      'cancelada',
+      'no asistió',
+    ])
+    .default('pendiente'),
+  paymentStatus: z
+    .enum(['pendiente', 'pagado', 'parcial', 'reembolsado'])
+    .default('pendiente'),
+  deposit: z
+    .object({
+      amount: z.number(),
+      currency: z.string(),
+    })
+    .nullable()
+    .default(null),
   equipmentIds: z.array(z.string()).default([]),
-  consumableUsages: z.array(z.object({
-    consumableId: z.string(),
-    quantity: z.number(),
-  })).default([]),
-  createdAt: z.string().default(""),
+  consumableUsages: z
+    .array(
+      z.object({
+        consumableId: z.string(),
+        quantity: z.number(),
+      })
+    )
+    .default([]),
+  createdAt: z.string().default(''),
 })
 
 export type Appointment = z.infer<typeof appointment>
@@ -158,34 +191,37 @@ export type Appointment = z.infer<typeof appointment>
 // Funciones utilitarias para obtener configuraciones de colores
 export const getAppointmentStatusConfig = (status: AppointmentStatus) => {
   const configs = {
-    pendiente: { label: 'Pendiente', color: '#6b7280' },        // gray
-    confirmada: { label: 'Confirmada', color: '#10b981' },      // green
-    reprogramada: { label: 'Reprogramada', color: '#6366f1' },  // indigo
-    completada: { label: 'Completada', color: '#3b82f6' },      // blue
-    cancelada: { label: 'Cancelada', color: '#ef4444' },        // red
-    'no asistió': { label: 'No Asistió', color: '#f97316' }     // orange
+    pendiente: { label: 'Pendiente', color: '#6b7280' }, // gray
+    confirmada: { label: 'Confirmada', color: '#10b981' }, // green
+    reprogramada: { label: 'Reprogramada', color: '#6366f1' }, // indigo
+    completada: { label: 'Completada', color: '#3b82f6' }, // blue
+    cancelada: { label: 'Cancelada', color: '#ef4444' }, // red
+    'no asistió': { label: 'No Asistió', color: '#f97316' }, // orange
   }
   return configs[status] || configs.pendiente
 }
 
 export const getPaymentStatusConfig = (paymentStatus: PaymentStatus) => {
   const configs = {
-    pendiente: { label: 'Pago Pendiente', color: '#6b7280', bgColor: '#f3f4f6' },
+    pendiente: {
+      label: 'Pago Pendiente',
+      color: '#6b7280',
+      bgColor: '#f3f4f6',
+    },
     pagado: { label: 'Pagado', color: '#10b981', bgColor: '#d1fae5' },
     parcial: { label: 'Pago Parcial', color: '#f59e0b', bgColor: '#fef3c7' },
-    reembolsado: { label: 'Reembolsado', color: '#ef4444', bgColor: '#fee2e2' }
+    reembolsado: { label: 'Reembolsado', color: '#ef4444', bgColor: '#fee2e2' },
   }
   return configs[paymentStatus] || configs.pendiente
 }
 
-
 export type AvailabilityResult = {
   availableSlots: {
-    slot: MinutesTimeRange,
+    slot: MinutesTimeRange
     employees: EmployeeAvailable[]
-  }[],
+  }[]
   bookedSlots: {
-    slot: MinutesTimeRange,
+    slot: MinutesTimeRange
     employees: EmployeeAvailable[]
   }[]
 }
