@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { eachDayOfInterval, endOfWeek, format, isSameDay, startOfWeek, parseISO } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
 import { es } from 'date-fns/locale';
@@ -13,6 +13,7 @@ import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.t
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts';
 import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts';
 import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts';
+import { getVisualAppointments } from '@/features/appointments/utils/multiday.ts';
 import type { Appointment } from './types';
 
 
@@ -52,8 +53,12 @@ export function WeekView({
   // Use week appointments if available, fallback to passed appointments
   const appointmentsToUse = weekAppointments || appointments
 
+  const visualAppointments = useMemo(() => {
+    return getVisualAppointments(appointmentsToUse, workHours || undefined)
+  }, [appointmentsToUse, workHours])
+
   const positionedEvents = usePositionedEvents({
-    appointments: appointmentsToUse,
+    appointments: visualAppointments,
     selectedService,
   })
 
@@ -175,18 +180,10 @@ export function WeekView({
 
             {/* Week Days Columns */}
             {weekDays.map((day) => {
-              // Filter positioned events for this specific day (inclusive date check for multi-day)
-              const dayPositionedEvents = positionedEvents.filter((event) => {
-                const aptStartDate = parseISO(event.appointment.date)
-                const aptEndDate = event.appointment.endDate ? parseISO(event.appointment.endDate) : aptStartDate
-
-                // Normalize to date-only comparison
-                const dayOnly = new Date(day.getFullYear(), day.getMonth(), day.getDate())
-                const startOnly = new Date(aptStartDate.getFullYear(), aptStartDate.getMonth(), aptStartDate.getDate())
-                const endOnly = new Date(aptEndDate.getFullYear(), aptEndDate.getMonth(), aptEndDate.getDate())
-
-                return dayOnly >= startOnly && dayOnly <= endOnly
-              })
+              // Filter positioned events for this specific day
+              const dayPositionedEvents = positionedEvents.filter((event) =>
+                isSameDay(new Date(event.appointment.date), day)
+              )
 
               return (
                 <div
@@ -268,6 +265,7 @@ export function WeekView({
                             column={column}
                             totalColumns={totalColumns}
                             workHours={displayWorkHours}
+                            zoomScale={TIME_SLOT_HEIGHT / 120}
                             currentDate={day}
                           />
                         )

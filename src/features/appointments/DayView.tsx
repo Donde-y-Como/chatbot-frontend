@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { format, isSameDay } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
 import { es } from 'date-fns/locale'
@@ -16,6 +16,7 @@ import { useGetEmployees } from '@/features/appointments/hooks/useGetEmployees.t
 import { useGetServices } from '@/features/appointments/hooks/useGetServices.ts'
 import { useGetWorkSchedule } from '@/features/appointments/hooks/useGetWorkSchedule.ts'
 import { usePositionedEvents } from '@/features/appointments/hooks/usePositionedEvents.ts'
+import { getVisualAppointments } from '@/features/appointments/utils/multiday.ts'
 import { QuickAppointmentDialog } from '@/features/appointments/components/QuickAppointmentDialog'
 import { useDialogState } from '@/features/appointments/contexts/DialogStateContext'
 import type { Appointment } from './types'
@@ -70,8 +71,14 @@ export function DayView({
   const currentZoom = ZOOM_LEVELS[zoomIndex]
   const TIME_SLOT_HEIGHT = BASE_TIME_SLOT_HEIGHT * currentZoom
 
+  const visualAppointments = useMemo(() => {
+    const segments = getVisualAppointments(appointments, workHours || undefined)
+    // Only keep segments that belong to THIS specific day being viewed
+    return segments.filter((apt) => isSameDay(new Date(apt.date), date))
+  }, [appointments, workHours, date])
+
   const positionedEvents = usePositionedEvents({
-    appointments,
+    appointments: visualAppointments,
     selectedService,
   })
 
@@ -367,10 +374,10 @@ export function DayView({
               <div
                 ref={timeSlotAreaRef}
                 className={`flex-1 relative transition-all duration-200 ${hasOpenDialogs
-                    ? 'cursor-not-allowed opacity-60'
-                    : isDragging
-                      ? 'cursor-ns-resize'
-                      : 'cursor-pointer hover:bg-primary/5 active:bg-primary/10'
+                  ? 'cursor-not-allowed opacity-60'
+                  : isDragging
+                    ? 'cursor-ns-resize'
+                    : 'cursor-pointer hover:bg-primary/5 active:bg-primary/10'
                   }`}
                 role='grid'
                 aria-label='Horarios del día para crear citas'

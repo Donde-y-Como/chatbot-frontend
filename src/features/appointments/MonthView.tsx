@@ -140,14 +140,14 @@ export function MonthView({
         key={`${apt.id}-${currentDay.toISOString()}`}
         className={cn(
           'text-xs p-1 truncate cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-between gap-1 rounded',
-          isMultiDay && 'border-l-2',
-          isMultiDay && !isFirstDay && !isLastDay && 'rounded-none',
-          isMultiDay && isFirstDay && !isLastDay && 'rounded-r-none',
-          isMultiDay && !isFirstDay && isLastDay && 'rounded-l-none'
+          isMultiDay && isFirstDay && 'border-l-2',
+          isMultiDay && !isFirstDay && !isLastDay && 'rounded-none -mx-1 px-2',
+          isMultiDay && isFirstDay && !isLastDay && 'rounded-r-none -mr-1',
+          isMultiDay && !isFirstDay && isLastDay && 'rounded-l-none -ml-1 pl-2'
         )}
         style={{
           backgroundColor: `${statusConfig.color}20`,
-          borderLeftColor: isMultiDay ? statusConfig.color : 'transparent',
+          borderLeftColor: isMultiDay && isFirstDay ? statusConfig.color : 'transparent',
           color: statusConfig.color,
         }}
         onClick={(e) => {

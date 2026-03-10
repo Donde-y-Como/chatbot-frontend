@@ -57,11 +57,12 @@ import {
 } from './components/StatusBadges'
 import { ClientChatButton } from './components/client-chat-button'
 import type { Appointment, Service } from './types.ts'
+import type { VisualAppointment } from './utils/multiday.ts'
 import { getAppointmentStatusConfig } from './types'
 
 interface AppointmentBlockProps {
   cancelAppointment: (id: string) => void
-  appointment: Appointment
+  appointment: VisualAppointment
   employees: Employee[]
   services: Service[]
   client: ClientPrimitives
@@ -207,18 +208,8 @@ export function AppointmentBlock({
 
   // Format time range
   const timeRangeText = `${formatTime(appointment.timeRange.startAt)}-${formatTime(appointment.timeRange.endAt)}`
-  const isMultiDay = appointment.endDate && !isSameDay(new Date(appointment.date), new Date(appointment.endDate))
-
-  let multidayText = 'Multidía'
-  if (isMultiDay && currentDate) {
-    if (isSameDay(currentDate, new Date(appointment.date))) {
-      multidayText = 'Inicio'
-    } else if (appointment.endDate && isSameDay(currentDate, new Date(appointment.endDate))) {
-      multidayText = 'Fin'
-    } else {
-      multidayText = 'Día cont.'
-    }
-  }
+  const isMultiDaySegment = !!appointment._multiDaySegment
+  const multidayText = appointment._multiDaySegment || 'Multidía'
 
   const isShort = duration <= 30
 
@@ -274,7 +265,7 @@ export function AppointmentBlock({
                     CANC.
                   </span>
                 )}
-                {isMultiDay && (
+                {isMultiDaySegment && (
                   <span className='inline-flex items-center gap-1 bg-white/20 text-white px-1.5 py-0.5 rounded text-[9px] font-medium shrink-0'>
                     <CalendarRange className='w-2.5 h-2.5' />
                     {multidayText}
@@ -300,7 +291,7 @@ export function AppointmentBlock({
                     {client.name}
                   </div>
 
-                  {isMultiDay && (
+                  {isMultiDaySegment && (
                     <div className='absolute top-0 right-0 z-10'>
                       <span className='inline-flex items-center gap-1 bg-white/20 text-white px-1.5 py-0.5 rounded text-[9px] font-medium shadow-sm backdrop-blur-sm border border-white/10'>
                         <CalendarRange className='w-2.5 h-2.5' />
