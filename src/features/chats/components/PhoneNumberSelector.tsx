@@ -28,7 +28,7 @@ interface PhoneNumberSelectorProps {
   onChange: (phones: string[]) => void
 }
 
-function extractWhatsAppWebPhone(client: Client): string | null {
+export function extractWhatsAppWebPhone(client: { platformIdentities: any[] } | any): string | null {
   const identity = client.platformIdentities?.find(
     (i) => i.platformName === PlatformName.WhatsappWeb
   )
@@ -37,7 +37,7 @@ function extractWhatsAppWebPhone(client: Client): string | null {
   return match ? match[1] : null
 }
 
-function formatDisplayPhone(phone: string): string {
+export function formatDisplayPhone(phone: string): string {
   if (phone.startsWith('521') && phone.length === 13) {
     const local = phone.slice(3)
     return `+52 1 ${local.slice(0, 3)}-${local.slice(3, 6)}-${local.slice(6)}`
@@ -50,7 +50,7 @@ const ClientRow = React.memo(function ClientRow({
   phone,
   onSelect,
 }: {
-  client: Client
+  client: { platformIdentities: any[] } | any
   phone: string
   onSelect: () => void
 }) {
