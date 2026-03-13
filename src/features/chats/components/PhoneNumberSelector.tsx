@@ -131,8 +131,12 @@ export function PhoneNumberSelector({ value, onChange }: PhoneNumberSelectorProp
           setLabelMap((prev) => ({ ...prev, [phone]: label }))
         }
       }
-      setInputValue('')
-      setIsDropdownOpen(false)
+      // Keep dropdown open so multiple recipients can be selected quickly.
+      // Preserve the search query when selecting from the list.
+      if (!label) {
+        setInputValue('')
+      }
+      setIsDropdownOpen(true)
       inputRef.current?.focus()
     },
     [value, onChange]
